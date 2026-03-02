@@ -1,0 +1,83 @@
+﻿namespace PixelEditor
+{
+    public static class HistoryManager
+    {
+        private static readonly Stack<byte[]> undoStack = new();
+        private static readonly Stack<byte[]> redoStack = new();
+
+        public static Image? ExistingImage { get; set; } = null;
+
+        public static void RecordState(HistoryItem history)
+        {
+            try
+            {
+                var includeImage = true; // !ImageManipulator.AreBitmapsEqual(ExistingImage, history.Image);
+                using MemoryStream ms = new();
+                //StrokePTVSaver.Save(ms, history.Zoom, history.Offset, history.Image, history.Layers, includeImage);
+                undoStack.Push(ms.ToArray());
+                redoStack.Clear();
+            }
+            catch
+            {
+            }
+        }
+
+        public static HistoryItem? Undo()
+        {
+            try
+            {
+                if (undoStack.Count == 0) return null;
+
+                if (redoStack.Count == 0)
+                {
+                    redoStack.Push(undoStack.Pop()); //remove the current state from undo and put it in redo
+                }
+
+                using MemoryStream ms = new();
+                byte[] data = undoStack.Pop();
+                using MemoryStream restoreMs = new(data);
+                //StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out Image? image, out List<StrokeLayer>layers, existingImage: null);
+                redoStack.Push(data);
+                return null; //return new HistoryItem(zoom, offset, image, layers);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static HistoryItem? Redo()
+        {
+            try
+            {
+                if (redoStack.Count == 0) return null;
+
+                if (undoStack.Count == 0)
+                {
+                    undoStack.Push(redoStack.Pop()); //remove the first state from redo and put it in undo
+                }
+
+                using MemoryStream ms = new();
+                byte[] data = redoStack.Pop();
+                using MemoryStream restoreMs = new(data);
+                //StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out Image? image, out List<StrokeLayer> layers, existingImage: null);
+                undoStack.Push(data);
+                return null; //return new HistoryItem(zoom, offset, image, layers);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static void Clear()
+        {
+            undoStack.Clear();
+            redoStack.Clear();
+        }
+
+        public static bool CanUndo => undoStack.Count > 0;
+
+        public static bool CanRedo => redoStack.Count > 0;
+    }
+}
