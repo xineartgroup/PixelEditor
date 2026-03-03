@@ -702,7 +702,7 @@
             brush_size.Name = "brush_size";
             brush_size.Size = new Size(164, 45);
             brush_size.TabIndex = 23;
-            brush_size.Value = 10;
+            brush_size.Value = 25;
             brush_size.Scroll += Brush_size_Scroll;
             // 
             // brush_opacity

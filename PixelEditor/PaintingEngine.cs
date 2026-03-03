@@ -5,77 +5,85 @@ namespace PixelEditor
 {
     public class PaintingEngine
     {
-        private Image? targetImage = null;
+        private Bitmap? strokeBase;
+        private Bitmap? targetBitmap;
         private Paint currentBrush;
 
-        private float[,]? accumulationBuffer;
-        private int bufferWidth, bufferHeight;
+        private float[,]? strokeCoverage;
+        private int bufferWidth;
+        private int bufferHeight;
 
-        public void SetBrush(Paint brush)
-        {
-            currentBrush = brush;
-        }
+        public void SetBrush(Paint brush) => currentBrush = brush;
 
-        public void SetTarget(Image? image)
-        {
-            targetImage = image;
-        }
+        public void SetTarget(Image? image) => targetBitmap = image as Bitmap;
 
         public void BeginStroke()
         {
-            if (targetImage == null) return;
+            if (targetBitmap == null)
+                return;
 
-            bufferWidth = targetImage.Width;
-            bufferHeight = targetImage.Height;
-            accumulationBuffer = new float[bufferWidth, bufferHeight];
+            bufferWidth = targetBitmap.Width;
+            bufferHeight = targetBitmap.Height;
+
+            strokeBase?.Dispose();
+            strokeBase = new Bitmap(targetBitmap);
+
+            if (strokeCoverage == null || strokeCoverage.GetLength(0) != bufferWidth || strokeCoverage.GetLength(1) != bufferHeight)
+                strokeCoverage = new float[bufferWidth, bufferHeight];
+            else
+                Array.Clear(strokeCoverage, 0, strokeCoverage.Length);
         }
 
-        public void PaintLine(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f)
+        public void EndStroke()
         {
-            if (currentBrush.Brush == null || targetImage == null) return;
+            strokeBase?.Dispose();
+            strokeBase = null;
+            strokeCoverage = null;
+        }
 
-            BeginStroke(); // Auto-begin stroke if not already started
+        public void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f)
+        {
+            if (currentBrush.Brush == null || targetBitmap == null)
+                return;
 
             float distance = Distance(start, end);
 
-            float brushSize = currentBrush.Brush.Width * brushScale; // Adaptive step size based on brush size
-            float step = Math.Max(0.5f, brushSize * 0.3f); // 30% overlap
+            if (distance < 1f)
+            {
+                PaintAt(end, brushScale, opacity);
+                return;
+            }
 
-            Random random = new(start.X * 1000 + start.Y); // Use a stable random for jitter
+            float brushSize = currentBrush.Brush.Width * brushScale;
+            float step = Math.Max(1.0f, brushSize * 0.2f);
 
             for (float t = 0; t <= distance; t += step)
             {
-                float lerp = distance == 0 ? 0 : t / distance;
-                int x = (int)(start.X + (end.X - start.X) * lerp);
-                int y = (int)(start.Y + (end.Y - start.Y) * lerp);
-
-                float jitter = 0.9f + (float)(random.NextDouble() * 0.2f); // Vary opacity slightly for more natural strokes
-                PaintAt(new Point(x, y), brushScale, opacity * jitter);
+                float lerp = t / distance;
+                int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
+                int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
+                PaintAt(new Point(x, y), brushScale, opacity);
             }
 
-            if (distance > step)
-            {
-                PaintAt(end, brushScale, opacity); // Ensure we paint at the end point
-            }
-
-            EndStroke();
+            PaintAt(end, brushScale, opacity);
         }
 
-        public void PaintAt(Point location, float brushScale = 1.0f, float opacity = 1.0f)
+        private void PaintAt(Point location, float brushScale, float opacity)
         {
-            if (currentBrush.Brush == null || targetImage == null || accumulationBuffer == null)
+            if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
                 return;
 
             int brushWidth = (int)(currentBrush.Brush.Width * brushScale);
             int brushHeight = (int)(currentBrush.Brush.Height * brushScale);
 
-            int x = location.X - brushWidth / 2;
-            int y = location.Y - brushHeight / 2;
-
             using Bitmap brushStamp = GetBrushStamp(brushScale, brushWidth, brushHeight);
-            Bitmap targetBitmap = (Bitmap)targetImage;
+
+            int x0 = location.X - brushWidth / 2;
+            int y0 = location.Y - brushHeight / 2;
+
             Rectangle targetRect = new(0, 0, targetBitmap.Width, targetBitmap.Height);
-            BitmapData targetData = targetBitmap.LockBits(targetRect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            BitmapData targetData = targetBitmap.LockBits(targetRect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            BitmapData baseData = strokeBase.LockBits(targetRect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
             Rectangle brushRect = new(0, 0, brushStamp.Width, brushStamp.Height);
             BitmapData brushData = brushStamp.LockBits(brushRect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -83,79 +91,99 @@ namespace PixelEditor
             unsafe
             {
                 byte* targetPtr = (byte*)targetData.Scan0;
+                byte* basePtr = (byte*)baseData.Scan0;
                 byte* brushPtr = (byte*)brushData.Scan0;
 
                 int targetStride = targetData.Stride;
                 int brushStride = brushData.Stride;
 
-                int startX = Math.Max(0, x);
-                int startY = Math.Max(0, y);
-                int endX = Math.Min(targetImage.Width, x + brushWidth);
-                int endY = Math.Min(targetImage.Height, y + brushHeight);
+                int startX = Math.Max(0, x0);
+                int startY = Math.Max(0, y0);
+                int endX = Math.Min(targetBitmap.Width, x0 + brushWidth);
+                int endY = Math.Min(targetBitmap.Height, y0 + brushHeight);
 
-                for (int py = startY; py < endY; py++)
+                for (int y = startY; y < endY; y++)
                 {
-                    for (int px = startX; px < endX; px++)
+                    for (int x = startX; x < endX; x++)
                     {
-                        int brushPx = px - x;
-                        int brushPy = py - y;
+                        int bx = x - x0;
+                        int by = y - y0;
 
-                        byte* brushPixel = brushPtr + brushPy * brushStride + brushPx * 4;
-                        byte brushAlpha = brushPixel[3]; // Get brush alpha (softness)
+                        byte* brushPixel = brushPtr + by * brushStride + bx * 4;
 
-                        if (brushAlpha == 0) continue;
+                        float brushAlpha = brushPixel[3] / 255f;
+                        if (brushAlpha <= 0f)
+                            continue;
 
-                        float brushIntensity = brushAlpha / 255f;
+                        float desired = brushAlpha * opacity;
+                        float current = strokeCoverage[x, y];
 
-                        float strokeIntensity = brushIntensity * opacity;
+                        if (current >= desired)
+                            continue;
 
-                        accumulationBuffer[px, py] += strokeIntensity;
-                        accumulationBuffer[px, py] = Math.Min(accumulationBuffer[px, py], 1.0f);
+                        strokeCoverage[x, y] = desired;
 
-                        byte* targetPixel = targetPtr + py * targetStride + px * 4;
+                        byte* basePixel = basePtr + y * targetStride + x * 4;
+                        byte* targetPixel = targetPtr + y * targetStride + x * 4;
 
-                        float finalOpacity = accumulationBuffer[px, py];
-
-                        // Blend brush color with existing pixel
-                        float invOpacity = 1 - finalOpacity;
-                        targetPixel[0] = (byte)(targetPixel[0] * invOpacity + brushPixel[0] * finalOpacity);
-                        targetPixel[1] = (byte)(targetPixel[1] * invOpacity + brushPixel[1] * finalOpacity);
-                        targetPixel[2] = (byte)(targetPixel[2] * invOpacity + brushPixel[2] * finalOpacity);
+                        float inv = 1f - desired;
+                        targetPixel[0] = (byte)(basePixel[0] * inv + brushPixel[0] * desired);
+                        targetPixel[1] = (byte)(basePixel[1] * inv + brushPixel[1] * desired);
+                        targetPixel[2] = (byte)(basePixel[2] * inv + brushPixel[2] * desired);
+                        targetPixel[3] = basePixel[3];
                     }
                 }
             }
 
             targetBitmap.UnlockBits(targetData);
+            strokeBase.UnlockBits(baseData);
             brushStamp.UnlockBits(brushData);
         }
 
-        private Bitmap GetBrushStamp(float brushScale, int brushWidth, int brushHeight)
+        private Bitmap GetBrushStamp(float scale, int width, int height)
         {
-            if (currentBrush.Brush == null) return new Bitmap(1, 1); // Return a dummy brush if none set
-            if (brushScale == 1.0f)
-            {
-                return new Bitmap(currentBrush.Brush); // Return a clone so we don't modify the original
-            }
-            else
-            {
-                Bitmap resized = new(brushWidth, brushHeight, PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(resized))
-                {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(currentBrush.Brush, 0, 0, brushWidth, brushHeight);
-                }
-                return resized;
-            }
-        }
+            if (currentBrush.Brush == null)
+                return new Bitmap(1, 1);
 
-        public void EndStroke()
-        {
-            accumulationBuffer = null;
+            if (scale == 1f)
+                return new Bitmap(currentBrush.Brush);
+
+            Bitmap resized = new(width, height, PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(resized))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(currentBrush.Brush, 0, 0, width, height);
+            }
+            return resized;
         }
 
         private static float Distance(Point p1, Point p2)
         {
-            return (float)Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
+            float dx = p2.X - p1.X;
+            float dy = p2.Y - p1.Y;
+            return MathF.Sqrt(dx * dx + dy * dy);
+        }
+
+        public static PointF CatmullRomPoint(PointF p0, PointF p1, PointF p2, PointF p3, float t)
+        {
+            float t2 = t * t;
+            float t3 = t2 * t;
+
+            float x = 0.5f * (
+                (2 * p1.X) +
+                (-p0.X + p2.X) * t +
+                (2 * p0.X - 5 * p1.X + 4 * p2.X - p3.X) * t2 +
+                (-p0.X + 3 * p1.X - 3 * p2.X + p3.X) * t3
+            );
+
+            float y = 0.5f * (
+                (2 * p1.Y) +
+                (-p0.Y + p2.Y) * t +
+                (2 * p0.Y - 5 * p1.Y + 4 * p2.Y - p3.Y) * t2 +
+                (-p0.Y + 3 * p1.Y - 3 * p2.Y + p3.Y) * t3
+            );
+
+            return new PointF(x, y);
         }
     }
 }

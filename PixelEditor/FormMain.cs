@@ -21,14 +21,19 @@ namespace PixelEditor
         private bool isDragging = false;
         private bool isPainting = false;
         private bool isDirty = false;
-        private DateTime lastPaintTime = DateTime.MinValue;
         private float zoom = 1.0f;
         private string? currentFilePath = null;
         private readonly PaintingEngine painter = new();
         private readonly List<Layer> imageLayers = [];
-        private readonly List<Paint> brushDetails = [];
         private Rectangle _lastRenderedDragBounds = Rectangle.Empty;
         private Rectangle _accumulatedDragBounds = Rectangle.Empty;
+        private DateTime lastPaintTime = DateTime.MinValue;
+
+        private List<PointF>? strokePoints;
+        private PointF lazyMousePos;
+        private PointF lazyLocalPos;
+        private PointF strokeLastPainted;
+        private PointF strokeLastInterpolated;
 
         public FormMain()
         {
@@ -58,35 +63,54 @@ namespace PixelEditor
             try
             {
                 string[] files = Directory.GetFiles(Application.StartupPath + @"\Brushes\");
-                int x = 0; int y = 0;
+                int x = 0;
+                int y = 0;
                 foreach (string file in files)
                 {
-                    Paint brushDetail = new()
-                    {
-                        Name = file[file.LastIndexOf('\\')..].Trim(@"\".ToCharArray()).Trim(),
-                        Brush = new Bitmap(file)
-                    };
                     PictureBox pic = new()
                     {
-                        Image = brushDetail.Brush,
+                        Image = new Bitmap(file),
                         Size = new Size(24, 24),
                         Location = new Point(x, y),
                         SizeMode = PictureBoxSizeMode.StretchImage,
                         BorderStyle = BorderStyle.None
                     };
-                    pic.Click += new EventHandler(Pic_Click);
+                    pic.Click += Pic_Click;
                     panel2.Controls.Add(pic);
                     x += 24;
                     if (x > 128)
                     {
                         x = 0; y += 24;
                     }
-                    brushDetails.Add(brushDetail);
                 }
             }
             catch
             {
                 MessageBox.Show("Couldn't load Brushes");
+            }
+        }
+
+        private void Pic_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is not null && sender is PictureBox brush)
+                {
+                    if (brush.Image is not null)
+                    {
+                        paint.Brush = new Bitmap(brush.Image);
+                        if (paint.Brush != null)
+                        {
+                            paint.SetColor(btnPenColor.BackColor);
+                            painter.SetBrush(paint);
+                        }
+                        UpdateCursor();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -101,8 +125,9 @@ namespace PixelEditor
                 btnPenColor.BackColor = c.Color;
                 if (paint.Brush != null)
                 {
-                    paint.Color = btnPenColor.BackColor;
+                    paint.SetColor(btnPenColor.BackColor);
                     painter.SetBrush(paint);
+                    UpdateCursor();
                 }
             }
         }
@@ -112,31 +137,6 @@ namespace PixelEditor
             paint.Brush = null;
             painter.SetBrush(paint);
             UpdateCursor();
-        }
-
-        private void Pic_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (sender is not null && sender is PictureBox brush)
-                {
-                    if (brush.Image is not null)
-                    {
-                        paint.Brush = new Bitmap(brush.Image);
-                        UpdateCursor();
-                        if (paint.Brush != null)
-                        {
-                            paint.Color = btnPenColor.BackColor;
-                            painter.SetBrush(paint);
-                        }
-                        brush_size.Focus();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
         }
 
         private void UpdateCursor()
@@ -653,172 +653,6 @@ namespace PixelEditor
             BtnEditCaption_Click(sender, e);
         }
 
-        private void PixelImage_MouseDown(object sender, MouseEventArgs e)
-        {
-            lastMousePosition = e.Location;
-
-            if (paint.Brush != null)
-            {
-                isPainting = true;
-            }
-            else
-            {
-                isDragging = true;
-            }
-        }
-
-        private void PixelImage_MouseMove(object sender, MouseEventArgs e)
-        {
-            labelMousePosition.Text = $"({e.X}, {e.Y})";
-            labelDocStatus.Text = $"Zoom: {zoom * 100:F1}% Offset {imageOffset}";
-
-            if (isDragging)
-            {
-                int dx = e.X - lastMousePosition.X;
-                int dy = e.Y - lastMousePosition.Y;
-
-                if (ModifierKeys.HasFlag(Keys.Control))
-                {
-                    float zoomDelta = dy * 0.01f;
-                    zoom = Math.Max(0.1f, Math.Min(10.0f, zoom - zoomDelta));
-                    ImageManipulator.InvalidateCompositeBuffers();
-                    RedrawImage();
-                }
-                else if (ModifierKeys.HasFlag(Keys.Shift))
-                {
-                    imageOffset.X += dx;
-                    imageOffset.Y += dy;
-                    ImageManipulator.InvalidateCompositeBuffers();
-                    RedrawImage();
-                }
-                else
-                {
-                    if (chkListLayers.Items.Count == imageLayers.Count
-                        && chkListLayers.SelectedIndex >= 0
-                        && chkListLayers.SelectedIndex < imageLayers.Count)
-                    {
-                        var layer = imageLayers[chkListLayers.SelectedIndex];
-                        int dw = layer.image?.Width * layer.ScaleWidth ?? 0;
-                        int dh = layer.image?.Height * layer.ScaleHeight ?? 0;
-
-                        Rectangle currentBounds = new(layer.X, layer.Y, dw, dh);
-                        _accumulatedDragBounds = _accumulatedDragBounds == Rectangle.Empty
-                            ? currentBounds
-                            : Rectangle.Union(_accumulatedDragBounds, currentBounds);
-
-                        float ratio = GetCanvasToWorldRatio();
-                        layer.X += (int)Math.Round(dx / ratio);
-                        layer.Y += (int)Math.Round(dy / ratio);
-
-                        int minPaintIntervalMs = 16;
-                        if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
-                        {
-                            RedrawImage(chkListLayers.SelectedIndex, _accumulatedDragBounds);
-                            _accumulatedDragBounds = Rectangle.Empty;
-                            lastPaintTime = DateTime.Now;
-                        }
-                    }
-                }
-            }
-            else if (isPainting)
-            {
-                if (chkListLayers.Items.Count == imageLayers.Count
-                    && chkListLayers.SelectedIndex >= 0
-                    && chkListLayers.SelectedIndex < imageLayers.Count)
-                {
-                    if (paint.Brush != null)
-                    {
-                        var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
-
-                        Point currentWorldPos = ScreenToWorld(e.Location, ImageManipulator.Width, ImageManipulator.Height);
-                        Point lastWorldPos = ScreenToWorld(lastMousePosition, ImageManipulator.Width, ImageManipulator.Height);
-
-                        Point localStart = new(lastWorldPos.X - selectedLayer.X, lastWorldPos.Y - selectedLayer.Y);
-                        Point localEnd = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
-
-                        painter.SetTarget(selectedLayer.image);
-
-                        float scale = 1.0f;
-                        float aspectRatio = (float)ImageManipulator.Screen.Width / ImageManipulator.Screen.Height;
-                        float containerAspectRatio = (float)canvas.Width / canvas.Height;
-
-                        if (aspectRatio > containerAspectRatio)
-                            scale = (float)ImageManipulator.Screen.Width / canvas.Width;
-                        else if (aspectRatio < containerAspectRatio)
-                            scale = (float)ImageManipulator.Screen.Height / canvas.Height;
-
-                        painter.PaintLine(localStart, localEnd, 2 * scale * (float)brush_size.Value / brush_size.Maximum, (float)brush_opacity.Value / brush_opacity.Maximum);
-
-                        Rectangle dirtyArea = new(
-                            Math.Min(currentWorldPos.X, lastWorldPos.X) - paint.Brush.Width / 2,
-                            Math.Min(currentWorldPos.Y, lastWorldPos.Y) - paint.Brush.Height / 2,
-                            Math.Abs(currentWorldPos.X - lastWorldPos.X) + paint.Brush.Width,
-                            Math.Abs(currentWorldPos.Y - lastWorldPos.Y) + paint.Brush.Height
-                        );
-                        ImageManipulator.DirtyRegions.Add(dirtyArea);
-                    }
-                }
-
-                int minPaintIntervalMs = 16;
-                if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
-                {
-                    RedrawImage();
-                    lastPaintTime = DateTime.Now;
-                }
-            }
-
-            lastMousePosition = e.Location;
-        }
-
-        private void PixelImage_MouseUp(object sender, MouseEventArgs e)
-        {
-            isDragging = false;
-            isPainting = false;
-            _accumulatedDragBounds = Rectangle.Empty;
-            RedrawImage();
-        }
-
-        private float GetCanvasToWorldRatio()
-        {
-            float aspectRatio = (float)ImageManipulator.Width / ImageManipulator.Height;
-            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-
-            float scaledWidth = aspectRatio > containerAspectRatio
-                ? canvas.Width * zoom
-                : canvas.Height * zoom * aspectRatio;
-
-            return scaledWidth / ImageManipulator.Width;
-        }
-
-        private Point ScreenToWorld(Point screenPt, int canvasW, int canvasH)
-        {
-            float aspectRatio = (float)canvasW / canvasH;
-            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-
-            float scaledWidth, scaledHeight;
-            if (aspectRatio > containerAspectRatio)
-            {
-                scaledWidth = canvas.Width * zoom;
-                scaledHeight = scaledWidth / aspectRatio;
-            }
-            else
-            {
-                scaledHeight = canvas.Height * zoom;
-                scaledWidth = scaledHeight * aspectRatio;
-            }
-
-            float centerX = (canvas.Width - scaledWidth) / 2;
-            float centerY = (canvas.Height - scaledHeight) / 2;
-
-            // Use the ratio of Screen Pixels to Canvas Pixels
-            float ratio = scaledWidth / canvasW;
-
-            int worldX = (int)((screenPt.X - (centerX + imageOffset.X)) / ratio);
-            int worldY = (int)((screenPt.Y - (centerY + imageOffset.Y)) / ratio);
-
-            return new Point(worldX, worldY);
-        }
-
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
@@ -1007,17 +841,246 @@ namespace PixelEditor
             }
         }
 
-        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void PixelImage_MouseDown(object sender, MouseEventArgs e)
         {
-            Application.Exit();
+            lastMousePosition = e.Location;
+            lazyMousePos = e.Location;
+
+            if (paint.Brush != null)
+            {
+                isPainting = true;
+                strokePoints = null;
+                lazyLocalPos = PointF.Empty;
+                strokeLastPainted = PointF.Empty;
+                strokeLastInterpolated = PointF.Empty;
+                painter.BeginStroke();
+            }
+            else
+            {
+                isDragging = true;
+            }
+        }
+
+        private void PixelImage_MouseMove(object sender, MouseEventArgs e)
+        {
+            labelMousePosition.Text = $"({e.X}, {e.Y})";
+            labelDocStatus.Text = $"Zoom: {zoom * 100:F1}% Offset {imageOffset}";
+
+            if (isDragging)
+            {
+                int dx = e.X - lastMousePosition.X;
+                int dy = e.Y - lastMousePosition.Y;
+
+                if (ModifierKeys.HasFlag(Keys.Control))
+                {
+                    float zoomDelta = dy * 0.01f;
+                    zoom = Math.Max(0.1f, Math.Min(10.0f, zoom - zoomDelta));
+                    ImageManipulator.InvalidateCompositeBuffers();
+                    RedrawImage();
+                }
+                else if (ModifierKeys.HasFlag(Keys.Shift))
+                {
+                    imageOffset.X += dx;
+                    imageOffset.Y += dy;
+                    ImageManipulator.InvalidateCompositeBuffers();
+                    RedrawImage();
+                }
+                else
+                {
+                    if (chkListLayers.Items.Count == imageLayers.Count
+                        && chkListLayers.SelectedIndex >= 0
+                        && chkListLayers.SelectedIndex < imageLayers.Count)
+                    {
+                        var layer = imageLayers[chkListLayers.SelectedIndex];
+                        int dw = layer.image?.Width * layer.ScaleWidth ?? 0;
+                        int dh = layer.image?.Height * layer.ScaleHeight ?? 0;
+
+                        Rectangle currentBounds = new(layer.X, layer.Y, dw, dh);
+                        _accumulatedDragBounds = _accumulatedDragBounds == Rectangle.Empty
+                            ? currentBounds
+                            : Rectangle.Union(_accumulatedDragBounds, currentBounds);
+
+                        float ratio = GetCanvasToWorldRatio();
+                        layer.X += (int)Math.Round(dx / ratio);
+                        layer.Y += (int)Math.Round(dy / ratio);
+
+                        int minPaintIntervalMs = 16;
+                        if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                        {
+                            RedrawImage(chkListLayers.SelectedIndex, _accumulatedDragBounds);
+                            _accumulatedDragBounds = Rectangle.Empty;
+                            lastPaintTime = DateTime.Now;
+                        }
+                    }
+                }
+            }
+            else if (isPainting)
+            {
+                float lazySmoothing = 0.22f;
+
+                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+
+                Point currentWorldPos = ScreenToWorld(e.Location, ImageManipulator.Width, ImageManipulator.Height);
+                Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+
+                if (strokePoints == null)
+                {
+                    strokePoints = new List<PointF> { localCurrentRaw };
+                    lazyLocalPos = localCurrentRaw;
+                    strokeLastPainted = localCurrentRaw;
+                    strokeLastInterpolated = localCurrentRaw;
+                    lastMousePosition = e.Location;
+
+                    // Start the stroke once at the beginning
+                    painter.SetTarget(selectedLayer.image);
+                    painter.BeginStroke();
+                    return;
+                }
+
+                PointF delta = new PointF(
+                    localCurrentRaw.X - lazyLocalPos.X,
+                    localCurrentRaw.Y - lazyLocalPos.Y);
+
+                lazyLocalPos.X += delta.X * lazySmoothing;
+                lazyLocalPos.Y += delta.Y * lazySmoothing;
+
+                strokePoints.Add(lazyLocalPos);
+
+                float aspectRatio = (float)ImageManipulator.Screen.Width / ImageManipulator.Screen.Height;
+                float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                float scale = 1.0f;
+                if (aspectRatio > containerAspectRatio)
+                    scale = (float)ImageManipulator.Screen.Width / canvas.Width;
+                else if (aspectRatio < containerAspectRatio)
+                    scale = (float)ImageManipulator.Screen.Height / canvas.Height;
+
+                float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
+                float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
+
+                if (strokePoints.Count >= 2)
+                {
+                    if (strokePoints.Count == 2)
+                    {
+                        Point start = Point.Round(strokePoints[0]);
+                        Point end = Point.Round(strokePoints[1]);
+                        painter.PaintStroke(start, end, brushPixelSize, currentOpacity);
+                    }
+                    else
+                    {
+                        int n = strokePoints.Count;
+                        PointF p0 = (n >= 3) ? strokePoints[n - 3] : strokePoints[n - 2];
+                        PointF p1 = strokePoints[n - 2];
+                        PointF p2 = strokePoints[n - 1];
+                        PointF p3 = p2;
+
+                        const int segments = 8; // Increased for smoother curves
+
+                        PointF previousPos = strokeLastInterpolated;
+
+                        for (int i = 1; i <= segments; i++)
+                        {
+                            float t = i / (float)segments;
+                            PointF pos = PaintingEngine.CatmullRomPoint(p0, p1, p2, p3, t);
+
+                            Point prevRounded = Point.Round(previousPos);
+                            Point currRounded = Point.Round(pos);
+
+                            // Only paint if we've moved at least 1 pixel
+                            if (prevRounded != currRounded)
+                            {
+                                painter.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity);
+                            }
+
+                            previousPos = pos;
+                        }
+
+                        strokeLastInterpolated = previousPos;
+                    }
+                }
+
+                // Calculate dirty region for redraw
+                float radius = brushPixelSize * 1.5f;
+                int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
+                int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
+                int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
+                int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
+
+                Rectangle dirty = new(minX, minY, maxX - minX, maxY - minY);
+                dirty.Intersect(new Rectangle(0, 0, selectedLayer.image?.Width ?? 0, selectedLayer.image?.Height ?? 0));
+
+                if (!dirty.IsEmpty)
+                    ImageManipulator.DirtyRegions.Add(dirty);
+
+                lastMousePosition = e.Location;
+
+                // Throttle redraws but DON'T restart the stroke
+                const int minPaintIntervalMs = 16;
+                if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                {
+                    RedrawImage();
+                    lastPaintTime = DateTime.Now;
+                }
+            }
+
+            lastMousePosition = e.Location;
+        }
+
+        private void PixelImage_MouseUp(object sender, MouseEventArgs e)
+        {
+            isDragging = false;
+            isPainting = false;
+            _accumulatedDragBounds = Rectangle.Empty;
+            painter.EndStroke();
+            RedrawImage();
+        }
+
+        private float GetCanvasToWorldRatio()
+        {
+            float aspectRatio = (float)ImageManipulator.Width / ImageManipulator.Height;
+            float containerAspectRatio = (float)canvas.Width / canvas.Height;
+
+            float scaledWidth = aspectRatio > containerAspectRatio
+                ? canvas.Width * zoom
+                : canvas.Height * zoom * aspectRatio;
+
+            return scaledWidth / ImageManipulator.Width;
+        }
+
+        private Point ScreenToWorld(Point screenPt, int canvasW, int canvasH)
+        {
+            float aspectRatio = (float)canvasW / canvasH;
+            float containerAspectRatio = (float)canvas.Width / canvas.Height;
+
+            float scaledWidth, scaledHeight;
+            if (aspectRatio > containerAspectRatio)
+            {
+                scaledWidth = canvas.Width * zoom;
+                scaledHeight = scaledWidth / aspectRatio;
+            }
+            else
+            {
+                scaledHeight = canvas.Height * zoom;
+                scaledWidth = scaledHeight * aspectRatio;
+            }
+
+            float centerX = (canvas.Width - scaledWidth) / 2;
+            float centerY = (canvas.Height - scaledHeight) / 2;
+
+            // Use the ratio of Screen Pixels to Canvas Pixels
+            float ratio = scaledWidth / canvasW;
+
+            int worldX = (int)((screenPt.X - (centerX + imageOffset.X)) / ratio);
+            int worldY = (int)((screenPt.Y - (centerY + imageOffset.Y)) / ratio);
+
+            return new Point(worldX, worldY);
         }
 
         private void RedrawImage(int dragLayerIndex = -1, Rectangle previousLayerBounds = default)
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+            //var sw = System.Diagnostics.Stopwatch.StartNew();
             ImageManipulator.PopulateColorGrid(imageLayers, dragLayerIndex, previousLayerBounds);
-            sw.Stop();
-            Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
+            //sw.Stop();
+            //Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
 
             Rectangle dirty;
             if (dragLayerIndex >= 0 && dragLayerIndex < imageLayers.Count)
@@ -1081,6 +1144,11 @@ namespace PixelEditor
             var old = canvas.Image;
             canvas.Image = bmp;
             old?.Dispose();
+        }
+
+        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

@@ -4,72 +4,68 @@ namespace PixelEditor
 {
     public struct Paint
     {
+        private Bitmap? bitmap = null;
         private Bitmap? brush = null;
-
-        private Color color = Color.Black;
-
-        public string Name = "";
 
         public Paint()
         {
         }
 
-        public Color Color
+        public void SetColor(Color color)
         {
-            set
+            if (bitmap != null)
             {
-                color = value;
-                if (brush != null)
+                brush?.Dispose();
+                brush = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
+                brush.MakeTransparent(Color.White);
+                for (int i = 192; i < 256; i++)
                 {
-                    Brush = brush; //Re-apply the brush to make it transparent again, since changing the color may have made some pixels non-transparent
+                    brush.MakeTransparent(Color.FromArgb(i, i, i)); //Make all gray-scale pixels that are nearly white transparent
+                }
 
-                    var result = new Bitmap(brush.Width, brush.Height, PixelFormat.Format32bppArgb);
-
-                    for (int y = 0; y < brush.Height; y++)
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    for (int x = 0; x < bitmap.Width; x++)
                     {
-                        for (int x = 0; x < brush.Width; x++)
+                        Color sourcePixel = bitmap.GetPixel(x, y);
+
+                        if (sourcePixel.A > 0)
                         {
-                            Color sourcePixel = brush.GetPixel(x, y);
+                            float blend = sourcePixel.GetBrightness();
 
-                            if (sourcePixel.A > 0)
-                            {
-                                float blend = sourcePixel.GetBrightness();
+                            int a = (int)(255 - (255 * blend));
 
-                                int a = (int)(255 - (255 * blend));
-                                //int r = (int)(color.R * (1 - blend) + 255 * blend);
-                                //int g = (int)(color.G * (1 - blend) + 255 * blend);
-                                //int b = (int)(color.B * (1 - blend) + 255 * blend);
-
-                                //result.SetPixel(x, y, Color.FromArgb(a, r, g, b));
-
-                                result.SetPixel(x, y, Color.FromArgb(a, color));
-                            }
-                            else
-                            {
-                                result.SetPixel(x, y, Color.Transparent);
-                            }
+                            brush.SetPixel(x, y, Color.FromArgb(a, color));
+                        }
+                        else
+                        {
+                            brush.SetPixel(x, y, Color.Transparent);
                         }
                     }
-
-                    brush.Dispose();
-                    brush = result;
                 }
             }
         }
 
         public Bitmap? Brush
         {
-            readonly get => brush;
+            get
+            {
+                if (bitmap != null && brush == null)
+                {
+                    SetColor(Color.Black);
+                }
+                return brush;
+            }
             set
             {
-                brush = value;
-                if (brush != null)
+                if (value != null)
                 {
-                    brush.MakeTransparent(Color.White);
-                    for (int i = 192; i < 256; i++)
-                    {
-                        brush.MakeTransparent(Color.FromArgb(i, i, i)); //Make all gray-scale pixels that are nearly white transparent
-                    }
+                    bitmap = value;
+                }
+                else
+                {
+                    bitmap = null;
+                    brush = null;
                 }
             }
         }
