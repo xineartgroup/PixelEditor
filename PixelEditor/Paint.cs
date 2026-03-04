@@ -48,19 +48,13 @@ namespace PixelEditor
 
         public Bitmap? Brush
         {
-            get
-            {
-                if (bitmap != null && brush == null)
-                {
-                    SetColor(Color.Black);
-                }
-                return brush;
-            }
+            readonly get => brush;
             set
             {
                 if (value != null)
                 {
                     bitmap = value;
+                    SetColor(Color.Black); // update brush
                 }
                 else
                 {

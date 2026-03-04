@@ -17,6 +17,7 @@ namespace PixelEditor
         private static int _foregroundHash = 0;
 
         private static Bitmap? _screenBitmap;
+        private static Bitmap? _canvasBitmap;
 
         public static void InvalidateCompositeBuffers()
         {
@@ -29,6 +30,11 @@ namespace PixelEditor
 
         public static void PopulateColorGrid(List<Layer> layers, int dragLayerIndex = -1, Rectangle previousLayerBounds = default)
         {
+            if (_canvasBitmap == null || _canvasBitmap?.Width != Width || _canvasBitmap?.Height != Height)
+            {
+                PopulateBackgrounImage();
+            }
+
             if (dragLayerIndex >= 0 && dragLayerIndex < layers.Count)
             {
                 PopulateColorGridDragging(layers, dragLayerIndex, previousLayerBounds);
@@ -36,6 +42,8 @@ namespace PixelEditor
             }
 
             Screen = new ColorGrid(Width, Height);
+
+            InitializeScreenWithBackground();
 
             for (int i = layers.Count - 1; i >= 0; i--)
             {
@@ -66,6 +74,77 @@ namespace PixelEditor
             DirtyRegions.Clear();
         }
 
+        private static void PopulateBackgrounImage()
+        {
+            _canvasBitmap = new Bitmap(Width, Height);
+
+            using Graphics g = Graphics.FromImage(_canvasBitmap);
+            int squareSize = 20;
+            Color lightColor = Color.LightGray;
+            Color darkColor = Color.White;
+
+            for (int x = 0; x < Width; x += squareSize)
+            {
+                for (int y = 0; y < Height; y += squareSize)
+                {
+                    if ((x / squareSize + y / squareSize) % 2 == 0)
+                    {
+                        using SolidBrush brush = new(lightColor);
+                        g.FillRectangle(brush, x, y, squareSize, squareSize);
+                    }
+                    else
+                    {
+                        using SolidBrush brush = new(darkColor);
+                        g.FillRectangle(brush, x, y, squareSize, squareSize);
+                    }
+                }
+            }
+        }
+
+        private static void InitializeScreenWithBackground()
+        {
+            if (_canvasBitmap == null) return;
+
+            var bgData = _canvasBitmap.LockBits(
+                new Rectangle(0, 0, Width, Height),
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb);
+
+            try
+            {
+                int bytesPerPixel = 4;
+                int stride = bgData.Stride;
+                IntPtr scan0 = bgData.Scan0;
+
+                unsafe
+                {
+                    byte* bgPtr = (byte*)scan0;
+                    int[] screenPixels = Screen.GetRawPixels();
+
+                    for (int y = 0; y < Height; y++)
+                    {
+                        int rowOffset = y * stride;
+                        int screenRowOffset = y * Width;
+
+                        for (int x = 0; x < Width; x++)
+                        {
+                            int pixelOffset = rowOffset + x * bytesPerPixel;
+                            int bgColor = (bgPtr[pixelOffset + 2] << 16) |
+                                          (bgPtr[pixelOffset + 1] << 8) |
+                                          (bgPtr[pixelOffset + 0]) |
+                                          (bgPtr[pixelOffset + 3] << 24);
+
+                            screenPixels[screenRowOffset + x] = bgColor;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _canvasBitmap.UnlockBits(bgData);
+            }
+        }
+
         private static void PopulateColorGridDragging(List<Layer> layers, int dragLayerIndex, Rectangle previousLayerBounds)
         {
             var dragLayer = layers[dragLayerIndex];
@@ -79,7 +158,10 @@ namespace PixelEditor
 
             if (!bgValid)
             {
+                // Initialize background buffer with the checkered pattern first
                 _backgroundBuffer = new ColorGrid(Width, Height);
+                InitializeColorGridWithBackground(_backgroundBuffer);
+
                 for (int i = layers.Count - 1; i > dragLayerIndex; i--)
                 {
                     var layer = layers[i];
@@ -101,7 +183,10 @@ namespace PixelEditor
 
             if (!fgValid)
             {
+                // Initialize foreground buffer with transparent background
                 _foregroundBuffer = new ColorGrid(Width, Height);
+                // Foreground buffer should start as transparent, not with background pattern
+
                 for (int i = dragLayerIndex - 1; i >= 0; i--)
                 {
                     var layer = layers[i];
@@ -154,6 +239,50 @@ namespace PixelEditor
             ApplyCachedLayerRegion(Screen, _foregroundBuffer!, new Rectangle(0, 0, Width, Height), dirty, LayerBlending.Normal);
 
             DirtyRegions.Clear();
+        }
+
+        private static void InitializeColorGridWithBackground(ColorGrid grid)
+        {
+            if (_canvasBitmap == null) return;
+
+            var bgData = _canvasBitmap.LockBits(
+                new Rectangle(0, 0, Width, Height),
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb);
+
+            try
+            {
+                int bytesPerPixel = 4;
+                int stride = bgData.Stride;
+                IntPtr scan0 = bgData.Scan0;
+
+                unsafe
+                {
+                    byte* bgPtr = (byte*)scan0;
+                    int[] gridPixels = grid.GetRawPixels();
+
+                    for (int y = 0; y < Height; y++)
+                    {
+                        int rowOffset = y * stride;
+                        int gridRowOffset = y * Width;
+
+                        for (int x = 0; x < Width; x++)
+                        {
+                            int pixelOffset = rowOffset + x * bytesPerPixel;
+                            int bgColor = (bgPtr[pixelOffset + 2] << 16) |  // R
+                                          (bgPtr[pixelOffset + 1] << 8) |   // G
+                                          (bgPtr[pixelOffset + 0]) |        // B
+                                          (bgPtr[pixelOffset + 3] << 24);   // A
+
+                            gridPixels[gridRowOffset + x] = bgColor;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _canvasBitmap.UnlockBits(bgData);
+            }
         }
 
         private static int ComputeGroupHash(List<Layer> layers, int fromInclusive, int toExclusive)
@@ -372,9 +501,6 @@ namespace PixelEditor
 
             return _screenBitmap;
         }
-
-        public static Bitmap GetImage(ColorGrid grid)
-            => GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
 
         public static ColorGrid DarkPixelGrid(bool[,] mask, int width, int height)
         {

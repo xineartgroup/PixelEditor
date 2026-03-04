@@ -25,14 +25,11 @@ namespace PixelEditor
         private string? currentFilePath = null;
         private readonly PaintingEngine painter = new();
         private readonly List<Layer> imageLayers = [];
-        private Rectangle _lastRenderedDragBounds = Rectangle.Empty;
         private Rectangle _accumulatedDragBounds = Rectangle.Empty;
         private DateTime lastPaintTime = DateTime.MinValue;
 
         private List<PointF>? strokePoints;
-        private PointF lazyMousePos;
         private PointF lazyLocalPos;
-        private PointF strokeLastPainted;
         private PointF strokeLastInterpolated;
 
         public FormMain()
@@ -42,19 +39,11 @@ namespace PixelEditor
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            Bitmap bmp = new(ImageManipulator.Width, ImageManipulator.Height);
-
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.White);
-            }
-
             Form1_Resize(sender, e);
             UpdateTitleBar();
             cboBlendMode.Items.Clear();
             cboBlendMode.Items.AddRange(Enum.GetNames<LayerBlending>());
             cboBlendMode.SelectedIndex = 0;
-            AddLayer(bmp);
             ReloadBrushes();
         }
 
@@ -188,7 +177,12 @@ namespace PixelEditor
 
         private void Brush_opacity_Scroll(object sender, EventArgs e)
         {
+            labelStatus.Text = $"Brush opacity {brush_opacity.Value}";
+        }
 
+        private void Brush_smoothness_Scroll(object sender, EventArgs e)
+        {
+            labelStatus.Text = $"Brush opacity {brush_smoothness.Value}";
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
@@ -765,7 +759,7 @@ namespace PixelEditor
                 {
                     bool[,] mask = ImageManipulator.GetDarkPixels(ImageManipulator.Screen, 0.0f, 1.0f);
                     ColorGrid grid = ImageManipulator.DarkPixelGrid(mask, ImageManipulator.Screen.Width, ImageManipulator.Screen.Height);
-                    imageLayers[chkListLayers.SelectedIndex].image = ImageManipulator.GetImage(grid);
+                    imageLayers[chkListLayers.SelectedIndex].image = ImageManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
                     RedrawImage();
                 }
             }
@@ -844,14 +838,12 @@ namespace PixelEditor
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
-            lazyMousePos = e.Location;
 
             if (paint.Brush != null)
             {
                 isPainting = true;
                 strokePoints = null;
                 lazyLocalPos = PointF.Empty;
-                strokeLastPainted = PointF.Empty;
                 strokeLastInterpolated = PointF.Empty;
                 painter.BeginStroke();
             }
@@ -916,109 +908,113 @@ namespace PixelEditor
             }
             else if (isPainting)
             {
-                float lazySmoothing = 0.22f;
-
-                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
-
-                Point currentWorldPos = ScreenToWorld(e.Location, ImageManipulator.Width, ImageManipulator.Height);
-                Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
-
-                if (strokePoints == null)
+                if (chkListLayers.Items.Count == imageLayers.Count
+                    && chkListLayers.SelectedIndex >= 0
+                    && chkListLayers.SelectedIndex < imageLayers.Count)
                 {
-                    strokePoints = new List<PointF> { localCurrentRaw };
-                    lazyLocalPos = localCurrentRaw;
-                    strokeLastPainted = localCurrentRaw;
-                    strokeLastInterpolated = localCurrentRaw;
-                    lastMousePosition = e.Location;
+                    float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum; //0.22f
 
-                    // Start the stroke once at the beginning
-                    painter.SetTarget(selectedLayer.image);
-                    painter.BeginStroke();
-                    return;
-                }
+                    var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
 
-                PointF delta = new PointF(
-                    localCurrentRaw.X - lazyLocalPos.X,
-                    localCurrentRaw.Y - lazyLocalPos.Y);
+                    Point currentWorldPos = ScreenToWorld(e.Location, ImageManipulator.Width, ImageManipulator.Height);
+                    Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
-                lazyLocalPos.X += delta.X * lazySmoothing;
-                lazyLocalPos.Y += delta.Y * lazySmoothing;
-
-                strokePoints.Add(lazyLocalPos);
-
-                float aspectRatio = (float)ImageManipulator.Screen.Width / ImageManipulator.Screen.Height;
-                float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                float scale = 1.0f;
-                if (aspectRatio > containerAspectRatio)
-                    scale = (float)ImageManipulator.Screen.Width / canvas.Width;
-                else if (aspectRatio < containerAspectRatio)
-                    scale = (float)ImageManipulator.Screen.Height / canvas.Height;
-
-                float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
-                float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
-
-                if (strokePoints.Count >= 2)
-                {
-                    if (strokePoints.Count == 2)
+                    if (strokePoints == null)
                     {
-                        Point start = Point.Round(strokePoints[0]);
-                        Point end = Point.Round(strokePoints[1]);
-                        painter.PaintStroke(start, end, brushPixelSize, currentOpacity);
+                        strokePoints = [localCurrentRaw];
+                        lazyLocalPos = localCurrentRaw;
+                        strokeLastInterpolated = localCurrentRaw;
+                        lastMousePosition = e.Location;
+
+                        // Start the stroke once at the beginning
+                        painter.SetTarget(selectedLayer.image);
+                        painter.BeginStroke();
+                        return;
                     }
-                    else
+
+                    PointF delta = new(
+                        localCurrentRaw.X - lazyLocalPos.X,
+                        localCurrentRaw.Y - lazyLocalPos.Y);
+
+                    lazyLocalPos.X += delta.X * lazySmoothing;
+                    lazyLocalPos.Y += delta.Y * lazySmoothing;
+
+                    strokePoints.Add(lazyLocalPos);
+
+                    float aspectRatio = (float)ImageManipulator.Screen.Width / ImageManipulator.Screen.Height;
+                    float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                    float scale = 1.0f;
+                    if (aspectRatio > containerAspectRatio)
+                        scale = (float)ImageManipulator.Screen.Width / canvas.Width;
+                    else if (aspectRatio < containerAspectRatio)
+                        scale = (float)ImageManipulator.Screen.Height / canvas.Height;
+
+                    float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
+                    float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
+
+                    if (strokePoints.Count >= 2)
                     {
-                        int n = strokePoints.Count;
-                        PointF p0 = (n >= 3) ? strokePoints[n - 3] : strokePoints[n - 2];
-                        PointF p1 = strokePoints[n - 2];
-                        PointF p2 = strokePoints[n - 1];
-                        PointF p3 = p2;
-
-                        const int segments = 8; // Increased for smoother curves
-
-                        PointF previousPos = strokeLastInterpolated;
-
-                        for (int i = 1; i <= segments; i++)
+                        if (strokePoints.Count == 2)
                         {
-                            float t = i / (float)segments;
-                            PointF pos = PaintingEngine.CatmullRomPoint(p0, p1, p2, p3, t);
+                            Point start = Point.Round(strokePoints[0]);
+                            Point end = Point.Round(strokePoints[1]);
+                            painter.PaintStroke(start, end, brushPixelSize, currentOpacity);
+                        }
+                        else
+                        {
+                            int n = strokePoints.Count;
+                            PointF p0 = (n >= 3) ? strokePoints[n - 3] : strokePoints[n - 2];
+                            PointF p1 = strokePoints[n - 2];
+                            PointF p2 = strokePoints[n - 1];
+                            PointF p3 = p2;
 
-                            Point prevRounded = Point.Round(previousPos);
-                            Point currRounded = Point.Round(pos);
+                            const int segments = 8; // Increased for smoother curves
 
-                            // Only paint if we've moved at least 1 pixel
-                            if (prevRounded != currRounded)
+                            PointF previousPos = strokeLastInterpolated;
+
+                            for (int i = 1; i <= segments; i++)
                             {
-                                painter.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity);
+                                float t = i / (float)segments;
+                                PointF pos = PaintingEngine.CatmullRomPoint(p0, p1, p2, p3, t);
+
+                                Point prevRounded = Point.Round(previousPos);
+                                Point currRounded = Point.Round(pos);
+
+                                // Only paint if we've moved at least 1 pixel
+                                if (prevRounded != currRounded)
+                                {
+                                    painter.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity);
+                                }
+
+                                previousPos = pos;
                             }
 
-                            previousPos = pos;
+                            strokeLastInterpolated = previousPos;
                         }
-
-                        strokeLastInterpolated = previousPos;
                     }
-                }
 
-                // Calculate dirty region for redraw
-                float radius = brushPixelSize * 1.5f;
-                int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
-                int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
-                int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
-                int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
+                    // Calculate dirty region for redraw
+                    float radius = brushPixelSize * 1.5f;
+                    int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
+                    int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
+                    int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
+                    int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
 
-                Rectangle dirty = new(minX, minY, maxX - minX, maxY - minY);
-                dirty.Intersect(new Rectangle(0, 0, selectedLayer.image?.Width ?? 0, selectedLayer.image?.Height ?? 0));
+                    Rectangle dirty = new(minX, minY, maxX - minX, maxY - minY);
+                    dirty.Intersect(new Rectangle(0, 0, selectedLayer.image?.Width ?? 0, selectedLayer.image?.Height ?? 0));
 
-                if (!dirty.IsEmpty)
-                    ImageManipulator.DirtyRegions.Add(dirty);
+                    if (!dirty.IsEmpty)
+                        ImageManipulator.DirtyRegions.Add(dirty);
 
-                lastMousePosition = e.Location;
+                    lastMousePosition = e.Location;
 
-                // Throttle redraws but DON'T restart the stroke
-                const int minPaintIntervalMs = 16;
-                if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
-                {
-                    RedrawImage();
-                    lastPaintTime = DateTime.Now;
+                    // Throttle redraws but DON'T restart the stroke
+                    const int minPaintIntervalMs = 16;
+                    if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                    {
+                        RedrawImage();
+                        lastPaintTime = DateTime.Now;
+                    }
                 }
             }
 

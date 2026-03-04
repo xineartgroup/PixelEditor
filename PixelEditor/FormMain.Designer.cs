@@ -111,6 +111,7 @@
             brush_opacity = new TrackBar();
             btnPenColor = new Button();
             btnPointer = new Button();
+            brush_smoothness = new TrackBar();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -118,6 +119,7 @@
             ((System.ComponentModel.ISupportInitialize)opacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_size).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_opacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)brush_smoothness).BeginInit();
             SuspendLayout();
             // 
             // canvas
@@ -127,7 +129,7 @@
             canvas.ContextMenuStrip = contextMenuStrip1;
             canvas.Location = new Point(180, 27);
             canvas.Name = "canvas";
-            canvas.Size = new Size(818, 477);
+            canvas.Size = new Size(607, 477);
             canvas.TabIndex = 0;
             canvas.TabStop = false;
             canvas.MouseDown += PixelImage_MouseDown;
@@ -178,7 +180,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, settingsToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1184, 24);
+            menuStrip1.Size = new Size(984, 24);
             menuStrip1.TabIndex = 4;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -582,7 +584,8 @@
             // 
             // btnAddVector
             // 
-            btnAddVector.Location = new Point(8, 196);
+            btnAddVector.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnAddVector.Location = new Point(793, 85);
             btnAddVector.Name = "btnAddVector";
             btnAddVector.Size = new Size(28, 25);
             btnAddVector.TabIndex = 7;
@@ -592,7 +595,8 @@
             // 
             // btnSubtractVector
             // 
-            btnSubtractVector.Location = new Point(42, 196);
+            btnSubtractVector.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnSubtractVector.Location = new Point(827, 85);
             btnSubtractVector.Name = "btnSubtractVector";
             btnSubtractVector.Size = new Size(28, 25);
             btnSubtractVector.TabIndex = 8;
@@ -602,7 +606,8 @@
             // 
             // btnMoveUp
             // 
-            btnMoveUp.Location = new Point(76, 196);
+            btnMoveUp.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnMoveUp.Location = new Point(861, 85);
             btnMoveUp.Name = "btnMoveUp";
             btnMoveUp.Size = new Size(28, 25);
             btnMoveUp.TabIndex = 9;
@@ -612,7 +617,8 @@
             // 
             // btnMoveDown
             // 
-            btnMoveDown.Location = new Point(110, 196);
+            btnMoveDown.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnMoveDown.Location = new Point(895, 85);
             btnMoveDown.Name = "btnMoveDown";
             btnMoveDown.Size = new Size(28, 25);
             btnMoveDown.TabIndex = 10;
@@ -622,7 +628,8 @@
             // 
             // btnMergeDown
             // 
-            btnMergeDown.Location = new Point(144, 196);
+            btnMergeDown.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnMergeDown.Location = new Point(929, 85);
             btnMergeDown.Name = "btnMergeDown";
             btnMergeDown.Size = new Size(28, 25);
             btnMergeDown.TabIndex = 14;
@@ -654,15 +661,16 @@
             label6.BorderStyle = BorderStyle.Fixed3D;
             label6.Location = new Point(770, 529);
             label6.Name = "label6";
-            label6.Size = new Size(402, 23);
+            label6.Size = new Size(202, 23);
             label6.TabIndex = 8;
             // 
             // chkListLayers
             // 
+            chkListLayers.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             chkListLayers.FormattingEnabled = true;
-            chkListLayers.Location = new Point(8, 96);
+            chkListLayers.Location = new Point(793, 116);
             chkListLayers.Name = "chkListLayers";
-            chkListLayers.Size = new Size(164, 94);
+            chkListLayers.Size = new Size(179, 112);
             chkListLayers.TabIndex = 19;
             chkListLayers.ItemCheck += ChkListLayers_ItemCheck;
             chkListLayers.SelectedIndexChanged += ChkListLayers_SelectedIndexChanged;
@@ -670,44 +678,48 @@
             // 
             // cboBlendMode
             // 
+            cboBlendMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             cboBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboBlendMode.FormattingEnabled = true;
-            cboBlendMode.Location = new Point(8, 27);
+            cboBlendMode.Location = new Point(793, 28);
             cboBlendMode.Name = "cboBlendMode";
-            cboBlendMode.Size = new Size(164, 23);
+            cboBlendMode.Size = new Size(179, 23);
             cboBlendMode.TabIndex = 20;
             cboBlendMode.SelectedIndexChanged += CboBlendMode_SelectedIndexChanged;
             // 
             // opacity
             // 
-            opacity.Location = new Point(115, 56);
+            opacity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            opacity.Location = new Point(925, 57);
             opacity.Name = "opacity";
-            opacity.Size = new Size(57, 23);
+            opacity.Size = new Size(47, 23);
             opacity.TabIndex = 21;
             opacity.Value = new decimal(new int[] { 100, 0, 0, 0 });
             opacity.Leave += Opacity_Leave;
             // 
             // panel2
             // 
-            panel2.Location = new Point(8, 297);
+            panel2.BackColor = Color.White;
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Location = new Point(8, 159);
             panel2.Name = "panel2";
-            panel2.Size = new Size(164, 101);
+            panel2.Size = new Size(164, 139);
             panel2.TabIndex = 22;
             // 
             // brush_size
             // 
-            brush_size.Location = new Point(8, 404);
-            brush_size.Maximum = 200;
+            brush_size.Location = new Point(8, 304);
+            brush_size.Maximum = 100;
             brush_size.Minimum = 1;
             brush_size.Name = "brush_size";
             brush_size.Size = new Size(164, 45);
             brush_size.TabIndex = 23;
-            brush_size.Value = 25;
+            brush_size.Value = 12;
             brush_size.Scroll += Brush_size_Scroll;
             // 
             // brush_opacity
             // 
-            brush_opacity.Location = new Point(8, 455);
+            brush_opacity.Location = new Point(8, 355);
             brush_opacity.Maximum = 100;
             brush_opacity.Name = "brush_opacity";
             brush_opacity.Size = new Size(164, 45);
@@ -719,7 +731,7 @@
             // 
             btnPenColor.BackColor = Color.Black;
             btnPenColor.FlatStyle = FlatStyle.Popup;
-            btnPenColor.Location = new Point(9, 258);
+            btnPenColor.Location = new Point(73, 130);
             btnPenColor.Name = "btnPenColor";
             btnPenColor.Size = new Size(27, 23);
             btnPenColor.TabIndex = 24;
@@ -731,20 +743,31 @@
             btnPointer.BackColor = Color.White;
             btnPointer.FlatStyle = FlatStyle.Popup;
             btnPointer.Image = Properties.Resources.Pointer;
-            btnPointer.Location = new Point(43, 258);
+            btnPointer.Location = new Point(9, 28);
             btnPointer.Name = "btnPointer";
             btnPointer.Size = new Size(27, 23);
             btnPointer.TabIndex = 24;
             btnPointer.UseVisualStyleBackColor = false;
             btnPointer.Click += BtnPointer_Click;
             // 
+            // brush_smoothness
+            // 
+            brush_smoothness.Location = new Point(9, 406);
+            brush_smoothness.Maximum = 100;
+            brush_smoothness.Name = "brush_smoothness";
+            brush_smoothness.Size = new Size(164, 45);
+            brush_smoothness.TabIndex = 23;
+            brush_smoothness.Value = 22;
+            brush_smoothness.Scroll += Brush_smoothness_Scroll;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1184, 561);
+            ClientSize = new Size(984, 561);
             Controls.Add(btnPointer);
             Controls.Add(btnPenColor);
+            Controls.Add(brush_smoothness);
             Controls.Add(brush_opacity);
             Controls.Add(brush_size);
             Controls.Add(panel2);
@@ -764,7 +787,7 @@
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             MinimizeBox = false;
-            MinimumSize = new Size(1200, 600);
+            MinimumSize = new Size(1000, 600);
             Name = "FormMain";
             Text = "Pixel to Vector Converter";
             FormClosing += FormMain_FormClosing;
@@ -778,6 +801,7 @@
             ((System.ComponentModel.ISupportInitialize)opacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)brush_size).EndInit();
             ((System.ComponentModel.ISupportInitialize)brush_opacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)brush_smoothness).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -866,5 +890,6 @@
         private Button btnPointer;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripMenuItem generalSettingsToolStripMenuItem;
+        private TrackBar brush_smoothness;
     }
 }
