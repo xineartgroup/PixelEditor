@@ -4,6 +4,7 @@ namespace PixelEditor
 {
     public struct Paint
     {
+        private Color fillColor = Color.Black;
         private Bitmap? bitmap = null;
         private Bitmap? brush = null;
 
@@ -13,6 +14,7 @@ namespace PixelEditor
 
         public void SetColor(Color color)
         {
+            fillColor = color;
             if (bitmap != null)
             {
                 brush?.Dispose();
@@ -44,6 +46,11 @@ namespace PixelEditor
                     }
                 }
             }
+        }
+
+        public readonly Color GetColor()
+        {
+            return fillColor;
         }
 
         public Bitmap? Brush

@@ -52,15 +52,15 @@ namespace PixelEditor
             for (int i = layers.Count - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                if (!layer.IsVisible || layer.image == null) continue;
+                if (!layer.IsVisible || layer.Image == null) continue;
 
-                int displayWidth = layer.image.Width * layer.ScaleWidth;
-                int displayHeight = layer.image.Height * layer.ScaleHeight;
+                int displayWidth = layer.Image.Width * layer.ScaleWidth;
+                int displayHeight = layer.Image.Height * layer.ScaleHeight;
                 Rectangle layerBounds = new(layer.X, layer.Y, displayWidth, displayHeight);
 
                 int stateHash = HashCode.Combine(
                     layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                    layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                    layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                 bool isDirty = DirtyRegions.Any(r => r.IntersectsWith(layerBounds));
 
@@ -105,14 +105,14 @@ namespace PixelEditor
                 for (int i = layers.Count - 1; i > selectedLayerIndex; i--)
                 {
                     var layer = layers[i];
-                    if (!layer.IsVisible || layer.image == null) continue;
+                    if (!layer.IsVisible || layer.Image == null) continue;
 
-                    int dw = layer.image.Width * layer.ScaleWidth;
-                    int dh = layer.image.Height * layer.ScaleHeight;
+                    int dw = layer.Image.Width * layer.ScaleWidth;
+                    int dh = layer.Image.Height * layer.ScaleHeight;
                     Rectangle lb = new(layer.X, layer.Y, dw, dh);
 
                     int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                        layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                        layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                     if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
                     {
@@ -138,10 +138,10 @@ namespace PixelEditor
             }
 
             var activeLayer = layers[selectedLayerIndex];
-            if (activeLayer.IsVisible && activeLayer.image != null)
+            if (activeLayer.IsVisible && activeLayer.Image != null)
             {
-                int dw = activeLayer.image.Width * activeLayer.ScaleWidth;
-                int dh = activeLayer.image.Height * activeLayer.ScaleHeight;
+                int dw = activeLayer.Image.Width * activeLayer.ScaleWidth;
+                int dh = activeLayer.Image.Height * activeLayer.ScaleHeight;
                 Rectangle activeBounds = new(activeLayer.X, activeLayer.Y, dw, dh);
                 ColorGrid activeBuffer = RasterizeLayer(activeLayer, dw, dh);
 
@@ -152,14 +152,14 @@ namespace PixelEditor
             for (int i = selectedLayerIndex - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                if (!layer.IsVisible || layer.image == null) continue;
+                if (!layer.IsVisible || layer.Image == null) continue;
 
-                int dw = layer.image.Width * layer.ScaleWidth;
-                int dh = layer.image.Height * layer.ScaleHeight;
+                int dw = layer.Image.Width * layer.ScaleWidth;
+                int dh = layer.Image.Height * layer.ScaleHeight;
                 Rectangle lb = new(layer.X, layer.Y, dw, dh);
 
                 int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                    layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                    layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                 if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
                 {
@@ -295,7 +295,7 @@ namespace PixelEditor
             {
                 var l = layers[i];
                 hc.Add(l.X); hc.Add(l.Y); hc.Add(l.ScaleWidth); hc.Add(l.ScaleHeight);
-                hc.Add(l.image?.GetHashCode() ?? 0); hc.Add(l.Opacity); hc.Add(l.BlendMode);
+                hc.Add(l.Image?.GetHashCode() ?? 0); hc.Add(l.Opacity); hc.Add(l.BlendMode);
                 hc.Add(l.IsVisible);
             }
             return hc.ToHashCode();
@@ -310,7 +310,7 @@ namespace PixelEditor
 
             unsafe
             {
-                using Bitmap bmp = new(layer.image!);
+                using Bitmap bmp = new(layer.Image!);
                 BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                     ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 byte* ptr = (byte*)data.Scan0;

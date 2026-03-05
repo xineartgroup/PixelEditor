@@ -18,8 +18,9 @@ namespace PixelEditor
 
         public event Action<Rectangle>? OnLayerChanged;
 
-        public Image? image = null;
-        public string Name = name;
+        public Image? Image { get; set; } = null;
+
+        public string Name { get; set; } = name;
 
         public int X { get => _x; set => SetProperty(ref _x, value); }
 
@@ -54,41 +55,41 @@ namespace PixelEditor
 
         public Rectangle GetBounds()
         {
-            if (image == null) return Rectangle.Empty;
-            return new Rectangle(_x, _y, image.Width * _scaleWidth, image.Height * _scaleHeight);
+            if (Image == null) return Rectangle.Empty;
+            return new Rectangle(_x, _y, Image.Width * _scaleWidth, Image.Height * _scaleHeight);
         }
 
         public Image? GetProxyImage(int step)
         {
-            if (image == null || step <= 1) return image;
+            if (Image == null || step <= 1) return Image;
 
             int div = (int)Math.Pow(2, step - 1);
-            int nw = Math.Max(1, image.Width / div);
-            int nh = Math.Max(1, image.Height / div);
+            int nw = Math.Max(1, Image.Width / div);
+            int nh = Math.Max(1, Image.Height / div);
 
             Bitmap proxy = new(nw, nh);
             using (Graphics g = Graphics.FromImage(proxy))
             {
                 g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                g.DrawImage(image, 0, 0, nw, nh);
+                g.DrawImage(Image, 0, 0, nw, nh);
             }
             return proxy;
         }
 
         public void ResizeContainer(int containerWidth, int containerHeight)
         {
-            if (image == null) return;
+            if (Image == null) return;
             if (containerWidth <= 0 || containerHeight <= 0) return;
 
             Bitmap newImage = new(containerWidth, containerHeight);
             using (Graphics g = Graphics.FromImage(newImage))
             {
                 g.Clear(Color.Transparent);
-                g.DrawImage(image, 0, 0, containerWidth, containerHeight);
+                g.DrawImage(Image, 0, 0, containerWidth, containerHeight);
             }
 
-            image.Dispose();
-            image = newImage;
+            Image.Dispose();
+            Image = newImage;
             OnLayerChanged?.Invoke(GetBounds());
         }
     }

@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             canvas = new PictureBox();
             contextMenuStrip1 = new ContextMenuStrip(components);
             deleteImageToolStripMenuItem1 = new ToolStripMenuItem();
@@ -110,8 +111,10 @@
             brush_size = new TrackBar();
             brush_opacity = new TrackBar();
             btnPenColor = new Button();
-            btnPointer = new Button();
             brush_smoothness = new TrackBar();
+            btnPointer = new RadioButton();
+            btnFiller = new RadioButton();
+            btnBrusher = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -738,18 +741,6 @@
             btnPenColor.UseVisualStyleBackColor = false;
             btnPenColor.Click += BtnPenColor_Click;
             // 
-            // btnPointer
-            // 
-            btnPointer.BackColor = Color.White;
-            btnPointer.FlatStyle = FlatStyle.Popup;
-            btnPointer.Image = Properties.Resources.Pointer;
-            btnPointer.Location = new Point(9, 28);
-            btnPointer.Name = "btnPointer";
-            btnPointer.Size = new Size(27, 23);
-            btnPointer.TabIndex = 24;
-            btnPointer.UseVisualStyleBackColor = false;
-            btnPointer.Click += BtnPointer_Click;
-            // 
             // brush_smoothness
             // 
             brush_smoothness.Location = new Point(9, 406);
@@ -760,11 +751,55 @@
             brush_smoothness.Value = 22;
             brush_smoothness.Scroll += Brush_smoothness_Scroll;
             // 
+            // btnPointer
+            // 
+            btnPointer.Appearance = Appearance.Button;
+            btnPointer.FlatStyle = FlatStyle.Popup;
+            btnPointer.Image = (Image)resources.GetObject("btnPointer.Image");
+            btnPointer.Location = new Point(9, 28);
+            btnPointer.Name = "btnPointer";
+            btnPointer.Size = new Size(32, 32);
+            btnPointer.TabIndex = 26;
+            btnPointer.TabStop = true;
+            btnPointer.UseVisualStyleBackColor = true;
+            btnPointer.CheckedChanged += BtnPointer_CheckedChanged;
+            btnPointer.Click += BtnPointer_Click;
+            // 
+            // btnFiller
+            // 
+            btnFiller.Appearance = Appearance.Button;
+            btnFiller.FlatStyle = FlatStyle.Popup;
+            btnFiller.Image = (Image)resources.GetObject("btnFiller.Image");
+            btnFiller.Location = new Point(47, 28);
+            btnFiller.Name = "btnFiller";
+            btnFiller.Size = new Size(32, 32);
+            btnFiller.TabIndex = 26;
+            btnFiller.TabStop = true;
+            btnFiller.UseVisualStyleBackColor = true;
+            btnFiller.CheckedChanged += BtnPointer_CheckedChanged;
+            btnFiller.Click += BtnFiller_Click;
+            // 
+            // btnBrusher
+            // 
+            btnBrusher.Appearance = Appearance.Button;
+            btnBrusher.FlatStyle = FlatStyle.Popup;
+            btnBrusher.Image = (Image)resources.GetObject("btnBrusher.Image");
+            btnBrusher.Location = new Point(85, 28);
+            btnBrusher.Name = "btnBrusher";
+            btnBrusher.Size = new Size(32, 32);
+            btnBrusher.TabIndex = 26;
+            btnBrusher.TabStop = true;
+            btnBrusher.UseVisualStyleBackColor = true;
+            btnBrusher.CheckedChanged += BtnPointer_CheckedChanged;
+            btnBrusher.Click += BtnBrusher_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(984, 561);
+            Controls.Add(btnBrusher);
+            Controls.Add(btnFiller);
             Controls.Add(btnPointer);
             Controls.Add(btnPenColor);
             Controls.Add(brush_smoothness);
@@ -887,9 +922,11 @@
         private TrackBar brush_size;
         private TrackBar brush_opacity;
         private Button btnPenColor;
-        private Button btnPointer;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripMenuItem generalSettingsToolStripMenuItem;
         private TrackBar brush_smoothness;
+        private RadioButton btnPointer;
+        private RadioButton btnFiller;
+        private RadioButton btnBrusher;
     }
 }

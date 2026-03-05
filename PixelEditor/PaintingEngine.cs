@@ -3,21 +3,21 @@ using System.Drawing.Imaging;
 
 namespace PixelEditor
 {
-    public class PaintingEngine
+    public static class PaintingEngine
     {
-        private Bitmap? strokeBase;
-        private Bitmap? targetBitmap;
-        private Paint currentBrush;
+        private static Bitmap? strokeBase;
+        private static Bitmap? targetBitmap;
+        private static Paint currentBrush;
 
-        private float[,]? strokeCoverage;
-        private int bufferWidth;
-        private int bufferHeight;
+        private static float[,]? strokeCoverage;
+        private static int bufferWidth;
+        private static int bufferHeight;
 
-        public void SetBrush(Paint brush) => currentBrush = brush;
+        public static void SetBrush(Paint brush) => currentBrush = brush;
 
-        public void SetTarget(Image? image) => targetBitmap = image as Bitmap;
+        public static void SetTarget(Image? image) => targetBitmap = image as Bitmap;
 
-        public void BeginStroke()
+        public static void BeginStroke()
         {
             if (targetBitmap == null)
                 return;
@@ -34,14 +34,14 @@ namespace PixelEditor
                 Array.Clear(strokeCoverage, 0, strokeCoverage.Length);
         }
 
-        public void EndStroke()
+        public static void EndStroke()
         {
             strokeBase?.Dispose();
             strokeBase = null;
             strokeCoverage = null;
         }
 
-        public void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f)
+        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f)
         {
             if (currentBrush.Brush == null || targetBitmap == null)
                 return;
@@ -68,7 +68,7 @@ namespace PixelEditor
             PaintAt(end, brushScale, opacity);
         }
 
-        private void PaintAt(Point location, float brushScale, float opacity)
+        private static void PaintAt(Point location, float brushScale, float opacity)
         {
             if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
                 return;
@@ -140,7 +140,7 @@ namespace PixelEditor
             brushStamp.UnlockBits(brushData);
         }
 
-        private Bitmap GetBrushStamp(float scale, int width, int height)
+        private static Bitmap GetBrushStamp(float scale, int width, int height)
         {
             if (currentBrush.Brush == null)
                 return new Bitmap(1, 1);
