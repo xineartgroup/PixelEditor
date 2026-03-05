@@ -25,7 +25,6 @@ namespace PixelEditor
         private string? currentFilePath = null;
         private readonly PaintingEngine painter = new();
         private readonly List<Layer> imageLayers = [];
-        private Rectangle _accumulatedDragBounds = Rectangle.Empty;
         private DateTime lastPaintTime = DateTime.MinValue;
 
         private List<PointF>? strokePoints;
@@ -490,6 +489,7 @@ namespace PixelEditor
             imageLayers.Insert(newIndex, layerToMove);
 
             chkListLayers.SelectedIndex = newIndex;
+            chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
 
             RedrawImage();
         }
@@ -511,6 +511,7 @@ namespace PixelEditor
             imageLayers.Insert(newIndex, layerToMove);
 
             chkListLayers.SelectedIndex = newIndex;
+            chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
 
             RedrawImage();
         }
@@ -630,7 +631,19 @@ namespace PixelEditor
 
         private void UpdateControls()
         {
-
+            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
+            {
+                var layer = imageLayers[chkListLayers.SelectedIndex];
+                opacity.Value = layer.Opacity;
+                cboBlendMode.SelectedItem = layer.BlendMode.ToString();
+                redToolStripMenuItem.Checked = layer.Channel == LayerChannel.Red;
+                greenToolStripMenuItem.Checked = layer.Channel == LayerChannel.Green;
+                blueToolStripMenuItem.Checked = layer.Channel == LayerChannel.Blue;
+                allToolStripMenuItem.Checked = layer.Channel == LayerChannel.RGB;
+                redToolStripMenuItem1.Checked = layer.RedFilter;
+                greenToolStripMenuItem1.Checked = layer.GreenFilter;
+                blueToolStripMenuItem1.Checked = layer.BlueFilter;
+            }
         }
 
         private void ListBoxVectors_SelectedIndexChanged(object sender, EventArgs e)
@@ -888,9 +901,6 @@ namespace PixelEditor
                         int dh = layer.image?.Height * layer.ScaleHeight ?? 0;
 
                         Rectangle currentBounds = new(layer.X, layer.Y, dw, dh);
-                        _accumulatedDragBounds = _accumulatedDragBounds == Rectangle.Empty
-                            ? currentBounds
-                            : Rectangle.Union(_accumulatedDragBounds, currentBounds);
 
                         float ratio = GetCanvasToWorldRatio();
                         layer.X += (int)Math.Round(dx / ratio);
@@ -899,8 +909,7 @@ namespace PixelEditor
                         int minPaintIntervalMs = 16;
                         if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                         {
-                            RedrawImage(chkListLayers.SelectedIndex, _accumulatedDragBounds);
-                            _accumulatedDragBounds = Rectangle.Empty;
+                            RedrawImage(chkListLayers.SelectedIndex);
                             lastPaintTime = DateTime.Now;
                         }
                     }
@@ -952,8 +961,24 @@ namespace PixelEditor
                     float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
                     float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
 
+                    float radius = paint.Brush != null ? (int)(paint.Brush.Width * brushPixelSize / 2) : 0;
+                    Rectangle dirty = new(0, 0, 0, 0);
+
                     if (strokePoints.Count >= 2)
                     {
+                        int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
+                        int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
+                        int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
+                        int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
+
+                        dirty = new(
+                            minX + selectedLayer.X,
+                            minY + selectedLayer.Y,
+                            maxX - minX,
+                            maxY - minY);
+
+                        dirty.Intersect(new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height));
+
                         if (strokePoints.Count == 2)
                         {
                             Point start = Point.Round(strokePoints[0]);
@@ -993,26 +1018,17 @@ namespace PixelEditor
                         }
                     }
 
-                    // Calculate dirty region for redraw
-                    float radius = brushPixelSize * 1.5f;
-                    int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
-                    int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
-                    int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
-                    int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
-
-                    Rectangle dirty = new(minX, minY, maxX - minX, maxY - minY);
-                    dirty.Intersect(new Rectangle(0, 0, selectedLayer.image?.Width ?? 0, selectedLayer.image?.Height ?? 0));
-
                     if (!dirty.IsEmpty)
                         ImageManipulator.DirtyRegions.Add(dirty);
 
                     lastMousePosition = e.Location;
 
-                    // Throttle redraws but DON'T restart the stroke
                     const int minPaintIntervalMs = 16;
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                     {
-                        RedrawImage();
+                        RedrawImage(chkListLayers.SelectedIndex);
+                        ImageManipulator.DirtyRegions.Clear();
+                        ImageManipulator.DirtyRegions.Add(dirty); // Keep the last dirty region for the next paint
                         lastPaintTime = DateTime.Now;
                     }
                 }
@@ -1025,7 +1041,7 @@ namespace PixelEditor
         {
             isDragging = false;
             isPainting = false;
-            _accumulatedDragBounds = Rectangle.Empty;
+            ImageManipulator.UpdateBuffers();
             painter.EndStroke();
             RedrawImage();
         }
@@ -1071,29 +1087,14 @@ namespace PixelEditor
             return new Point(worldX, worldY);
         }
 
-        private void RedrawImage(int dragLayerIndex = -1, Rectangle previousLayerBounds = default)
+        private void RedrawImage(int selectedLayerIndex = -1)
         {
-            //var sw = System.Diagnostics.Stopwatch.StartNew();
-            ImageManipulator.PopulateColorGrid(imageLayers, dragLayerIndex, previousLayerBounds);
-            //sw.Stop();
-            //Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            ImageManipulator.PopulateColorGrid(imageLayers, selectedLayerIndex);
+            sw.Stop();
+            Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
 
-            Rectangle dirty;
-            if (dragLayerIndex >= 0 && dragLayerIndex < imageLayers.Count)
-            {
-                var layer = imageLayers[dragLayerIndex];
-                int dw = layer.image?.Width * layer.ScaleWidth ?? 0;
-                int dh = layer.image?.Height * layer.ScaleHeight ?? 0;
-                Rectangle currentBounds = new(layer.X, layer.Y, dw, dh);
-                dirty = Rectangle.Union(previousLayerBounds, currentBounds);
-                dirty.Intersect(new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height));
-            }
-            else
-            {
-                dirty = new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height);
-            }
-
-            Bitmap image = ImageManipulator.GetImage(ImageManipulator.Screen, dirty);
+            Bitmap image = ImageManipulator.GetImage(ImageManipulator.Screen, new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height));
             RedrawRasterImage(image);
         }
 

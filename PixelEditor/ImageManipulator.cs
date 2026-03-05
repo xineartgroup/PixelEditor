@@ -11,10 +11,10 @@ namespace PixelEditor
         public static HashSet<Rectangle> DirtyRegions { get; set; } = [];
 
         private static ColorGrid? _backgroundBuffer;
-        private static ColorGrid? _foregroundBuffer;
-        private static int _cachedDragLayerIndex = -1;
+        private static ColorGrid? _activeBuffer;
+
         private static int _backgroundHash = 0;
-        private static int _foregroundHash = 0;
+        private static int _cachedSelectedIndex = -1;
 
         private static Bitmap? _screenBitmap;
         private static Bitmap? _canvasBitmap;
@@ -22,27 +22,31 @@ namespace PixelEditor
         public static void InvalidateCompositeBuffers()
         {
             _backgroundBuffer = null;
-            _foregroundBuffer = null;
-            _cachedDragLayerIndex = -1;
+            _activeBuffer = null;
             _backgroundHash = 0;
-            _foregroundHash = 0;
+            _cachedSelectedIndex = -1;
         }
 
-        public static void PopulateColorGrid(List<Layer> layers, int dragLayerIndex = -1, Rectangle previousLayerBounds = default)
+        public static void UpdateBuffers()
         {
-            if (_canvasBitmap == null || _canvasBitmap?.Width != Width || _canvasBitmap?.Height != Height)
-            {
-                PopulateBackgrounImage();
-            }
+            _backgroundHash = 0;
+            _cachedSelectedIndex = -1;
+            _backgroundBuffer = null;
+            _activeBuffer = null;
+        }
 
-            if (dragLayerIndex >= 0 && dragLayerIndex < layers.Count)
+        public static void PopulateColorGrid(List<Layer> layers, int selectedLayerIndex = -1)
+        {
+            if (_canvasBitmap == null || _canvasBitmap.Width != Width || _canvasBitmap.Height != Height)
+                PopulateBackgroundImage();
+
+            if (selectedLayerIndex >= 0 && selectedLayerIndex < layers.Count)
             {
-                PopulateColorGridDragging(layers, dragLayerIndex, previousLayerBounds);
+                PopulateColorGridOptimized(layers, selectedLayerIndex);
                 return;
             }
 
             Screen = new ColorGrid(Width, Height);
-
             InitializeScreenWithBackground();
 
             for (int i = layers.Count - 1; i >= 0; i--)
@@ -74,7 +78,102 @@ namespace PixelEditor
             DirtyRegions.Clear();
         }
 
-        private static void PopulateBackgrounImage()
+        private static void PopulateColorGridOptimized(List<Layer> layers, int selectedLayerIndex)
+        {
+            if (Screen.Width != Width || Screen.Height != Height)
+                Screen = new ColorGrid(Width, Height);
+
+            int bgHash = ComputeGroupHash(layers, selectedLayerIndex + 1, layers.Count);
+            bool bgValid = _backgroundBuffer != null && _cachedSelectedIndex == selectedLayerIndex && _backgroundHash == bgHash;
+
+            Rectangle compositeRegion = new(0, 0, Width, Height);
+            if (DirtyRegions.Count > 0)
+            {
+                Rectangle combined = Rectangle.Empty;
+                foreach (var region in DirtyRegions)
+                    combined = combined.IsEmpty ? region : Rectangle.Union(combined, region);
+                combined.Intersect(new Rectangle(0, 0, Width, Height));
+                if (!combined.IsEmpty)
+                    compositeRegion = combined;
+            }
+
+            if (!bgValid)
+            {
+                _backgroundBuffer = new ColorGrid(Width, Height);
+                InitializeColorGridWithBackground(_backgroundBuffer);
+
+                for (int i = layers.Count - 1; i > selectedLayerIndex; i--)
+                {
+                    var layer = layers[i];
+                    if (!layer.IsVisible || layer.image == null) continue;
+
+                    int dw = layer.image.Width * layer.ScaleWidth;
+                    int dh = layer.image.Height * layer.ScaleHeight;
+                    Rectangle lb = new(layer.X, layer.Y, dw, dh);
+
+                    int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
+                        layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
+
+                    if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
+                    {
+                        cached = (RasterizeLayer(layer, dw, dh), hash);
+                        LayerCache[layer.Name] = cached;
+                    }
+
+                    ApplyCachedLayer(_backgroundBuffer, cached.Cache, lb, Width, Height, layer.BlendMode);
+                }
+
+                _backgroundHash = bgHash;
+            }
+
+            _cachedSelectedIndex = selectedLayerIndex;
+
+            int[] screenPixels = Screen.GetRawPixels();
+            int[] bgPixels = _backgroundBuffer!.GetRawPixels();
+
+            for (int y = compositeRegion.Top; y < compositeRegion.Bottom; y++)
+            {
+                int rowBase = y * Width;
+                Array.Copy(bgPixels, rowBase + compositeRegion.Left, screenPixels, rowBase + compositeRegion.Left, compositeRegion.Width);
+            }
+
+            var activeLayer = layers[selectedLayerIndex];
+            if (activeLayer.IsVisible && activeLayer.image != null)
+            {
+                int dw = activeLayer.image.Width * activeLayer.ScaleWidth;
+                int dh = activeLayer.image.Height * activeLayer.ScaleHeight;
+                Rectangle activeBounds = new(activeLayer.X, activeLayer.Y, dw, dh);
+                ColorGrid activeBuffer = RasterizeLayer(activeLayer, dw, dh);
+
+                if (activeBounds.IntersectsWith(compositeRegion))
+                    ApplyCachedLayerRegion(Screen, activeBuffer, activeBounds, compositeRegion, activeLayer.BlendMode);
+            }
+
+            for (int i = selectedLayerIndex - 1; i >= 0; i--)
+            {
+                var layer = layers[i];
+                if (!layer.IsVisible || layer.image == null) continue;
+
+                int dw = layer.image.Width * layer.ScaleWidth;
+                int dh = layer.image.Height * layer.ScaleHeight;
+                Rectangle lb = new(layer.X, layer.Y, dw, dh);
+
+                int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
+                    layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
+
+                if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
+                {
+                    cached = (RasterizeLayer(layer, dw, dh), hash);
+                    LayerCache[layer.Name] = cached;
+                }
+
+                ApplyCachedLayerRegion(Screen, cached.Cache, lb, compositeRegion, layer.BlendMode);
+            }
+
+            DirtyRegions.Clear();
+        }
+
+        public static void PopulateBackgroundImage()
         {
             _canvasBitmap = new Bitmap(Width, Height);
 
@@ -145,102 +244,6 @@ namespace PixelEditor
             }
         }
 
-        private static void PopulateColorGridDragging(List<Layer> layers, int dragLayerIndex, Rectangle previousLayerBounds)
-        {
-            var dragLayer = layers[dragLayerIndex];
-            if (dragLayer.image == null) return;
-
-            int bgHash = ComputeGroupHash(layers, dragLayerIndex + 1, layers.Count);
-            int fgHash = ComputeGroupHash(layers, 0, dragLayerIndex);
-
-            bool bgValid = _backgroundBuffer != null && _cachedDragLayerIndex == dragLayerIndex && _backgroundHash == bgHash;
-            bool fgValid = _foregroundBuffer != null && _cachedDragLayerIndex == dragLayerIndex && _foregroundHash == fgHash;
-
-            if (!bgValid)
-            {
-                // Initialize background buffer with the checkered pattern first
-                _backgroundBuffer = new ColorGrid(Width, Height);
-                InitializeColorGridWithBackground(_backgroundBuffer);
-
-                for (int i = layers.Count - 1; i > dragLayerIndex; i--)
-                {
-                    var layer = layers[i];
-                    if (!layer.IsVisible || layer.image == null) continue;
-                    int dw = layer.image.Width * layer.ScaleWidth;
-                    int dh = layer.image.Height * layer.ScaleHeight;
-                    Rectangle lb = new(layer.X, layer.Y, dw, dh);
-                    int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                        layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
-                    if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
-                    {
-                        cached = (RasterizeLayer(layer, dw, dh), hash);
-                        LayerCache[layer.Name] = cached;
-                    }
-                    ApplyCachedLayer(_backgroundBuffer, cached.Cache, lb, Width, Height, layer.BlendMode);
-                }
-                _backgroundHash = bgHash;
-            }
-
-            if (!fgValid)
-            {
-                // Initialize foreground buffer with transparent background
-                _foregroundBuffer = new ColorGrid(Width, Height);
-                // Foreground buffer should start as transparent, not with background pattern
-
-                for (int i = dragLayerIndex - 1; i >= 0; i--)
-                {
-                    var layer = layers[i];
-                    if (!layer.IsVisible || layer.image == null) continue;
-                    int dw = layer.image.Width * layer.ScaleWidth;
-                    int dh = layer.image.Height * layer.ScaleHeight;
-                    Rectangle lb = new(layer.X, layer.Y, dw, dh);
-                    int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                        layer.image.GetHashCode(), layer.Opacity, layer.BlendMode);
-                    if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
-                    {
-                        cached = (RasterizeLayer(layer, dw, dh), hash);
-                        LayerCache[layer.Name] = cached;
-                    }
-                    ApplyCachedLayer(_foregroundBuffer, cached.Cache, lb, Width, Height, layer.BlendMode);
-                }
-                _foregroundHash = fgHash;
-            }
-
-            _cachedDragLayerIndex = dragLayerIndex;
-
-            int dragDw = dragLayer.image.Width * dragLayer.ScaleWidth;
-            int dragDh = dragLayer.image.Height * dragLayer.ScaleHeight;
-            Rectangle currentBounds = new(dragLayer.X, dragLayer.Y, dragDw, dragDh);
-
-            int dragHash = HashCode.Combine(dragLayer.X, dragLayer.Y, dragLayer.ScaleWidth, dragLayer.ScaleHeight,
-                dragLayer.image.GetHashCode(), dragLayer.Opacity, dragLayer.BlendMode);
-            if (!LayerCache.TryGetValue(dragLayer.Name, out var dragCached) || dragCached.Hash != dragHash)
-            {
-                dragCached = (RasterizeLayer(dragLayer, dragDw, dragDh), dragHash);
-                LayerCache[dragLayer.Name] = dragCached;
-            }
-
-            Rectangle dirty = Rectangle.Union(previousLayerBounds, currentBounds);
-            dirty.Intersect(new Rectangle(0, 0, Width, Height));
-
-            if (Screen.Width != Width || Screen.Height != Height)
-                Screen = new ColorGrid(Width, Height);
-
-            int[] screenPixels = Screen.GetRawPixels();
-            int[] bgPixels = _backgroundBuffer!.GetRawPixels();
-
-            for (int y = dirty.Top; y < dirty.Bottom; y++)
-            {
-                int rowBase = y * Width;
-                Array.Copy(bgPixels, rowBase + dirty.Left, screenPixels, rowBase + dirty.Left, dirty.Width);
-            }
-
-            ApplyCachedLayerRegion(Screen, dragCached.Cache, currentBounds, dirty, dragLayer.BlendMode);
-            ApplyCachedLayerRegion(Screen, _foregroundBuffer!, new Rectangle(0, 0, Width, Height), dirty, LayerBlending.Normal);
-
-            DirtyRegions.Clear();
-        }
-
         private static void InitializeColorGridWithBackground(ColorGrid grid)
         {
             if (_canvasBitmap == null) return;
@@ -269,10 +272,10 @@ namespace PixelEditor
                         for (int x = 0; x < Width; x++)
                         {
                             int pixelOffset = rowOffset + x * bytesPerPixel;
-                            int bgColor = (bgPtr[pixelOffset + 2] << 16) |  // R
-                                          (bgPtr[pixelOffset + 1] << 8) |   // G
-                                          (bgPtr[pixelOffset + 0]) |        // B
-                                          (bgPtr[pixelOffset + 3] << 24);   // A
+                            int bgColor = (bgPtr[pixelOffset + 2] << 16) |
+                                          (bgPtr[pixelOffset + 1] << 8) |
+                                          (bgPtr[pixelOffset + 0]) |
+                                          (bgPtr[pixelOffset + 3] << 24);
 
                             gridPixels[gridRowOffset + x] = bgColor;
                         }
@@ -512,13 +515,9 @@ namespace PixelEditor
                     for (int x = 0; x < width; x++)
                     {
                         if (mask[x, y])
-                        {
                             result[x, y] = Color.Black.ToArgb();
-                        }
                         else
-                        {
                             result[x, y] = Color.White.ToArgb();
-                        }
                     }
                 }
             }
@@ -557,9 +556,7 @@ namespace PixelEditor
                             int pixelCount = data1.Width * data1.Height;
 
                             for (int i = 0; i < pixelCount; i++)
-                            {
                                 if (ptr1[i] != ptr2[i]) return false;
-                            }
                         }
                         return true;
                     }
@@ -586,9 +583,7 @@ namespace PixelEditor
             bool[,] mask = new bool[grid.Width, grid.Height];
 
             for (float threshold = start; threshold < end; threshold += 0.1f)
-            {
                 mask = MaskDarkPixels(grid, threshold, mask);
-            }
 
             return mask;
         }
