@@ -21,10 +21,11 @@ namespace PixelEditor
         private bool isPainting = false;
         private bool isDirty = false;
         private float zoom = 0.95f;
+        private int selectedBrushIndex = 0;
         private string? currentFilePath = null;
-        private readonly List<Layer> imageLayers = [];
         private DateTime lastPaintTime = DateTime.MinValue;
-
+        private readonly List<Layer> imageLayers = [];
+        private readonly List<Image> brushes = [];
         private List<PointF>? strokePoints;
         private PointF lazyLocalPos;
         private PointF strokeLastInterpolated;
@@ -58,6 +59,7 @@ namespace PixelEditor
                 string[] files = Directory.GetFiles(Application.StartupPath + @"\Brushes\");
                 int x = 0;
                 int y = 0;
+                int index = 0;
                 foreach (string file in files)
                 {
                     PictureBox pic = new()
@@ -66,10 +68,12 @@ namespace PixelEditor
                         Size = new Size(24, 24),
                         Location = new Point(x, y),
                         SizeMode = PictureBoxSizeMode.StretchImage,
-                        BorderStyle = BorderStyle.None
+                        BorderStyle = BorderStyle.None,
+                        Tag = index++
                     };
                     pic.Click += Pic_Click;
                     panel2.Controls.Add(pic);
+                    brushes.Add(new Bitmap(pic.Image));
                     x += 24;
                     if (x > 128)
                     {
@@ -91,10 +95,11 @@ namespace PixelEditor
                 {
                     if (brush.Image is not null)
                     {
+                        selectedBrushIndex = brush.Tag != null ? (int)brush.Tag : -1;
                         paint.Brush = new Bitmap(brush.Image);
                         if (paint.Brush != null)
                         {
-                            paint.SetColor(btnPenColor.BackColor);
+                            paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                             PaintingEngine.SetBrush(paint);
                         }
                         UpdateCursor();
@@ -131,7 +136,7 @@ namespace PixelEditor
             if (c.ShowDialog() == DialogResult.OK)
             {
                 btnPenColor.BackColor = c.Color;
-                paint.SetColor(btnPenColor.BackColor);
+                paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 if (paint.Brush != null)
                 {
                     PaintingEngine.SetBrush(paint);
@@ -140,16 +145,39 @@ namespace PixelEditor
             }
         }
 
+        private void BtnFillColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog c = new()
+            {
+                Color = btnFillColor.BackColor
+            };
+            if (c.ShowDialog() == DialogResult.OK)
+            {
+                btnFillColor.BackColor = c.Color;
+                paint.SetFillColor(btnFillColor.BackColor);
+                PaintingEngine.SetBrush(paint);
+                UpdateCursor(btnFiller.Image);
+            }
+        }
+
         private void UncheckOthers(RadioButton? btn)
         {
             if (btn is not null)
             {
-                if (btn != btnFiller)
-                    btnFiller.Checked = false;
                 if (btn != btnPointer)
+                {
                     btnPointer.Checked = false;
+                }
+                if (btn != btnFiller)
+                {
+                    btnFiller.Checked = false;
+                    groupFillDetail.Visible = false;
+                }
                 if (btn != btnBrusher)
+                {
                     btnBrusher.Checked = false;
+                    groupBrushDetail.Visible = false;
+                }
             }
         }
 
@@ -162,15 +190,19 @@ namespace PixelEditor
             }
             else if (btnFiller.Checked)
             {
-                paint.SetColor(btnPenColor.BackColor);
+                paint.SetFillColor(btnFillColor.BackColor);
                 PaintingEngine.SetBrush(paint);
+                groupFillDetail.Visible = true;
+                groupFillDetail.TabIndex = 0;
                 UpdateCursor(btnFiller.Image);
             }
             else if (btnBrusher.Checked)
             {
-                paint.SetColor(btnPenColor.BackColor);
+                paint.Brush = brushes.Count > selectedBrushIndex && selectedBrushIndex >= 0 ? new Bitmap(brushes[selectedBrushIndex]) : null;
+                paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
-                UpdateCursor(btnFiller.Image);
+                groupBrushDetail.Visible = true;
+                UpdateCursor();
             }
             else
             {
@@ -188,6 +220,31 @@ namespace PixelEditor
                 for (int i = 128; i < 256; i++)
                 {
                     bitmap.MakeTransparent(Color.FromArgb(i, i, i)); //Make all gray-scale pixels that are nearly white transparent
+                }
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        Color sourcePixel = bitmap.GetPixel(x, y);
+
+                        Color tL = x > 0 && y > 0 ? bitmap.GetPixel(x - 1, y - 1) : Color.Transparent;
+                        Color tM = y > 0 ? bitmap.GetPixel(x, y - 1) : Color.Transparent;
+                        Color tR = x < bitmap.Width - 1 && y > 0 ? bitmap.GetPixel(x + 1, y - 1) : Color.Transparent;
+                        Color cL = x > 0 ? bitmap.GetPixel(x - 1, y) : Color.Transparent;
+                        Color cR = x < bitmap.Width - 1 ? bitmap.GetPixel(x + 1, y) : Color.Transparent;
+                        Color bL = x > 0 && y < bitmap.Height - 1 ? bitmap.GetPixel(x - 1, y + 1) : Color.Transparent;
+                        Color bM = y < bitmap.Height - 1 ? bitmap.GetPixel(x, y + 1) : Color.Transparent;
+                        Color bR = x < bitmap.Width - 1 && y < bitmap.Height - 1 ? bitmap.GetPixel(x + 1, y + 1) : Color.Transparent;
+
+                        if ((tL.A == 0 || tM.A == 0 || tR.A == 0 || cL.A == 0 || cR.A == 0 || bL.A == 0 || bM.A == 0 || bR.A == 0) && sourcePixel.A > 0)
+                        {
+                            bitmap.SetPixel(x, y, Color.Black);
+                        }
+                        else if (sourcePixel.A > 0)
+                        {
+                            bitmap.SetPixel(x, y, paint.GetFillColor());
+                        }
+                    }
                 }
                 canvas.Cursor = CreateCursor(new Bitmap(bitmap, 24, 24), 0, 0);
             }
@@ -242,6 +299,17 @@ namespace PixelEditor
             labelStatus.Text = $"Brush opacity {brush_smoothness.Value}";
         }
 
+        private void Brush_hardness_Scroll(object sender, EventArgs e)
+        {
+            if (paint.Brush != null)
+            {
+                labelStatus.Text = $"Size {brush_hardness.Value}";
+                paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+                PaintingEngine.SetBrush(paint);
+                UpdateCursor();
+            }
+        }
+
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!ConfirmAbandonChanges())
@@ -254,7 +322,7 @@ namespace PixelEditor
         {
             if (WindowState != FormWindowState.Minimized)
             {
-                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 200,
+                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 220,
                     ClientSize.Height - canvas.Location.Y - 40);
                 RedrawImage();
             }
@@ -286,7 +354,7 @@ namespace PixelEditor
             layer.OnLayerChanged += (bounds) =>
             {
                 if (bounds != Rectangle.Empty)
-                    ImageManipulator.DirtyRegions.Add(bounds);
+                    LayerManipulator.DirtyRegions.Add(bounds);
             };
 
             chkListLayers.Items.Insert(0, layer.Name);
@@ -514,7 +582,7 @@ namespace PixelEditor
 
         private void BtnAddVector_Click(object sender, EventArgs e)
         {
-            Bitmap bmp = new(ImageManipulator.Width, ImageManipulator.Height);
+            Bitmap bmp = new(LayerManipulator.Width, LayerManipulator.Height);
 
             using (Graphics g = Graphics.FromImage(bmp))
             {
@@ -828,9 +896,9 @@ namespace PixelEditor
             {
                 if (imageLayers[chkListLayers.SelectedIndex].Image is not null)
                 {
-                    bool[,] mask = ImageManipulator.GetDarkPixels(ImageManipulator.Screen, 0.0f, 1.0f);
-                    ColorGrid grid = ImageManipulator.DarkPixelGrid(mask, ImageManipulator.Screen.Width, ImageManipulator.Screen.Height);
-                    imageLayers[chkListLayers.SelectedIndex].Image = ImageManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
+                    bool[,] mask = LayerManipulator.GetDarkPixels(LayerManipulator.Screen, 0.0f, 1.0f);
+                    ColorGrid grid = LayerManipulator.DarkPixelGrid(mask, LayerManipulator.Screen.Width, LayerManipulator.Screen.Height);
+                    imageLayers[chkListLayers.SelectedIndex].Image = LayerManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
                     RedrawImage();
                 }
             }
@@ -916,6 +984,23 @@ namespace PixelEditor
             }
         }
 
+        private void BlurImageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chkListLayers.Items.Count == imageLayers.Count
+                && chkListLayers.SelectedIndex >= 0
+                && chkListLayers.SelectedIndex < imageLayers.Count)
+            {
+                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+                if (selectedLayer.Image != null)
+                {
+                    Bitmap blurred = BitmapManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 32);
+                    selectedLayer.Image.Dispose();
+                    selectedLayer.Image = blurred;
+                    RedrawImage();
+                }
+            }
+        }
+
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
@@ -944,11 +1029,12 @@ namespace PixelEditor
                         Bitmap bitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
                         using (Graphics g = Graphics.FromImage(bitmap))
                         {
-                            g.Clear(paint.GetColor());
+                            g.Clear(paint.GetFillColor());
                         }
                         var old = selectedLayer.Image;
                         selectedLayer.Image = bitmap;
                         old?.Dispose();
+                        PaintingEngine.SetTarget(selectedLayer.Image);
                         RedrawImage();
                     }
                 }
@@ -969,14 +1055,14 @@ namespace PixelEditor
                 {
                     float zoomDelta = dy * 0.01f;
                     zoom = Math.Max(0.1f, Math.Min(10.0f, zoom - zoomDelta));
-                    ImageManipulator.InvalidateCompositeBuffers();
+                    LayerManipulator.InvalidateCompositeBuffers();
                     RedrawImage(selectedLayerIndex: -1, repopulateImage: false);
                 }
                 else if (ModifierKeys.HasFlag(Keys.Shift))
                 {
                     imageOffset.X += dx;
                     imageOffset.Y += dy;
-                    ImageManipulator.InvalidateCompositeBuffers();
+                    LayerManipulator.InvalidateCompositeBuffers();
                     RedrawImage(selectedLayerIndex: -1, repopulateImage: false);
                 }
                 else
@@ -1010,7 +1096,7 @@ namespace PixelEditor
 
                     var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
 
-                    Point currentWorldPos = ScreenToWorld(e.Location, ImageManipulator.Width, ImageManipulator.Height);
+                    Point currentWorldPos = ScreenToWorld(e.Location, LayerManipulator.Width, LayerManipulator.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     if (strokePoints == null)
@@ -1035,13 +1121,13 @@ namespace PixelEditor
 
                     strokePoints.Add(lazyLocalPos);
 
-                    float aspectRatio = (float)ImageManipulator.Screen.Width / ImageManipulator.Screen.Height;
+                    float aspectRatio = (float)LayerManipulator.Screen.Width / LayerManipulator.Screen.Height;
                     float containerAspectRatio = (float)canvas.Width / canvas.Height;
                     float scale = 1.0f;
                     if (aspectRatio > containerAspectRatio)
-                        scale = (float)ImageManipulator.Screen.Width / canvas.Width;
+                        scale = (float)LayerManipulator.Screen.Width / canvas.Width;
                     else if (aspectRatio < containerAspectRatio)
-                        scale = (float)ImageManipulator.Screen.Height / canvas.Height;
+                        scale = (float)LayerManipulator.Screen.Height / canvas.Height;
 
                     float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
                     float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
@@ -1062,7 +1148,7 @@ namespace PixelEditor
                             maxX - minX,
                             maxY - minY);
 
-                        dirty.Intersect(new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height));
+                        dirty.Intersect(new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height));
 
                         if (strokePoints.Count == 2)
                         {
@@ -1104,7 +1190,7 @@ namespace PixelEditor
                     }
 
                     if (!dirty.IsEmpty)
-                        ImageManipulator.DirtyRegions.Add(dirty);
+                        LayerManipulator.DirtyRegions.Add(dirty);
 
                     lastMousePosition = e.Location;
 
@@ -1112,8 +1198,8 @@ namespace PixelEditor
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                     {
                         RedrawImage(chkListLayers.SelectedIndex);
-                        ImageManipulator.DirtyRegions.Clear();
-                        ImageManipulator.DirtyRegions.Add(dirty); // Keep the last dirty region for the next paint
+                        LayerManipulator.DirtyRegions.Clear();
+                        LayerManipulator.DirtyRegions.Add(dirty); // Keep the last dirty region for the next paint
                         lastPaintTime = DateTime.Now;
                     }
                 }
@@ -1126,21 +1212,21 @@ namespace PixelEditor
         {
             isDragging = false;
             isPainting = false;
-            ImageManipulator.UpdateBuffers();
+            LayerManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             RedrawImage();
         }
 
         private float GetCanvasToWorldRatio()
         {
-            float aspectRatio = (float)ImageManipulator.Width / ImageManipulator.Height;
+            float aspectRatio = (float)LayerManipulator.Width / LayerManipulator.Height;
             float containerAspectRatio = (float)canvas.Width / canvas.Height;
 
             float scaledWidth = aspectRatio > containerAspectRatio
                 ? canvas.Width * zoom
                 : canvas.Height * zoom * aspectRatio;
 
-            return scaledWidth / ImageManipulator.Width;
+            return scaledWidth / LayerManipulator.Width;
         }
 
         private Point ScreenToWorld(Point screenPt, int canvasW, int canvasH)
@@ -1178,14 +1264,14 @@ namespace PixelEditor
 
             if (repopulateImage)
             {
-                ImageManipulator.PopulateColorGrid(imageLayers, selectedLayerIndex);
+                LayerManipulator.PopulateColorGrid(imageLayers, selectedLayerIndex);
             }
 
             var rect = repopulateImage ?
-                new Rectangle(0, 0, ImageManipulator.Width, ImageManipulator.Height) :
+                new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height) :
                 new Rectangle(0, 0, 0, 0);
 
-            RedrawRasterImage(ImageManipulator.GetImage(ImageManipulator.Screen, rect));
+            RedrawRasterImage(LayerManipulator.GetImage(LayerManipulator.Screen, rect));
 
             sw.Stop();
             Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");

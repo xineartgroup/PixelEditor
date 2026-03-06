@@ -2,7 +2,7 @@
 
 namespace PixelEditor
 {
-    public static class ImageManipulator
+    public static class LayerManipulator
     {
         public static int Width { get; set; } = 1920;
         public static int Height { get; set; } = 1080;

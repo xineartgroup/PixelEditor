@@ -1,4 +1,5 @@
 ﻿using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace PixelEditor
 {
@@ -12,43 +13,26 @@ namespace PixelEditor
         {
         }
 
-        public void SetColor(Color color)
+        public void Reset(Color color, int radius)
         {
-            fillColor = color;
             if (bitmap != null)
             {
                 brush?.Dispose();
-                brush = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                brush.MakeTransparent(Color.White);
-                for (int i = 192; i < 256; i++)
-                {
-                    brush.MakeTransparent(Color.FromArgb(i, i, i)); //Make all gray-scale pixels that are nearly white transparent
-                }
-
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    for (int x = 0; x < bitmap.Width; x++)
-                    {
-                        Color sourcePixel = bitmap.GetPixel(x, y);
-
-                        if (sourcePixel.A > 0)
-                        {
-                            float blend = sourcePixel.GetBrightness();
-
-                            int a = (int)(255 - (255 * blend));
-
-                            brush.SetPixel(x, y, Color.FromArgb(a, color));
-                        }
-                        else
-                        {
-                            brush.SetPixel(x, y, Color.Transparent);
-                        }
-                    }
-                }
+                brush = SoftenEdges(bitmap, color, radius);
             }
         }
 
-        public readonly Color GetColor()
+        public readonly int GetRadius()
+        {
+            return brush != null ? brush.Width / 2 : 0;
+        }
+
+        public void SetFillColor(Color color)
+        {
+            fillColor = color;
+        }
+
+        public readonly Color GetFillColor()
         {
             return fillColor;
         }
@@ -60,8 +44,9 @@ namespace PixelEditor
             {
                 if (value != null)
                 {
-                    bitmap = value;
-                    SetColor(Color.Black); // update brush
+                    brush?.Dispose();
+                    bitmap = new Bitmap(value);
+                    Reset(Color.Black, 0);
                 }
                 else
                 {
@@ -69,6 +54,184 @@ namespace PixelEditor
                     brush = null;
                 }
             }
+        }
+
+        private static Bitmap SoftenEdges(Bitmap input, Color color, int radius)
+        {
+            int width = input.Width;
+            int height = input.Height;
+
+            bool[,] isBrush = GetBrushMask(input);
+
+            int[,] distanceFromEdge = CalculateDistanceFromEdge(isBrush, width, height);
+
+            Bitmap result = new(width, height, PixelFormat.Format32bppArgb);
+            BitmapData resultData = result.LockBits(new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            try
+            {
+                byte[] pixels = new byte[resultData.Stride * height];
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = y * resultData.Stride + x * 4;
+
+                        if (isBrush[x, y])
+                        {
+                            int dist = distanceFromEdge[x, y];
+
+                            if (dist >= radius) // Interior - solid color
+                            {
+                                pixels[index + 0] = color.B;  // B
+                                pixels[index + 1] = color.G;  // G
+                                pixels[index + 2] = color.R;  // R
+                                pixels[index + 3] = color.A;  // A
+                            }
+                            else // Edge - gradient based on distance
+                            {
+                                float factor = (float)dist / radius;
+                                byte alpha = (byte)(255 * factor);
+
+                                pixels[index + 0] = color.B;
+                                pixels[index + 1] = color.G;
+                                pixels[index + 2] = color.R;
+                                pixels[index + 3] = alpha;
+                            }
+                        }
+                        else // Background - transparent
+                        {
+                            pixels[index + 0] = 0;
+                            pixels[index + 1] = 0;
+                            pixels[index + 2] = 0;
+                            pixels[index + 3] = 0;
+                        }
+                    }
+                }
+
+                Marshal.Copy(pixels, 0, resultData.Scan0, pixels.Length);
+            }
+            finally
+            {
+                result.UnlockBits(resultData);
+            }
+
+            return result;
+        }
+
+        private static bool[,] GetBrushMask(Bitmap image)
+        {
+            int width = image.Width;
+            int height = image.Height;
+            bool[,] mask = new bool[width, height];
+
+            BitmapData data = image.LockBits(new Rectangle(0, 0, width, height),
+                ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+            try
+            {
+                byte[] pixels = new byte[data.Stride * height];
+                Marshal.Copy(data.Scan0, pixels, 0, pixels.Length);
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = y * data.Stride + x * 3;
+                        // Check if pixel is dark (brush)
+                        if (pixels[index] < 128 && pixels[index + 1] < 128 && pixels[index + 2] < 128)
+                        {
+                            mask[x, y] = true;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                image.UnlockBits(data);
+            }
+
+            return mask;
+        }
+
+        private static int[,] CalculateDistanceFromEdge(bool[,] mask, int width, int height)
+        {
+            int[,] distance = new int[width, height];
+
+            // Initialize: 0 for edge pixels, max for others
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (mask[x, y])
+                    {
+                        // Check if this is an edge pixel (has background neighbor)
+                        bool isEdge = false;
+                        for (int ny = -1; ny <= 1; ny++)
+                        {
+                            for (int nx = -1; nx <= 1; nx++)
+                            {
+                                int checkX = x + nx;
+                                int checkY = y + ny;
+
+                                if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+                                {
+                                    if (!mask[checkX, checkY])
+                                    {
+                                        isEdge = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (isEdge) break;
+                        }
+
+                        distance[x, y] = isEdge ? 0 : int.MaxValue;
+                    }
+                    else
+                    {
+                        distance[x, y] = -1; // Background
+                    }
+                }
+            }
+
+            // Propagate distances inward (multiple passes until stable)
+            bool changed;
+            do
+            {
+                changed = false;
+
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        if (mask[x, y] && distance[x, y] > 0)
+                        {
+                            int minNeighbor = int.MaxValue;
+
+                            // Check 4-directional neighbors
+                            if (x > 0 && distance[x - 1, y] >= 0)
+                                minNeighbor = Math.Min(minNeighbor, distance[x - 1, y]);
+                            if (x < width - 1 && distance[x + 1, y] >= 0)
+                                minNeighbor = Math.Min(minNeighbor, distance[x + 1, y]);
+                            if (y > 0 && distance[x, y - 1] >= 0)
+                                minNeighbor = Math.Min(minNeighbor, distance[x, y - 1]);
+                            if (y < height - 1 && distance[x, y + 1] >= 0)
+                                minNeighbor = Math.Min(minNeighbor, distance[x, y + 1]);
+
+                            if (minNeighbor != int.MaxValue && minNeighbor + 1 < distance[x, y])
+                            {
+                                distance[x, y] = minNeighbor + 1;
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+            } while (changed);
+
+            return distance;
         }
     }
 }

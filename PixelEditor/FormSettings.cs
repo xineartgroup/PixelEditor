@@ -12,16 +12,16 @@
 
         private void FormSettings_Load(object sender, EventArgs e)
         {
-            canvasWidth.Value = ImageManipulator.Width;
-            canvasHeight.Value = ImageManipulator.Height;
+            canvasWidth.Value = LayerManipulator.Width;
+            canvasHeight.Value = LayerManipulator.Height;
             layerWidth.Value = LayerWidth >= layerWidth.Minimum && LayerWidth <= layerWidth.Maximum ? LayerWidth : 2;
             layerHeight.Value = LayerHeight >= layerHeight.Minimum && LayerHeight <= layerHeight.Maximum ? LayerHeight : 2;
         }
 
         private void BtnOK_Click(object sender, EventArgs e)
         {
-            ImageManipulator.Width = (int)canvasWidth.Value;
-            ImageManipulator.Height = (int)canvasHeight.Value;
+            LayerManipulator.Width = (int)canvasWidth.Value;
+            LayerManipulator.Height = (int)canvasHeight.Value;
             LayerWidth = (int)layerWidth.Value;
             LayerHeight = (int)layerHeight.Value;
             DialogResult = DialogResult.OK;
