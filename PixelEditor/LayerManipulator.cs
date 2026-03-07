@@ -350,7 +350,7 @@ namespace PixelEditor
         }
 
         private static void ApplyCachedLayer(ColorGrid screen, ColorGrid source, Rectangle bounds,
-            int screenW, int screenH, LayerBlending mode)
+            int screenW, int screenH, ImageBlending mode)
         {
             int startY = Math.Max(0, bounds.Y);
             int endY = Math.Min(screenH, bounds.Y + bounds.Height);
@@ -379,7 +379,7 @@ namespace PixelEditor
         }
 
         private static void ApplyCachedLayerRegion(ColorGrid screen, ColorGrid source, Rectangle sourceBounds,
-            Rectangle region, LayerBlending mode)
+            Rectangle region, ImageBlending mode)
         {
             int startY = Math.Max(region.Top, Math.Max(0, sourceBounds.Y));
             int endY = Math.Min(region.Bottom, Math.Min(screen.Height, sourceBounds.Bottom));
@@ -411,7 +411,7 @@ namespace PixelEditor
             }
         }
 
-        private static int Composite(int src, int srcA, int bg, LayerBlending mode)
+        private static int Composite(int src, int srcA, int bg, ImageBlending mode)
         {
             int srcR = (src >> 16) & 0xFF;
             int srcG = (src >> 8) & 0xFF;
@@ -426,20 +426,46 @@ namespace PixelEditor
 
             switch (mode)
             {
-                case LayerBlending.Multiply:
+                case ImageBlending.Multiply:
                     blendedR = (srcR * bgR) / 255;
                     blendedG = (srcG * bgG) / 255;
                     blendedB = (srcB * bgB) / 255;
                     break;
-                case LayerBlending.Screen:
+                case ImageBlending.Screen:
                     blendedR = 255 - ((255 - srcR) * (255 - bgR) / 255);
                     blendedG = 255 - ((255 - srcG) * (255 - bgG) / 255);
                     blendedB = 255 - ((255 - srcB) * (255 - bgB) / 255);
                     break;
-                case LayerBlending.Add:
+                case ImageBlending.Add:
                     blendedR = Math.Min(255, srcR + bgR);
                     blendedG = Math.Min(255, srcG + bgG);
                     blendedB = Math.Min(255, srcB + bgB);
+                    break;
+                case ImageBlending.Subtract:
+                    blendedR = Math.Max(0, srcR - bgR);
+                    blendedG = Math.Max(0, srcG - bgG);
+                    blendedB = Math.Max(0, srcB - bgB);
+                    break;
+                case ImageBlending.Darken:
+                    blendedR = Math.Min(srcR, bgR);
+                    blendedG = Math.Min(srcG, bgG);
+                    blendedB = Math.Min(srcB, bgB);
+                    break;
+                case ImageBlending.Lighten:
+                case ImageBlending.Lighen:
+                    blendedR = Math.Max(srcR, bgR);
+                    blendedG = Math.Max(srcG, bgG);
+                    blendedB = Math.Max(srcB, bgB);
+                    break;
+                case ImageBlending.Overlay:
+                    blendedR = OverlayBlend(srcR, bgR);
+                    blendedG = OverlayBlend(srcG, bgG);
+                    blendedB = OverlayBlend(srcB, bgB);
+                    break;
+                case ImageBlending.Difference:
+                    blendedR = Math.Abs(srcR - bgR);
+                    blendedG = Math.Abs(srcG - bgG);
+                    blendedB = Math.Abs(srcB - bgB);
                     break;
                 default:
                     blendedR = srcR;
@@ -448,7 +474,7 @@ namespace PixelEditor
                     break;
             }
 
-            if (srcA == 255 && mode == LayerBlending.Normal)
+            if (srcA == 255 && mode == ImageBlending.Normal)
                 return src;
 
             float fa = srcA / 255f;
@@ -463,6 +489,14 @@ namespace PixelEditor
             byte b = (byte)((blendedB * fa + bgB * ba * invFa) / outA);
 
             return ((byte)(outA * 255) << 24) | (r << 16) | (g << 8) | b;
+        }
+
+        private static int OverlayBlend(int src, int bg)
+        {
+            if (bg < 128)
+                return (2 * src * bg) / 255;
+            else
+                return 255 - (2 * (255 - src) * (255 - bg) / 255);
         }
 
         public static Bitmap GetImage(ColorGrid grid, Rectangle dirty)

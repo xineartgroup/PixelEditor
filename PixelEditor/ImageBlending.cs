@@ -1,7 +1,7 @@
 ﻿
 namespace PixelEditor
 {
-    public enum LayerBlending
+    public enum ImageBlending
     {
         Normal = 0,
         Multiply = 1,
@@ -13,6 +13,5 @@ namespace PixelEditor
         Subtract = 7,
         Darken = 8,
         Lighten = 9
-
     }
 }

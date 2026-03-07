@@ -66,6 +66,16 @@
             zoomOutToolStripMenuItem = new ToolStripMenuItem();
             resetToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem8 = new ToolStripSeparator();
+            imageToolStripMenuItem = new ToolStripMenuItem();
+            generalSettingsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem5 = new ToolStripSeparator();
+            adjustmentsToolStripMenuItem = new ToolStripMenuItem();
+            invertToolStripMenuItem = new ToolStripMenuItem();
+            grayscaleToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem16 = new ToolStripSeparator();
+            brightnessToolStripMenuItem = new ToolStripMenuItem();
+            contrastToolStripMenuItem = new ToolStripMenuItem();
+            blurImageToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripSeparator();
             channelsToolStripMenuItem = new ToolStripMenuItem();
             allToolStripMenuItem = new ToolStripMenuItem();
@@ -78,9 +88,38 @@
             blueToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripMenuItem7 = new ToolStripSeparator();
             darkToolStripMenuItem = new ToolStripMenuItem();
-            imageToolStripMenuItem = new ToolStripMenuItem();
-            generalSettingsToolStripMenuItem = new ToolStripMenuItem();
-            blurImageToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem19 = new ToolStripSeparator();
+            toolStripMenuItem20 = new ToolStripMenuItem();
+            toolStripMenuItem21 = new ToolStripMenuItem();
+            toolStripMenuItem22 = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
+            toolStripMenuItem23 = new ToolStripMenuItem();
+            toolStripMenuItem24 = new ToolStripMenuItem();
+            toolStripMenuItem25 = new ToolStripMenuItem();
+            toolStripMenuItem26 = new ToolStripMenuItem();
+            layerToolStripMenuItem = new ToolStripMenuItem();
+            newToolStripMenuItem1 = new ToolStripMenuItem();
+            duplicateToolStripMenuItem = new ToolStripMenuItem();
+            mergeDownToolStripMenuItem1 = new ToolStripMenuItem();
+            deleteToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem17 = new ToolStripSeparator();
+            maskToolStripMenuItem = new ToolStripMenuItem();
+            mToolStripMenuItem = new ToolStripMenuItem();
+            applyMaskToolStripMenuItem = new ToolStripMenuItem();
+            deleteMaskToolStripMenuItem = new ToolStripMenuItem();
+            stackToolStripMenuItem = new ToolStripMenuItem();
+            raiseToolStripMenuItem = new ToolStripMenuItem();
+            lowerToolStripMenuItem = new ToolStripMenuItem();
+            toTopToolStripMenuItem = new ToolStripMenuItem();
+            toBottomToolStripMenuItem = new ToolStripMenuItem();
+            transdormToolStripMenuItem = new ToolStripMenuItem();
+            flipHorizomtallyToolStripMenuItem = new ToolStripMenuItem();
+            flipVerticallyToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem18 = new ToolStripSeparator();
+            rotate90DegreesToolStripMenuItem = new ToolStripMenuItem();
+            rotate90DegreesCountereclockwiseToolStripMenuItem = new ToolStripMenuItem();
+            rotate180DegreesToolStripMenuItem = new ToolStripMenuItem();
+            rotateToolStripMenuItem = new ToolStripMenuItem();
             labelStatus = new Label();
             contextMenuStrip3 = new ContextMenuStrip(components);
             toolStripMenuItem11 = new ToolStripMenuItem();
@@ -110,14 +149,15 @@
             opacity = new NumericUpDown();
             panel2 = new Panel();
             groupFillDetail = new GroupBox();
-            btnIsGradient = new RadioButton();
+            cboFillBlendMode = new ComboBox();
             label5 = new Label();
             label4 = new Label();
             label3 = new Label();
             fillOpacity = new NumericUpDown();
-            button2 = new Button();
+            label7 = new Label();
             button1 = new Button();
             btnFillColor = new Button();
+            cboFIllGradient = new ComboBox();
             comboBox1 = new ComboBox();
             brush_size = new TrackBar();
             brush_opacity = new TrackBar();
@@ -127,10 +167,15 @@
             btnFiller = new RadioButton();
             btnBrusher = new RadioButton();
             groupBrushDetail = new GroupBox();
+            label10 = new Label();
+            label9 = new Label();
+            label11 = new Label();
+            label8 = new Label();
             brush_hardness = new TrackBar();
             label1 = new Label();
             label2 = new Label();
             groupBox1 = new GroupBox();
+            btnFreehand = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -151,9 +196,9 @@
             canvas.BackColor = Color.White;
             canvas.BorderStyle = BorderStyle.Fixed3D;
             canvas.ContextMenuStrip = contextMenuStrip1;
-            canvas.Location = new Point(198, 74);
+            canvas.Location = new Point(225, 74);
             canvas.Name = "canvas";
-            canvas.Size = new Size(768, 430);
+            canvas.Size = new Size(741, 430);
             canvas.TabIndex = 0;
             canvas.TabStop = false;
             canvas.MouseDown += PixelImage_MouseDown;
@@ -201,7 +246,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, imageToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, imageToolStripMenuItem, layerToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(1184, 24);
@@ -364,7 +409,7 @@
             // 
             // viewToolStripMenuItem
             // 
-            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { resetZoomToolStripMenuItem, toolStripMenuItem8, toolStripMenuItem9, channelsToolStripMenuItem, filtersToolStripMenuItem });
+            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { resetZoomToolStripMenuItem, toolStripMenuItem8 });
             viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             viewToolStripMenuItem.Size = new Size(44, 20);
             viewToolStripMenuItem.Text = "View";
@@ -373,7 +418,7 @@
             // 
             resetZoomToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { zoomInToolStripMenuItem, zoomOutToolStripMenuItem, resetToolStripMenuItem });
             resetZoomToolStripMenuItem.Name = "resetZoomToolStripMenuItem";
-            resetZoomToolStripMenuItem.Size = new Size(123, 22);
+            resetZoomToolStripMenuItem.Size = new Size(106, 22);
             resetZoomToolStripMenuItem.Text = "Zoom";
             // 
             // zoomInToolStripMenuItem
@@ -403,93 +448,11 @@
             // toolStripMenuItem8
             // 
             toolStripMenuItem8.Name = "toolStripMenuItem8";
-            toolStripMenuItem8.Size = new Size(120, 6);
-            // 
-            // toolStripMenuItem9
-            // 
-            toolStripMenuItem9.Name = "toolStripMenuItem9";
-            toolStripMenuItem9.Size = new Size(120, 6);
-            // 
-            // channelsToolStripMenuItem
-            // 
-            channelsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem, redToolStripMenuItem, greenToolStripMenuItem, blueToolStripMenuItem });
-            channelsToolStripMenuItem.Name = "channelsToolStripMenuItem";
-            channelsToolStripMenuItem.Size = new Size(123, 22);
-            channelsToolStripMenuItem.Text = "Channels";
-            // 
-            // allToolStripMenuItem
-            // 
-            allToolStripMenuItem.Checked = true;
-            allToolStripMenuItem.CheckState = CheckState.Checked;
-            allToolStripMenuItem.Name = "allToolStripMenuItem";
-            allToolStripMenuItem.Size = new Size(105, 22);
-            allToolStripMenuItem.Text = "All";
-            allToolStripMenuItem.Click += AllToolStripMenuItem_Click;
-            // 
-            // redToolStripMenuItem
-            // 
-            redToolStripMenuItem.Name = "redToolStripMenuItem";
-            redToolStripMenuItem.Size = new Size(105, 22);
-            redToolStripMenuItem.Text = "Red";
-            redToolStripMenuItem.Click += RedToolStripMenuItem_Click;
-            // 
-            // greenToolStripMenuItem
-            // 
-            greenToolStripMenuItem.Name = "greenToolStripMenuItem";
-            greenToolStripMenuItem.Size = new Size(105, 22);
-            greenToolStripMenuItem.Text = "Green";
-            greenToolStripMenuItem.Click += GreenToolStripMenuItem_Click;
-            // 
-            // blueToolStripMenuItem
-            // 
-            blueToolStripMenuItem.Name = "blueToolStripMenuItem";
-            blueToolStripMenuItem.Size = new Size(105, 22);
-            blueToolStripMenuItem.Text = "Blue";
-            blueToolStripMenuItem.Click += BlueToolStripMenuItem_Click;
-            // 
-            // filtersToolStripMenuItem
-            // 
-            filtersToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { redToolStripMenuItem1, greenToolStripMenuItem1, blueToolStripMenuItem1, toolStripMenuItem7, darkToolStripMenuItem });
-            filtersToolStripMenuItem.Name = "filtersToolStripMenuItem";
-            filtersToolStripMenuItem.Size = new Size(123, 22);
-            filtersToolStripMenuItem.Text = "Filters";
-            // 
-            // redToolStripMenuItem1
-            // 
-            redToolStripMenuItem1.Name = "redToolStripMenuItem1";
-            redToolStripMenuItem1.Size = new Size(105, 22);
-            redToolStripMenuItem1.Text = "Red";
-            redToolStripMenuItem1.Click += ChkFilter_CheckedChanged;
-            // 
-            // greenToolStripMenuItem1
-            // 
-            greenToolStripMenuItem1.Name = "greenToolStripMenuItem1";
-            greenToolStripMenuItem1.Size = new Size(105, 22);
-            greenToolStripMenuItem1.Text = "Green";
-            greenToolStripMenuItem1.Click += ChkFilter_CheckedChanged;
-            // 
-            // blueToolStripMenuItem1
-            // 
-            blueToolStripMenuItem1.Name = "blueToolStripMenuItem1";
-            blueToolStripMenuItem1.Size = new Size(105, 22);
-            blueToolStripMenuItem1.Text = "Blue";
-            blueToolStripMenuItem1.Click += ChkFilter_CheckedChanged;
-            // 
-            // toolStripMenuItem7
-            // 
-            toolStripMenuItem7.Name = "toolStripMenuItem7";
-            toolStripMenuItem7.Size = new Size(102, 6);
-            // 
-            // darkToolStripMenuItem
-            // 
-            darkToolStripMenuItem.Name = "darkToolStripMenuItem";
-            darkToolStripMenuItem.Size = new Size(105, 22);
-            darkToolStripMenuItem.Text = "Dark";
-            darkToolStripMenuItem.Click += DarkToolStripMenuItem_Click;
+            toolStripMenuItem8.Size = new Size(103, 6);
             // 
             // imageToolStripMenuItem
             // 
-            imageToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { generalSettingsToolStripMenuItem, blurImageToolStripMenuItem });
+            imageToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { generalSettingsToolStripMenuItem, toolStripMenuItem5, adjustmentsToolStripMenuItem, toolStripMenuItem9, channelsToolStripMenuItem, filtersToolStripMenuItem, toolStripMenuItem19, toolStripMenuItem20 });
             imageToolStripMenuItem.Name = "imageToolStripMenuItem";
             imageToolStripMenuItem.Size = new Size(52, 20);
             imageToolStripMenuItem.Text = "Image";
@@ -501,12 +464,324 @@
             generalSettingsToolStripMenuItem.Text = "Image Settings";
             generalSettingsToolStripMenuItem.Click += GeneralSettingsToolStripMenuItem_Click;
             // 
+            // toolStripMenuItem5
+            // 
+            toolStripMenuItem5.Name = "toolStripMenuItem5";
+            toolStripMenuItem5.Size = new Size(149, 6);
+            // 
+            // adjustmentsToolStripMenuItem
+            // 
+            adjustmentsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { invertToolStripMenuItem, grayscaleToolStripMenuItem, toolStripMenuItem16, brightnessToolStripMenuItem, contrastToolStripMenuItem, blurImageToolStripMenuItem });
+            adjustmentsToolStripMenuItem.Name = "adjustmentsToolStripMenuItem";
+            adjustmentsToolStripMenuItem.Size = new Size(152, 22);
+            adjustmentsToolStripMenuItem.Text = "Adjustments";
+            // 
+            // invertToolStripMenuItem
+            // 
+            invertToolStripMenuItem.Name = "invertToolStripMenuItem";
+            invertToolStripMenuItem.Size = new Size(154, 22);
+            invertToolStripMenuItem.Text = "Invert";
+            invertToolStripMenuItem.Click += InvertToolStripMenuItem_Click;
+            // 
+            // grayscaleToolStripMenuItem
+            // 
+            grayscaleToolStripMenuItem.Name = "grayscaleToolStripMenuItem";
+            grayscaleToolStripMenuItem.Size = new Size(154, 22);
+            grayscaleToolStripMenuItem.Text = "Grayscale";
+            grayscaleToolStripMenuItem.Click += GrayscaleToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem16
+            // 
+            toolStripMenuItem16.Name = "toolStripMenuItem16";
+            toolStripMenuItem16.Size = new Size(151, 6);
+            // 
+            // brightnessToolStripMenuItem
+            // 
+            brightnessToolStripMenuItem.Name = "brightnessToolStripMenuItem";
+            brightnessToolStripMenuItem.Size = new Size(154, 22);
+            brightnessToolStripMenuItem.Text = "Brightness...";
+            brightnessToolStripMenuItem.Click += BrightnessToolStripMenuItem_Click;
+            // 
+            // contrastToolStripMenuItem
+            // 
+            contrastToolStripMenuItem.Name = "contrastToolStripMenuItem";
+            contrastToolStripMenuItem.Size = new Size(154, 22);
+            contrastToolStripMenuItem.Text = "Contrast...";
+            contrastToolStripMenuItem.Click += ContrastToolStripMenuItem_Click;
+            // 
             // blurImageToolStripMenuItem
             // 
             blurImageToolStripMenuItem.Name = "blurImageToolStripMenuItem";
-            blurImageToolStripMenuItem.Size = new Size(152, 22);
-            blurImageToolStripMenuItem.Text = "Blur Image";
+            blurImageToolStripMenuItem.Size = new Size(154, 22);
+            blurImageToolStripMenuItem.Text = "Gaussian Blur...";
             blurImageToolStripMenuItem.Click += BlurImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem9
+            // 
+            toolStripMenuItem9.Name = "toolStripMenuItem9";
+            toolStripMenuItem9.Size = new Size(149, 6);
+            // 
+            // channelsToolStripMenuItem
+            // 
+            channelsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem, redToolStripMenuItem, greenToolStripMenuItem, blueToolStripMenuItem });
+            channelsToolStripMenuItem.Name = "channelsToolStripMenuItem";
+            channelsToolStripMenuItem.Size = new Size(152, 22);
+            channelsToolStripMenuItem.Text = "Channels";
+            // 
+            // allToolStripMenuItem
+            // 
+            allToolStripMenuItem.Checked = true;
+            allToolStripMenuItem.CheckState = CheckState.Checked;
+            allToolStripMenuItem.Name = "allToolStripMenuItem";
+            allToolStripMenuItem.Size = new Size(105, 22);
+            allToolStripMenuItem.Text = "All";
+            // 
+            // redToolStripMenuItem
+            // 
+            redToolStripMenuItem.Name = "redToolStripMenuItem";
+            redToolStripMenuItem.Size = new Size(105, 22);
+            redToolStripMenuItem.Text = "Red";
+            // 
+            // greenToolStripMenuItem
+            // 
+            greenToolStripMenuItem.Name = "greenToolStripMenuItem";
+            greenToolStripMenuItem.Size = new Size(105, 22);
+            greenToolStripMenuItem.Text = "Green";
+            // 
+            // blueToolStripMenuItem
+            // 
+            blueToolStripMenuItem.Name = "blueToolStripMenuItem";
+            blueToolStripMenuItem.Size = new Size(105, 22);
+            blueToolStripMenuItem.Text = "Blue";
+            // 
+            // filtersToolStripMenuItem
+            // 
+            filtersToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { redToolStripMenuItem1, greenToolStripMenuItem1, blueToolStripMenuItem1, toolStripMenuItem7, darkToolStripMenuItem });
+            filtersToolStripMenuItem.Name = "filtersToolStripMenuItem";
+            filtersToolStripMenuItem.Size = new Size(152, 22);
+            filtersToolStripMenuItem.Text = "Filters";
+            // 
+            // redToolStripMenuItem1
+            // 
+            redToolStripMenuItem1.Name = "redToolStripMenuItem1";
+            redToolStripMenuItem1.Size = new Size(105, 22);
+            redToolStripMenuItem1.Text = "Red";
+            // 
+            // greenToolStripMenuItem1
+            // 
+            greenToolStripMenuItem1.Name = "greenToolStripMenuItem1";
+            greenToolStripMenuItem1.Size = new Size(105, 22);
+            greenToolStripMenuItem1.Text = "Green";
+            // 
+            // blueToolStripMenuItem1
+            // 
+            blueToolStripMenuItem1.Name = "blueToolStripMenuItem1";
+            blueToolStripMenuItem1.Size = new Size(105, 22);
+            blueToolStripMenuItem1.Text = "Blue";
+            // 
+            // toolStripMenuItem7
+            // 
+            toolStripMenuItem7.Name = "toolStripMenuItem7";
+            toolStripMenuItem7.Size = new Size(102, 6);
+            // 
+            // darkToolStripMenuItem
+            // 
+            darkToolStripMenuItem.Name = "darkToolStripMenuItem";
+            darkToolStripMenuItem.Size = new Size(105, 22);
+            darkToolStripMenuItem.Text = "Dark";
+            // 
+            // toolStripMenuItem19
+            // 
+            toolStripMenuItem19.Name = "toolStripMenuItem19";
+            toolStripMenuItem19.Size = new Size(149, 6);
+            // 
+            // toolStripMenuItem20
+            // 
+            toolStripMenuItem20.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem21, toolStripMenuItem22, toolStripSeparator1, toolStripMenuItem23, toolStripMenuItem24, toolStripMenuItem25, toolStripMenuItem26 });
+            toolStripMenuItem20.Name = "toolStripMenuItem20";
+            toolStripMenuItem20.Size = new Size(152, 22);
+            toolStripMenuItem20.Text = "Transdorm";
+            // 
+            // toolStripMenuItem21
+            // 
+            toolStripMenuItem21.Name = "toolStripMenuItem21";
+            toolStripMenuItem21.Size = new Size(275, 22);
+            toolStripMenuItem21.Text = "Flip Horizomtally";
+            // 
+            // toolStripMenuItem22
+            // 
+            toolStripMenuItem22.Name = "toolStripMenuItem22";
+            toolStripMenuItem22.Size = new Size(275, 22);
+            toolStripMenuItem22.Text = "Flip Vertically";
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(272, 6);
+            // 
+            // toolStripMenuItem23
+            // 
+            toolStripMenuItem23.Name = "toolStripMenuItem23";
+            toolStripMenuItem23.Size = new Size(275, 22);
+            toolStripMenuItem23.Text = "Rotate 90 degrees Clockwise";
+            // 
+            // toolStripMenuItem24
+            // 
+            toolStripMenuItem24.Name = "toolStripMenuItem24";
+            toolStripMenuItem24.Size = new Size(275, 22);
+            toolStripMenuItem24.Text = "Rotate 90 degrees Countere-clockwise";
+            // 
+            // toolStripMenuItem25
+            // 
+            toolStripMenuItem25.Name = "toolStripMenuItem25";
+            toolStripMenuItem25.Size = new Size(275, 22);
+            toolStripMenuItem25.Text = "Rotate 180 degrees";
+            // 
+            // toolStripMenuItem26
+            // 
+            toolStripMenuItem26.Name = "toolStripMenuItem26";
+            toolStripMenuItem26.Size = new Size(275, 22);
+            toolStripMenuItem26.Text = "Rotate...";
+            // 
+            // layerToolStripMenuItem
+            // 
+            layerToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem1, duplicateToolStripMenuItem, mergeDownToolStripMenuItem1, deleteToolStripMenuItem, toolStripMenuItem17, maskToolStripMenuItem, stackToolStripMenuItem, transdormToolStripMenuItem });
+            layerToolStripMenuItem.Name = "layerToolStripMenuItem";
+            layerToolStripMenuItem.Size = new Size(47, 20);
+            layerToolStripMenuItem.Text = "Layer";
+            // 
+            // newToolStripMenuItem1
+            // 
+            newToolStripMenuItem1.Name = "newToolStripMenuItem1";
+            newToolStripMenuItem1.Size = new Size(142, 22);
+            newToolStripMenuItem1.Text = "New...";
+            // 
+            // duplicateToolStripMenuItem
+            // 
+            duplicateToolStripMenuItem.Name = "duplicateToolStripMenuItem";
+            duplicateToolStripMenuItem.Size = new Size(142, 22);
+            duplicateToolStripMenuItem.Text = "Duplicate";
+            // 
+            // mergeDownToolStripMenuItem1
+            // 
+            mergeDownToolStripMenuItem1.Name = "mergeDownToolStripMenuItem1";
+            mergeDownToolStripMenuItem1.Size = new Size(142, 22);
+            mergeDownToolStripMenuItem1.Text = "Merge Down";
+            // 
+            // deleteToolStripMenuItem
+            // 
+            deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            deleteToolStripMenuItem.Size = new Size(142, 22);
+            deleteToolStripMenuItem.Text = "Delete";
+            // 
+            // toolStripMenuItem17
+            // 
+            toolStripMenuItem17.Name = "toolStripMenuItem17";
+            toolStripMenuItem17.Size = new Size(139, 6);
+            // 
+            // maskToolStripMenuItem
+            // 
+            maskToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mToolStripMenuItem, applyMaskToolStripMenuItem, deleteMaskToolStripMenuItem });
+            maskToolStripMenuItem.Name = "maskToolStripMenuItem";
+            maskToolStripMenuItem.Size = new Size(142, 22);
+            maskToolStripMenuItem.Text = "Mask";
+            // 
+            // mToolStripMenuItem
+            // 
+            mToolStripMenuItem.Name = "mToolStripMenuItem";
+            mToolStripMenuItem.Size = new Size(138, 22);
+            mToolStripMenuItem.Text = "Add Mask";
+            // 
+            // applyMaskToolStripMenuItem
+            // 
+            applyMaskToolStripMenuItem.Name = "applyMaskToolStripMenuItem";
+            applyMaskToolStripMenuItem.Size = new Size(138, 22);
+            applyMaskToolStripMenuItem.Text = "Apply Mask";
+            // 
+            // deleteMaskToolStripMenuItem
+            // 
+            deleteMaskToolStripMenuItem.Name = "deleteMaskToolStripMenuItem";
+            deleteMaskToolStripMenuItem.Size = new Size(138, 22);
+            deleteMaskToolStripMenuItem.Text = "Delete Mask";
+            // 
+            // stackToolStripMenuItem
+            // 
+            stackToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { raiseToolStripMenuItem, lowerToolStripMenuItem, toTopToolStripMenuItem, toBottomToolStripMenuItem });
+            stackToolStripMenuItem.Name = "stackToolStripMenuItem";
+            stackToolStripMenuItem.Size = new Size(142, 22);
+            stackToolStripMenuItem.Text = "Stack";
+            // 
+            // raiseToolStripMenuItem
+            // 
+            raiseToolStripMenuItem.Name = "raiseToolStripMenuItem";
+            raiseToolStripMenuItem.Size = new Size(130, 22);
+            raiseToolStripMenuItem.Text = "Raise";
+            // 
+            // lowerToolStripMenuItem
+            // 
+            lowerToolStripMenuItem.Name = "lowerToolStripMenuItem";
+            lowerToolStripMenuItem.Size = new Size(130, 22);
+            lowerToolStripMenuItem.Text = "Lower";
+            // 
+            // toTopToolStripMenuItem
+            // 
+            toTopToolStripMenuItem.Name = "toTopToolStripMenuItem";
+            toTopToolStripMenuItem.Size = new Size(130, 22);
+            toTopToolStripMenuItem.Text = "To Top";
+            // 
+            // toBottomToolStripMenuItem
+            // 
+            toBottomToolStripMenuItem.Name = "toBottomToolStripMenuItem";
+            toBottomToolStripMenuItem.Size = new Size(130, 22);
+            toBottomToolStripMenuItem.Text = "To Bottom";
+            // 
+            // transdormToolStripMenuItem
+            // 
+            transdormToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { flipHorizomtallyToolStripMenuItem, flipVerticallyToolStripMenuItem, toolStripMenuItem18, rotate90DegreesToolStripMenuItem, rotate90DegreesCountereclockwiseToolStripMenuItem, rotate180DegreesToolStripMenuItem, rotateToolStripMenuItem });
+            transdormToolStripMenuItem.Name = "transdormToolStripMenuItem";
+            transdormToolStripMenuItem.Size = new Size(142, 22);
+            transdormToolStripMenuItem.Text = "Transdorm";
+            // 
+            // flipHorizomtallyToolStripMenuItem
+            // 
+            flipHorizomtallyToolStripMenuItem.Name = "flipHorizomtallyToolStripMenuItem";
+            flipHorizomtallyToolStripMenuItem.Size = new Size(275, 22);
+            flipHorizomtallyToolStripMenuItem.Text = "Flip Horizomtally";
+            // 
+            // flipVerticallyToolStripMenuItem
+            // 
+            flipVerticallyToolStripMenuItem.Name = "flipVerticallyToolStripMenuItem";
+            flipVerticallyToolStripMenuItem.Size = new Size(275, 22);
+            flipVerticallyToolStripMenuItem.Text = "Flip Vertically";
+            // 
+            // toolStripMenuItem18
+            // 
+            toolStripMenuItem18.Name = "toolStripMenuItem18";
+            toolStripMenuItem18.Size = new Size(272, 6);
+            // 
+            // rotate90DegreesToolStripMenuItem
+            // 
+            rotate90DegreesToolStripMenuItem.Name = "rotate90DegreesToolStripMenuItem";
+            rotate90DegreesToolStripMenuItem.Size = new Size(275, 22);
+            rotate90DegreesToolStripMenuItem.Text = "Rotate 90 degrees Clockwise";
+            // 
+            // rotate90DegreesCountereclockwiseToolStripMenuItem
+            // 
+            rotate90DegreesCountereclockwiseToolStripMenuItem.Name = "rotate90DegreesCountereclockwiseToolStripMenuItem";
+            rotate90DegreesCountereclockwiseToolStripMenuItem.Size = new Size(275, 22);
+            rotate90DegreesCountereclockwiseToolStripMenuItem.Text = "Rotate 90 degrees Countere-clockwise";
+            // 
+            // rotate180DegreesToolStripMenuItem
+            // 
+            rotate180DegreesToolStripMenuItem.Name = "rotate180DegreesToolStripMenuItem";
+            rotate180DegreesToolStripMenuItem.Size = new Size(275, 22);
+            rotate180DegreesToolStripMenuItem.Text = "Rotate 180 degrees";
+            // 
+            // rotateToolStripMenuItem
+            // 
+            rotateToolStripMenuItem.Name = "rotateToolStripMenuItem";
+            rotateToolStripMenuItem.Size = new Size(275, 22);
+            rotateToolStripMenuItem.Text = "Rotate...";
             // 
             // labelStatus
             // 
@@ -655,7 +930,7 @@
             // 
             // btnMergeDown
             // 
-            btnMergeDown.Location = new Point(153, 80);
+            btnMergeDown.Location = new Point(164, 80);
             btnMergeDown.Name = "btnMergeDown";
             btnMergeDown.Size = new Size(30, 30);
             btnMergeDown.TabIndex = 14;
@@ -695,7 +970,7 @@
             chkListLayers.FormattingEnabled = true;
             chkListLayers.Location = new Point(9, 116);
             chkListLayers.Name = "chkListLayers";
-            chkListLayers.Size = new Size(174, 112);
+            chkListLayers.Size = new Size(185, 112);
             chkListLayers.TabIndex = 19;
             chkListLayers.ItemCheck += ChkListLayers_ItemCheck;
             chkListLayers.SelectedIndexChanged += ChkListLayers_SelectedIndexChanged;
@@ -705,7 +980,7 @@
             // 
             cboBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboBlendMode.FormattingEnabled = true;
-            cboBlendMode.Location = new Point(55, 22);
+            cboBlendMode.Location = new Point(66, 22);
             cboBlendMode.Name = "cboBlendMode";
             cboBlendMode.Size = new Size(128, 23);
             cboBlendMode.TabIndex = 20;
@@ -713,7 +988,7 @@
             // 
             // opacity
             // 
-            opacity.Location = new Point(136, 51);
+            opacity.Location = new Point(147, 51);
             opacity.Name = "opacity";
             opacity.Size = new Size(47, 23);
             opacity.TabIndex = 21;
@@ -731,38 +1006,37 @@
             // 
             // groupFillDetail
             // 
-            groupFillDetail.Controls.Add(btnIsGradient);
+            groupFillDetail.Controls.Add(cboFillBlendMode);
             groupFillDetail.Controls.Add(label5);
             groupFillDetail.Controls.Add(label4);
             groupFillDetail.Controls.Add(label3);
             groupFillDetail.Controls.Add(fillOpacity);
-            groupFillDetail.Controls.Add(button2);
+            groupFillDetail.Controls.Add(label7);
             groupFillDetail.Controls.Add(button1);
             groupFillDetail.Controls.Add(btnFillColor);
+            groupFillDetail.Controls.Add(cboFIllGradient);
             groupFillDetail.Controls.Add(comboBox1);
             groupFillDetail.Location = new Point(12, 77);
             groupFillDetail.Name = "groupFillDetail";
-            groupFillDetail.Size = new Size(180, 183);
+            groupFillDetail.Size = new Size(207, 187);
             groupFillDetail.TabIndex = 28;
             groupFillDetail.TabStop = false;
             groupFillDetail.Text = "Fill Detail";
             groupFillDetail.Visible = false;
             // 
-            // btnIsGradient
+            // cboFillBlendMode
             // 
-            btnIsGradient.AutoSize = true;
-            btnIsGradient.Location = new Point(6, 92);
-            btnIsGradient.Name = "btnIsGradient";
-            btnIsGradient.Size = new Size(70, 19);
-            btnIsGradient.TabIndex = 30;
-            btnIsGradient.TabStop = true;
-            btnIsGradient.Text = "Gradient";
-            btnIsGradient.UseVisualStyleBackColor = true;
+            cboFillBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboFillBlendMode.FormattingEnabled = true;
+            cboFillBlendMode.Location = new Point(67, 22);
+            cboFillBlendMode.Name = "cboFillBlendMode";
+            cboFillBlendMode.Size = new Size(128, 23);
+            cboFillBlendMode.TabIndex = 31;
             // 
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(6, 130);
+            label5.Location = new Point(8, 145);
             label5.Name = "label5";
             label5.Size = new Size(48, 15);
             label5.TabIndex = 29;
@@ -771,7 +1045,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(6, 63);
+            label4.Location = new Point(8, 86);
             label4.Name = "label4";
             label4.Size = new Size(39, 15);
             label4.TabIndex = 29;
@@ -780,7 +1054,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(6, 29);
+            label3.Location = new Point(7, 59);
             label3.Name = "label3";
             label3.Size = new Size(51, 15);
             label3.TabIndex = 29;
@@ -789,23 +1063,20 @@
             // fillOpacity
             // 
             fillOpacity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            fillOpacity.Location = new Point(121, 24);
+            fillOpacity.Location = new Point(149, 54);
             fillOpacity.Name = "fillOpacity";
             fillOpacity.Size = new Size(47, 23);
             fillOpacity.TabIndex = 26;
             fillOpacity.Value = new decimal(new int[] { 100, 0, 0, 0 });
             // 
-            // button2
+            // label7
             // 
-            button2.BackColor = Color.Black;
-            button2.Enabled = false;
-            button2.FlatStyle = FlatStyle.Popup;
-            button2.Location = new Point(108, 90);
-            button2.Name = "button2";
-            button2.Size = new Size(27, 23);
-            button2.TabIndex = 25;
-            button2.UseVisualStyleBackColor = false;
-            button2.Click += BtnFillColor_Click;
+            label7.AutoSize = true;
+            label7.Location = new Point(7, 27);
+            label7.Name = "label7";
+            label7.Size = new Size(40, 15);
+            label7.TabIndex = 29;
+            label7.Text = "Blend:";
             // 
             // button1
             // 
@@ -813,7 +1084,7 @@
             button1.Enabled = false;
             button1.FlatStyle = FlatStyle.Popup;
             button1.ForeColor = Color.Black;
-            button1.Location = new Point(141, 90);
+            button1.Location = new Point(167, 113);
             button1.Name = "button1";
             button1.Size = new Size(27, 23);
             button1.TabIndex = 25;
@@ -824,42 +1095,56 @@
             // 
             btnFillColor.BackColor = Color.Black;
             btnFillColor.FlatStyle = FlatStyle.Popup;
-            btnFillColor.Location = new Point(141, 59);
+            btnFillColor.Location = new Point(137, 113);
             btnFillColor.Name = "btnFillColor";
             btnFillColor.Size = new Size(27, 23);
             btnFillColor.TabIndex = 25;
             btnFillColor.UseVisualStyleBackColor = false;
             btnFillColor.Click += BtnFillColor_Click;
             // 
+            // cboFIllGradient
+            // 
+            cboFIllGradient.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cboFIllGradient.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboFIllGradient.FormattingEnabled = true;
+            cboFIllGradient.Items.AddRange(new object[] { "No Gradient", "Linear Gradient", "Radial Gradient" });
+            cboFIllGradient.Location = new Point(73, 83);
+            cboFIllGradient.Name = "cboFIllGradient";
+            cboFIllGradient.Size = new Size(121, 23);
+            cboFIllGradient.TabIndex = 20;
+            cboFIllGradient.SelectedIndexChanged += CboBlendMode_SelectedIndexChanged;
+            // 
             // comboBox1
             // 
             comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(58, 127);
+            comboBox1.Location = new Point(68, 142);
             comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(109, 23);
+            comboBox1.Size = new Size(128, 23);
             comboBox1.TabIndex = 20;
             comboBox1.SelectedIndexChanged += CboBlendMode_SelectedIndexChanged;
             // 
             // brush_size
             // 
-            brush_size.Location = new Point(12, 196);
+            brush_size.Location = new Point(76, 196);
             brush_size.Maximum = 100;
             brush_size.Minimum = 1;
             brush_size.Name = "brush_size";
-            brush_size.Size = new Size(155, 45);
+            brush_size.Size = new Size(117, 45);
             brush_size.TabIndex = 23;
+            brush_size.TickStyle = TickStyle.None;
             brush_size.Value = 12;
             brush_size.Scroll += Brush_size_Scroll;
             // 
             // brush_opacity
             // 
-            brush_opacity.Location = new Point(12, 247);
+            brush_opacity.Location = new Point(73, 247);
             brush_opacity.Maximum = 100;
             brush_opacity.Name = "brush_opacity";
-            brush_opacity.Size = new Size(155, 45);
+            brush_opacity.Size = new Size(126, 45);
             brush_opacity.TabIndex = 23;
+            brush_opacity.TickStyle = TickStyle.None;
             brush_opacity.Value = 100;
             brush_opacity.Scroll += Brush_opacity_Scroll;
             // 
@@ -876,17 +1161,19 @@
             // 
             // brush_smoothness
             // 
-            brush_smoothness.Location = new Point(13, 298);
+            brush_smoothness.Location = new Point(74, 298);
             brush_smoothness.Maximum = 100;
             brush_smoothness.Name = "brush_smoothness";
-            brush_smoothness.Size = new Size(155, 45);
+            brush_smoothness.Size = new Size(126, 45);
             brush_smoothness.TabIndex = 23;
+            brush_smoothness.TickStyle = TickStyle.None;
             brush_smoothness.Value = 22;
             brush_smoothness.Scroll += Brush_smoothness_Scroll;
             // 
             // btnPointer
             // 
             btnPointer.Appearance = Appearance.Button;
+            btnPointer.Checked = true;
             btnPointer.FlatStyle = FlatStyle.Popup;
             btnPointer.Image = (Image)resources.GetObject("btnPointer.Image");
             btnPointer.Location = new Point(12, 27);
@@ -907,7 +1194,6 @@
             btnFiller.Name = "btnFiller";
             btnFiller.Size = new Size(32, 32);
             btnFiller.TabIndex = 26;
-            btnFiller.TabStop = true;
             btnFiller.UseVisualStyleBackColor = true;
             btnFiller.CheckedChanged += BtnPointer_CheckedChanged;
             btnFiller.Click += BtnFiller_Click;
@@ -921,7 +1207,6 @@
             btnBrusher.Name = "btnBrusher";
             btnBrusher.Size = new Size(32, 32);
             btnBrusher.TabIndex = 26;
-            btnBrusher.TabStop = true;
             btnBrusher.UseVisualStyleBackColor = true;
             btnBrusher.CheckedChanged += BtnPointer_CheckedChanged;
             btnBrusher.Click += BtnBrusher_Click;
@@ -932,24 +1217,65 @@
             groupBrushDetail.Controls.Add(panel2);
             groupBrushDetail.Controls.Add(brush_size);
             groupBrushDetail.Controls.Add(brush_opacity);
+            groupBrushDetail.Controls.Add(label10);
+            groupBrushDetail.Controls.Add(label9);
+            groupBrushDetail.Controls.Add(label11);
+            groupBrushDetail.Controls.Add(label8);
             groupBrushDetail.Controls.Add(brush_hardness);
             groupBrushDetail.Controls.Add(brush_smoothness);
             groupBrushDetail.Location = new Point(12, 74);
             groupBrushDetail.Name = "groupBrushDetail";
-            groupBrushDetail.Size = new Size(180, 430);
+            groupBrushDetail.Size = new Size(207, 430);
             groupBrushDetail.TabIndex = 27;
             groupBrushDetail.TabStop = false;
             groupBrushDetail.Text = "Brush Detail";
             groupBrushDetail.Visible = false;
             // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(7, 349);
+            label10.Name = "label10";
+            label10.Size = new Size(59, 15);
+            label10.TabIndex = 29;
+            label10.Text = "Hardness:";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(6, 298);
+            label9.Name = "label9";
+            label9.Size = new Size(75, 15);
+            label9.TabIndex = 29;
+            label9.Text = "Smoothness:";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(7, 196);
+            label11.Name = "label11";
+            label11.Size = new Size(30, 15);
+            label11.TabIndex = 29;
+            label11.Text = "Size:";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(7, 247);
+            label8.Name = "label8";
+            label8.Size = new Size(51, 15);
+            label8.TabIndex = 29;
+            label8.Text = "Opacity:";
+            // 
             // brush_hardness
             // 
-            brush_hardness.Location = new Point(12, 349);
+            brush_hardness.Location = new Point(73, 349);
             brush_hardness.Maximum = 100;
             brush_hardness.Minimum = 1;
             brush_hardness.Name = "brush_hardness";
-            brush_hardness.Size = new Size(155, 45);
+            brush_hardness.Size = new Size(126, 45);
             brush_hardness.TabIndex = 23;
+            brush_hardness.TickStyle = TickStyle.None;
             brush_hardness.Value = 100;
             brush_hardness.Scroll += Brush_hardness_Scroll;
             // 
@@ -990,6 +1316,19 @@
             groupBox1.TabIndex = 30;
             groupBox1.TabStop = false;
             // 
+            // btnFreehand
+            // 
+            btnFreehand.Appearance = Appearance.Button;
+            btnFreehand.FlatStyle = FlatStyle.Popup;
+            btnFreehand.Image = (Image)resources.GetObject("btnFreehand.Image");
+            btnFreehand.Location = new Point(126, 27);
+            btnFreehand.Name = "btnFreehand";
+            btnFreehand.Size = new Size(32, 32);
+            btnFreehand.TabIndex = 26;
+            btnFreehand.UseVisualStyleBackColor = true;
+            btnFreehand.CheckedChanged += BtnPointer_CheckedChanged;
+            btnFreehand.Click += BtnBrusher_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -998,6 +1337,7 @@
             Controls.Add(groupBox1);
             Controls.Add(groupFillDetail);
             Controls.Add(groupBrushDetail);
+            Controls.Add(btnFreehand);
             Controls.Add(btnBrusher);
             Controls.Add(btnFiller);
             Controls.Add(btnPointer);
@@ -1053,11 +1393,6 @@
         private ToolStripMenuItem zoomInToolStripMenuItem;
         private ToolStripMenuItem zoomOutToolStripMenuItem;
         private ToolStripMenuItem resetToolStripMenuItem;
-        private ToolStripMenuItem channelsToolStripMenuItem;
-        private ToolStripMenuItem redToolStripMenuItem;
-        private ToolStripMenuItem greenToolStripMenuItem;
-        private ToolStripMenuItem blueToolStripMenuItem;
-        private ToolStripMenuItem allToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem1;
         private ToolStripSeparator toolStripMenuItem2;
         private ToolStripMenuItem exitToolStripMenuItem;
@@ -1082,11 +1417,6 @@
         private ToolStripSeparator toolStripMenuItem6;
         private ToolStripMenuItem importToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem8;
-        private ToolStripSeparator toolStripMenuItem9;
-        private ToolStripMenuItem filtersToolStripMenuItem;
-        private ToolStripMenuItem redToolStripMenuItem1;
-        private ToolStripMenuItem greenToolStripMenuItem1;
-        private ToolStripMenuItem blueToolStripMenuItem1;
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem deleteImageToolStripMenuItem1;
         private ToolStripSeparator toolStripMenuItem10;
@@ -1108,8 +1438,6 @@
         private ToolStripMenuItem renameToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem15;
         private ToolStripMenuItem mergeDownToolStripMenuItem;
-        private ToolStripSeparator toolStripMenuItem7;
-        private ToolStripMenuItem darkToolStripMenuItem;
         private CheckedListBox chkListLayers;
         private ComboBox cboBlendMode;
         private NumericUpDown opacity;
@@ -1131,13 +1459,70 @@
         private Label label2;
         private Label label4;
         private Label label3;
-        private RadioButton btnIsGradient;
-        private Button button2;
         private Button button1;
         private Label label5;
         private ComboBox comboBox1;
         private TrackBar brush_hardness;
-        private ToolStripMenuItem blurImageToolStripMenuItem;
         private GroupBox groupBox1;
+        private ComboBox cboFillBlendMode;
+        private Label label7;
+        private Label label10;
+        private Label label9;
+        private Label label8;
+        private ComboBox cboFIllGradient;
+        private Label label11;
+        private ToolStripSeparator toolStripMenuItem5;
+        private ToolStripMenuItem channelsToolStripMenuItem;
+        private ToolStripMenuItem allToolStripMenuItem;
+        private ToolStripMenuItem redToolStripMenuItem;
+        private ToolStripMenuItem greenToolStripMenuItem;
+        private ToolStripMenuItem blueToolStripMenuItem;
+        private ToolStripMenuItem filtersToolStripMenuItem;
+        private ToolStripMenuItem redToolStripMenuItem1;
+        private ToolStripMenuItem greenToolStripMenuItem1;
+        private ToolStripMenuItem blueToolStripMenuItem1;
+        private ToolStripSeparator toolStripMenuItem7;
+        private ToolStripMenuItem darkToolStripMenuItem;
+        private ToolStripMenuItem adjustmentsToolStripMenuItem;
+        private ToolStripMenuItem blurImageToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem9;
+        private ToolStripMenuItem contrastToolStripMenuItem;
+        private ToolStripMenuItem brightnessToolStripMenuItem;
+        private ToolStripMenuItem invertToolStripMenuItem;
+        private ToolStripMenuItem grayscaleToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem16;
+        private ToolStripMenuItem layerToolStripMenuItem;
+        private ToolStripMenuItem newToolStripMenuItem1;
+        private ToolStripMenuItem duplicateToolStripMenuItem;
+        private ToolStripMenuItem mergeDownToolStripMenuItem1;
+        private ToolStripMenuItem deleteToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem17;
+        private ToolStripMenuItem maskToolStripMenuItem;
+        private ToolStripMenuItem mToolStripMenuItem;
+        private ToolStripMenuItem applyMaskToolStripMenuItem;
+        private ToolStripMenuItem deleteMaskToolStripMenuItem;
+        private ToolStripMenuItem stackToolStripMenuItem;
+        private ToolStripMenuItem raiseToolStripMenuItem;
+        private ToolStripMenuItem lowerToolStripMenuItem;
+        private ToolStripMenuItem toTopToolStripMenuItem;
+        private ToolStripMenuItem toBottomToolStripMenuItem;
+        private ToolStripMenuItem transdormToolStripMenuItem;
+        private ToolStripMenuItem flipHorizomtallyToolStripMenuItem;
+        private ToolStripMenuItem flipVerticallyToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem18;
+        private ToolStripMenuItem rotate90DegreesToolStripMenuItem;
+        private ToolStripMenuItem rotate90DegreesCountereclockwiseToolStripMenuItem;
+        private ToolStripMenuItem rotate180DegreesToolStripMenuItem;
+        private ToolStripMenuItem rotateToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem19;
+        private ToolStripMenuItem toolStripMenuItem20;
+        private ToolStripMenuItem toolStripMenuItem21;
+        private ToolStripMenuItem toolStripMenuItem22;
+        private ToolStripSeparator toolStripSeparator1;
+        private ToolStripMenuItem toolStripMenuItem23;
+        private ToolStripMenuItem toolStripMenuItem24;
+        private ToolStripMenuItem toolStripMenuItem25;
+        private ToolStripMenuItem toolStripMenuItem26;
+        private RadioButton btnFreehand;
     }
 }

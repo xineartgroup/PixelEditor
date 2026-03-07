@@ -19,14 +19,17 @@ namespace PixelEditor
         private PointF imageOffset = new(0, 0);
         private bool isDragging = false;
         private bool isPainting = false;
+        private bool isSelecting = false;
         private bool isDirty = false;
         private float zoom = 0.95f;
+        private float _dashOffset = 0;
         private int selectedBrushIndex = 0;
-        private string? currentFilePath = null;
+        private string currentFilePath = "";
         private DateTime lastPaintTime = DateTime.MinValue;
         private readonly List<Layer> imageLayers = [];
         private readonly List<Image> brushes = [];
-        private List<PointF>? strokePoints;
+        private List<PointF> strokePoints = [];
+        private readonly List<Point> selectionPoints = [];
         private PointF lazyLocalPos;
         private PointF strokeLastInterpolated;
 
@@ -40,6 +43,23 @@ namespace PixelEditor
         public FormMain()
         {
             InitializeComponent();
+
+            System.Windows.Forms.Timer animationTimer = new()
+            {
+                Interval = 200 // Roughly 5 frames per second
+            };
+            animationTimer.Tick += (s, e) =>
+            {
+                if (selectionPoints.Count > 1)
+                {
+                    _dashOffset += 1.0f; // Decrement to move forward, increment to move backward
+
+                    if (_dashOffset > 100.0f) _dashOffset = 0; // Reset offset to prevent it from growing into a massive number over time
+
+                    RedrawImage();
+                }
+            };
+            animationTimer.Start();
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -47,8 +67,12 @@ namespace PixelEditor
             Form1_Resize(sender, e);
             UpdateTitleBar();
             cboBlendMode.Items.Clear();
-            cboBlendMode.Items.AddRange(Enum.GetNames<LayerBlending>());
+            cboBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
             cboBlendMode.SelectedIndex = 0;
+            cboFillBlendMode.Items.Clear();
+            cboFillBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
+            cboFillBlendMode.SelectedIndex = 0;
+            cboFIllGradient.SelectedIndex = 0;
             ReloadBrushes();
         }
 
@@ -186,7 +210,7 @@ namespace PixelEditor
             if (btnPointer.Checked)
             {
                 PaintingEngine.SetBrush(paint);
-                canvas.Cursor = Cursors.Cross;
+                canvas.Cursor = Cursors.SizeAll;
             }
             else if (btnFiller.Checked)
             {
@@ -203,6 +227,11 @@ namespace PixelEditor
                 PaintingEngine.SetBrush(paint);
                 groupBrushDetail.Visible = true;
                 UpdateCursor();
+            }
+            else if (btnFreehand.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                canvas.Cursor = Cursors.Cross;
             }
             else
             {
@@ -575,7 +604,7 @@ namespace PixelEditor
         {
             if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
             {
-                imageLayers[chkListLayers.SelectedIndex].BlendMode = Enum.Parse<LayerBlending>(cboBlendMode.Text);
+                imageLayers[chkListLayers.SelectedIndex].BlendMode = Enum.Parse<ImageBlending>(cboBlendMode.Text);
                 RedrawImage();
             }
         }
@@ -984,6 +1013,40 @@ namespace PixelEditor
             }
         }
 
+        private void InvertToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chkListLayers.Items.Count == imageLayers.Count
+                && chkListLayers.SelectedIndex >= 0
+                && chkListLayers.SelectedIndex < imageLayers.Count)
+            {
+                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+                if (selectedLayer.Image != null)
+                {
+                    Bitmap inverted = ImageManipulator.InvertColors((Bitmap)selectedLayer.Image);
+                    selectedLayer.Image.Dispose();
+                    selectedLayer.Image = inverted;
+                    RedrawImage();
+                }
+            }
+        }
+
+        private void GrayscaleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chkListLayers.Items.Count == imageLayers.Count
+                && chkListLayers.SelectedIndex >= 0
+                && chkListLayers.SelectedIndex < imageLayers.Count)
+            {
+                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+                if (selectedLayer.Image != null)
+                {
+                    Bitmap greyed = ImageManipulator.Grayscale((Bitmap)selectedLayer.Image);
+                    selectedLayer.Image.Dispose();
+                    selectedLayer.Image = greyed;
+                    RedrawImage();
+                }
+            }
+        }
+
         private void BlurImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (chkListLayers.Items.Count == imageLayers.Count
@@ -993,12 +1056,22 @@ namespace PixelEditor
                 var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                 if (selectedLayer.Image != null)
                 {
-                    Bitmap blurred = BitmapManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 32);
+                    Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
                     selectedLayer.Image.Dispose();
                     selectedLayer.Image = blurred;
                     RedrawImage();
                 }
             }
+        }
+
+        private void ContrastToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void BrightnessToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
 
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
@@ -1008,7 +1081,7 @@ namespace PixelEditor
             if (btnBrusher.Checked)
             {
                 isPainting = true;
-                strokePoints = null;
+                strokePoints = [];
                 lazyLocalPos = PointF.Empty;
                 strokeLastInterpolated = PointF.Empty;
                 PaintingEngine.BeginStroke();
@@ -1026,11 +1099,14 @@ namespace PixelEditor
                     var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                     if (selectedLayer.Image != null)
                     {
-                        Bitmap bitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
-                        using (Graphics g = Graphics.FromImage(bitmap))
-                        {
-                            g.Clear(paint.GetFillColor());
-                        }
+                        Bitmap bitmap = ImageManipulator.FillColor(selectedLayer.Image, 
+                            (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(), 
+                            (float)(fillOpacity.Value / fillOpacity.Maximum),
+                            lastMousePosition,
+                            selectionPoints,
+                            canvas,
+                            zoom,
+                            imageOffset);
                         var old = selectedLayer.Image;
                         selectedLayer.Image = bitmap;
                         old?.Dispose();
@@ -1038,6 +1114,12 @@ namespace PixelEditor
                         RedrawImage();
                     }
                 }
+            }
+            else if (btnFreehand.Checked)
+            {
+                isSelecting = true;
+                selectionPoints.Clear();
+                selectionPoints.Add(lastMousePosition);
             }
         }
 
@@ -1099,7 +1181,7 @@ namespace PixelEditor
                     Point currentWorldPos = ScreenToWorld(e.Location, LayerManipulator.Width, LayerManipulator.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
-                    if (strokePoints == null)
+                    if (strokePoints.Count == 0)
                     {
                         strokePoints = [localCurrentRaw];
                         lazyLocalPos = localCurrentRaw;
@@ -1204,14 +1286,29 @@ namespace PixelEditor
                     }
                 }
             }
+            else if (isSelecting)
+            {
+                if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
+                {
+                    selectionPoints.Add(e.Location);
+                }
+            }
 
             lastMousePosition = e.Location;
         }
 
         private void PixelImage_MouseUp(object sender, MouseEventArgs e)
         {
+            if (isSelecting)
+            {
+                if (selectionPoints.Count > 2)
+                {
+                    selectionPoints.Add(selectionPoints[0]);
+                }
+            }
             isDragging = false;
             isPainting = false;
+            isSelecting = false;
             LayerManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             RedrawImage();
@@ -1313,6 +1410,15 @@ namespace PixelEditor
                 g.PixelOffsetMode = PixelOffsetMode.Half;
 
                 g.DrawImage(image, destRect);
+
+                if (selectionPoints.Count > 1)
+                {
+                    using Pen selectionPen = new(Color.Blue, 2f);
+                    selectionPen.DashPattern = [5, 5];
+                    selectionPen.DashOffset = _dashOffset;
+
+                    g.DrawLines(selectionPen, selectionPoints.ToArray());
+                }
             }
 
             var old = canvas.Image;

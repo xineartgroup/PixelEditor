@@ -14,7 +14,7 @@ namespace PixelEditor
         private bool _greenFilter = false;
         private bool _blueFilter = false;
         private LayerChannel _channel = LayerChannel.RGB;
-        private LayerBlending _blendMode = LayerBlending.Normal;
+        private ImageBlending _blendMode = ImageBlending.Normal;
 
         public event Action<Rectangle>? OnLayerChanged;
 
@@ -42,7 +42,7 @@ namespace PixelEditor
 
         public LayerChannel Channel { get => _channel; set => SetProperty(ref _channel, value); }
 
-        public LayerBlending BlendMode { get => _blendMode; set => SetProperty(ref _blendMode, value); }
+        public ImageBlending BlendMode { get => _blendMode; set => SetProperty(ref _blendMode, value); }
 
         private void SetProperty<T>(ref T field, T value)
         {
