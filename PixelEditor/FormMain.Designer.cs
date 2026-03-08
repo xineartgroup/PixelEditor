@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             canvas = new PictureBox();
             contextMenuStrip1 = new ContextMenuStrip(components);
             deleteImageToolStripMenuItem1 = new ToolStripMenuItem();
@@ -167,6 +166,10 @@
             btnFiller = new RadioButton();
             btnBrusher = new RadioButton();
             groupBrushDetail = new GroupBox();
+            lblBrushHardness = new Label();
+            lblBrushSmoothness = new Label();
+            lblBrushOpacity = new Label();
+            lblBrushSize = new Label();
             label10 = new Label();
             label9 = new Label();
             label11 = new Label();
@@ -196,9 +199,9 @@
             canvas.BackColor = Color.White;
             canvas.BorderStyle = BorderStyle.Fixed3D;
             canvas.ContextMenuStrip = contextMenuStrip1;
-            canvas.Location = new Point(225, 74);
+            canvas.Location = new Point(248, 74);
             canvas.Name = "canvas";
-            canvas.Size = new Size(741, 430);
+            canvas.Size = new Size(718, 430);
             canvas.TabIndex = 0;
             canvas.TabStop = false;
             canvas.MouseDown += PixelImage_MouseDown;
@@ -600,7 +603,7 @@
             toolStripMenuItem20.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem21, toolStripMenuItem22, toolStripSeparator1, toolStripMenuItem23, toolStripMenuItem24, toolStripMenuItem25, toolStripMenuItem26 });
             toolStripMenuItem20.Name = "toolStripMenuItem20";
             toolStripMenuItem20.Size = new Size(152, 22);
-            toolStripMenuItem20.Text = "Transdorm";
+            toolStripMenuItem20.Text = "Transform";
             // 
             // toolStripMenuItem21
             // 
@@ -716,24 +719,28 @@
             raiseToolStripMenuItem.Name = "raiseToolStripMenuItem";
             raiseToolStripMenuItem.Size = new Size(130, 22);
             raiseToolStripMenuItem.Text = "Raise";
+            raiseToolStripMenuItem.Click += BtnMoveUp_Click;
             // 
             // lowerToolStripMenuItem
             // 
             lowerToolStripMenuItem.Name = "lowerToolStripMenuItem";
             lowerToolStripMenuItem.Size = new Size(130, 22);
             lowerToolStripMenuItem.Text = "Lower";
+            lowerToolStripMenuItem.Click += BtnMoveDown_Click;
             // 
             // toTopToolStripMenuItem
             // 
             toTopToolStripMenuItem.Name = "toTopToolStripMenuItem";
             toTopToolStripMenuItem.Size = new Size(130, 22);
             toTopToolStripMenuItem.Text = "To Top";
+            toTopToolStripMenuItem.Click += MoveToTopToolStripMenuItem_Click;
             // 
             // toBottomToolStripMenuItem
             // 
             toBottomToolStripMenuItem.Name = "toBottomToolStripMenuItem";
             toBottomToolStripMenuItem.Size = new Size(130, 22);
             toBottomToolStripMenuItem.Text = "To Bottom";
+            toBottomToolStripMenuItem.Click += MoveToBottomToolStripMenuItem_Click;
             // 
             // transdormToolStripMenuItem
             // 
@@ -1018,7 +1025,7 @@
             groupFillDetail.Controls.Add(comboBox1);
             groupFillDetail.Location = new Point(12, 77);
             groupFillDetail.Name = "groupFillDetail";
-            groupFillDetail.Size = new Size(207, 187);
+            groupFillDetail.Size = new Size(230, 187);
             groupFillDetail.TabIndex = 28;
             groupFillDetail.TabStop = false;
             groupFillDetail.Text = "Fill Detail";
@@ -1028,7 +1035,7 @@
             // 
             cboFillBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboFillBlendMode.FormattingEnabled = true;
-            cboFillBlendMode.Location = new Point(67, 22);
+            cboFillBlendMode.Location = new Point(91, 22);
             cboFillBlendMode.Name = "cboFillBlendMode";
             cboFillBlendMode.Size = new Size(128, 23);
             cboFillBlendMode.TabIndex = 31;
@@ -1036,34 +1043,36 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(8, 145);
+            label5.Font = new Font("Segoe UI", 8.25F);
+            label5.Location = new Point(8, 115);
             label5.Name = "label5";
-            label5.Size = new Size(48, 15);
+            label5.Size = new Size(47, 13);
             label5.TabIndex = 29;
             label5.Text = "Pattern:";
             // 
             // label4
             // 
             label4.AutoSize = true;
+            label4.Font = new Font("Segoe UI", 8.25F);
             label4.Location = new Point(8, 86);
             label4.Name = "label4";
-            label4.Size = new Size(39, 15);
+            label4.Size = new Size(38, 13);
             label4.TabIndex = 29;
             label4.Text = "Color:";
             // 
             // label3
             // 
             label3.AutoSize = true;
+            label3.Font = new Font("Segoe UI", 8.25F);
             label3.Location = new Point(7, 59);
             label3.Name = "label3";
-            label3.Size = new Size(51, 15);
+            label3.Size = new Size(49, 13);
             label3.TabIndex = 29;
             label3.Text = "Opacity:";
             // 
             // fillOpacity
             // 
-            fillOpacity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            fillOpacity.Location = new Point(149, 54);
+            fillOpacity.Location = new Point(172, 54);
             fillOpacity.Name = "fillOpacity";
             fillOpacity.Size = new Size(47, 23);
             fillOpacity.TabIndex = 26;
@@ -1072,9 +1081,10 @@
             // label7
             // 
             label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 8.25F);
             label7.Location = new Point(7, 27);
             label7.Name = "label7";
-            label7.Size = new Size(40, 15);
+            label7.Size = new Size(40, 13);
             label7.TabIndex = 29;
             label7.Text = "Blend:";
             // 
@@ -1084,7 +1094,7 @@
             button1.Enabled = false;
             button1.FlatStyle = FlatStyle.Popup;
             button1.ForeColor = Color.Black;
-            button1.Location = new Point(167, 113);
+            button1.Location = new Point(81, 83);
             button1.Name = "button1";
             button1.Size = new Size(27, 23);
             button1.TabIndex = 25;
@@ -1095,7 +1105,7 @@
             // 
             btnFillColor.BackColor = Color.Black;
             btnFillColor.FlatStyle = FlatStyle.Popup;
-            btnFillColor.Location = new Point(137, 113);
+            btnFillColor.Location = new Point(51, 83);
             btnFillColor.Name = "btnFillColor";
             btnFillColor.Size = new Size(27, 23);
             btnFillColor.TabIndex = 25;
@@ -1104,22 +1114,20 @@
             // 
             // cboFIllGradient
             // 
-            cboFIllGradient.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             cboFIllGradient.DropDownStyle = ComboBoxStyle.DropDownList;
             cboFIllGradient.FormattingEnabled = true;
             cboFIllGradient.Items.AddRange(new object[] { "No Gradient", "Linear Gradient", "Radial Gradient" });
-            cboFIllGradient.Location = new Point(73, 83);
+            cboFIllGradient.Location = new Point(114, 83);
             cboFIllGradient.Name = "cboFIllGradient";
-            cboFIllGradient.Size = new Size(121, 23);
+            cboFIllGradient.Size = new Size(105, 23);
             cboFIllGradient.TabIndex = 20;
             cboFIllGradient.SelectedIndexChanged += CboBlendMode_SelectedIndexChanged;
             // 
             // comboBox1
             // 
-            comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(68, 142);
+            comboBox1.Location = new Point(91, 112);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(128, 23);
             comboBox1.TabIndex = 20;
@@ -1131,7 +1139,7 @@
             brush_size.Maximum = 100;
             brush_size.Minimum = 1;
             brush_size.Name = "brush_size";
-            brush_size.Size = new Size(117, 45);
+            brush_size.Size = new Size(106, 45);
             brush_size.TabIndex = 23;
             brush_size.TickStyle = TickStyle.None;
             brush_size.Value = 12;
@@ -1139,10 +1147,10 @@
             // 
             // brush_opacity
             // 
-            brush_opacity.Location = new Point(73, 247);
+            brush_opacity.Location = new Point(76, 247);
             brush_opacity.Maximum = 100;
             brush_opacity.Name = "brush_opacity";
-            brush_opacity.Size = new Size(126, 45);
+            brush_opacity.Size = new Size(106, 45);
             brush_opacity.TabIndex = 23;
             brush_opacity.TickStyle = TickStyle.None;
             brush_opacity.Value = 100;
@@ -1161,10 +1169,10 @@
             // 
             // brush_smoothness
             // 
-            brush_smoothness.Location = new Point(74, 298);
+            brush_smoothness.Location = new Point(76, 298);
             brush_smoothness.Maximum = 100;
             brush_smoothness.Name = "brush_smoothness";
-            brush_smoothness.Size = new Size(126, 45);
+            brush_smoothness.Size = new Size(106, 45);
             brush_smoothness.TabIndex = 23;
             brush_smoothness.TickStyle = TickStyle.None;
             brush_smoothness.Value = 22;
@@ -1175,7 +1183,7 @@
             btnPointer.Appearance = Appearance.Button;
             btnPointer.Checked = true;
             btnPointer.FlatStyle = FlatStyle.Popup;
-            btnPointer.Image = (Image)resources.GetObject("btnPointer.Image");
+            btnPointer.Image = Properties.Resources.Cross;
             btnPointer.Location = new Point(12, 27);
             btnPointer.Name = "btnPointer";
             btnPointer.Size = new Size(32, 32);
@@ -1189,7 +1197,7 @@
             // 
             btnFiller.Appearance = Appearance.Button;
             btnFiller.FlatStyle = FlatStyle.Popup;
-            btnFiller.Image = (Image)resources.GetObject("btnFiller.Image");
+            btnFiller.Image = Properties.Resources.Fill;
             btnFiller.Location = new Point(50, 27);
             btnFiller.Name = "btnFiller";
             btnFiller.Size = new Size(32, 32);
@@ -1202,7 +1210,7 @@
             // 
             btnBrusher.Appearance = Appearance.Button;
             btnBrusher.FlatStyle = FlatStyle.Popup;
-            btnBrusher.Image = (Image)resources.GetObject("btnBrusher.Image");
+            btnBrusher.Image = Properties.Resources.Brush;
             btnBrusher.Location = new Point(88, 27);
             btnBrusher.Name = "btnBrusher";
             btnBrusher.Size = new Size(32, 32);
@@ -1213,6 +1221,10 @@
             // 
             // groupBrushDetail
             // 
+            groupBrushDetail.Controls.Add(lblBrushHardness);
+            groupBrushDetail.Controls.Add(lblBrushSmoothness);
+            groupBrushDetail.Controls.Add(lblBrushOpacity);
+            groupBrushDetail.Controls.Add(lblBrushSize);
             groupBrushDetail.Controls.Add(btnPenColor);
             groupBrushDetail.Controls.Add(panel2);
             groupBrushDetail.Controls.Add(brush_size);
@@ -1225,58 +1237,110 @@
             groupBrushDetail.Controls.Add(brush_smoothness);
             groupBrushDetail.Location = new Point(12, 74);
             groupBrushDetail.Name = "groupBrushDetail";
-            groupBrushDetail.Size = new Size(207, 430);
+            groupBrushDetail.Size = new Size(230, 430);
             groupBrushDetail.TabIndex = 27;
             groupBrushDetail.TabStop = false;
             groupBrushDetail.Text = "Brush Detail";
             groupBrushDetail.Visible = false;
             // 
+            // lblBrushHardness
+            // 
+            lblBrushHardness.BackColor = Color.White;
+            lblBrushHardness.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushHardness.FlatStyle = FlatStyle.Flat;
+            lblBrushHardness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushHardness.Location = new Point(188, 349);
+            lblBrushHardness.Name = "lblBrushHardness";
+            lblBrushHardness.Size = new Size(32, 24);
+            lblBrushHardness.TabIndex = 30;
+            lblBrushHardness.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushSmoothness
+            // 
+            lblBrushSmoothness.BackColor = Color.White;
+            lblBrushSmoothness.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushSmoothness.FlatStyle = FlatStyle.Flat;
+            lblBrushSmoothness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushSmoothness.Location = new Point(188, 298);
+            lblBrushSmoothness.Name = "lblBrushSmoothness";
+            lblBrushSmoothness.Size = new Size(32, 24);
+            lblBrushSmoothness.TabIndex = 30;
+            lblBrushSmoothness.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushOpacity
+            // 
+            lblBrushOpacity.BackColor = Color.White;
+            lblBrushOpacity.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushOpacity.FlatStyle = FlatStyle.Flat;
+            lblBrushOpacity.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushOpacity.Location = new Point(188, 247);
+            lblBrushOpacity.Name = "lblBrushOpacity";
+            lblBrushOpacity.Size = new Size(32, 24);
+            lblBrushOpacity.TabIndex = 30;
+            lblBrushOpacity.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushSize
+            // 
+            lblBrushSize.BackColor = Color.White;
+            lblBrushSize.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushSize.FlatStyle = FlatStyle.Flat;
+            lblBrushSize.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushSize.Location = new Point(188, 196);
+            lblBrushSize.Name = "lblBrushSize";
+            lblBrushSize.Size = new Size(32, 24);
+            lblBrushSize.TabIndex = 30;
+            lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // label10
             // 
             label10.AutoSize = true;
+            label10.Font = new Font("Segoe UI", 8.25F);
             label10.Location = new Point(7, 349);
             label10.Name = "label10";
-            label10.Size = new Size(59, 15);
+            label10.Size = new Size(58, 13);
             label10.TabIndex = 29;
             label10.Text = "Hardness:";
             // 
             // label9
             // 
             label9.AutoSize = true;
+            label9.Font = new Font("Segoe UI", 8.25F);
             label9.Location = new Point(6, 298);
             label9.Name = "label9";
-            label9.Size = new Size(75, 15);
+            label9.Size = new Size(73, 13);
             label9.TabIndex = 29;
             label9.Text = "Smoothness:";
             // 
             // label11
             // 
             label11.AutoSize = true;
+            label11.Font = new Font("Segoe UI", 8.25F);
             label11.Location = new Point(7, 196);
             label11.Name = "label11";
-            label11.Size = new Size(30, 15);
+            label11.Size = new Size(30, 13);
             label11.TabIndex = 29;
             label11.Text = "Size:";
             // 
             // label8
             // 
             label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 8.25F);
             label8.Location = new Point(7, 247);
             label8.Name = "label8";
-            label8.Size = new Size(51, 15);
+            label8.Size = new Size(49, 13);
             label8.TabIndex = 29;
             label8.Text = "Opacity:";
             // 
             // brush_hardness
             // 
-            brush_hardness.Location = new Point(73, 349);
+            brush_hardness.Location = new Point(76, 349);
             brush_hardness.Maximum = 100;
             brush_hardness.Minimum = 1;
             brush_hardness.Name = "brush_hardness";
-            brush_hardness.Size = new Size(126, 45);
+            brush_hardness.Size = new Size(106, 45);
             brush_hardness.TabIndex = 23;
             brush_hardness.TickStyle = TickStyle.None;
-            brush_hardness.Value = 100;
+            brush_hardness.Value = 80;
             brush_hardness.Scroll += Brush_hardness_Scroll;
             // 
             // label1
@@ -1320,7 +1384,7 @@
             // 
             btnFreehand.Appearance = Appearance.Button;
             btnFreehand.FlatStyle = FlatStyle.Popup;
-            btnFreehand.Image = (Image)resources.GetObject("btnFreehand.Image");
+            btnFreehand.Image = Properties.Resources.Lasso;
             btnFreehand.Location = new Point(126, 27);
             btnFreehand.Name = "btnFreehand";
             btnFreehand.Size = new Size(32, 32);
@@ -1524,5 +1588,9 @@
         private ToolStripMenuItem toolStripMenuItem25;
         private ToolStripMenuItem toolStripMenuItem26;
         private RadioButton btnFreehand;
+        private Label lblBrushSize;
+        private Label lblBrushHardness;
+        private Label lblBrushSmoothness;
+        private Label lblBrushOpacity;
     }
 }

@@ -5,15 +5,12 @@
         private static readonly Stack<byte[]> undoStack = new();
         private static readonly Stack<byte[]> redoStack = new();
 
-        public static Image? ExistingImage { get; set; } = null;
-
         public static void RecordState(HistoryItem history)
         {
             try
             {
-                var includeImage = true; // !ImageManipulator.AreBitmapsEqual(ExistingImage, history.Image);
                 using MemoryStream ms = new();
-                //StrokePTVSaver.Save(ms, history.Zoom, history.Offset, history.Image, history.Layers, includeImage);
+                StrokePTVSaver.Save(ms, history.Zoom, history.Offset, history.Layers, history.SelectedLayerIndex);
                 undoStack.Push(ms.ToArray());
                 redoStack.Clear();
             }
@@ -36,9 +33,9 @@
                 using MemoryStream ms = new();
                 byte[] data = undoStack.Pop();
                 using MemoryStream restoreMs = new(data);
-                //StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out Image? image, out List<StrokeLayer>layers, existingImage: null);
+                StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
                 redoStack.Push(data);
-                return null; //return new HistoryItem(zoom, offset, image, layers);
+                return new HistoryItem(zoom, offset, layers, selectedLayerIndex);
             }
             catch
             {
@@ -60,9 +57,9 @@
                 using MemoryStream ms = new();
                 byte[] data = redoStack.Pop();
                 using MemoryStream restoreMs = new(data);
-                //StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out Image? image, out List<StrokeLayer> layers, existingImage: null);
+                StrokePTVLoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
                 undoStack.Push(data);
-                return null; //return new HistoryItem(zoom, offset, image, layers);
+                return new HistoryItem(zoom, offset, layers, selectedLayerIndex);
             }
             catch
             {

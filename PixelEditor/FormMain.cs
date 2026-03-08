@@ -46,7 +46,7 @@ namespace PixelEditor
 
             System.Windows.Forms.Timer animationTimer = new()
             {
-                Interval = 200 // Roughly 5 frames per second
+                Interval = 100 // Roughly 10 frames per second
             };
             animationTimer.Tick += (s, e) =>
             {
@@ -73,6 +73,14 @@ namespace PixelEditor
             cboFillBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
             cboFillBlendMode.SelectedIndex = 0;
             cboFIllGradient.SelectedIndex = 0;
+            brush_size.Value = 12;
+            brush_opacity.Value = 100;
+            brush_smoothness.Value = 22;
+            brush_hardness.Value = 80;
+            Brush_size_Scroll(sender, e);
+            Brush_opacity_Scroll(sender, e);
+            Brush_smoothness_Scroll(sender, e);
+            Brush_hardness_Scroll(sender, e);
             ReloadBrushes();
         }
 
@@ -314,25 +322,25 @@ namespace PixelEditor
 
         private void Brush_size_Scroll(object sender, EventArgs e)
         {
-            labelStatus.Text = $"Size {brush_size.Value}";
+            lblBrushSize.Text = $"{brush_size.Value}";
             UpdateCursor();
         }
 
         private void Brush_opacity_Scroll(object sender, EventArgs e)
         {
-            labelStatus.Text = $"Brush opacity {brush_opacity.Value}";
+            lblBrushOpacity.Text = $"{brush_opacity.Value}";
         }
 
         private void Brush_smoothness_Scroll(object sender, EventArgs e)
         {
-            labelStatus.Text = $"Brush opacity {brush_smoothness.Value}";
+            lblBrushSmoothness.Text = $"{brush_smoothness.Value}";
         }
 
         private void Brush_hardness_Scroll(object sender, EventArgs e)
         {
+            lblBrushHardness.Text = $"{brush_hardness.Value}";
             if (paint.Brush != null)
             {
-                labelStatus.Text = $"Size {brush_hardness.Value}";
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
                 UpdateCursor();
@@ -466,10 +474,19 @@ namespace PixelEditor
                 {
                     using FileStream fs = File.Open(ofd.FileName, FileMode.Open);
 
-                    //StrokePTVLoader.Load(fs, out zoom, out imageOffset, out image, out var layers);
+                    StrokePTVLoader.Load(fs, out zoom, out imageOffset, out var layers, out int selectedLayerIndex);
 
                     imageLayers.Clear();
                     chkListLayers.Items.Clear();
+
+                    imageLayers.AddRange(layers);
+                    foreach (var layer in imageLayers)
+                    {
+                        chkListLayers.Items.Add(layer.Name);
+                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
+                    }
+
+                    chkListLayers.SelectedIndex = selectedLayerIndex;
 
                     currentFilePath = ofd.FileName;
                     isDirty = false;
@@ -528,7 +545,7 @@ namespace PixelEditor
             try
             {
                 using FileStream fs = File.Open(fileName, FileMode.Create);
-                //StrokePTVSaver.Save(fs, zoom, imageOffset, image, strokeLayers, includeImage: true);
+                StrokePTVSaver.Save(fs, zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex);
                 currentFilePath = fileName;
                 isDirty = false;
                 UpdateTitleBar();
@@ -620,12 +637,14 @@ namespace PixelEditor
 
             AddLayer(bmp);
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void BtnSubtractVector_Click(object sender, EventArgs e)
         {
             RemoveLayer(chkListLayers.SelectedIndex);
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void BtnMoveUp_Click(object sender, EventArgs e)
@@ -647,6 +666,7 @@ namespace PixelEditor
             chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
 
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void BtnMoveDown_Click(object sender, EventArgs e)
@@ -669,6 +689,7 @@ namespace PixelEditor
             chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
 
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void MoveToTopToolStripMenuItem_Click(object sender, EventArgs e)
@@ -689,6 +710,7 @@ namespace PixelEditor
             chkListLayers.SelectedIndex = 0;
 
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void MoveToBottomToolStripMenuItem_Click(object sender, EventArgs e)
@@ -710,6 +732,7 @@ namespace PixelEditor
             chkListLayers.SelectedIndex = newIndex;
 
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void ChkListLayers_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -764,7 +787,7 @@ namespace PixelEditor
                 formName.StrokeName = imageLayers[chkListLayers.SelectedIndex].Name;
                 if (formName.ShowDialog() == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
+                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
                     imageLayers[chkListLayers.SelectedIndex].Name = formName.StrokeName;
                     chkListLayers.Items[chkListLayers.SelectedIndex] = formName.StrokeName;
                 }
@@ -817,7 +840,7 @@ namespace PixelEditor
 
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
             float zoomDelta = 0.1f;
             zoom = Math.Max(0.1f, Math.Min(10.0f, zoom + zoomDelta));
             RedrawImage();
@@ -825,7 +848,7 @@ namespace PixelEditor
 
         private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
             float zoomDelta = 0.1f;
             zoom = Math.Max(0.1f, Math.Min(10.0f, zoom - zoomDelta));
             RedrawImage();
@@ -833,7 +856,7 @@ namespace PixelEditor
 
         private void BtnResetZoom_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
             zoom = 1.0f;
             imageOffset = new(0, 0);
             RedrawImage();
@@ -937,7 +960,7 @@ namespace PixelEditor
         {
             if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
             {
-                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers));
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
                 canvas.Image?.Dispose();
                 canvas.Image = null;
                 imageLayers[chkListLayers.SelectedIndex].Image?.Dispose();
@@ -990,12 +1013,54 @@ namespace PixelEditor
 
         private void UndoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (HistoryManager.CanUndo)
+            {
+                HistoryItem? history = HistoryManager.Undo();
 
+                if (history != null)
+                {
+                    imageLayers.Clear();
+                    chkListLayers.Items.Clear();
+                    imageLayers.AddRange(history.Layers);
+                    zoom = history.Zoom;
+                    imageOffset = history.Offset;
+                    foreach (var layer in imageLayers)
+                    {
+                        chkListLayers.Items.Add(layer.Name);
+                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
+                    }
+                    chkListLayers.SelectedIndex = history.SelectedLayerIndex;
+                }
+
+                Refresh();
+                RedrawImage();
+            }
         }
 
         private void RedoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (HistoryManager.CanRedo)
+            {
+                HistoryItem? history = HistoryManager.Redo();
 
+                if (history != null)
+                {
+                    imageLayers.Clear();
+                    chkListLayers.Items.Clear();
+                    imageLayers.AddRange(history.Layers);
+                    zoom = history.Zoom;
+                    imageOffset = history.Offset;
+                    foreach (var layer in imageLayers)
+                    {
+                        chkListLayers.Items.Add(layer.Name);
+                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
+                    }
+                    chkListLayers.SelectedIndex = history.SelectedLayerIndex;
+                }
+
+                Refresh();
+                RedrawImage();
+            }
         }
 
         private void GeneralSettingsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1159,7 +1224,7 @@ namespace PixelEditor
                         layer.X += (int)Math.Round(dx / ratio);
                         layer.Y += (int)Math.Round(dy / ratio);
 
-                        int minPaintIntervalMs = 16;
+                        int minPaintIntervalMs = 16; // 60 fps
                         if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                         {
                             RedrawImage(chkListLayers.SelectedIndex);
@@ -1174,6 +1239,8 @@ namespace PixelEditor
                     && chkListLayers.SelectedIndex >= 0
                     && chkListLayers.SelectedIndex < imageLayers.Count)
                 {
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+
                     float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum; //0.22f
 
                     var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
@@ -1194,9 +1261,7 @@ namespace PixelEditor
                         return;
                     }
 
-                    PointF delta = new(
-                        localCurrentRaw.X - lazyLocalPos.X,
-                        localCurrentRaw.Y - lazyLocalPos.Y);
+                    PointF delta = new(localCurrentRaw.X - lazyLocalPos.X, localCurrentRaw.Y - lazyLocalPos.Y);
 
                     lazyLocalPos.X += delta.X * lazySmoothing;
                     lazyLocalPos.Y += delta.Y * lazySmoothing;
@@ -1224,11 +1289,7 @@ namespace PixelEditor
                         int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
                         int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
 
-                        dirty = new(
-                            minX + selectedLayer.X,
-                            minY + selectedLayer.Y,
-                            maxX - minX,
-                            maxY - minY);
+                        dirty = new(minX + selectedLayer.X, minY + selectedLayer.Y, maxX - minX, maxY - minY);
 
                         dirty.Intersect(new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height));
 
@@ -1246,7 +1307,7 @@ namespace PixelEditor
                             PointF p2 = strokePoints[n - 1];
                             PointF p3 = p2;
 
-                            const int segments = 8; // Increased for smoother curves
+                            const int segments = 1; // Increased for smoother curves, allegedly (intitialy set to 8 - too slow)
 
                             PointF previousPos = strokeLastInterpolated;
 
@@ -1276,7 +1337,10 @@ namespace PixelEditor
 
                     lastMousePosition = e.Location;
 
-                    const int minPaintIntervalMs = 16;
+                    sw.Stop();
+                    Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
+
+                    const int minPaintIntervalMs = 32; // 30 fps
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                     {
                         RedrawImage(chkListLayers.SelectedIndex);
@@ -1290,7 +1354,7 @@ namespace PixelEditor
             {
                 if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
                 {
-                    selectionPoints.Add(e.Location);
+                    selectionPoints.Add(e.Location); // You don't need to call RedrawImage() here since the selection is drawn with the timer for selectionPoints.Count > 1
                 }
             }
 
@@ -1312,6 +1376,7 @@ namespace PixelEditor
             LayerManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             RedrawImage();
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private float GetCanvasToWorldRatio()

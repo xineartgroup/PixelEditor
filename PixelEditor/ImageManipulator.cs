@@ -7,10 +7,10 @@ namespace PixelEditor
     {
         public static Bitmap FillColor(Image image, ImageBlending blend, Color color, float opacity, Point startPoint, List<Point> selectionPoints, Control canvas, float zoom, PointF imageOffset)
         {
-            Bitmap bitmap = new Bitmap(image);
+            Bitmap bitmap = new(image);
             int width = bitmap.Width;
             int height = bitmap.Height;
-            Rectangle rect = new Rectangle(0, 0, width, height);
+            Rectangle rect = new(0, 0, width, height);
             BitmapData data = bitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
             int bytes = data.Stride * height;
@@ -35,37 +35,35 @@ namespace PixelEditor
             float imageX = ((canvas.Width - scaledWidth) / 2) + imageOffset.X;
             float imageY = ((canvas.Height - scaledHeight) / 2) + imageOffset.Y;
 
-            PointF CanvasToImage(Point p) => new PointF(
+            PointF CanvasToImage(Point p) => new(
                 (p.X - imageX) / scaledWidth * width,
                 (p.Y - imageY) / scaledHeight * height
             );
 
             PointF startF = CanvasToImage(startPoint);
-            Point startI = new Point((int)startF.X, (int)startF.Y);
+            Point startI = new((int)startF.X, (int)startF.Y);
 
             bool usePointSelection = selectionPoints.Count > 2;
-            byte[] mask = null;
+            byte[] mask = [];
 
             if (usePointSelection)
             {
                 mask = new byte[width * height];
-                using (Bitmap maskBmp = new Bitmap(width, height, PixelFormat.Format32bppArgb))
-                using (Graphics g = Graphics.FromImage(maskBmp))
-                {
-                    g.Clear(Color.Transparent);
-                    PointF[] pts = selectionPoints.Select(CanvasToImage).ToArray();
-                    using (Brush b = new SolidBrush(Color.White))
-                        g.FillPolygon(b, pts);
+                using Bitmap maskBmp = new(width, height, PixelFormat.Format32bppArgb);
+                using Graphics g = Graphics.FromImage(maskBmp);
+                g.Clear(Color.Transparent);
+                PointF[] pts = [.. selectionPoints.Select(CanvasToImage)];
+                using (Brush b = new SolidBrush(Color.White))
+                    g.FillPolygon(b, pts);
 
-                    BitmapData mData = maskBmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                    unsafe
-                    {
-                        byte* ptr = (byte*)mData.Scan0;
-                        for (int i = 0; i < width * height; i++)
-                            if (ptr[i * 4 + 3] > 0) mask[i] = 1;
-                    }
-                    maskBmp.UnlockBits(mData);
+                BitmapData mData = maskBmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                unsafe
+                {
+                    byte* ptr = (byte*)mData.Scan0;
+                    for (int i = 0; i < width * height; i++)
+                        if (ptr[i * 4 + 3] > 0) mask[i] = 1;
                 }
+                maskBmp.UnlockBits(mData);
             }
 
             void ApplyBlend(int idx, byte cr, byte cg, byte cb, float alpha, float invAlpha)
@@ -125,7 +123,7 @@ namespace PixelEditor
                 byte tr = pixels[startIdx + 2], tg = pixels[startIdx + 1], tb = pixels[startIdx];
 
                 bool[] visited = new bool[width * height];
-                Stack<Point> stack = new Stack<Point>();
+                Stack<Point> stack = new();
                 stack.Push(startI);
 
                 while (stack.Count > 0)

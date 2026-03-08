@@ -1,6 +1,4 @@
-﻿using System.Drawing.Drawing2D;
-
-namespace PixelEditor
+﻿namespace PixelEditor
 {
     public class Layer(string name, bool isVisible)
     {
@@ -57,23 +55,6 @@ namespace PixelEditor
         {
             if (Image == null) return Rectangle.Empty;
             return new Rectangle(_x, _y, Image.Width * _scaleWidth, Image.Height * _scaleHeight);
-        }
-
-        public Image? GetProxyImage(int step)
-        {
-            if (Image == null || step <= 1) return Image;
-
-            int div = (int)Math.Pow(2, step - 1);
-            int nw = Math.Max(1, Image.Width / div);
-            int nh = Math.Max(1, Image.Height / div);
-
-            Bitmap proxy = new(nw, nh);
-            using (Graphics g = Graphics.FromImage(proxy))
-            {
-                g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                g.DrawImage(Image, 0, 0, nw, nh);
-            }
-            return proxy;
         }
 
         public void ResizeContainer(int containerWidth, int containerHeight)
