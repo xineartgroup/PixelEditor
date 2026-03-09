@@ -349,8 +349,7 @@ namespace PixelEditor
             return layerBuffer;
         }
 
-        private static void ApplyCachedLayer(ColorGrid screen, ColorGrid source, Rectangle bounds,
-            int screenW, int screenH, ImageBlending mode)
+        private static void ApplyCachedLayer(ColorGrid screen, ColorGrid source, Rectangle bounds, int screenW, int screenH, ImageBlending mode)
         {
             int startY = Math.Max(0, bounds.Y);
             int endY = Math.Min(screenH, bounds.Y + bounds.Height);
@@ -378,8 +377,7 @@ namespace PixelEditor
             });
         }
 
-        private static void ApplyCachedLayerRegion(ColorGrid screen, ColorGrid source, Rectangle sourceBounds,
-            Rectangle region, ImageBlending mode)
+        private static void ApplyCachedLayerRegion(ColorGrid screen, ColorGrid source, Rectangle sourceBounds, Rectangle region, ImageBlending mode)
         {
             int startY = Math.Max(region.Top, Math.Max(0, sourceBounds.Y));
             int endY = Math.Min(region.Bottom, Math.Min(screen.Height, sourceBounds.Bottom));

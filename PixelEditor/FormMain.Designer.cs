@@ -178,7 +178,8 @@
             label1 = new Label();
             label2 = new Label();
             groupBox1 = new GroupBox();
-            btnFreehand = new RadioButton();
+            btnLassoSelect = new RadioButton();
+            btnRectangleSelect = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -204,6 +205,7 @@
             canvas.Size = new Size(718, 430);
             canvas.TabIndex = 0;
             canvas.TabStop = false;
+            canvas.MouseDoubleClick += Canvas_MouseDoubleClick;
             canvas.MouseDown += PixelImage_MouseDown;
             canvas.MouseMove += PixelImage_MouseMove;
             canvas.MouseUp += PixelImage_MouseUp;
@@ -1380,18 +1382,31 @@
             groupBox1.TabIndex = 30;
             groupBox1.TabStop = false;
             // 
-            // btnFreehand
+            // btnLassoSelect
             // 
-            btnFreehand.Appearance = Appearance.Button;
-            btnFreehand.FlatStyle = FlatStyle.Popup;
-            btnFreehand.Image = Properties.Resources.Lasso;
-            btnFreehand.Location = new Point(126, 27);
-            btnFreehand.Name = "btnFreehand";
-            btnFreehand.Size = new Size(32, 32);
-            btnFreehand.TabIndex = 26;
-            btnFreehand.UseVisualStyleBackColor = true;
-            btnFreehand.CheckedChanged += BtnPointer_CheckedChanged;
-            btnFreehand.Click += BtnBrusher_Click;
+            btnLassoSelect.Appearance = Appearance.Button;
+            btnLassoSelect.FlatStyle = FlatStyle.Popup;
+            btnLassoSelect.Image = Properties.Resources.Lasso;
+            btnLassoSelect.Location = new Point(126, 27);
+            btnLassoSelect.Name = "btnLassoSelect";
+            btnLassoSelect.Size = new Size(32, 32);
+            btnLassoSelect.TabIndex = 26;
+            btnLassoSelect.UseVisualStyleBackColor = true;
+            btnLassoSelect.CheckedChanged += BtnPointer_CheckedChanged;
+            btnLassoSelect.Click += BtnBrusher_Click;
+            // 
+            // btnRectangleSelect
+            // 
+            btnRectangleSelect.Appearance = Appearance.Button;
+            btnRectangleSelect.FlatStyle = FlatStyle.Popup;
+            btnRectangleSelect.Image = Properties.Resources.Rect;
+            btnRectangleSelect.Location = new Point(162, 27);
+            btnRectangleSelect.Name = "btnRectangleSelect";
+            btnRectangleSelect.Size = new Size(32, 32);
+            btnRectangleSelect.TabIndex = 26;
+            btnRectangleSelect.UseVisualStyleBackColor = true;
+            btnRectangleSelect.CheckedChanged += BtnPointer_CheckedChanged;
+            btnRectangleSelect.Click += BtnBrusher_Click;
             // 
             // FormMain
             // 
@@ -1401,7 +1416,8 @@
             Controls.Add(groupBox1);
             Controls.Add(groupFillDetail);
             Controls.Add(groupBrushDetail);
-            Controls.Add(btnFreehand);
+            Controls.Add(btnRectangleSelect);
+            Controls.Add(btnLassoSelect);
             Controls.Add(btnBrusher);
             Controls.Add(btnFiller);
             Controls.Add(btnPointer);
@@ -1587,10 +1603,11 @@
         private ToolStripMenuItem toolStripMenuItem24;
         private ToolStripMenuItem toolStripMenuItem25;
         private ToolStripMenuItem toolStripMenuItem26;
-        private RadioButton btnFreehand;
+        private RadioButton btnLassoSelect;
         private Label lblBrushSize;
         private Label lblBrushHardness;
         private Label lblBrushSmoothness;
         private Label lblBrushOpacity;
+        private RadioButton btnRectangleSelect;
     }
 }

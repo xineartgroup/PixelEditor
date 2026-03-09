@@ -17,12 +17,24 @@ namespace PixelEditor
         private Paint paint;
         private Point lastMousePosition;
         private PointF imageOffset = new(0, 0);
+        private PointF lazyLocalPos;
+        private PointF strokeLastInterpolated;
+        private PointF selectionCenter;
+        private RectangleF selectionBounds;
         private bool isDragging = false;
         private bool isPainting = false;
-        private bool isSelecting = false;
+        private bool isRotating = false;
+        private bool isScaling = false;
+        private bool isLassoSelecting = false;
+        private bool isRectSelecting = false;
         private bool isDirty = false;
         private float zoom = 0.95f;
         private float _dashOffset = 0;
+        private float startMouseAngle = 0;
+        private float rotationAngle = 0;
+        private float initialScaleDistance = 0f;
+        private float initialScaleFactor = 0f;
+        private float scaleFactor = 1.0f;
         private int selectedBrushIndex = 0;
         private string currentFilePath = "";
         private DateTime lastPaintTime = DateTime.MinValue;
@@ -30,8 +42,11 @@ namespace PixelEditor
         private readonly List<Image> brushes = [];
         private List<PointF> strokePoints = [];
         private readonly List<Point> selectionPoints = [];
-        private PointF lazyLocalPos;
-        private PointF strokeLastInterpolated;
+        private Bitmap? selectedAreaBitmap = null;
+        private readonly Matrix transformMatrix = new();
+
+        private const float ROTATION_HANDLE_SIZE = 20;
+        private const float SCALE_HANDLE_SIZE = 15;
 
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
@@ -236,7 +251,12 @@ namespace PixelEditor
                 groupBrushDetail.Visible = true;
                 UpdateCursor();
             }
-            else if (btnFreehand.Checked)
+            else if (btnLassoSelect.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                canvas.Cursor = Cursors.Cross;
+            }
+            else if (btnRectangleSelect.Checked)
             {
                 PaintingEngine.SetBrush(paint);
                 canvas.Cursor = Cursors.Cross;
@@ -296,7 +316,6 @@ namespace PixelEditor
                 int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
 
-                // Calculate hot spot relative to the scaled cursor size
                 int hotSpotX = cursorWidth / 2;
                 int hotSpotY = cursorHeight / 2;
 
@@ -305,6 +324,41 @@ namespace PixelEditor
             else
             {
                 canvas.Cursor = Cursors.Default;
+            }
+        }
+
+        private void UpdateCursor(Point mousePosition)
+        {
+            if (IsOverRotationHandle(mousePosition))
+            {
+                Cursor.Current = Cursors.Hand;
+            }
+            else if (IsOverScaleHandle(mousePosition, out string handle))
+            {
+                Cursor.Current = GetScaleCursor(handle);
+            }
+            else if (IsPointInSelection(mousePosition))
+            {
+                Cursor.Current = Cursors.SizeAll;
+            }
+            else
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private static Cursor GetScaleCursor(string handle)
+        {
+            switch (handle)
+            {
+                case "topLeft":
+                case "bottomRight":
+                    return Cursors.SizeNWSE;
+                case "topRight":
+                case "bottomLeft":
+                    return Cursors.SizeNESW;
+                default:
+                    return Cursors.SizeAll;
             }
         }
 
@@ -427,7 +481,7 @@ namespace PixelEditor
                     DialogResult result = DialogResult.Yes;
                     if (result != DialogResult.Cancel)
                     {
-                        zoom = 1.0f;
+                        zoom = 0.95f;
                         imageOffset = new PointF(0, 0);
 
                         redToolStripMenuItem1.Checked = false;
@@ -446,7 +500,7 @@ namespace PixelEditor
         {
             if (!ConfirmAbandonChanges()) return;
 
-            zoom = 1.0f;
+            zoom = 0.95f;
             imageOffset = new PointF(0, 0);
 
             HistoryManager.Clear();
@@ -857,7 +911,7 @@ namespace PixelEditor
         private void BtnResetZoom_Click(object sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-            zoom = 1.0f;
+            zoom = 0.95f;
             imageOffset = new(0, 0);
             RedrawImage();
         }
@@ -1139,6 +1193,227 @@ namespace PixelEditor
 
         }
 
+        private void CalculateSelectionBounds()
+        {
+            if (selectionPoints.Count == 0) return;
+
+            float minX = float.MaxValue, minY = float.MaxValue;
+            float maxX = float.MinValue, maxY = float.MinValue;
+
+            foreach (var point in selectionPoints)
+            {
+                minX = Math.Min(minX, point.X);
+                minY = Math.Min(minY, point.Y);
+                maxX = Math.Max(maxX, point.X);
+                maxY = Math.Max(maxY, point.Y);
+            }
+
+            selectionBounds = new RectangleF(minX, minY, maxX - minX, maxY - minY);
+            selectionCenter = new PointF(
+                selectionBounds.X + selectionBounds.Width / 2,
+                selectionBounds.Y + selectionBounds.Height / 2
+            );
+        }
+
+        private void UpdateTransformMatrix()
+        {
+            transformMatrix.Reset();
+            transformMatrix.Translate(-selectionCenter.X, -selectionCenter.Y, MatrixOrder.Append);
+            transformMatrix.Rotate(rotationAngle, MatrixOrder.Append);
+            transformMatrix.Scale(scaleFactor, scaleFactor, MatrixOrder.Append);
+            transformMatrix.Translate(selectionCenter.X, selectionCenter.Y, MatrixOrder.Append);
+        }
+
+        private void MoveSelectionContent(float dx, float dy)
+        {
+            selectionCenter = new PointF(selectionCenter.X + dx, selectionCenter.Y + dy);
+
+            UpdateTransformMatrix();
+        }
+
+        private Bitmap? ExtractSelectedArea(Layer selectedLayer)
+        {
+            if (selectedLayer.Image == null || selectionPoints.Count < 3) return null;
+
+            Point layerTopLeft = ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y), LayerManipulator.Width, LayerManipulator.Height);
+            layerTopLeft.X -= selectedLayer.X;
+            layerTopLeft.Y -= selectedLayer.Y;
+
+            float ratio = GetCanvasToWorldRatio();
+            int srcW = (int)(selectionBounds.Width / ratio);
+            int srcH = (int)(selectionBounds.Height / ratio);
+
+            Bitmap result = new(srcW, srcH);
+
+            using Graphics g = Graphics.FromImage(result);
+
+            using GraphicsPath path = new();
+            PointF[] sourcePoints = [.. selectionPoints.Select(p => {
+                Point worldP = ScreenToWorld(p, LayerManipulator.Width, LayerManipulator.Height);
+                return new PointF(worldP.X - selectedLayer.X - layerTopLeft.X,
+                                  worldP.Y - selectedLayer.Y - layerTopLeft.Y);
+            })];
+
+            path.AddPolygon(sourcePoints);
+            g.SetClip(path);
+
+            g.DrawImage(selectedLayer.Image,
+                new Rectangle(0, 0, srcW, srcH),
+                new Rectangle(layerTopLeft.X, layerTopLeft.Y, srcW, srcH),
+                GraphicsUnit.Pixel);
+
+            return result;
+        }
+
+        private Bitmap? CutSelectionFromLayer(Layer selectedLayer, bool emptyHole = false)
+        {
+            if (chkListLayers.SelectedIndex < 0) return null;
+            if (selectedLayer.Image == null || selectionPoints.Count < 3) return null;
+
+            Bitmap result = new(selectedLayer.Image);
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                PointF[] layerPoints = [.. selectionPoints.Select(p =>
+                {
+                    Point worldP = ScreenToWorld(p, LayerManipulator.Width, LayerManipulator.Height);
+                    return new PointF(worldP.X - selectedLayer.X, worldP.Y - selectedLayer.Y);
+                })];
+
+                Color fillColor = emptyHole ? Color.Transparent : Color.White;
+
+                using GraphicsPath path = new();
+                path.AddPolygon(layerPoints);
+                g.CompositingMode = CompositingMode.SourceCopy;
+                using Brush transparentBrush = new SolidBrush(fillColor);
+                g.FillPath(transparentBrush, path);
+            }
+            return result;
+        }
+
+        private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
+        {
+            if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
+
+            Bitmap result = new(selectedLayer.Image);
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                float ratio = GetCanvasToWorldRatio();
+                Point worldPos = ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y),
+                                                LayerManipulator.Width, LayerManipulator.Height);
+
+                float localX = worldPos.X - selectedLayer.X;
+                float localY = worldPos.Y - selectedLayer.Y;
+
+                using Matrix layerMatrix = transformMatrix.Clone();
+                float[] elements = layerMatrix.Elements;
+
+                float worldOffsetX = (selectionCenter.X - lastMousePosition.X) / ratio;
+                float worldOffsetY = (selectionCenter.Y - lastMousePosition.Y) / ratio;
+
+                layerMatrix.Reset();
+                layerMatrix.Translate(localX + (selectedAreaBitmap.Width / 2f),
+                                     localY + (selectedAreaBitmap.Height / 2f));
+                layerMatrix.Rotate(rotationAngle);
+                layerMatrix.Scale(scaleFactor, scaleFactor);
+                layerMatrix.Translate(-(selectedAreaBitmap.Width / 2f),
+                                     -(selectedAreaBitmap.Height / 2f));
+
+                g.Transform = layerMatrix;
+                g.DrawImage(selectedAreaBitmap, 0, 0);
+            }
+
+            selectedAreaBitmap?.Dispose();
+            selectedAreaBitmap = null;
+            selectionPoints.Clear();
+
+            return result;
+        }
+
+        private bool IsPointInSelection(Point point)
+        {
+            if (selectionPoints.Count < 3) return false;
+
+            using GraphicsPath path = new();
+            path.AddPolygon(selectionPoints.ToArray());
+            return path.IsVisible(point);
+        }
+
+        private bool IsOverRotationHandle(Point point)
+        {
+            PointF rotationHandle = new(
+                selectionCenter.X,
+                selectionBounds.Y - ROTATION_HANDLE_SIZE
+            );
+
+            float distance = Distance(point, rotationHandle);
+            return distance < ROTATION_HANDLE_SIZE;
+        }
+
+        private bool IsOverScaleHandle(Point point, out string handle)
+        {
+            handle = "";
+
+            var corners = new[]
+            {
+                new { Name = "topLeft", Point = new PointF(selectionBounds.X, selectionBounds.Y) },
+                new { Name = "topRight", Point = new PointF(selectionBounds.Right, selectionBounds.Y) },
+                new { Name = "bottomLeft", Point = new PointF(selectionBounds.X, selectionBounds.Bottom) },
+                new { Name = "bottomRight", Point = new PointF(selectionBounds.Right, selectionBounds.Bottom) }
+            };
+
+            foreach (var corner in corners)
+            {
+                if (Distance(point, corner.Point) < SCALE_HANDLE_SIZE)
+                {
+                    handle = corner.Name;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private float CalculateScaleFactor(Point mousePosition)
+        {
+            float currentDistance = Distance(Point.Round(selectionCenter), mousePosition);
+
+            if (initialScaleDistance > 0)
+            {
+                return (currentDistance / initialScaleDistance) * initialScaleFactor;
+            }
+            return 1.0f;
+        }
+
+        private void MoveSelection(float dx, float dy)
+        {
+            for (int i = 0; i < selectionPoints.Count; i++)
+            {
+                selectionPoints[i] = new Point(
+                    (int)(selectionPoints[i].X + dx),
+                    (int)(selectionPoints[i].Y + dy)
+                );
+            }
+
+            CalculateSelectionBounds();
+        }
+
+        private static float Distance(Point p1, PointF p2)
+        {
+            float dx = p1.X - p2.X;
+            float dy = p1.Y - p2.Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        private float CalculateRotationAngle(Point mousePosition)
+        {
+            float dx = mousePosition.X - selectionCenter.X;
+            float dy = mousePosition.Y - selectionCenter.Y;
+            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+        }
+
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
@@ -1153,7 +1428,46 @@ namespace PixelEditor
             }
             else if (btnPointer.Checked)
             {
-                isDragging = true;
+                if (selectionPoints.Count > 0)
+                {
+                    if (chkListLayers.Items.Count == imageLayers.Count
+                        && chkListLayers.SelectedIndex >= 0
+                        && chkListLayers.SelectedIndex < imageLayers.Count)
+                    {
+                        var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+                        if (selectedLayer.Image == null || selectionPoints.Count == 0) return;
+
+                        if (IsOverRotationHandle(e.Location))
+                        {
+                            isRotating = true;
+                            Cursor.Current = Cursors.SizeAll;
+                            startMouseAngle = CalculateRotationAngle(e.Location) - rotationAngle;
+                        }
+                        else if (IsOverScaleHandle(e.Location, out string handle))
+                        {
+                            isScaling = true;
+                            Cursor.Current = GetScaleCursor(handle);
+                            initialScaleDistance = Distance(Point.Round(selectionCenter), e.Location);
+                            initialScaleFactor = scaleFactor;
+                        }
+                        else if (IsPointInSelection(e.Location))
+                        {
+                            isDragging = true;
+                            Cursor.Current = Cursors.SizeAll;
+                        }
+
+                        if (selectedAreaBitmap == null)
+                        {
+                            CalculateSelectionBounds();
+                            selectedAreaBitmap = ExtractSelectedArea(selectedLayer);
+                            selectedLayer.Image = CutSelectionFromLayer(selectedLayer);
+                        }
+                    }
+                }
+                else
+                {
+                    isDragging = true;
+                }
             }
             else if (btnFiller.Checked)
             {
@@ -1164,8 +1478,8 @@ namespace PixelEditor
                     var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                     if (selectedLayer.Image != null)
                     {
-                        Bitmap bitmap = ImageManipulator.FillColor(selectedLayer.Image, 
-                            (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(), 
+                        Bitmap bitmap = ImageManipulator.FillColor(selectedLayer.Image,
+                            (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
                             (float)(fillOpacity.Value / fillOpacity.Maximum),
                             lastMousePosition,
                             selectionPoints,
@@ -1180,9 +1494,15 @@ namespace PixelEditor
                     }
                 }
             }
-            else if (btnFreehand.Checked)
+            else if (btnLassoSelect.Checked)
             {
-                isSelecting = true;
+                isLassoSelecting = true;
+                selectionPoints.Clear();
+                selectionPoints.Add(lastMousePosition);
+            }
+            else if (btnRectangleSelect.Checked)
+            {
+                isRectSelecting = true;
                 selectionPoints.Clear();
                 selectionPoints.Add(lastMousePosition);
             }
@@ -1218,19 +1538,50 @@ namespace PixelEditor
                         && chkListLayers.SelectedIndex >= 0
                         && chkListLayers.SelectedIndex < imageLayers.Count)
                     {
-                        var layer = imageLayers[chkListLayers.SelectedIndex];
-
-                        float ratio = GetCanvasToWorldRatio();
-                        layer.X += (int)Math.Round(dx / ratio);
-                        layer.Y += (int)Math.Round(dy / ratio);
-
-                        int minPaintIntervalMs = 16; // 60 fps
-                        if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                        if (selectionPoints.Count > 0)
                         {
-                            RedrawImage(chkListLayers.SelectedIndex);
-                            lastPaintTime = DateTime.Now;
+                            MoveSelection(dx, dy);
+                            MoveSelectionContent(dx, dy);
+                            RedrawImage(); //selectedLayerIndex: chkListLayers.SelectedIndex
+                        }
+                        else
+                        {
+                            var layer = imageLayers[chkListLayers.SelectedIndex];
+
+                            float ratio = GetCanvasToWorldRatio();
+                            layer.X += (int)Math.Round(dx / ratio);
+                            layer.Y += (int)Math.Round(dy / ratio);
+
+                            int minPaintIntervalMs = 16; // 60 fps
+                            if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                            {
+                                RedrawImage(chkListLayers.SelectedIndex);
+                                lastPaintTime = DateTime.Now;
+                            }
                         }
                     }
+                }
+            }
+            else if (isRotating)
+            {
+                if (selectionPoints.Count > 0)
+                {
+                    rotationAngle = CalculateRotationAngle(e.Location) - startMouseAngle;
+                    UpdateTransformMatrix();
+                }
+                else
+                {
+                }
+            }
+            else if (isScaling)
+            {
+                if (selectionPoints.Count > 0)
+                {
+                    scaleFactor = CalculateScaleFactor(e.Location);
+                    UpdateTransformMatrix();
+                }
+                else
+                {
                 }
             }
             else if (isPainting)
@@ -1350,11 +1701,37 @@ namespace PixelEditor
                     }
                 }
             }
-            else if (isSelecting)
+            else if (isLassoSelecting)
             {
                 if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
                 {
                     selectionPoints.Add(e.Location); // You don't need to call RedrawImage() here since the selection is drawn with the timer for selectionPoints.Count > 1
+                }
+            }
+            else if (isRectSelecting)
+            {
+                if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
+                {
+                    if (selectionPoints.Count == 1)
+                    {
+                        selectionPoints.Add(new Point(e.X, selectionPoints[0].Y));
+                        selectionPoints.Add(e.Location);
+                        selectionPoints.Add(new Point(selectionPoints[0].X, e.Y));
+                        selectionPoints.Add(selectionPoints[0]);
+                    }
+                    else if (selectionPoints.Count == 5)
+                    {
+                        selectionPoints[1] = new Point(e.X, selectionPoints[0].Y);
+                        selectionPoints[2] = e.Location;
+                        selectionPoints[3] = new Point(selectionPoints[0].X, e.Y);
+                    }
+                }
+            }
+            else
+            {
+                if (selectionPoints.Count > 0)
+                {
+                    UpdateCursor(e.Location);
                 }
             }
 
@@ -1363,7 +1740,7 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object sender, MouseEventArgs e)
         {
-            if (isSelecting)
+            if (isLassoSelecting)
             {
                 if (selectionPoints.Count > 2)
                 {
@@ -1372,11 +1749,37 @@ namespace PixelEditor
             }
             isDragging = false;
             isPainting = false;
-            isSelecting = false;
+            isLassoSelecting = false;
+            isRectSelecting = false;
+            isRotating = false;
+            isScaling = false;
+            Cursor.Current = Cursors.Default;
             LayerManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             RedrawImage();
             HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
+        }
+
+        private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (selectionPoints.Count > 0)
+            {
+                selectionPoints.Clear();
+            }
+
+            if (selectedAreaBitmap != null)
+            {
+                if (chkListLayers.Items.Count == imageLayers.Count
+                    && chkListLayers.SelectedIndex >= 0
+                    && chkListLayers.SelectedIndex < imageLayers.Count)
+                {
+                    var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
+                    selectedLayer.Image = MergeSelectionToLayer(selectedLayer);
+                }
+            }
+
+            rotationAngle = 0;
+            scaleFactor = 1.0f;
         }
 
         private float GetCanvasToWorldRatio()
@@ -1411,7 +1814,6 @@ namespace PixelEditor
             float centerX = (canvas.Width - scaledWidth) / 2;
             float centerY = (canvas.Height - scaledHeight) / 2;
 
-            // Use the ratio of Screen Pixels to Canvas Pixels
             float ratio = scaledWidth / canvasW;
 
             int worldX = (int)((screenPt.X - (centerX + imageOffset.X)) / ratio);
@@ -1434,6 +1836,7 @@ namespace PixelEditor
                 new Rectangle(0, 0, 0, 0);
 
             RedrawRasterImage(LayerManipulator.GetImage(LayerManipulator.Screen, rect));
+            RedrawHandles();
 
             sw.Stop();
             Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
@@ -1473,22 +1876,78 @@ namespace PixelEditor
 
                 g.InterpolationMode = (zoom < 0.5f || zoom > 2.0f) ? InterpolationMode.HighQualityBicubic : InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = PixelOffsetMode.Half;
-
                 g.DrawImage(image, destRect);
 
-                if (selectionPoints.Count > 1)
+                if (selectedAreaBitmap != null)
                 {
-                    using Pen selectionPen = new(Color.Blue, 2f);
-                    selectionPen.DashPattern = [5, 5];
-                    selectionPen.DashOffset = _dashOffset;
-
-                    g.DrawLines(selectionPen, selectionPoints.ToArray());
+                    g.MultiplyTransform(transformMatrix);
+                    g.DrawImage(selectedAreaBitmap, selectionBounds);
+                    g.ResetTransform();
                 }
             }
 
             var old = canvas.Image;
             canvas.Image = bmp;
             old?.Dispose();
+        }
+
+        private void RedrawHandles()
+        {
+            if (selectionPoints.Count == 0 || canvas.Image == null) return;
+
+            using (Graphics g = Graphics.FromImage(canvas.Image))
+            {
+                if (selectionPoints.Count > 1)
+                {
+                    using Pen selectionPen = new(Color.Blue, 2f);
+                    selectionPen.DashPattern = [5, 5];
+                    selectionPen.DashOffset = _dashOffset;
+                    g.DrawLines(selectionPen, selectionPoints.ToArray());
+                }
+
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using Pen handlePen = new(Color.White, 1.5f);
+                using Brush scaleBrush = new SolidBrush(Color.FromArgb(0, 120, 215));
+                using Brush rotateBrush = new SolidBrush(Color.Gold);
+
+                PointF[] corners =
+                [
+                    new(selectionBounds.X, selectionBounds.Y),
+                    new(selectionBounds.Right, selectionBounds.Y),
+                    new(selectionBounds.X, selectionBounds.Bottom),
+                    new(selectionBounds.Right, selectionBounds.Bottom)
+                ];
+
+                foreach (var corner in corners)
+                {
+                    RectangleF rect = new(
+                        corner.X - SCALE_HANDLE_SIZE / 2,
+                        corner.Y - SCALE_HANDLE_SIZE / 2,
+                        SCALE_HANDLE_SIZE,
+                        SCALE_HANDLE_SIZE
+                    );
+                    g.FillRectangle(scaleBrush, rect);
+                    g.DrawRectangle(handlePen, rect.X, rect.Y, rect.Width, rect.Height);
+                }
+
+                float centerX = selectionBounds.X + selectionBounds.Width / 2;
+                float handleCenterY = selectionBounds.Y - ROTATION_HANDLE_SIZE;
+
+                g.DrawLine(handlePen, centerX, selectionBounds.Y, centerX, handleCenterY);
+
+                RectangleF rotRect = new(
+                    centerX - ROTATION_HANDLE_SIZE / 2,
+                    handleCenterY - ROTATION_HANDLE_SIZE / 2,
+                    ROTATION_HANDLE_SIZE,
+                    ROTATION_HANDLE_SIZE
+                );
+
+                g.FillEllipse(rotateBrush, rotRect);
+                g.DrawEllipse(handlePen, rotRect);
+            }
+
+            canvas.Invalidate();
         }
 
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
