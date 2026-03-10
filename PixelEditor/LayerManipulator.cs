@@ -11,7 +11,6 @@ namespace PixelEditor
         public static HashSet<Rectangle> DirtyRegions { get; set; } = [];
 
         private static ColorGrid? _backgroundBuffer;
-        private static ColorGrid? _activeBuffer;
 
         private static int _backgroundHash = 0;
         private static int _cachedSelectedIndex = -1;
@@ -22,7 +21,6 @@ namespace PixelEditor
         public static void InvalidateCompositeBuffers()
         {
             _backgroundBuffer = null;
-            _activeBuffer = null;
             _backgroundHash = 0;
             _cachedSelectedIndex = -1;
         }
@@ -32,10 +30,9 @@ namespace PixelEditor
             _backgroundHash = 0;
             _cachedSelectedIndex = -1;
             _backgroundBuffer = null;
-            _activeBuffer = null;
         }
 
-        public static void PopulateColorGrid(List<Layer> layers, int selectedLayerIndex = -1)
+        public static void PopulateColorGrid(List<Layer> layers, int selectedLayerIndex = -1, bool includeBackground = true)
         {
             if (_canvasBitmap == null || _canvasBitmap.Width != Width || _canvasBitmap.Height != Height)
                 PopulateBackgroundImage();
@@ -47,7 +44,11 @@ namespace PixelEditor
             }
 
             Screen = new ColorGrid(Width, Height);
-            InitializeScreenWithBackground();
+
+            if (includeBackground)
+            {
+                InitializeScreenWithBackground();
+            }
 
             for (int i = layers.Count - 1; i >= 0; i--)
             {

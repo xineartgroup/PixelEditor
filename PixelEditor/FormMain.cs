@@ -38,7 +38,7 @@ namespace PixelEditor
         private int selectedBrushIndex = 0;
         private string currentFilePath = "";
         private DateTime lastPaintTime = DateTime.MinValue;
-        private readonly List<Layer> imageLayers = [];
+        //private readonly List<Layer> imageLayers = [];
         private readonly List<Image> brushes = [];
         private List<PointF> strokePoints = [];
         private readonly List<Point> selectionPoints = [];
@@ -75,6 +75,9 @@ namespace PixelEditor
                 }
             };
             animationTimer.Start();
+
+            layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
+            layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -97,6 +100,24 @@ namespace PixelEditor
             Brush_smoothness_Scroll(sender, e);
             Brush_hardness_Scroll(sender, e);
             ReloadBrushes();
+        }
+
+        private void LayersControl_LayerVisibilityChanged(object? sender, LayerVisibilityChangedEventArgs e)
+        {
+            Console.WriteLine($"Layer {e.Layer.Name}'s visibility changed from {e.OldValue} to {e.NewValue}");
+
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            RedrawImage();
+        }
+
+        private void LayersControl_LayerOrderChanged(object? sender, SelectedLayerChangedEventArgs e)
+        {
+            Console.WriteLine($"Layer {e.NewLayer?.Name} was picked");
+
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            UpdateControls();
+
+            RedrawImage();
         }
 
         private void ReloadBrushes()
@@ -134,7 +155,7 @@ namespace PixelEditor
             }
         }
 
-        private void Pic_Click(object sender, EventArgs e)
+        private void Pic_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -193,6 +214,21 @@ namespace PixelEditor
         }
 
         private void BtnFillColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog c = new()
+            {
+                Color = btnFillColor.BackColor
+            };
+            if (c.ShowDialog() == DialogResult.OK)
+            {
+                btnFillColor.BackColor = c.Color;
+                paint.SetFillColor(btnFillColor.BackColor);
+                PaintingEngine.SetBrush(paint);
+                UpdateCursor(btnFiller.Image);
+            }
+        }
+
+        private void BtnFillColor1_Click(object sender, EventArgs e)
         {
             ColorDialog c = new()
             {
@@ -419,60 +455,12 @@ namespace PixelEditor
             }
         }
 
-        private void AddLayer(Image? image)
-        {
-            int count = 1;
-
-            for (int i = 0; i < imageLayers.Count; i++)
-            {
-                if (imageLayers[i].Name.StartsWith("layer "))
-                {
-                    string suffix = imageLayers[i].Name[6..];
-                    if (int.TryParse(suffix, out int num))
-                    {
-                        count = Math.Max(count, num + 1);
-                    }
-                }
-            }
-
-            if (chkListLayers.Items.Count != imageLayers.Count)
-            {
-                MessageBox.Show("Layer count mismatch. Cannot add new layer.");
-                return;
-            }
-
-            var layer = new Layer($"layer {count}", true);
-            layer.OnLayerChanged += (bounds) =>
-            {
-                if (bounds != Rectangle.Empty)
-                    LayerManipulator.DirtyRegions.Add(bounds);
-            };
-
-            chkListLayers.Items.Insert(0, layer.Name);
-            imageLayers.Insert(0, layer);
-            chkListLayers.SelectedIndex = 0;
-            imageLayers[chkListLayers.SelectedIndex].Image = image;
-            chkListLayers.SetItemChecked(chkListLayers.SelectedIndex, true);
-        }
-
-        private void RemoveLayer(int selectedIndex)
-        {
-            if (chkListLayers.Items.Count != imageLayers.Count)
-            {
-                MessageBox.Show("Layer count mismatch. Cannot add new layer.");
-                return;
-            }
-
-            if (selectedIndex < chkListLayers.Items.Count && selectedIndex >= 0)
-            {
-                imageLayers.RemoveAt(selectedIndex);
-                chkListLayers.Items.RemoveAt(selectedIndex);
-            }
-        }
-
         private void BtnBrowseImage_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog1 = new();
+            OpenFileDialog openFileDialog1 = new()
+            {
+                Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png;*.gif;*.tiff|All Files|*.*"
+            };
             if ((openFileDialog1).ShowDialog() == DialogResult.OK)
             {
                 Image image = Image.FromFile(openFileDialog1.FileName);
@@ -488,10 +476,115 @@ namespace PixelEditor
                         greenToolStripMenuItem1.Checked = false;
                         blueToolStripMenuItem1.Checked = false;
 
-                        AddLayer(image);
+                        //AddLayer(image);
+                        var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
+                        {
+                            Image = image
+                        };
+                        layersControl.InsertLayer(0, layer);
 
                         RedrawImage();
                     }
+                }
+            }
+        }
+
+        private void PNGPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new()
+            {
+                Filter = "PNG Image|*.png"
+            };
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    LayerManipulator.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
+
+                    var rect = new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height);
+
+                    Bitmap bitmap = LayerManipulator.GetImage(LayerManipulator.Screen, rect);
+                    bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                    labelStatus.Text = "Image saved successfully!";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving image: {ex.Message}");
+                }
+            }
+        }
+
+        private void JPEGPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new()
+            {
+                Filter = "JPEG Image|*.jpg;*.jpeg"
+            };
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    LayerManipulator.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
+
+                    var rect = new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height);
+
+                    Bitmap bitmap = LayerManipulator.GetImage(LayerManipulator.Screen, rect);
+                    bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    labelStatus.Text = "Image saved successfully!";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving image: {ex.Message}");
+                }
+            }
+        }
+
+        private void BMPPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new()
+            {
+                Filter = "BMP Image|*.bmp"
+            };
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    LayerManipulator.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
+
+                    var rect = new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height);
+
+                    Bitmap bitmap = LayerManipulator.GetImage(LayerManipulator.Screen, rect);
+                    bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
+                    labelStatus.Text = "Image saved successfully!";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving image: {ex.Message}");
+                }
+            }
+        }
+
+        private void GIFPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new()
+            {
+                Filter = "GIF Image|*.gif"
+            };
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    LayerManipulator.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
+
+                    var rect = new Rectangle(0, 0, LayerManipulator.Width, LayerManipulator.Height);
+
+                    Bitmap bitmap = LayerManipulator.GetImage(LayerManipulator.Screen, rect);
+                    bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Gif);
+                    labelStatus.Text = "Image saved successfully!";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving image: {ex.Message}");
                 }
             }
         }
@@ -504,12 +597,10 @@ namespace PixelEditor
             imageOffset = new PointF(0, 0);
 
             HistoryManager.Clear();
-            imageLayers.Clear();
-            chkListLayers.Items.Clear();
-            imageLayers.Clear();
+            layersControl.ClearLayers();
             RedrawImage();
 
-            currentFilePath = null;
+            currentFilePath = "";
             isDirty = false;
             UpdateTitleBar();
             this.Invalidate();
@@ -520,7 +611,7 @@ namespace PixelEditor
             if (!ConfirmAbandonChanges()) return;
 
             using OpenFileDialog ofd = new();
-            ofd.Filter = "Pixel to Vector Files (*.ptv)|*.ptv";
+            ofd.Filter = "Paint++ Files (*.ptv)|*.ptv";
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
@@ -530,17 +621,11 @@ namespace PixelEditor
 
                     StrokePTVLoader.Load(fs, out zoom, out imageOffset, out var layers, out int selectedLayerIndex);
 
-                    imageLayers.Clear();
-                    chkListLayers.Items.Clear();
+                    layersControl.ClearLayers();
 
-                    imageLayers.AddRange(layers);
-                    foreach (var layer in imageLayers)
-                    {
-                        chkListLayers.Items.Add(layer.Name);
-                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
-                    }
+                    layersControl.AddRange(layers);
 
-                    chkListLayers.SelectedIndex = selectedLayerIndex;
+                    layersControl.SetSelectedLayerIndex(selectedLayerIndex);
 
                     currentFilePath = ofd.FileName;
                     isDirty = false;
@@ -565,7 +650,7 @@ namespace PixelEditor
             if (string.IsNullOrEmpty(currentFilePath))
             {
                 using SaveFileDialog sfd = new();
-                sfd.Filter = "Pixel to Vector Files (*.ptv)|*.ptv";
+                sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -581,7 +666,7 @@ namespace PixelEditor
         private void SaveAsProjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using SaveFileDialog sfd = new();
-            sfd.Filter = "Pixel to Vector Files (*.ptv)|*.ptv";
+            sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
@@ -599,7 +684,7 @@ namespace PixelEditor
             try
             {
                 using FileStream fs = File.Open(fileName, FileMode.Create);
-                StrokePTVSaver.Save(fs, zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex);
+                StrokePTVSaver.Save(fs, zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex());
                 currentFilePath = fileName;
                 isDirty = false;
                 UpdateTitleBar();
@@ -638,7 +723,7 @@ namespace PixelEditor
                 if (string.IsNullOrEmpty(currentFilePath))
                 {
                     using SaveFileDialog sfd = new();
-                    sfd.Filter = "Pixel to Vector Files (*.ptv)|*.ptv";
+                    sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
                         PerformSave(sfd.FileName);
@@ -664,24 +749,33 @@ namespace PixelEditor
 
         private void Opacity_Leave(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
+            Layer? layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (layer != null)
             {
-                imageLayers[chkListLayers.SelectedIndex].Opacity = (int)opacity.Value;
+                layer.Opacity = (int)opacity.Value;
+                layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
                 RedrawImage();
             }
         }
 
         private void CboBlendMode_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
+            Layer? layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (layer != null)
             {
-                imageLayers[chkListLayers.SelectedIndex].BlendMode = Enum.Parse<ImageBlending>(cboBlendMode.Text);
-                RedrawImage();
+                if (layer.BlendMode != Enum.Parse<ImageBlending>(cboBlendMode.Text))
+                {
+                    layer.BlendMode = Enum.Parse<ImageBlending>(cboBlendMode.Text);
+                    layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
+                    RedrawImage();
+                }
             }
         }
 
         private void BtnAddVector_Click(object sender, EventArgs e)
         {
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
             Bitmap bmp = new(LayerManipulator.Width, LayerManipulator.Height);
 
             using (Graphics g = Graphics.FromImage(bmp))
@@ -689,183 +783,166 @@ namespace PixelEditor
                 g.Clear(Color.White);
             }
 
-            AddLayer(bmp);
+            var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
+            {
+                Image = bmp
+            };
+            layersControl.InsertLayer(0, layer);
             RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void BtnSubtractVector_Click(object sender, EventArgs e)
         {
-            RemoveLayer(chkListLayers.SelectedIndex);
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            layersControl.RemoveLayerAt(layersControl.GetSelectedLayerIndex());
             RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
         }
 
         private void BtnMoveUp_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.SelectedIndex <= 0) return;
+            if (layersControl.GetSelectedLayerIndex() <= 0) return;
 
-            int currentIndex = chkListLayers.SelectedIndex;
+            int currentIndex = layersControl.GetSelectedLayerIndex();
             int newIndex = currentIndex - 1;
 
-            object itemToMove = chkListLayers.Items[currentIndex];
-            chkListLayers.Items.RemoveAt(currentIndex);
-            chkListLayers.Items.Insert(newIndex, itemToMove);
+            var layerToMove = layersControl.GetLayer(currentIndex);
 
-            var layerToMove = imageLayers[currentIndex];
-            imageLayers.RemoveAt(currentIndex);
-            imageLayers.Insert(newIndex, layerToMove);
-
-            chkListLayers.SelectedIndex = newIndex;
-            chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
-
-            RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-        }
-
-        private void BtnMoveDown_Click(object sender, EventArgs e)
-        {
-            if (chkListLayers.SelectedIndex < 0 ||
-                chkListLayers.SelectedIndex >= chkListLayers.Items.Count - 1) return;
-
-            int currentIndex = chkListLayers.SelectedIndex;
-            int newIndex = currentIndex + 1;
-
-            object itemToMove = chkListLayers.Items[currentIndex];
-            chkListLayers.Items.RemoveAt(currentIndex);
-            chkListLayers.Items.Insert(newIndex, itemToMove);
-
-            var layerToMove = imageLayers[currentIndex];
-            imageLayers.RemoveAt(currentIndex);
-            imageLayers.Insert(newIndex, layerToMove);
-
-            chkListLayers.SelectedIndex = newIndex;
-            chkListLayers.SetItemChecked(newIndex, imageLayers[newIndex].IsVisible);
-
-            RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-        }
-
-        private void MoveToTopToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (chkListLayers.SelectedIndex < 0 ||
-                chkListLayers.SelectedIndex >= chkListLayers.Items.Count - 1) return;
-
-            int currentIndex = chkListLayers.SelectedIndex;
-
-            object itemToMove = chkListLayers.Items[currentIndex];
-            chkListLayers.Items.RemoveAt(currentIndex);
-            chkListLayers.Items.Add(itemToMove);
-
-            var layerToMove = imageLayers[currentIndex];
-            imageLayers.RemoveAt(currentIndex);
-            imageLayers.Add(layerToMove);
-
-            chkListLayers.SelectedIndex = 0;
-
-            RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-        }
-
-        private void MoveToBottomToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (chkListLayers.SelectedIndex < 0 ||
-                chkListLayers.SelectedIndex >= chkListLayers.Items.Count - 1) return;
-
-            int currentIndex = chkListLayers.SelectedIndex;
-            int newIndex = chkListLayers.Items.Count - 2;
-
-            object itemToMove = chkListLayers.Items[currentIndex];
-            chkListLayers.Items.RemoveAt(currentIndex);
-            chkListLayers.Items.Insert(newIndex, itemToMove);
-
-            var layerToMove = imageLayers[currentIndex];
-            imageLayers.RemoveAt(currentIndex);
-            imageLayers.Insert(newIndex, layerToMove);
-
-            chkListLayers.SelectedIndex = newIndex;
-
-            RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-        }
-
-        private void ChkListLayers_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            BtnEditCaption_Click(sender, e);
-        }
-
-        private void ChkListLayers_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            btnMoveUp.Enabled = chkListLayers.SelectedIndex > 0;
-            btnMoveDown.Enabled = chkListLayers.SelectedIndex < chkListLayers.Items.Count - 1
-                               && chkListLayers.SelectedIndex >= 0;
-
-            UpdateControls();
-        }
-
-        private void ChkListLayers_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
+            if (layerToMove != null)
             {
-                imageLayers[chkListLayers.SelectedIndex].IsVisible = !chkListLayers.GetItemChecked(chkListLayers.SelectedIndex);
-                chkListLayers.Items[chkListLayers.SelectedIndex] = chkListLayers.Text;
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                layersControl.RemoveLayerAt(currentIndex);
+                layersControl.InsertLayer(newIndex, layerToMove);
+
+                layersControl.SetSelectedLayerIndex(newIndex);
+
                 RedrawImage();
             }
         }
 
+        private void BtnMoveDown_Click(object sender, EventArgs e)
+        {
+            if (layersControl.GetSelectedLayerIndex() < 0 ||
+                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
+
+            int currentIndex = layersControl.GetSelectedLayerIndex();
+            int newIndex = currentIndex + 1;
+
+            var layerToMove = layersControl.GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                layersControl.RemoveLayerAt(currentIndex);
+                layersControl.InsertLayer(newIndex, layerToMove);
+
+                layersControl.SetSelectedLayerIndex(newIndex);
+
+                RedrawImage();
+            }
+        }
+
+        private void MoveToTopToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (layersControl.GetSelectedLayerIndex() < 0 ||
+                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
+
+            int currentIndex = layersControl.GetSelectedLayerIndex();
+            int newIndex = 0;
+
+            var layerToMove = layersControl.GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                layersControl.RemoveLayerAt(currentIndex);
+                layersControl.InsertLayer(newIndex, layerToMove);
+
+                layersControl.SetSelectedLayerIndex(newIndex);
+
+                RedrawImage();
+            }
+        }
+
+        private void MoveToBottomToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (layersControl.GetSelectedLayerIndex() < 0 ||
+                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
+
+            int currentIndex = layersControl.GetSelectedLayerIndex();
+            int newIndex = layersControl.GetLayers().Count - 2;
+
+            var layerToMove = layersControl.GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                layersControl.RemoveLayerAt(currentIndex);
+                layersControl.InsertLayer(newIndex, layerToMove);
+
+                layersControl.SetSelectedLayerIndex(newIndex);
+
+                RedrawImage();
+            }
+        }
+
+        private void ChkListLayers_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
+            btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
+                               && layersControl.GetSelectedLayerIndex() >= 0;
+
+            UpdateControls();
+        }
+
         private void BtnShowVector_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
+            var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (layer != null)
             {
-                imageLayers[chkListLayers.SelectedIndex].IsVisible = true;
-                chkListLayers.Items[chkListLayers.SelectedIndex] = chkListLayers.Text;
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                layer.IsVisible = true;
+                layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
                 RedrawImage();
             }
         }
 
         private void BtnHideVector_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
-            {
-                imageLayers[chkListLayers.SelectedIndex].IsVisible = false;
-                chkListLayers.Items[chkListLayers.SelectedIndex] = chkListLayers.Text;
-                RedrawImage();
-            }
-        }
+            var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-        private void BtnEditCaption_Click(object sender, EventArgs e)
-        {
-            FormName formName = new();
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.SelectedIndex < chkListLayers.Items.Count && chkListLayers.SelectedIndex >= 0)
+            if (layer != null)
             {
-                formName.StrokeName = imageLayers[chkListLayers.SelectedIndex].Name;
-                if (formName.ShowDialog() == DialogResult.OK)
-                {
-                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-                    imageLayers[chkListLayers.SelectedIndex].Name = formName.StrokeName;
-                    chkListLayers.Items[chkListLayers.SelectedIndex] = formName.StrokeName;
-                }
+                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                layer.IsVisible = false;
+                layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
+                RedrawImage();
             }
         }
 
         private void BtnMergeDown_Click(object sender, EventArgs e)
         {
-            if (imageLayers.Count < 2)
-                return;
+            //if (imageLayers.Count < 2)
+            //    return;
 
-            int selectedIndex = chkListLayers.SelectedIndex;
+            //int selectedIndex = layersControl.GetSelectedLayerIndex();
 
-            if (selectedIndex < 0 || selectedIndex >= imageLayers.Count - 1)
-                return;
+            //if (selectedIndex < 0 || selectedIndex >= imageLayers.Count - 1)
+            //    return;
 
-            ListBoxVectors_SelectedIndexChanged(sender, e);
+            //ListBoxVectors_SelectedIndexChanged(sender, e);
         }
 
         private void UpdateControls()
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
+            var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (layer != null)
             {
-                var layer = imageLayers[chkListLayers.SelectedIndex];
                 opacity.Value = layer.Opacity;
                 cboBlendMode.SelectedItem = layer.BlendMode.ToString();
                 redToolStripMenuItem.Checked = layer.Channel == LayerChannel.Red;
@@ -880,21 +957,16 @@ namespace PixelEditor
 
         private void ListBoxVectors_SelectedIndexChanged(object sender, EventArgs e)
         {
-            btnMoveUp.Enabled = chkListLayers.SelectedIndex > 0;
-            btnMoveDown.Enabled = chkListLayers.SelectedIndex < chkListLayers.Items.Count - 1
-                               && chkListLayers.SelectedIndex >= 0;
+            btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
+            btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
+                               && layersControl.GetSelectedLayerIndex() >= 0;
 
             UpdateControls();
         }
 
-        private void ListBoxVectors_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            BtnEditCaption_Click(sender, e);
-        }
-
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
             zoom = Math.Max(0.1f, Math.Min(10.0f, zoom + zoomDelta));
             RedrawImage();
@@ -902,7 +974,7 @@ namespace PixelEditor
 
         private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
             zoom = Math.Max(0.1f, Math.Min(10.0f, zoom - zoomDelta));
             RedrawImage();
@@ -910,7 +982,7 @@ namespace PixelEditor
 
         private void BtnResetZoom_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             zoom = 0.95f;
             imageOffset = new(0, 0);
             RedrawImage();
@@ -918,135 +990,183 @@ namespace PixelEditor
 
         private void AllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count &&
-                chkListLayers.Items.Count > chkListLayers.SelectedIndex &&
-                chkListLayers.SelectedIndex >= 0)
-            {
-                redToolStripMenuItem.Checked = false;
-                greenToolStripMenuItem.Checked = false;
-                blueToolStripMenuItem.Checked = false;
-                allToolStripMenuItem.Checked = !allToolStripMenuItem.Checked;
-                imageLayers[chkListLayers.SelectedIndex].Channel = LayerChannel.RGB;
-                RedrawImage();
-            }
+            //if (layersControl.GetLayers().Count == imageLayers.Count &&
+            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
+            //    layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    redToolStripMenuItem.Checked = false;
+            //    greenToolStripMenuItem.Checked = false;
+            //    blueToolStripMenuItem.Checked = false;
+            //    allToolStripMenuItem.Checked = !allToolStripMenuItem.Checked;
+            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.RGB;
+            //    RedrawImage();
+            //}
         }
 
         private void RedToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count &&
-                chkListLayers.Items.Count > chkListLayers.SelectedIndex &&
-                chkListLayers.SelectedIndex >= 0)
-            {
-                redToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
-                greenToolStripMenuItem.Checked = false;
-                blueToolStripMenuItem.Checked = false;
-                allToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
-                imageLayers[chkListLayers.SelectedIndex].Channel = LayerChannel.Red;
-                RedrawImage();
-            }
+            //if (layersControl.GetLayers().Count == imageLayers.Count &&
+            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
+            //    layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    redToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
+            //    greenToolStripMenuItem.Checked = false;
+            //    blueToolStripMenuItem.Checked = false;
+            //    allToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
+            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Red;
+            //    RedrawImage();
+            //}
         }
 
         private void GreenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count &&
-                chkListLayers.Items.Count > chkListLayers.SelectedIndex &&
-                chkListLayers.SelectedIndex >= 0)
-            {
-                redToolStripMenuItem.Checked = false;
-                greenToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
-                blueToolStripMenuItem.Checked = false;
-                allToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
-                imageLayers[chkListLayers.SelectedIndex].Channel = LayerChannel.Green;
-                RedrawImage();
-            }
+            //if (layersControl.GetLayers().Count == imageLayers.Count &&
+            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
+            //    layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    redToolStripMenuItem.Checked = false;
+            //    greenToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
+            //    blueToolStripMenuItem.Checked = false;
+            //    allToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
+            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Green;
+            //    RedrawImage();
+            //}
         }
 
         private void BlueToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count &&
-                chkListLayers.Items.Count > chkListLayers.SelectedIndex &&
-                chkListLayers.SelectedIndex >= 0)
-            {
-                redToolStripMenuItem.Checked = false;
-                greenToolStripMenuItem.Checked = false;
-                blueToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
-                allToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
-                imageLayers[chkListLayers.SelectedIndex].Channel = LayerChannel.Blue;
-                RedrawImage();
-            }
+            //if (layersControl.GetLayers().Count == imageLayers.Count &&
+            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
+            //    layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    redToolStripMenuItem.Checked = false;
+            //    greenToolStripMenuItem.Checked = false;
+            //    blueToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
+            //    allToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
+            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Blue;
+            //    RedrawImage();
+            //}
         }
 
         private void ChkFilter_CheckedChanged(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
-            {
-                if (imageLayers[chkListLayers.SelectedIndex].Image is not null)
-                {
-                    if (sender.GetType() == typeof(ToolStripMenuItem))
-                    {
-                        ToolStripMenuItem item = (ToolStripMenuItem)sender;
-                        item.Checked = !item.Checked;
-                    }
+            //if (layersControl.GetLayers().Count == imageLayers.Count && layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() && layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    if (imageLayers[layersControl.GetSelectedLayerIndex()].Image is not null)
+            //    {
+            //        if (sender.GetType() == typeof(ToolStripMenuItem))
+            //        {
+            //            ToolStripMenuItem item = (ToolStripMenuItem)sender;
+            //            item.Checked = !item.Checked;
+            //        }
 
-                    imageLayers[chkListLayers.SelectedIndex].RedFilter = redToolStripMenuItem1.Checked;
-                    imageLayers[chkListLayers.SelectedIndex].GreenFilter = greenToolStripMenuItem1.Checked;
-                    imageLayers[chkListLayers.SelectedIndex].BlueFilter = blueToolStripMenuItem1.Checked;
-                    RedrawImage();
-                }
-            }
+            //        imageLayers[layersControl.GetSelectedLayerIndex()].RedFilter = redToolStripMenuItem1.Checked;
+            //        imageLayers[layersControl.GetSelectedLayerIndex()].GreenFilter = greenToolStripMenuItem1.Checked;
+            //        imageLayers[layersControl.GetSelectedLayerIndex()].BlueFilter = blueToolStripMenuItem1.Checked;
+            //        RedrawImage();
+            //    }
+            //}
         }
 
         private void DarkToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
-            {
-                if (imageLayers[chkListLayers.SelectedIndex].Image is not null)
-                {
-                    bool[,] mask = LayerManipulator.GetDarkPixels(LayerManipulator.Screen, 0.0f, 1.0f);
-                    ColorGrid grid = LayerManipulator.DarkPixelGrid(mask, LayerManipulator.Screen.Width, LayerManipulator.Screen.Height);
-                    imageLayers[chkListLayers.SelectedIndex].Image = LayerManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
-                    RedrawImage();
-                }
-            }
+            //if (layersControl.GetLayers().Count == imageLayers.Count && layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() && layersControl.GetSelectedLayerIndex() >= 0)
+            //{
+            //    if (imageLayers[layersControl.GetSelectedLayerIndex()].Image is not null)
+            //    {
+            //        bool[,] mask = LayerManipulator.GetDarkPixels(LayerManipulator.Screen, 0.0f, 1.0f);
+            //        ColorGrid grid = LayerManipulator.DarkPixelGrid(mask, LayerManipulator.Screen.Width, LayerManipulator.Screen.Height);
+            //        imageLayers[layersControl.GetSelectedLayerIndex()].Image = LayerManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
+            //        RedrawImage();
+            //    }
+            //}
         }
 
         private void DeleteImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
-                canvas.Image?.Dispose();
-                canvas.Image = null;
-                imageLayers[chkListLayers.SelectedIndex].Image?.Dispose();
-                imageLayers[chkListLayers.SelectedIndex].Image = null;
+                if (selectionPoints.Count > 0)
+                {
+                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    CalculateSelectionBounds();
+                    selectedLayer.Image = CutSelectionFromLayer(selectedLayer, true);
+                    rotationAngle = 0;
+                    scaleFactor = 1.0f;
+                    selectionPoints.Clear();
+                    RedrawImage();
+                }
+                else
+                {
+                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    selectedLayer.Image?.Dispose();
+                    selectedLayer.Image = null;
+                    rotationAngle = 0;
+                    scaleFactor = 1.0f;
+                    RedrawImage();
+                }
             }
         }
 
         private void CutImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count
-                && chkListLayers.Items.Count > chkListLayers.SelectedIndex
-                && chkListLayers.SelectedIndex >= 0)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                Image? tempImage = imageLayers[chkListLayers.SelectedIndex].Image;
-                if (tempImage != null)
+                if (selectionPoints.Count > 0)
                 {
-                    Clipboard.SetImage(tempImage);
-                    DeleteImageToolStripMenuItem_Click(sender, e);
+                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    CalculateSelectionBounds();
+                    Image? tempImage = ExtractSelectedArea(selectedLayer);
+                    selectedLayer.Image = CutSelectionFromLayer(selectedLayer, true);
+                    if (tempImage != null)
+                    {
+                        Clipboard.SetImage(tempImage);
+                        selectionPoints.Clear();
+                        RedrawImage();
+                    }
+                }
+                else
+                {
+                    Image? tempImage = selectedLayer.Image;
+                    if (tempImage != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Clipboard.SetImage(tempImage);
+                        DeleteImageToolStripMenuItem_Click(sender, e);
+                        RedrawImage();
+                    }
                 }
             }
         }
 
         private void CopyImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count
-                && chkListLayers.Items.Count > chkListLayers.SelectedIndex
-                && chkListLayers.SelectedIndex >= 0)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                Image? tempImage = imageLayers[chkListLayers.SelectedIndex].Image;
-                if (tempImage != null)
+                if (selectionPoints.Count > 0)
                 {
-                    Clipboard.SetImage(tempImage);
+                    HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    CalculateSelectionBounds();
+                    Image? tempImage = ExtractSelectedArea(selectedLayer);
+                    if (tempImage != null)
+                    {
+                        Clipboard.SetImage(tempImage);
+                        selectionPoints.Clear();
+                        RedrawImage();
+                    }
+                }
+                else
+                {
+                    Image? tempImage = selectedLayer.Image;
+                    if (tempImage != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Clipboard.SetImage(tempImage);
+                        RedrawImage();
+                    }
                 }
             }
         }
@@ -1056,9 +1176,10 @@ namespace PixelEditor
             Image? clipboardImage = Clipboard.GetImage();
             if (clipboardImage != null)
             {
-                if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
                 {
-                    imageLayers[chkListLayers.SelectedIndex].Image = new Bitmap(clipboardImage);
+                    selectedLayer.Image = new Bitmap(clipboardImage);
 
                     RedrawImage();
                 }
@@ -1073,17 +1194,11 @@ namespace PixelEditor
 
                 if (history != null)
                 {
-                    imageLayers.Clear();
-                    chkListLayers.Items.Clear();
-                    imageLayers.AddRange(history.Layers);
+                    layersControl.ClearLayers();
+                    layersControl.AddRange(history.Layers);
                     zoom = history.Zoom;
                     imageOffset = history.Offset;
-                    foreach (var layer in imageLayers)
-                    {
-                        chkListLayers.Items.Add(layer.Name);
-                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
-                    }
-                    chkListLayers.SelectedIndex = history.SelectedLayerIndex;
+                    layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
                 Refresh();
@@ -1099,17 +1214,11 @@ namespace PixelEditor
 
                 if (history != null)
                 {
-                    imageLayers.Clear();
-                    chkListLayers.Items.Clear();
-                    imageLayers.AddRange(history.Layers);
+                    layersControl.ClearLayers();
+                    layersControl.AddRange(history.Layers);
                     zoom = history.Zoom;
                     imageOffset = history.Offset;
-                    foreach (var layer in imageLayers)
-                    {
-                        chkListLayers.Items.Add(layer.Name);
-                        chkListLayers.SetItemChecked(chkListLayers.Items.Count - 1, layer.IsVisible);
-                    }
-                    chkListLayers.SelectedIndex = history.SelectedLayerIndex;
+                    layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
                 Refresh();
@@ -1120,25 +1229,24 @@ namespace PixelEditor
         private void GeneralSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FormSettings formSettings = new();
-            if (chkListLayers.Items.Count == imageLayers.Count && chkListLayers.Items.Count > chkListLayers.SelectedIndex && chkListLayers.SelectedIndex >= 0)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                formSettings.LayerHeight = imageLayers[chkListLayers.SelectedIndex].Image?.Height ?? 2;
-                formSettings.LayerWidth = imageLayers[chkListLayers.SelectedIndex].Image?.Width ?? 2;
-            }
-            if (formSettings.ShowDialog(this) == DialogResult.OK)
-            {
-                imageLayers[chkListLayers.SelectedIndex].ResizeContainer(formSettings.LayerWidth, formSettings.LayerHeight);
-                RedrawImage();
+                formSettings.LayerHeight = selectedLayer.Image?.Height ?? 2;
+                formSettings.LayerWidth = selectedLayer.Image?.Width ?? 2;
+                if (formSettings.ShowDialog(this) == DialogResult.OK)
+                {
+                    selectedLayer.ResizeContainer(formSettings.LayerWidth, formSettings.LayerHeight);
+                    RedrawImage();
+                }
             }
         }
 
         private void InvertToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count
-                && chkListLayers.SelectedIndex >= 0
-                && chkListLayers.SelectedIndex < imageLayers.Count)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                 if (selectedLayer.Image != null)
                 {
                     Bitmap inverted = ImageManipulator.InvertColors((Bitmap)selectedLayer.Image);
@@ -1151,11 +1259,9 @@ namespace PixelEditor
 
         private void GrayscaleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count
-                && chkListLayers.SelectedIndex >= 0
-                && chkListLayers.SelectedIndex < imageLayers.Count)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                 if (selectedLayer.Image != null)
                 {
                     Bitmap greyed = ImageManipulator.Grayscale((Bitmap)selectedLayer.Image);
@@ -1168,11 +1274,9 @@ namespace PixelEditor
 
         private void BlurImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (chkListLayers.Items.Count == imageLayers.Count
-                && chkListLayers.SelectedIndex >= 0
-                && chkListLayers.SelectedIndex < imageLayers.Count)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
                 if (selectedLayer.Image != null)
                 {
                     Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
@@ -1267,7 +1371,7 @@ namespace PixelEditor
 
         private Bitmap? CutSelectionFromLayer(Layer selectedLayer, bool emptyHole = false)
         {
-            if (chkListLayers.SelectedIndex < 0) return null;
+            if (layersControl.GetSelectedLayerIndex() < 0) return null;
             if (selectedLayer.Image == null || selectionPoints.Count < 3) return null;
 
             Bitmap result = new(selectedLayer.Image);
@@ -1418,93 +1522,92 @@ namespace PixelEditor
         {
             lastMousePosition = e.Location;
 
-            if (btnBrusher.Checked)
+            if (e.Button == MouseButtons.Left)
             {
-                isPainting = true;
-                strokePoints = [];
-                lazyLocalPos = PointF.Empty;
-                strokeLastInterpolated = PointF.Empty;
-                PaintingEngine.BeginStroke();
-            }
-            else if (btnPointer.Checked)
-            {
-                if (selectionPoints.Count > 0)
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+                if (btnBrusher.Checked)
                 {
-                    if (chkListLayers.Items.Count == imageLayers.Count
-                        && chkListLayers.SelectedIndex >= 0
-                        && chkListLayers.SelectedIndex < imageLayers.Count)
+                    isPainting = true;
+                    strokePoints = [];
+                    lazyLocalPos = PointF.Empty;
+                    strokeLastInterpolated = PointF.Empty;
+                    PaintingEngine.BeginStroke();
+                }
+                else if (btnPointer.Checked)
+                {
+                    if (selectionPoints.Count > 0)
                     {
-                        var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
-                        if (selectedLayer.Image == null || selectionPoints.Count == 0) return;
+                        if (selectedLayer != null)
+                        {
+                            if (selectedLayer.Image == null || selectionPoints.Count == 0) return;
 
-                        if (IsOverRotationHandle(e.Location))
-                        {
-                            isRotating = true;
-                            Cursor.Current = Cursors.SizeAll;
-                            startMouseAngle = CalculateRotationAngle(e.Location) - rotationAngle;
-                        }
-                        else if (IsOverScaleHandle(e.Location, out string handle))
-                        {
-                            isScaling = true;
-                            Cursor.Current = GetScaleCursor(handle);
-                            initialScaleDistance = Distance(Point.Round(selectionCenter), e.Location);
-                            initialScaleFactor = scaleFactor;
-                        }
-                        else if (IsPointInSelection(e.Location))
-                        {
-                            isDragging = true;
-                            Cursor.Current = Cursors.SizeAll;
-                        }
+                            if (IsOverRotationHandle(e.Location))
+                            {
+                                isRotating = true;
+                                Cursor.Current = Cursors.SizeAll;
+                                startMouseAngle = CalculateRotationAngle(e.Location) - rotationAngle;
+                            }
+                            else if (IsOverScaleHandle(e.Location, out string handle))
+                            {
+                                isScaling = true;
+                                Cursor.Current = GetScaleCursor(handle);
+                                initialScaleDistance = Distance(Point.Round(selectionCenter), e.Location);
+                                initialScaleFactor = scaleFactor;
+                            }
+                            else if (IsPointInSelection(e.Location))
+                            {
+                                isDragging = true;
+                                Cursor.Current = Cursors.SizeAll;
+                            }
 
-                        if (selectedAreaBitmap == null)
+                            if (selectedAreaBitmap == null)
+                            {
+                                CalculateSelectionBounds();
+                                selectedAreaBitmap = ExtractSelectedArea(selectedLayer);
+                                selectedLayer.Image = CutSelectionFromLayer(selectedLayer);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        isDragging = true;
+                    }
+                }
+                else if (btnFiller.Checked)
+                {
+                    if (selectedLayer != null)
+                    {
+                        if (selectedLayer.Image != null)
                         {
-                            CalculateSelectionBounds();
-                            selectedAreaBitmap = ExtractSelectedArea(selectedLayer);
-                            selectedLayer.Image = CutSelectionFromLayer(selectedLayer);
+                            Bitmap bitmap = ImageManipulator.FillColor(selectedLayer.Image,
+                                (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
+                                (float)(fillOpacity.Value / fillOpacity.Maximum),
+                                lastMousePosition,
+                                selectionPoints,
+                                canvas,
+                                zoom,
+                                imageOffset);
+                            var old = selectedLayer.Image;
+                            selectedLayer.Image = bitmap;
+                            old?.Dispose();
+                            PaintingEngine.SetTarget(selectedLayer.Image);
+                            RedrawImage();
                         }
                     }
                 }
-                else
+                else if (btnLassoSelect.Checked)
                 {
-                    isDragging = true;
+                    isLassoSelecting = true;
+                    selectionPoints.Clear();
+                    selectionPoints.Add(lastMousePosition);
                 }
-            }
-            else if (btnFiller.Checked)
-            {
-                if (chkListLayers.Items.Count == imageLayers.Count
-                    && chkListLayers.SelectedIndex >= 0
-                    && chkListLayers.SelectedIndex < imageLayers.Count)
+                else if (btnRectangleSelect.Checked)
                 {
-                    var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
-                    if (selectedLayer.Image != null)
-                    {
-                        Bitmap bitmap = ImageManipulator.FillColor(selectedLayer.Image,
-                            (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
-                            (float)(fillOpacity.Value / fillOpacity.Maximum),
-                            lastMousePosition,
-                            selectionPoints,
-                            canvas,
-                            zoom,
-                            imageOffset);
-                        var old = selectedLayer.Image;
-                        selectedLayer.Image = bitmap;
-                        old?.Dispose();
-                        PaintingEngine.SetTarget(selectedLayer.Image);
-                        RedrawImage();
-                    }
+                    isRectSelecting = true;
+                    selectionPoints.Clear();
+                    selectionPoints.Add(lastMousePosition);
                 }
-            }
-            else if (btnLassoSelect.Checked)
-            {
-                isLassoSelecting = true;
-                selectionPoints.Clear();
-                selectionPoints.Add(lastMousePosition);
-            }
-            else if (btnRectangleSelect.Checked)
-            {
-                isRectSelecting = true;
-                selectionPoints.Clear();
-                selectionPoints.Add(lastMousePosition);
             }
         }
 
@@ -1512,6 +1615,8 @@ namespace PixelEditor
         {
             labelMousePosition.Text = $"({e.X}, {e.Y})";
             labelDocStatus.Text = $"Zoom: {zoom * 100:F1}% Offset {imageOffset}";
+
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
             if (isDragging)
             {
@@ -1534,28 +1639,24 @@ namespace PixelEditor
                 }
                 else
                 {
-                    if (chkListLayers.Items.Count == imageLayers.Count
-                        && chkListLayers.SelectedIndex >= 0
-                        && chkListLayers.SelectedIndex < imageLayers.Count)
+                    if (selectedLayer != null)
                     {
                         if (selectionPoints.Count > 0)
                         {
                             MoveSelection(dx, dy);
                             MoveSelectionContent(dx, dy);
-                            RedrawImage(); //selectedLayerIndex: chkListLayers.SelectedIndex
+                            RedrawImage(); //selectedLayerIndex: layersControl.GetSelectedLayerIndex()
                         }
                         else
                         {
-                            var layer = imageLayers[chkListLayers.SelectedIndex];
-
                             float ratio = GetCanvasToWorldRatio();
-                            layer.X += (int)Math.Round(dx / ratio);
-                            layer.Y += (int)Math.Round(dy / ratio);
+                            selectedLayer.X += (int)Math.Round(dx / ratio);
+                            selectedLayer.Y += (int)Math.Round(dy / ratio);
 
                             int minPaintIntervalMs = 16; // 60 fps
                             if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                             {
-                                RedrawImage(chkListLayers.SelectedIndex);
+                                RedrawImage(layersControl.GetSelectedLayerIndex());
                                 lastPaintTime = DateTime.Now;
                             }
                         }
@@ -1586,15 +1687,11 @@ namespace PixelEditor
             }
             else if (isPainting)
             {
-                if (chkListLayers.Items.Count == imageLayers.Count
-                    && chkListLayers.SelectedIndex >= 0
-                    && chkListLayers.SelectedIndex < imageLayers.Count)
+                if (selectedLayer != null)
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
                     float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum; //0.22f
-
-                    var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
 
                     Point currentWorldPos = ScreenToWorld(e.Location, LayerManipulator.Width, LayerManipulator.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
@@ -1694,7 +1791,7 @@ namespace PixelEditor
                     const int minPaintIntervalMs = 32; // 30 fps
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                     {
-                        RedrawImage(chkListLayers.SelectedIndex);
+                        RedrawImage(layersControl.GetSelectedLayerIndex());
                         LayerManipulator.DirtyRegions.Clear();
                         LayerManipulator.DirtyRegions.Add(dirty); // Keep the last dirty region for the next paint
                         lastPaintTime = DateTime.Now;
@@ -1757,29 +1854,28 @@ namespace PixelEditor
             LayerManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             RedrawImage();
-            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, imageLayers, chkListLayers.SelectedIndex));
+            HistoryManager.RecordState(new HistoryItem(zoom, imageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (selectionPoints.Count > 0)
+            if (e.Button == MouseButtons.Left)
             {
-                selectionPoints.Clear();
-            }
-
-            if (selectedAreaBitmap != null)
-            {
-                if (chkListLayers.Items.Count == imageLayers.Count
-                    && chkListLayers.SelectedIndex >= 0
-                    && chkListLayers.SelectedIndex < imageLayers.Count)
+                if (selectionPoints.Count > 0)
                 {
-                    var selectedLayer = imageLayers[chkListLayers.SelectedIndex];
-                    selectedLayer.Image = MergeSelectionToLayer(selectedLayer);
+                    selectionPoints.Clear();
                 }
-            }
 
-            rotationAngle = 0;
-            scaleFactor = 1.0f;
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+                if (selectedAreaBitmap != null)
+                {
+                    selectedLayer?.Image = MergeSelectionToLayer(selectedLayer);
+                }
+
+                rotationAngle = 0;
+                scaleFactor = 1.0f;
+            }
         }
 
         private float GetCanvasToWorldRatio()
@@ -1828,7 +1924,7 @@ namespace PixelEditor
 
             if (repopulateImage)
             {
-                LayerManipulator.PopulateColorGrid(imageLayers, selectedLayerIndex);
+                LayerManipulator.PopulateColorGrid(layersControl.GetLayers(), selectedLayerIndex);
             }
 
             var rect = repopulateImage ?
