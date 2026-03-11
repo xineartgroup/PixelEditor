@@ -116,6 +116,17 @@ namespace PixelEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap MagicWand
+        {
+            get {
+                object obj = ResourceManager.GetObject("MagicWand", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Gradient {
             get {
                 object obj = ResourceManager.GetObject("Gradient", resourceCulture);

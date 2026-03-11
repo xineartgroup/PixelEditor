@@ -141,6 +141,7 @@
                 formName.StrokeName = layer.Name;
                 if (formName.ShowDialog() == DialogResult.OK)
                 {
+                    HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
                     layer.Name = formName.StrokeName;
                     UpdateLayer(selectedLayerIndex, layer);
                 }
@@ -271,7 +272,7 @@
             }
         }
 
-        private void RefreshLayersDisplay()
+        public void RefreshLayersDisplay()
         {
             flowLayers.SuspendLayout();
 

@@ -2,12 +2,20 @@
 
 namespace PixelEditor
 {
-    public static class LayerManipulator
+    public static class LayersManipulator
     {
+        public static PointF ImageOffset { get; set; } = new(0, 0);
+
+        public static float Zoom { get; set; } = 0.95f;
+
         public static int Width { get; set; } = 1920;
+
         public static int Height { get; set; } = 1080;
+
         public static ColorGrid Screen { get; set; } = new(0, 0);
+
         public static Dictionary<string, (ColorGrid Cache, int Hash)> LayerCache { get; set; } = [];
+
         public static HashSet<Rectangle> DirtyRegions { get; set; } = [];
 
         private static ColorGrid? _backgroundBuffer;

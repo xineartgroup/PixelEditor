@@ -113,11 +113,19 @@ namespace PixelEditor
 
             if (usePointSelection)
             {
-                if (startI.X < 0 || startI.X >= width || startI.Y < 0 || startI.Y >= height || mask[startI.Y * width + startI.X] == 0)
+                // Check if start point is within image bounds
+                if (startI.X < 0 || startI.X >= width || startI.Y < 0 || startI.Y >= height)
                 {
                     bitmap.UnlockBits(data);
                     return bitmap;
                 }
+
+                // Determine if start point is inside or outside the selection polygon
+                bool startInsideSelection = mask[startI.Y * width + startI.X] == 1;
+
+                // If start is inside, we fill inside the polygon
+                // If start is outside, we fill outside the polygon
+                bool fillInside = startInsideSelection;
 
                 int startIdx = (startI.Y * width + startI.X) * 4;
                 byte tr = pixels[startIdx + 2], tg = pixels[startIdx + 1], tb = pixels[startIdx];
@@ -132,18 +140,31 @@ namespace PixelEditor
                     int x = p.X, y = p.Y;
 
                     int lx = x;
-                    while (lx > 0 && !visited[y * width + (lx - 1)] && mask[y * width + (lx - 1)] == 1)
+                    while (lx > 0 && !visited[y * width + (lx - 1)])
                     {
+                        int pixelMask = mask[y * width + (lx - 1)];
+                        // Only allow movement if:
+                        // - For fillInside: pixel must be inside selection (mask == 1)
+                        // - For fillOutside: pixel must be outside selection (mask == 0)
+                        if ((fillInside && pixelMask == 0) || (!fillInside && pixelMask == 1))
+                            break;
+
                         int pix = (y * width + (lx - 1)) * 4;
-                        if (Math.Abs(pixels[pix + 2] - tr) > 10 || Math.Abs(pixels[pix + 1] - tg) > 10 || Math.Abs(pixels[pix] - tb) > 10) break;
+                        if (Math.Abs(pixels[pix + 2] - tr) > 10 || Math.Abs(pixels[pix + 1] - tg) > 10 || Math.Abs(pixels[pix] - tb) > 10)
+                            break;
                         lx--;
                     }
 
                     int rx = x;
-                    while (rx < width - 1 && !visited[y * width + (rx + 1)] && mask[y * width + (rx + 1)] == 1)
+                    while (rx < width - 1 && !visited[y * width + (rx + 1)])
                     {
+                        int pixelMask = mask[y * width + (rx + 1)];
+                        if ((fillInside && pixelMask == 0) || (!fillInside && pixelMask == 1))
+                            break;
+
                         int pix = (y * width + (rx + 1)) * 4;
-                        if (Math.Abs(pixels[pix + 2] - tr) > 10 || Math.Abs(pixels[pix + 1] - tg) > 10 || Math.Abs(pixels[pix] - tb) > 10) break;
+                        if (Math.Abs(pixels[pix + 2] - tr) > 10 || Math.Abs(pixels[pix + 1] - tg) > 10 || Math.Abs(pixels[pix] - tb) > 10)
+                            break;
                         rx++;
                     }
 
@@ -155,21 +176,29 @@ namespace PixelEditor
                         if (y > 0)
                         {
                             int up = (y - 1) * width + i;
-                            if (!visited[up] && mask[up] == 1)
+                            if (!visited[up])
                             {
-                                int pix = up * 4;
-                                if (Math.Abs(pixels[pix + 2] - tr) < 10 && Math.Abs(pixels[pix + 1] - tg) < 10 && Math.Abs(pixels[pix] - tb) < 10)
-                                    stack.Push(new Point(i, y - 1));
+                                int pixelMask = mask[up];
+                                if ((fillInside && pixelMask == 1) || (!fillInside && pixelMask == 0))
+                                {
+                                    int pix = up * 4;
+                                    if (Math.Abs(pixels[pix + 2] - tr) < 10 && Math.Abs(pixels[pix + 1] - tg) < 10 && Math.Abs(pixels[pix] - tb) < 10)
+                                        stack.Push(new Point(i, y - 1));
+                                }
                             }
                         }
                         if (y < height - 1)
                         {
                             int dn = (y + 1) * width + i;
-                            if (!visited[dn] && mask[dn] == 1)
+                            if (!visited[dn])
                             {
-                                int pix = dn * 4;
-                                if (Math.Abs(pixels[pix + 2] - tr) < 10 && Math.Abs(pixels[pix + 1] - tg) < 10 && Math.Abs(pixels[pix] - tb) < 10)
-                                    stack.Push(new Point(i, y + 1));
+                                int pixelMask = mask[dn];
+                                if ((fillInside && pixelMask == 1) || (!fillInside && pixelMask == 0))
+                                {
+                                    int pix = dn * 4;
+                                    if (Math.Abs(pixels[pix + 2] - tr) < 10 && Math.Abs(pixels[pix + 1] - tg) < 10 && Math.Abs(pixels[pix] - tb) < 10)
+                                        stack.Push(new Point(i, y + 1));
+                                }
                             }
                         }
                     }

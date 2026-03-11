@@ -62,6 +62,8 @@
             toolStripMenuItem4 = new ToolStripSeparator();
             undoToolStripMenuItem = new ToolStripMenuItem();
             redoToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem3 = new ToolStripSeparator();
+            selectAllToolStripMenuItem = new ToolStripMenuItem();
             viewToolStripMenuItem = new ToolStripMenuItem();
             resetZoomToolStripMenuItem = new ToolStripMenuItem();
             zoomInToolStripMenuItem = new ToolStripMenuItem();
@@ -186,6 +188,7 @@
             layersControl = new LayersControl();
             btnLassoSelect = new RadioButton();
             btnRectangleSelect = new RadioButton();
+            btnMagicWand = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -379,7 +382,7 @@
             // 
             // editToolStripMenuItem
             // 
-            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { deleteImageToolStripMenuItem, toolStripMenuItem1, cutImageToolStripMenuItem, copyImageToolStripMenuItem, pasteImageToolStripMenuItem, toolStripMenuItem4, undoToolStripMenuItem, redoToolStripMenuItem });
+            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { deleteImageToolStripMenuItem, toolStripMenuItem1, cutImageToolStripMenuItem, copyImageToolStripMenuItem, pasteImageToolStripMenuItem, toolStripMenuItem4, undoToolStripMenuItem, redoToolStripMenuItem, toolStripMenuItem3, selectAllToolStripMenuItem });
             editToolStripMenuItem.Name = "editToolStripMenuItem";
             editToolStripMenuItem.Size = new Size(39, 20);
             editToolStripMenuItem.Text = "Edit";
@@ -388,20 +391,20 @@
             // 
             deleteImageToolStripMenuItem.Name = "deleteImageToolStripMenuItem";
             deleteImageToolStripMenuItem.ShortcutKeys = Keys.Delete;
-            deleteImageToolStripMenuItem.Size = new Size(144, 22);
+            deleteImageToolStripMenuItem.Size = new Size(164, 22);
             deleteImageToolStripMenuItem.Text = "Delete";
             deleteImageToolStripMenuItem.Click += DeleteImageToolStripMenuItem_Click;
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(141, 6);
+            toolStripMenuItem1.Size = new Size(161, 6);
             // 
             // cutImageToolStripMenuItem
             // 
             cutImageToolStripMenuItem.Name = "cutImageToolStripMenuItem";
             cutImageToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.X;
-            cutImageToolStripMenuItem.Size = new Size(144, 22);
+            cutImageToolStripMenuItem.Size = new Size(164, 22);
             cutImageToolStripMenuItem.Text = "Cut";
             cutImageToolStripMenuItem.Click += CutImageToolStripMenuItem_Click;
             // 
@@ -409,7 +412,7 @@
             // 
             copyImageToolStripMenuItem.Name = "copyImageToolStripMenuItem";
             copyImageToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.C;
-            copyImageToolStripMenuItem.Size = new Size(144, 22);
+            copyImageToolStripMenuItem.Size = new Size(164, 22);
             copyImageToolStripMenuItem.Text = "Copy";
             copyImageToolStripMenuItem.Click += CopyImageToolStripMenuItem_Click;
             // 
@@ -417,20 +420,20 @@
             // 
             pasteImageToolStripMenuItem.Name = "pasteImageToolStripMenuItem";
             pasteImageToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.V;
-            pasteImageToolStripMenuItem.Size = new Size(144, 22);
+            pasteImageToolStripMenuItem.Size = new Size(164, 22);
             pasteImageToolStripMenuItem.Text = "Paste";
             pasteImageToolStripMenuItem.Click += PasteImageToolStripMenuItem_Click;
             // 
             // toolStripMenuItem4
             // 
             toolStripMenuItem4.Name = "toolStripMenuItem4";
-            toolStripMenuItem4.Size = new Size(141, 6);
+            toolStripMenuItem4.Size = new Size(161, 6);
             // 
             // undoToolStripMenuItem
             // 
             undoToolStripMenuItem.Name = "undoToolStripMenuItem";
             undoToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Z;
-            undoToolStripMenuItem.Size = new Size(144, 22);
+            undoToolStripMenuItem.Size = new Size(164, 22);
             undoToolStripMenuItem.Text = "Undo";
             undoToolStripMenuItem.Click += UndoToolStripMenuItem_Click;
             // 
@@ -438,9 +441,22 @@
             // 
             redoToolStripMenuItem.Name = "redoToolStripMenuItem";
             redoToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Y;
-            redoToolStripMenuItem.Size = new Size(144, 22);
+            redoToolStripMenuItem.Size = new Size(164, 22);
             redoToolStripMenuItem.Text = "Redo";
             redoToolStripMenuItem.Click += RedoToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem3
+            // 
+            toolStripMenuItem3.Name = "toolStripMenuItem3";
+            toolStripMenuItem3.Size = new Size(161, 6);
+            // 
+            // selectAllToolStripMenuItem
+            // 
+            selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
+            selectAllToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.A;
+            selectAllToolStripMenuItem.Size = new Size(164, 22);
+            selectAllToolStripMenuItem.Text = "Select All";
+            selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // viewToolStripMenuItem
             // 
@@ -1238,8 +1254,8 @@
             btnPointer.TabIndex = 26;
             btnPointer.TabStop = true;
             btnPointer.UseVisualStyleBackColor = true;
-            btnPointer.CheckedChanged += BtnPointer_CheckedChanged;
-            btnPointer.Click += BtnPointer_Click;
+            btnPointer.CheckedChanged += BtnTools_CheckedChanged;
+            btnPointer.Click += BtnTools_Click;
             // 
             // btnFiller
             // 
@@ -1251,8 +1267,8 @@
             btnFiller.Size = new Size(32, 32);
             btnFiller.TabIndex = 26;
             btnFiller.UseVisualStyleBackColor = true;
-            btnFiller.CheckedChanged += BtnPointer_CheckedChanged;
-            btnFiller.Click += BtnFiller_Click;
+            btnFiller.CheckedChanged += BtnTools_CheckedChanged;
+            btnFiller.Click += BtnTools_Click;
             // 
             // btnBrusher
             // 
@@ -1264,8 +1280,8 @@
             btnBrusher.Size = new Size(32, 32);
             btnBrusher.TabIndex = 26;
             btnBrusher.UseVisualStyleBackColor = true;
-            btnBrusher.CheckedChanged += BtnPointer_CheckedChanged;
-            btnBrusher.Click += BtnBrusher_Click;
+            btnBrusher.CheckedChanged += BtnTools_CheckedChanged;
+            btnBrusher.Click += BtnTools_Click;
             // 
             // groupBrushDetail
             // 
@@ -1446,8 +1462,8 @@
             btnLassoSelect.Size = new Size(32, 32);
             btnLassoSelect.TabIndex = 26;
             btnLassoSelect.UseVisualStyleBackColor = true;
-            btnLassoSelect.CheckedChanged += BtnPointer_CheckedChanged;
-            btnLassoSelect.Click += BtnBrusher_Click;
+            btnLassoSelect.CheckedChanged += BtnTools_CheckedChanged;
+            btnLassoSelect.Click += BtnTools_Click;
             // 
             // btnRectangleSelect
             // 
@@ -1459,8 +1475,21 @@
             btnRectangleSelect.Size = new Size(32, 32);
             btnRectangleSelect.TabIndex = 26;
             btnRectangleSelect.UseVisualStyleBackColor = true;
-            btnRectangleSelect.CheckedChanged += BtnPointer_CheckedChanged;
-            btnRectangleSelect.Click += BtnBrusher_Click;
+            btnRectangleSelect.CheckedChanged += BtnTools_CheckedChanged;
+            btnRectangleSelect.Click += BtnTools_Click;
+            // 
+            // btnMagicWand
+            // 
+            btnMagicWand.Appearance = Appearance.Button;
+            btnMagicWand.FlatStyle = FlatStyle.Popup;
+            btnMagicWand.Image = Properties.Resources.MagicWand;
+            btnMagicWand.Location = new Point(199, 27);
+            btnMagicWand.Name = "btnMagicWand";
+            btnMagicWand.Size = new Size(32, 32);
+            btnMagicWand.TabIndex = 26;
+            btnMagicWand.UseVisualStyleBackColor = true;
+            btnMagicWand.CheckedChanged += BtnTools_CheckedChanged;
+            btnMagicWand.Click += BtnTools_Click;
             // 
             // FormMain
             // 
@@ -1470,6 +1499,7 @@
             Controls.Add(groupBox1);
             Controls.Add(groupFillDetail);
             Controls.Add(groupBrushDetail);
+            Controls.Add(btnMagicWand);
             Controls.Add(btnRectangleSelect);
             Controls.Add(btnLassoSelect);
             Controls.Add(btnBrusher);
@@ -1669,5 +1699,8 @@
         private ToolStripMenuItem helpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private LayersControl layersControl;
+        private ToolStripSeparator toolStripMenuItem3;
+        private ToolStripMenuItem selectAllToolStripMenuItem;
+        private RadioButton btnMagicWand;
     }
 }
