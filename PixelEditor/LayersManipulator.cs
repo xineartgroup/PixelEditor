@@ -26,6 +26,63 @@ namespace PixelEditor
         private static Bitmap? _screenBitmap;
         private static Bitmap? _canvasBitmap;
 
+        public static Point ScreenToWorld(Point screenPt, int width, int height)
+        {
+            float aspectRatio = (float)Width / Height;
+            float containerAspectRatio = (float)width / height;
+
+            float scaledWidth, scaledHeight;
+            if (aspectRatio > containerAspectRatio)
+            {
+                scaledWidth = width * Zoom;
+                scaledHeight = scaledWidth / aspectRatio;
+            }
+            else
+            {
+                scaledHeight = height * Zoom;
+                scaledWidth = scaledHeight * aspectRatio;
+            }
+
+            float centerX = (width - scaledWidth) / 2;
+            float centerY = (height - scaledHeight) / 2;
+
+            float ratio = scaledWidth / Width;
+
+            int worldX = (int)((screenPt.X - (centerX + ImageOffset.X)) / ratio);
+            int worldY = (int)((screenPt.Y - (centerY + ImageOffset.Y)) / ratio);
+
+            return new Point(worldX, worldY);
+        }
+
+        public static Point WorldToScreen(Point worldPt, int width, int height)
+        {
+            float aspectRatio = (float)Width / Height;
+            float containerAspectRatio = (float)width / height;
+
+            float scaledWidth, scaledHeight;
+
+            if (aspectRatio > containerAspectRatio)
+            {
+                scaledWidth = width * Zoom;
+                scaledHeight = scaledWidth / aspectRatio;
+            }
+            else
+            {
+                scaledHeight = height * Zoom;
+                scaledWidth = scaledHeight * aspectRatio;
+            }
+
+            float centerX = (width - scaledWidth) / 2;
+            float centerY = (height - scaledHeight) / 2;
+
+            float ratio = scaledWidth / Width;
+
+            int screenX = (int)(worldPt.X * ratio + (centerX + ImageOffset.X));
+            int screenY = (int)(worldPt.Y * ratio + (centerY + ImageOffset.Y));
+
+            return new Point(screenX, screenY);
+        }
+
         public static void InvalidateCompositeBuffers()
         {
             _backgroundBuffer = null;
@@ -504,6 +561,26 @@ namespace PixelEditor
                 return (2 * src * bg) / 255;
             else
                 return 255 - (2 * (255 - src) * (255 - bg) / 255);
+        }
+
+        public static Bitmap GetImage(ColorGrid grid)
+        {
+            int width = grid.Width;
+            int height = grid.Height;
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+
+            BitmapData data = bitmap.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppArgb
+            );
+
+            int[] rawPixels = grid.GetRawPixels();
+
+            System.Runtime.InteropServices.Marshal.Copy(rawPixels, 0, data.Scan0, rawPixels.Length);
+
+            bitmap.UnlockBits(data);
+            return bitmap;
         }
 
         public static Bitmap GetImage(ColorGrid grid, Rectangle dirty)

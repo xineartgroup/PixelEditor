@@ -45,6 +45,40 @@ namespace PixelEditor
         private const float ROTATION_HANDLE_SIZE = 20;
         private const float SCALE_HANDLE_SIZE = 15;
 
+        private GroupBox groupBrushDetail = new();
+        private Label lblBrushHardness = new();
+        private Label lblBrushSmoothness = new();
+        private Label lblBrushOpacity = new();
+        private Label lblBrushSize = new();
+        private Button btnPenColor = new();
+        private Panel panel2 = new();
+        private TrackBar brush_size = new();
+        private TrackBar brush_opacity = new();
+        private Label label10 = new();
+        private Label label9 = new();
+        private Label label11 = new();
+        private Label label8 = new();
+        private TrackBar brush_hardness = new();
+        private TrackBar brush_smoothness = new();
+
+        private readonly GroupBox groupFillDetail = new();
+        private readonly ComboBox cboFillBlendMode = new();
+        private readonly Label label5 = new();
+        private readonly Label label4 = new();
+        private readonly Label label3 = new();
+        private readonly NumericUpDown fillOpacity = new();
+        private readonly Label label7 = new();
+        private readonly Button btnFillColor1 = new();
+        private readonly Button btnFillColor = new();
+        private readonly ComboBox cboFIllGradient = new();
+        private readonly ComboBox comboBox1 = new();
+
+        private readonly GroupBox groupMagicWand = new();
+        private readonly TrackBar selectionThreshold = new();
+        private readonly Label label12 = new();
+        private readonly Label label13 = new();
+        private readonly ComboBox cboMWSelectionMode = new();
+
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
 
@@ -55,6 +89,9 @@ namespace PixelEditor
         public FormMain()
         {
             InitializeComponent();
+            InitializeComponentGroupFill();
+            InitializeComponentGroupBrush();
+            InitializeComponentGroupMagicWand();
 
             System.Windows.Forms.Timer animationTimer = new()
             {
@@ -75,6 +112,428 @@ namespace PixelEditor
 
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
+        }
+
+        private void InitializeComponentGroupFill()
+        {
+            groupFillDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)fillOpacity).BeginInit();
+            SuspendLayout();
+            // 
+            // groupFillDetail
+            // 
+            groupFillDetail.Controls.Add(cboFillBlendMode);
+            groupFillDetail.Controls.Add(label5);
+            groupFillDetail.Controls.Add(label4);
+            groupFillDetail.Controls.Add(label3);
+            groupFillDetail.Controls.Add(fillOpacity);
+            groupFillDetail.Controls.Add(label7);
+            groupFillDetail.Controls.Add(btnFillColor1);
+            groupFillDetail.Controls.Add(btnFillColor);
+            groupFillDetail.Controls.Add(cboFIllGradient);
+            groupFillDetail.Controls.Add(comboBox1);
+            groupFillDetail.Location = new Point(12, 74);
+            groupFillDetail.Name = "groupFillDetail";
+            groupFillDetail.Size = new Size(230, 143);
+            groupFillDetail.TabIndex = 29;
+            groupFillDetail.TabStop = false;
+            groupFillDetail.Text = "Fill Detail";
+            groupFillDetail.Visible = false;
+            // 
+            // cboFillBlendMode
+            // 
+            cboFillBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboFillBlendMode.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cboFillBlendMode.FormattingEnabled = true;
+            cboFillBlendMode.Location = new Point(69, 22);
+            cboFillBlendMode.Name = "cboFillBlendMode";
+            cboFillBlendMode.Size = new Size(150, 21);
+            cboFillBlendMode.TabIndex = 31;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new Font("Segoe UI", 8.25F);
+            label5.Location = new Point(9, 108);
+            label5.Name = "label5";
+            label5.Size = new Size(47, 13);
+            label5.TabIndex = 29;
+            label5.Text = "Pattern:";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Font = new Font("Segoe UI", 8.25F);
+            label4.Location = new Point(8, 82);
+            label4.Name = "label4";
+            label4.Size = new Size(38, 13);
+            label4.TabIndex = 29;
+            label4.Text = "Color:";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Segoe UI", 8.25F);
+            label3.Location = new Point(7, 52);
+            label3.Name = "label3";
+            label3.Size = new Size(49, 13);
+            label3.TabIndex = 29;
+            label3.Text = "Opacity:";
+            // 
+            // fillOpacity
+            // 
+            fillOpacity.Location = new Point(172, 49);
+            fillOpacity.Name = "fillOpacity";
+            fillOpacity.Size = new Size(47, 23);
+            fillOpacity.TabIndex = 26;
+            fillOpacity.Value = new decimal([100, 0, 0, 0]);
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 8.25F);
+            label7.Location = new Point(7, 27);
+            label7.Name = "label7";
+            label7.Size = new Size(40, 13);
+            label7.TabIndex = 29;
+            label7.Text = "Blend:";
+            // 
+            // btnFillColor1
+            // 
+            btnFillColor1.BackColor = Color.White;
+            btnFillColor1.Enabled = false;
+            btnFillColor1.FlatStyle = FlatStyle.Popup;
+            btnFillColor1.ForeColor = Color.Black;
+            btnFillColor1.Location = new Point(91, 79);
+            btnFillColor1.Name = "btnFillColor1";
+            btnFillColor1.Size = new Size(20, 20);
+            btnFillColor1.TabIndex = 25;
+            btnFillColor1.UseVisualStyleBackColor = false;
+            btnFillColor1.Click += BtnFillColor1_Click;
+            // 
+            // btnFillColor
+            // 
+            btnFillColor.BackColor = Color.Black;
+            btnFillColor.FlatStyle = FlatStyle.Popup;
+            btnFillColor.Location = new Point(69, 79);
+            btnFillColor.Name = "btnFillColor";
+            btnFillColor.Size = new Size(20, 20);
+            btnFillColor.TabIndex = 25;
+            btnFillColor.UseVisualStyleBackColor = false;
+            btnFillColor.Click += BtnFillColor_Click;
+            // 
+            // cboFIllGradient
+            // 
+            cboFIllGradient.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboFIllGradient.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cboFIllGradient.FormattingEnabled = true;
+            cboFIllGradient.Items.AddRange(["No Gradient", "Linear Gradient", "Radial Gradient"]);
+            cboFIllGradient.Location = new Point(114, 78);
+            cboFIllGradient.Name = "cboFIllGradient";
+            cboFIllGradient.Size = new Size(105, 21);
+            cboFIllGradient.TabIndex = 20;
+            // 
+            // comboBox1
+            // 
+            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox1.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Location = new Point(70, 105);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(150, 21);
+            comboBox1.TabIndex = 20;
+            // 
+            // FormBrushSettings
+            // 
+            Controls.Add(groupFillDetail);
+            groupFillDetail.ResumeLayout(false);
+            groupFillDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)fillOpacity).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void InitializeComponentGroupBrush()
+        {
+            groupBrushDetail = new GroupBox();
+            lblBrushHardness = new Label();
+            lblBrushSmoothness = new Label();
+            lblBrushOpacity = new Label();
+            lblBrushSize = new Label();
+            btnPenColor = new Button();
+            panel2 = new Panel();
+            brush_size = new TrackBar();
+            brush_opacity = new TrackBar();
+            label10 = new Label();
+            label9 = new Label();
+            label11 = new Label();
+            label8 = new Label();
+            brush_hardness = new TrackBar();
+            brush_smoothness = new TrackBar();
+            groupBrushDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)brush_size).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)brush_opacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)brush_hardness).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)brush_smoothness).BeginInit();
+            SuspendLayout();
+            // 
+            // groupBrushDetail
+            // 
+            groupBrushDetail.Controls.Add(lblBrushHardness);
+            groupBrushDetail.Controls.Add(lblBrushSmoothness);
+            groupBrushDetail.Controls.Add(lblBrushOpacity);
+            groupBrushDetail.Controls.Add(lblBrushSize);
+            groupBrushDetail.Controls.Add(btnPenColor);
+            groupBrushDetail.Controls.Add(panel2);
+            groupBrushDetail.Controls.Add(brush_size);
+            groupBrushDetail.Controls.Add(brush_opacity);
+            groupBrushDetail.Controls.Add(label10);
+            groupBrushDetail.Controls.Add(label9);
+            groupBrushDetail.Controls.Add(label11);
+            groupBrushDetail.Controls.Add(label8);
+            groupBrushDetail.Controls.Add(brush_hardness);
+            groupBrushDetail.Controls.Add(brush_smoothness);
+            groupBrushDetail.Location = new Point(12, 74);
+            groupBrushDetail.Name = "groupBrushDetail";
+            groupBrushDetail.Size = new Size(230, 430);
+            groupBrushDetail.TabIndex = 28;
+            groupBrushDetail.TabStop = false;
+            groupBrushDetail.Text = "Brush Detail";
+            groupBrushDetail.Visible = false;
+            // 
+            // lblBrushHardness
+            // 
+            lblBrushHardness.BackColor = Color.White;
+            lblBrushHardness.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushHardness.FlatStyle = FlatStyle.Flat;
+            lblBrushHardness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushHardness.Location = new Point(188, 349);
+            lblBrushHardness.Name = "lblBrushHardness";
+            lblBrushHardness.Size = new Size(32, 24);
+            lblBrushHardness.TabIndex = 30;
+            lblBrushHardness.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushSmoothness
+            // 
+            lblBrushSmoothness.BackColor = Color.White;
+            lblBrushSmoothness.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushSmoothness.FlatStyle = FlatStyle.Flat;
+            lblBrushSmoothness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushSmoothness.Location = new Point(188, 298);
+            lblBrushSmoothness.Name = "lblBrushSmoothness";
+            lblBrushSmoothness.Size = new Size(32, 24);
+            lblBrushSmoothness.TabIndex = 30;
+            lblBrushSmoothness.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushOpacity
+            // 
+            lblBrushOpacity.BackColor = Color.White;
+            lblBrushOpacity.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushOpacity.FlatStyle = FlatStyle.Flat;
+            lblBrushOpacity.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushOpacity.Location = new Point(188, 247);
+            lblBrushOpacity.Name = "lblBrushOpacity";
+            lblBrushOpacity.Size = new Size(32, 24);
+            lblBrushOpacity.TabIndex = 30;
+            lblBrushOpacity.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblBrushSize
+            // 
+            lblBrushSize.BackColor = Color.White;
+            lblBrushSize.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushSize.FlatStyle = FlatStyle.Flat;
+            lblBrushSize.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushSize.Location = new Point(188, 196);
+            lblBrushSize.Name = "lblBrushSize";
+            lblBrushSize.Size = new Size(32, 24);
+            lblBrushSize.TabIndex = 30;
+            lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // btnPenColor
+            // 
+            btnPenColor.BackColor = Color.Black;
+            btnPenColor.FlatStyle = FlatStyle.Popup;
+            btnPenColor.Location = new Point(73, 22);
+            btnPenColor.Name = "btnPenColor";
+            btnPenColor.Size = new Size(20, 20);
+            btnPenColor.TabIndex = 24;
+            btnPenColor.UseVisualStyleBackColor = false;
+            btnPenColor.Click += BtnPenColor_Click;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.White;
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Location = new Point(12, 51);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(155, 139);
+            panel2.TabIndex = 22;
+            // 
+            // brush_size
+            // 
+            brush_size.Location = new Point(76, 196);
+            brush_size.Maximum = 100;
+            brush_size.Minimum = 1;
+            brush_size.Name = "brush_size";
+            brush_size.Size = new Size(106, 45);
+            brush_size.TabIndex = 23;
+            brush_size.TickStyle = TickStyle.None;
+            brush_size.Value = 12;
+            brush_size.Scroll += Brush_size_Scroll;
+            // 
+            // brush_opacity
+            // 
+            brush_opacity.Location = new Point(76, 247);
+            brush_opacity.Maximum = 100;
+            brush_opacity.Name = "brush_opacity";
+            brush_opacity.Size = new Size(106, 45);
+            brush_opacity.TabIndex = 23;
+            brush_opacity.TickStyle = TickStyle.None;
+            brush_opacity.Value = 100;
+            brush_opacity.Scroll += Brush_opacity_Scroll;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Font = new Font("Segoe UI", 8.25F);
+            label10.Location = new Point(7, 349);
+            label10.Name = "label10";
+            label10.Size = new Size(58, 13);
+            label10.TabIndex = 29;
+            label10.Text = "Hardness:";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Font = new Font("Segoe UI", 8.25F);
+            label9.Location = new Point(6, 298);
+            label9.Name = "label9";
+            label9.Size = new Size(73, 13);
+            label9.TabIndex = 29;
+            label9.Text = "Smoothness:";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Font = new Font("Segoe UI", 8.25F);
+            label11.Location = new Point(7, 196);
+            label11.Name = "label11";
+            label11.Size = new Size(30, 13);
+            label11.TabIndex = 29;
+            label11.Text = "Size:";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 8.25F);
+            label8.Location = new Point(7, 247);
+            label8.Name = "label8";
+            label8.Size = new Size(49, 13);
+            label8.TabIndex = 29;
+            label8.Text = "Opacity:";
+            // 
+            // brush_hardness
+            // 
+            brush_hardness.Location = new Point(76, 349);
+            brush_hardness.Maximum = 100;
+            brush_hardness.Minimum = 1;
+            brush_hardness.Name = "brush_hardness";
+            brush_hardness.Size = new Size(106, 45);
+            brush_hardness.TabIndex = 23;
+            brush_hardness.TickStyle = TickStyle.None;
+            brush_hardness.Value = 80;
+            brush_hardness.Scroll += Brush_hardness_Scroll;
+            // 
+            // brush_smoothness
+            // 
+            brush_smoothness.Location = new Point(76, 298);
+            brush_smoothness.Maximum = 100;
+            brush_smoothness.Name = "brush_smoothness";
+            brush_smoothness.Size = new Size(106, 45);
+            brush_smoothness.TabIndex = 23;
+            brush_smoothness.TickStyle = TickStyle.None;
+            brush_smoothness.Value = 22;
+            brush_smoothness.Scroll += Brush_smoothness_Scroll;
+            // 
+            // FormBrushSettings
+            // 
+            Controls.Add(groupBrushDetail);
+            groupBrushDetail.ResumeLayout(false);
+            groupBrushDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)brush_size).EndInit();
+            ((System.ComponentModel.ISupportInitialize)brush_opacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)brush_hardness).EndInit();
+            ((System.ComponentModel.ISupportInitialize)brush_smoothness).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void InitializeComponentGroupMagicWand()
+        {
+            groupMagicWand.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)selectionThreshold).BeginInit();
+            SuspendLayout();
+            // 
+            // groupMagicWand
+            // 
+            groupMagicWand.Controls.Add(selectionThreshold);
+            groupMagicWand.Controls.Add(label12);
+            groupMagicWand.Controls.Add(label13);
+            groupMagicWand.Controls.Add(cboMWSelectionMode);
+            groupMagicWand.Location = new Point(12, 74);
+            groupMagicWand.Name = "groupMagicWand";
+            groupMagicWand.Size = new Size(230, 116);
+            groupMagicWand.TabIndex = 0;
+            groupMagicWand.TabStop = false;
+            groupMagicWand.Text = "Magic Wand";
+            groupMagicWand.Visible = false;
+            // 
+            // selectionThreshold
+            // 
+            selectionThreshold.Location = new Point(74, 65);
+            selectionThreshold.Name = "selectionThreshold";
+            selectionThreshold.Size = new Size(150, 45);
+            selectionThreshold.TabIndex = 2;
+            selectionThreshold.TickStyle = TickStyle.None;
+            selectionThreshold.Minimum = 1;
+            selectionThreshold.Maximum = 100;
+            selectionThreshold.Value = 5;
+            selectionThreshold.Scroll += SelectionThreshold_Scroll;
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(6, 65);
+            label12.Name = "label12";
+            label12.Size = new Size(63, 15);
+            label12.TabIndex = 1;
+            label12.Text = "Threshold:";
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Location = new Point(6, 25);
+            label13.Name = "label13";
+            label13.Size = new Size(57, 15);
+            label13.TabIndex = 1;
+            label13.Text = "Select By:";
+            // 
+            // cboMWSelectionMode
+            // 
+            cboMWSelectionMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboMWSelectionMode.FormattingEnabled = true;
+            cboMWSelectionMode.Items.AddRange(["All", "Red", "Green", "Blue", "Alpha"]);
+            cboMWSelectionMode.SelectedIndex = 0;
+            cboMWSelectionMode.Location = new Point(74, 22);
+            cboMWSelectionMode.Name = "cboMWSelectionMode";
+            cboMWSelectionMode.Size = new Size(150, 23);
+            cboMWSelectionMode.TabIndex = 0;
+            // 
+            // FormBrushSettings
+            // 
+            Controls.Add(groupMagicWand);
+            groupMagicWand.ResumeLayout(false);
+            groupMagicWand.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)selectionThreshold).EndInit();
+            ResumeLayout(false);
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -110,6 +569,10 @@ namespace PixelEditor
         private void LayersControl_LayerOrderChanged(object? sender, SelectedLayerChangedEventArgs e)
         {
             Console.WriteLine($"Layer change from {e.OldIndex} to {e.NewIndex}. '{e.NewLayer?.Name}' was picked");
+
+            //btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
+            //btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
+            //                   && layersControl.GetSelectedLayerIndex() >= 0;
 
             HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             UpdateControls();
@@ -177,7 +640,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnPenColor_Click(object sender, EventArgs e)
+        private void BtnPenColor_Click(object? sender, EventArgs e)
         {
             ColorDialog c = new()
             {
@@ -195,7 +658,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnFillColor_Click(object sender, EventArgs e)
+        private void BtnFillColor_Click(object? sender, EventArgs e)
         {
             ColorDialog c = new()
             {
@@ -210,7 +673,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnFillColor1_Click(object sender, EventArgs e)
+        private void BtnFillColor1_Click(object? sender, EventArgs e)
         {
             ColorDialog c = new()
             {
@@ -254,7 +717,7 @@ namespace PixelEditor
                 if (btn != btnMagicWand)
                 {
                     btnMagicWand.Checked = false;
-                    //groupMagicWand.Visible = false;
+                    groupMagicWand.Visible = false;
                 }
             }
         }
@@ -295,6 +758,7 @@ namespace PixelEditor
             else if (btnMagicWand.Checked)
             {
                 PaintingEngine.SetBrush(paint);
+                groupMagicWand.Visible = true;
                 UpdateCursor(btnMagicWand.Image);
             }
             else
@@ -385,17 +849,12 @@ namespace PixelEditor
 
         private static Cursor GetScaleCursor(string handle)
         {
-            switch (handle)
+            return handle switch
             {
-                case "topLeft":
-                case "bottomRight":
-                    return Cursors.SizeNWSE;
-                case "topRight":
-                case "bottomLeft":
-                    return Cursors.SizeNESW;
-                default:
-                    return Cursors.SizeAll;
-            }
+                "topLeft" or "bottomRight" => Cursors.SizeNWSE,
+                "topRight" or "bottomLeft" => Cursors.SizeNESW,
+                _ => Cursors.SizeAll,
+            };
         }
 
         public static Cursor CreateCursor(Bitmap bmp, int xHotSpot, int yHotSpot)
@@ -410,23 +869,23 @@ namespace PixelEditor
             return new Cursor(ptr);
         }
 
-        private void Brush_size_Scroll(object sender, EventArgs e)
+        private void Brush_size_Scroll(object? sender, EventArgs e)
         {
             lblBrushSize.Text = $"{brush_size.Value}";
             UpdateCursor();
         }
 
-        private void Brush_opacity_Scroll(object sender, EventArgs e)
+        private void Brush_opacity_Scroll(object? sender, EventArgs e)
         {
             lblBrushOpacity.Text = $"{brush_opacity.Value}";
         }
 
-        private void Brush_smoothness_Scroll(object sender, EventArgs e)
+        private void Brush_smoothness_Scroll(object? sender, EventArgs e)
         {
             lblBrushSmoothness.Text = $"{brush_smoothness.Value}";
         }
 
-        private void Brush_hardness_Scroll(object sender, EventArgs e)
+        private void Brush_hardness_Scroll(object? sender, EventArgs e)
         {
             lblBrushHardness.Text = $"{brush_hardness.Value}";
             if (paint.Brush != null)
@@ -437,20 +896,16 @@ namespace PixelEditor
             }
         }
 
-        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        private void SelectionThreshold_Scroll(object? sender, EventArgs e)
         {
-            if (!ConfirmAbandonChanges())
-            {
-                e.Cancel = true;
-            }
+
         }
 
         private void Form1_Resize(object sender, EventArgs e)
         {
             if (WindowState != FormWindowState.Minimized)
             {
-                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 220,
-                    ClientSize.Height - canvas.Location.Y - 40);
+                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 220, ClientSize.Height - canvas.Location.Y - 40);
                 RedrawImage();
             }
         }
@@ -476,10 +931,11 @@ namespace PixelEditor
                         greenToolStripMenuItem1.Checked = false;
                         blueToolStripMenuItem1.Checked = false;
 
-                        //AddLayer(image);
                         var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
                         {
-                            Image = image
+                            Image = image,
+                            X = LayersManipulator.Width / 2 - image.Width / 2,
+                            Y = LayersManipulator.Height / 2 - image.Height / 2
                         };
                         layersControl.InsertLayer(0, layer);
 
@@ -617,11 +1073,11 @@ namespace PixelEditor
             {
                 try
                 {
+                    HistoryManager.Clear();
+
                     using FileStream fs = File.Open(ofd.FileName, FileMode.Open);
 
-                    float zoom;
-                    PointF imageOffset;
-                    StrokePTVLoader.Load(fs, out zoom, out imageOffset, out var layers, out int selectedLayerIndex);
+                    StrokePTVLoader.Load(fs, out float zoom, out PointF imageOffset, out var layers, out int selectedLayerIndex);
                     LayersManipulator.Zoom = zoom;
                     LayersManipulator.ImageOffset = imageOffset;
 
@@ -632,11 +1088,7 @@ namespace PixelEditor
                     currentFilePath = ofd.FileName;
                     isDirty = false;
                     UpdateTitleBar();
-
-                    HistoryManager.Clear();
-
                     UpdateControls();
-
                     RedrawImage();
                 }
                 catch (Exception ex)
@@ -778,7 +1230,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnAddVector_Click(object sender, EventArgs e)
+        private void BtnAddLayer_Click(object sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
@@ -797,7 +1249,7 @@ namespace PixelEditor
             RedrawImage();
         }
 
-        private void BtnSubtractVector_Click(object sender, EventArgs e)
+        private void BtnSubtractLayer_Click(object sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
@@ -896,16 +1348,7 @@ namespace PixelEditor
             }
         }
 
-        private void ChkListLayers_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
-            btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
-                               && layersControl.GetSelectedLayerIndex() >= 0;
-
-            UpdateControls();
-        }
-
-        private void BtnShowVector_Click(object sender, EventArgs e)
+        private void BtnShowLayer_Click(object sender, EventArgs e)
         {
             var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -918,7 +1361,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnHideVector_Click(object sender, EventArgs e)
+        private void BtnHideLayer_Click(object sender, EventArgs e)
         {
             var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -933,15 +1376,19 @@ namespace PixelEditor
 
         private void BtnMergeDown_Click(object sender, EventArgs e)
         {
-            //if (imageLayers.Count < 2)
-            //    return;
+            if (layersControl.GetLayers().Count < 2)
+                return;
 
-            //int selectedIndex = layersControl.GetSelectedLayerIndex();
+            int selectedIndex = layersControl.GetSelectedLayerIndex();
 
-            //if (selectedIndex < 0 || selectedIndex >= imageLayers.Count - 1)
-            //    return;
+            if (selectedIndex < 0 || selectedIndex >= layersControl.GetLayers().Count - 1)
+                return;
 
-            //ListBoxVectors_SelectedIndexChanged(sender, e);
+            //btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
+            //btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
+            //                   && layersControl.GetSelectedLayerIndex() >= 0;
+
+            UpdateControls();
         }
 
         private void UpdateControls()
@@ -959,15 +1406,6 @@ namespace PixelEditor
                 greenToolStripMenuItem1.Checked = layer.GreenFilter;
                 blueToolStripMenuItem1.Checked = layer.BlueFilter;
             }
-        }
-
-        private void ListBoxVectors_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
-            btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
-                               && layersControl.GetSelectedLayerIndex() >= 0;
-
-            UpdateControls();
         }
 
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
@@ -996,96 +1434,178 @@ namespace PixelEditor
 
         private void AllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count &&
-            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
-            //    layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    redToolStripMenuItem.Checked = false;
-            //    greenToolStripMenuItem.Checked = false;
-            //    blueToolStripMenuItem.Checked = false;
-            //    allToolStripMenuItem.Checked = !allToolStripMenuItem.Checked;
-            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.RGB;
-            //    RedrawImage();
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                allToolStripMenuItem.Checked = !allToolStripMenuItem.Checked;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = false;
+                selectedLayer.Channel = LayerChannel.RGB;
+                LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                RedrawImage();
+            }
         }
 
         private void RedToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count &&
-            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
-            //    layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    redToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
-            //    greenToolStripMenuItem.Checked = false;
-            //    blueToolStripMenuItem.Checked = false;
-            //    allToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
-            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Red;
-            //    RedrawImage();
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = !redToolStripMenuItem.Checked;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = false;
+                selectedLayer.Channel = LayerChannel.Red;
+                LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                RedrawImage();
+            }
         }
 
         private void GreenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count &&
-            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
-            //    layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    redToolStripMenuItem.Checked = false;
-            //    greenToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
-            //    blueToolStripMenuItem.Checked = false;
-            //    allToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
-            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Green;
-            //    RedrawImage();
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = !greenToolStripMenuItem.Checked;
+                blueToolStripMenuItem.Checked = false;
+                selectedLayer.Channel = LayerChannel.Green;
+                LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                RedrawImage();
+            }
         }
 
         private void BlueToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count &&
-            //    layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() &&
-            //    layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    redToolStripMenuItem.Checked = false;
-            //    greenToolStripMenuItem.Checked = false;
-            //    blueToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
-            //    allToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
-            //    imageLayers[layersControl.GetSelectedLayerIndex()].Channel = LayerChannel.Blue;
-            //    RedrawImage();
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = !blueToolStripMenuItem.Checked;
+                selectedLayer.Channel = LayerChannel.Blue;
+                LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                RedrawImage();
+            }
+        }
+
+        private void RdoAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdoAll.Checked)
+            {
+                allToolStripMenuItem.Checked = true;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = false;
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    selectedLayer.Channel = LayerChannel.RGB;
+                    LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                    RedrawImage();
+                }
+            }
+            else if (rdoRed.Checked)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = true;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = false;
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    selectedLayer.Channel = LayerChannel.Red;
+                    LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                    RedrawImage();
+                }
+            }
+            else if (rdoGreen.Checked)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = true;
+                blueToolStripMenuItem.Checked = false;
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    selectedLayer.Channel = LayerChannel.Green;
+                    LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                    RedrawImage();
+                }
+            }
+            else if (rdoBlue.Checked)
+            {
+                allToolStripMenuItem.Checked = false;
+                redToolStripMenuItem.Checked = false;
+                greenToolStripMenuItem.Checked = false;
+                blueToolStripMenuItem.Checked = true;
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    selectedLayer.Channel = LayerChannel.Blue;
+                    LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                    RedrawImage();
+                }
+            }
+        }
+
+        private void RedToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            redToolStripMenuItem1.Checked = !redToolStripMenuItem1.Checked;
+        }
+
+        private void GreenToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            greenToolStripMenuItem1.Checked = !greenToolStripMenuItem1.Checked;
+        }
+
+        private void BlueToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            blueToolStripMenuItem1.Checked = !blueToolStripMenuItem1.Checked;
+        }
+
+        private void ChkFilter1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (redToolStripMenuItem1.Checked != chkRed.Checked)
+            {
+                redToolStripMenuItem1.Checked = chkRed.Checked;
+            }
+            if (greenToolStripMenuItem1.Checked != chkGreen.Checked)
+            {
+                greenToolStripMenuItem1.Checked = chkGreen.Checked;
+            }
+            if (blueToolStripMenuItem1.Checked != chkBlue.Checked)
+            {
+                blueToolStripMenuItem1.Checked = chkBlue.Checked;
+            }
         }
 
         private void ChkFilter_CheckedChanged(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count && layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() && layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    if (imageLayers[layersControl.GetSelectedLayerIndex()].Image is not null)
-            //    {
-            //        if (sender.GetType() == typeof(ToolStripMenuItem))
-            //        {
-            //            ToolStripMenuItem item = (ToolStripMenuItem)sender;
-            //            item.Checked = !item.Checked;
-            //        }
-
-            //        imageLayers[layersControl.GetSelectedLayerIndex()].RedFilter = redToolStripMenuItem1.Checked;
-            //        imageLayers[layersControl.GetSelectedLayerIndex()].GreenFilter = greenToolStripMenuItem1.Checked;
-            //        imageLayers[layersControl.GetSelectedLayerIndex()].BlueFilter = blueToolStripMenuItem1.Checked;
-            //        RedrawImage();
-            //    }
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                selectedLayer.RedFilter = redToolStripMenuItem1.Checked;
+                selectedLayer.GreenFilter = greenToolStripMenuItem1.Checked;
+                selectedLayer.BlueFilter = blueToolStripMenuItem1.Checked;
+                LayersManipulator.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
+                RedrawImage();
+            }
         }
 
         private void DarkToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (layersControl.GetLayers().Count == imageLayers.Count && layersControl.GetLayers().Count > layersControl.GetSelectedLayerIndex() && layersControl.GetSelectedLayerIndex() >= 0)
-            //{
-            //    if (imageLayers[layersControl.GetSelectedLayerIndex()].Image is not null)
-            //    {
-            //        bool[,] mask = LayerManipulator.GetDarkPixels(LayerManipulator.Screen, 0.0f, 1.0f);
-            //        ColorGrid grid = LayerManipulator.DarkPixelGrid(mask, LayerManipulator.Screen.Width, LayerManipulator.Screen.Height);
-            //        imageLayers[layersControl.GetSelectedLayerIndex()].Image = LayerManipulator.GetImage(grid, new Rectangle(0, 0, grid.Width, grid.Height));
-            //        RedrawImage();
-            //    }
-            //}
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                bool[,] mask = LayersManipulator.GetDarkPixels(LayersManipulator.Screen, 0.0f, 1.0f);
+                ColorGrid grid = LayersManipulator.DarkPixelGrid(mask, LayersManipulator.Width, LayersManipulator.Height);
+                selectedLayer.Image = new Bitmap(LayersManipulator.GetImage(grid));
+                RedrawImage();
+            }
         }
 
         private void DeleteImageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1387,7 +1907,7 @@ namespace PixelEditor
         {
             if (selectedLayer.Image == null || selectionPoints.Count < 3) return null;
 
-            Point layerTopLeft = ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y), LayersManipulator.Width, LayersManipulator.Height);
+            Point layerTopLeft = LayersManipulator.ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y), canvas.Width, canvas.Height);
             layerTopLeft.X -= selectedLayer.X;
             layerTopLeft.Y -= selectedLayer.Y;
 
@@ -1401,7 +1921,7 @@ namespace PixelEditor
 
             using GraphicsPath path = new();
             PointF[] sourcePoints = [.. selectionPoints.Select(p => {
-                Point worldP = ScreenToWorld(p, LayersManipulator.Width, LayersManipulator.Height);
+                Point worldP = LayersManipulator.ScreenToWorld(p, canvas.Width, canvas.Height);
                 return new PointF(worldP.X - selectedLayer.X - layerTopLeft.X,
                                   worldP.Y - selectedLayer.Y - layerTopLeft.Y);
             })];
@@ -1427,7 +1947,7 @@ namespace PixelEditor
             {
                 PointF[] layerPoints = [.. selectionPoints.Select(p =>
                 {
-                    Point worldP = ScreenToWorld(p, LayersManipulator.Width, LayersManipulator.Height);
+                    Point worldP = LayersManipulator.ScreenToWorld(p, canvas.Width, canvas.Height);
                     return new PointF(worldP.X - selectedLayer.X, worldP.Y - selectedLayer.Y);
                 })];
 
@@ -1453,8 +1973,7 @@ namespace PixelEditor
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
                 float ratio = GetCanvasToWorldRatio();
-                Point worldPos = ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y),
-                                                LayersManipulator.Width, LayersManipulator.Height);
+                Point worldPos = LayersManipulator.ScreenToWorld(new Point((int)selectionBounds.X, (int)selectionBounds.Y), canvas.Width, canvas.Height);
 
                 float localX = worldPos.X - selectedLayer.X;
                 float localY = worldPos.Y - selectedLayer.Y;
@@ -1656,6 +2175,53 @@ namespace PixelEditor
                     selectionPoints.Clear();
                     selectionPoints.Add(lastMousePosition);
                 }
+                else if (btnMagicWand.Checked)
+                {
+                    if (selectedLayer != null)
+                    {
+                        if (selectedLayer.Image != null)
+                        {
+                            Point position = LayersManipulator.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height);
+                            position.X -= selectedLayer.X;
+                            position.Y -= selectedLayer.Y;
+
+                            bool[,] mask = ImageManipulator.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
+
+                            //ColorGrid grid = LayersManipulator.DarkPixelGrid(mask, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                            //selectedLayer.Image = new Bitmap(LayersManipulator.GetImage(grid));
+
+                            float aspectRatio = (float)LayersManipulator.Width / LayersManipulator.Height;
+                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                            float scaledWidth, scaledHeight;
+
+                            if (aspectRatio > containerAspectRatio)
+                            {
+                                scaledWidth = canvas.Width * LayersManipulator.Zoom;
+                                scaledHeight = scaledWidth / aspectRatio;
+                            }
+                            else
+                            {
+                                scaledHeight = canvas.Height * LayersManipulator.Zoom;
+                                scaledWidth = scaledHeight * aspectRatio;
+                            }
+
+                            int centerX = (int)(canvas.Width - scaledWidth) / 2;
+                            int centerY = (int)(canvas.Height - scaledHeight) / 2;
+
+                            Point screenL = LayersManipulator.WorldToScreen(new Point(selectedLayer.X, selectedLayer.Y), canvas.Width, canvas.Height);
+
+                            selectionPoints.Clear();
+                            List<Point> points = ImageManipulator.GetSelectionPointsFromMask(mask, false);
+                            foreach (Point point in points)
+                            {
+                                Point screenP = LayersManipulator.WorldToScreen(point, canvas.Width, canvas.Height);
+                                screenP.X += screenL.X - centerX;
+                                screenP.Y += screenL.Y - centerY;
+                                selectionPoints.Add(screenP);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -1742,7 +2308,7 @@ namespace PixelEditor
 
                     float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum; //0.22f
 
-                    Point currentWorldPos = ScreenToWorld(e.Location, LayersManipulator.Width, LayersManipulator.Height);
+                    Point currentWorldPos = LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     if (strokePoints.Count == 0)
@@ -1940,34 +2506,6 @@ namespace PixelEditor
             return scaledWidth / LayersManipulator.Width;
         }
 
-        private Point ScreenToWorld(Point screenPt, int canvasW, int canvasH)
-        {
-            float aspectRatio = (float)canvasW / canvasH;
-            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-
-            float scaledWidth, scaledHeight;
-            if (aspectRatio > containerAspectRatio)
-            {
-                scaledWidth = canvas.Width * LayersManipulator.Zoom;
-                scaledHeight = scaledWidth / aspectRatio;
-            }
-            else
-            {
-                scaledHeight = canvas.Height * LayersManipulator.Zoom;
-                scaledWidth = scaledHeight * aspectRatio;
-            }
-
-            float centerX = (canvas.Width - scaledWidth) / 2;
-            float centerY = (canvas.Height - scaledHeight) / 2;
-
-            float ratio = scaledWidth / canvasW;
-
-            int worldX = (int)((screenPt.X - (centerX + LayersManipulator.ImageOffset.X)) / ratio);
-            int worldY = (int)((screenPt.Y - (centerY + LayersManipulator.ImageOffset.Y)) / ratio);
-
-            return new Point(worldX, worldY);
-        }
-
         private void RedrawImage(int selectedLayerIndex = -1, bool repopulateImage = true)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -2094,6 +2632,14 @@ namespace PixelEditor
             }
 
             canvas.Invalidate();
+        }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!ConfirmAbandonChanges())
+            {
+                e.Cancel = true;
+            }
         }
 
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)

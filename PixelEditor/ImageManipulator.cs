@@ -35,10 +35,7 @@ namespace PixelEditor
             float imageX = ((canvas.Width - scaledWidth) / 2) + imageOffset.X;
             float imageY = ((canvas.Height - scaledHeight) / 2) + imageOffset.Y;
 
-            PointF CanvasToImage(Point p) => new(
-                (p.X - imageX) / scaledWidth * width,
-                (p.Y - imageY) / scaledHeight * height
-            );
+            PointF CanvasToImage(Point p) => new((p.X - imageX) / scaledWidth * width, (p.Y - imageY) / scaledHeight * height);
 
             PointF startF = CanvasToImage(startPoint);
             Point startI = new((int)startF.X, (int)startF.Y);
@@ -214,6 +211,157 @@ namespace PixelEditor
             Marshal.Copy(pixels, 0, data.Scan0, bytes);
             bitmap.UnlockBits(data);
             return bitmap;
+        }
+
+        public static unsafe bool[,] MagicWandSelect(Image image, Point startPosition, float threshold, string selectBy = "All")
+        {
+            Bitmap bmp = (Bitmap)image;
+            int width = bmp.Width;
+            int height = bmp.Height;
+            bool[,] mask = new bool[width, height];
+
+            if (startPosition.X < 0 || startPosition.X >= width || startPosition.Y < 0 || startPosition.Y >= height)
+                return mask;
+
+            BitmapData data = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            int stride = data.Stride;
+            byte* ptr = (byte*)data.Scan0;
+
+            byte* sPtr = ptr + (startPosition.Y * stride) + (startPosition.X * 4);
+            byte sB = sPtr[0], sG = sPtr[1], sR = sPtr[2], sA = sPtr[3];
+            float sBr = (0.2126f * sR + 0.7152f * sG + 0.0722f * sB) / 255f;
+
+            Queue<Point> pixels = new Queue<Point>();
+            pixels.Enqueue(startPosition);
+            mask[startPosition.X, startPosition.Y] = true;
+
+            int[] dx = { 0, 0, 1, -1, 1, 1, -1, -1 };
+            int[] dy = { 1, -1, 0, 0, 1, -1, 1, -1 };
+
+            while (pixels.Count > 0)
+            {
+                Point current = pixels.Dequeue();
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int nx = current.X + dx[i];
+                    int ny = current.Y + dy[i];
+
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && !mask[nx, ny])
+                    {
+                        byte* cP = ptr + (ny * stride) + (nx * 4);
+                        byte b = cP[0], g = cP[1], r = cP[2], a = cP[3];
+
+                        bool match = false;
+                        switch (selectBy)
+                        {
+                            case "Red": match = Math.Abs(sR - r) / 255f <= threshold; break;
+                            case "Green": match = Math.Abs(sG - g) / 255f <= threshold; break;
+                            case "Blue": match = Math.Abs(sB - b) / 255f <= threshold; break;
+                            case "Alpha": match = Math.Abs(sA - a) / 255f <= threshold; break;
+                            case "Brightness":
+                                float br = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+                                match = Math.Abs(sBr - br) <= threshold;
+                                break;
+                            case "All":
+                            default:
+                                // Max Euclidean distance for RGB is sqrt(255^2 * 3) ≈ 441.67
+                                double diff = Math.Sqrt(Math.Pow(sR - r, 2) + Math.Pow(sG - g, 2) + Math.Pow(sB - b, 2));
+                                match = (diff / 441.6729559300637) <= threshold;
+                                break;
+                        }
+
+                        if (match)
+                        {
+                            mask[nx, ny] = true;
+                            pixels.Enqueue(new Point(nx, ny));
+                        }
+                    }
+                }
+            }
+
+            bmp.UnlockBits(data);
+            return mask;
+        }
+
+        public static List<Point> GetSelectionPointsFromMask(bool[,] mask, bool inner)
+        {
+            List<Point> outline = [];
+
+            if (mask == null)
+                return outline;
+
+            int width = mask.GetLength(0);
+            int height = mask.GetLength(1);
+
+            int[] dx = [1, 0, -1, 0];
+            int[] dy = [0, 1, 0, -1];
+
+            Point? start = null;
+            for (int y = 0; y < height && !start.HasValue; y++)
+            {
+                for (int x = 0; x < width && !start.HasValue; x++)
+                {
+                    if (mask[x, y] == inner)
+                    {
+                        if (y == 0 || mask[x, y - 1] != inner)
+                        {
+                            start = new Point(x, y);
+                        }
+                    }
+                }
+            }
+
+            if (!start.HasValue)
+                return outline;
+
+            int currentX = start.Value.X;
+            int currentY = start.Value.Y;
+            int dir = 0; // Start moving right along the top edge
+
+            outline.Add(new Point(currentX, currentY));
+
+            do
+            {
+                int leftDir = (dir + 3) % 4;
+                int checkX = currentX + dx[leftDir];
+                int checkY = currentY + dy[leftDir];
+
+                bool pixelLeft = checkX >= 0 && checkX < width &&
+                                checkY >= 0 && checkY < height &&
+                                mask[checkX, checkY] == inner;
+
+                if (pixelLeft)
+                {
+                    dir = leftDir;
+                    currentX += dx[dir];
+                    currentY += dy[dir];
+                    outline.Add(new Point(currentX, currentY));
+                }
+                else
+                {
+                    int forwardX = currentX + dx[dir];
+                    int forwardY = currentY + dy[dir];
+
+                    bool pixelForward = forwardX >= 0 && forwardX < width &&
+                                       forwardY >= 0 && forwardY < height &&
+                                       mask[forwardX, forwardY] == inner;
+
+                    if (pixelForward)
+                    {
+                        currentX = forwardX;
+                        currentY = forwardY;
+                        outline.Add(new Point(currentX, currentY));
+                    }
+                    else
+                    {
+                        dir = (dir + 1) % 4;
+                    }
+                }
+
+            } while (!(currentX == start.Value.X && currentY == start.Value.Y && dir == 0) && outline.Count < (width * height * 4));
+
+            return outline;
         }
 
         public static Bitmap AdjustContrast(Image image, float contrast)
