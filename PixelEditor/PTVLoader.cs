@@ -2,7 +2,7 @@
 
 namespace PixelEditor
 {
-    public static class StrokePTVLoader
+    public static class PTVLoader
     {
         private const string MagicString = "BNDATA";
 

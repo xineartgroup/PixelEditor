@@ -567,7 +567,7 @@ namespace PixelEditor
         {
             int width = grid.Width;
             int height = grid.Height;
-            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            Bitmap bitmap = new(width, height, PixelFormat.Format32bppArgb);
 
             BitmapData data = bitmap.LockBits(
                 new Rectangle(0, 0, width, height),
@@ -694,6 +694,120 @@ namespace PixelEditor
             {
                 return false;
             }
+        }
+
+        public static unsafe Layer MergeLayers(Layer top, Layer bottom)
+        {
+            Rectangle topBounds = top.GetBounds();
+            Rectangle bottomBounds = bottom.GetBounds();
+            Rectangle combinedBounds = Rectangle.Union(topBounds, bottomBounds);
+
+            Layer result = new($"{top.Name}_merged", top.IsVisible)
+            {
+                X = combinedBounds.X,
+                Y = combinedBounds.Y
+            };
+
+            if (combinedBounds.IsEmpty) return result;
+
+            Bitmap mergedBitmap = new(combinedBounds.Width, combinedBounds.Height, PixelFormat.Format32bppArgb);
+            BitmapData resData = mergedBitmap.LockBits(new Rectangle(0, 0, mergedBitmap.Width, mergedBitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+
+            DrawLayerToBuffer(bottom, resData, combinedBounds);
+            DrawLayerToBuffer(top, resData, combinedBounds);
+
+            mergedBitmap.UnlockBits(resData);
+            result.Image = mergedBitmap;
+            return result;
+        }
+
+        private static unsafe void DrawLayerToBuffer(Layer layer, BitmapData destData, Rectangle canvasBounds)
+        {
+            if (layer.Image == null || !layer.IsVisible) return;
+
+            Bitmap srcBitmap = (Bitmap)layer.Image;
+            Rectangle srcBounds = layer.GetBounds();
+            BitmapData srcData = srcBitmap.LockBits(new Rectangle(0, 0, srcBitmap.Width, srcBitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+            byte* dBase = (byte*)destData.Scan0;
+            byte* sBase = (byte*)srcData.Scan0;
+
+            int ox = srcBounds.X - canvasBounds.X;
+            int oy = srcBounds.Y - canvasBounds.Y;
+            float alphaM = layer.Opacity / 100f;
+
+            for (int y = 0; y < srcBounds.Height; y++)
+            {
+                int dy = y + oy;
+                if (dy < 0 || dy >= canvasBounds.Height) continue;
+
+                for (int x = 0; x < srcBounds.Width; x++)
+                {
+                    int dx = x + ox;
+                    if (dx < 0 || dx >= canvasBounds.Width) continue;
+
+                    int sx = x / layer.ScaleWidth;
+                    int sy = y / layer.ScaleHeight;
+                    if (sx >= srcBitmap.Width || sy >= srcBitmap.Height) continue;
+
+                    byte* sP = sBase + (sy * srcData.Stride) + (sx * 4);
+                    byte* dP = dBase + (dy * destData.Stride) + (dx * 4);
+
+                    float sA = (sP[3] / 255f) * alphaM;
+                    float dA = dP[3] / 255f;
+
+                    if (sA <= 0) continue;
+
+                    float rS = sP[2] / 255f, gS = sP[1] / 255f, bS = sP[0] / 255f;
+                    float rD = dP[2] / 255f, gD = dP[1] / 255f, bD = dP[0] / 255f;
+                    float rR, gR, bR;
+
+                    switch (layer.BlendMode)
+                    {
+                        case ImageBlending.Multiply:
+                            rR = rS * rD; gR = gS * gD; bR = bS * bD;
+                            break;
+                        case ImageBlending.Screen:
+                            rR = 1 - (1 - rS) * (1 - rD); gR = 1 - (1 - gS) * (1 - gD); bR = 1 - (1 - bS) * (1 - bD);
+                            break;
+                        case ImageBlending.Overlay:
+                            rR = rD < 0.5f ? 2 * rS * rD : 1 - 2 * (1 - rS) * (1 - rD);
+                            gR = gD < 0.5f ? 2 * gS * gD : 1 - 2 * (1 - gS) * (1 - gD);
+                            bR = bD < 0.5f ? 2 * bS * bD : 1 - 2 * (1 - bS) * (1 - bD);
+                            break;
+                        case ImageBlending.Difference:
+                            rR = Math.Abs(rD - rS); gR = Math.Abs(gD - gS); bR = Math.Abs(bD - bS);
+                            break;
+                        case ImageBlending.Add:
+                            rR = rS + rD; gR = gS + gD; bR = bS + bD;
+                            break;
+                        case ImageBlending.Subtract:
+                            rR = rD - rS; gR = gD - gS; bR = bD - bS;
+                            break;
+                        case ImageBlending.Darken:
+                            rR = Math.Min(rS, rD); gR = Math.Min(gS, gD); bR = Math.Min(bS, bD);
+                            break;
+                        case ImageBlending.Lighen:
+                        case ImageBlending.Lighten:
+                            rR = Math.Max(rS, rD); gR = Math.Max(gS, gD); bR = Math.Max(bS, bD);
+                            break;
+                        case ImageBlending.Normal:
+                        default:
+                            rR = rS; gR = gS; bR = bS;
+                            break;
+                    }
+
+                    float outA = sA + dA * (1 - sA);
+                    if (outA > 0)
+                    {
+                        dP[2] = (byte)(Math.Clamp((rR * sA + rD * dA * (1 - sA)) / outA, 0, 1) * 255);
+                        dP[1] = (byte)(Math.Clamp((gR * sA + gD * dA * (1 - sA)) / outA, 0, 1) * 255);
+                        dP[0] = (byte)(Math.Clamp((bR * sA + bD * dA * (1 - sA)) / outA, 0, 1) * 255);
+                        dP[3] = (byte)(Math.Clamp(outA, 0, 1) * 255);
+                    }
+                }
+            }
+            srcBitmap.UnlockBits(srcData);
         }
 
         public static bool[,] GetDarkPixels(ColorGrid grid, float start, float end)

@@ -2,7 +2,7 @@
 
 namespace PixelEditor
 {
-    public static class StrokePTVSaver
+    public static class PTVSaver
     {
         private const int FormatMajorVersion = 1;
         private const int FormatMinorVersion = 1;
