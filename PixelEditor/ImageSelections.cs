@@ -2,22 +2,71 @@
 
 namespace PixelEditor
 {
-    public struct Edge(Point a, Point b)
-    {
-        public Point A = a, B = b;
-    }
-
     public static class ImageSelections
     {
-        private static readonly List<List<Point>> selectionPoints = [];
+        private static readonly List<List<Point>> selectionPolygons = [];
+        private static bool isInnerSelection = true;
+        private static RectangleF selectionBounds;
+        private static PointF selectionCenter;
 
-        public static bool IsInnerSelection { get; set; }
+        public const float ROTATION_HANDLE_SIZE = 20;
+        public const float SCALE_HANDLE_SIZE = 15;
+
+        public static bool IsInnerSelection()
+        {
+            return isInnerSelection;
+        }
+
+        public static bool IsOverRotationHandle(Point point)
+        {
+            PointF rotationHandle = new(
+                GetSelectionCenter().X,
+                GetSelectionBounds().Y - ROTATION_HANDLE_SIZE
+            );
+
+            float distance = Distance(point, rotationHandle);
+            return distance < ROTATION_HANDLE_SIZE;
+        }
+
+        public static bool IsOverScaleHandle(Point point, out string handle)
+        {
+            handle = "";
+
+            var corners = new[]
+            {
+                new { Name = "topLeft", Point = new PointF(GetSelectionBounds().X, GetSelectionBounds().Y) },
+                new { Name = "topRight", Point = new PointF(GetSelectionBounds().Right, GetSelectionBounds().Y) },
+                new { Name = "bottomLeft", Point = new PointF(GetSelectionBounds().X, GetSelectionBounds().Bottom) },
+                new { Name = "bottomRight", Point = new PointF(GetSelectionBounds().Right, GetSelectionBounds().Bottom) }
+            };
+
+            foreach (var corner in corners)
+            {
+                if (Distance(point, corner.Point) < SCALE_HANDLE_SIZE)
+                {
+                    handle = corner.Name;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static RectangleF GetSelectionBounds()
+        {
+            return selectionBounds;
+        }
+
+        public static PointF GetSelectionCenter()
+        {
+            return selectionCenter;
+        }
 
         public static bool ContainsSelection()
         {
-            for (int i = 0; i < selectionPoints.Count; i++)
+            for (int i = 0; i < selectionPolygons.Count; i++)
             {
-                if (selectionPoints[i].Count > 0)
+                if (selectionPolygons[i].Count > 0)
                 {
                     return true;
                 }
@@ -27,93 +76,138 @@ namespace PixelEditor
 
         public static void AddSelectionPoint(Point point)
         {
-            if (selectionPoints.Count == 0)
+            if (selectionPolygons.Count == 0)
             {
-                selectionPoints.Add([]);
+                selectionPolygons.Add([]);
             }
-            selectionPoints[^1].Add(point);
+            selectionPolygons[^1].Add(point);
         }
 
         public static void UpdateSelectionPoint(int index, Point point)
         {
-            if (selectionPoints.Count > 0)
+            if (selectionPolygons.Count > 0)
             {
-                selectionPoints[^1][index] = point;
+                selectionPolygons[^1][index] = point;
             }
         }
 
         public static void IncreaseSelectionPoints()
         {
-            selectionPoints.Add([]);
+            selectionPolygons.Add([]);
         }
 
         public static void ClearSelections()
         {
-            selectionPoints.Clear();
+            selectionPolygons.Clear();
         }
 
         public static List<List<Point>> GetSelections()
         {
-            return selectionPoints;
+            return selectionPolygons;
         }
 
         public static List<Point> GetLastSelection()
         {
-            if (selectionPoints.Count > 0)
+            if (selectionPolygons.Count > 0)
             {
-                return selectionPoints[^1];
+                return selectionPolygons[^1];
             }
             return [];
         }
 
         public static void MoveSelection(float dx, float dy)
         {
-            for (int i = 0; i < selectionPoints.Count; i++)
+            for (int i = 0; i < selectionPolygons.Count; i++)
             {
-                for (int j = 0; j < selectionPoints[i].Count; j++)
+                for (int j = 0; j < selectionPolygons[i].Count; j++)
                 {
-                    selectionPoints[i][j] = new Point((int)(selectionPoints[i][j].X + dx), (int)(selectionPoints[i][j].Y + dy));
+                    selectionPolygons[i][j] = new Point((int)(selectionPolygons[i][j].X + dx), (int)(selectionPolygons[i][j].Y + dy));
                 }
             }
+            CalculateSelectionBounds();
+            selectionCenter = new PointF(selectionCenter.X + dx, selectionCenter.Y + dy);
         }
 
         public static void MergeIntersections()
         {
-            if (selectionPoints.Count < 2) return;
-
-            int minX = int.MaxValue, minY = int.MaxValue;
-            int maxX = int.MinValue, maxY = int.MinValue;
-
-            foreach (var poly in selectionPoints)
+            if (isInnerSelection)
             {
-                foreach (var p in poly)
+                if (selectionPolygons.Count < 2) return;
+
+                int minX = int.MaxValue, minY = int.MaxValue;
+                int maxX = int.MinValue, maxY = int.MinValue;
+
+                foreach (var poly in selectionPolygons)
                 {
-                    if (p.X < minX) minX = p.X;
-                    if (p.Y < minY) minY = p.Y;
-                    if (p.X > maxX) maxX = p.X;
-                    if (p.Y > maxY) maxY = p.Y;
+                    foreach (var p in poly)
+                    {
+                        if (p.X < minX) minX = p.X;
+                        if (p.Y < minY) minY = p.Y;
+                        if (p.X > maxX) maxX = p.X;
+                        if (p.Y > maxY) maxY = p.Y;
+                    }
+                }
+
+                int padding = 2;
+                int width = (maxX - minX) + (padding * 2);
+                int height = (maxY - minY) + (padding * 2);
+
+                bool[,] mask = new bool[width, height];
+
+                foreach (var poly in selectionPolygons)
+                {
+                    List<Point> offsetPoly = [.. poly.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))];
+                    FillPolygonInMask(mask, offsetPoly);
+                }
+
+                List<List<Point>> mergedOutlines = GetSelectionPointsFromMask(mask, Point.Empty);
+
+                selectionPolygons.Clear();
+                foreach (var outline in mergedOutlines)
+                {
+                    selectionPolygons.Add([.. outline.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]);
+                }
+            }
+        }
+
+        public static void CalculateSelectionBounds()
+        {
+            if (!ContainsSelection()) return;
+
+            float minX = float.MaxValue, minY = float.MaxValue;
+            float maxX = float.MinValue, maxY = float.MinValue;
+
+            var selectionPoints = GetSelections();
+            for (int i = 0; i < selectionPoints.Count; i++)
+            {
+                foreach (var point in selectionPoints[i])
+                {
+                    minX = Math.Min(minX, point.X);
+                    minY = Math.Min(minY, point.Y);
+                    maxX = Math.Max(maxX, point.X);
+                    maxY = Math.Max(maxY, point.Y);
                 }
             }
 
-            int padding = 2;
-            int width = (maxX - minX) + (padding * 2);
-            int height = (maxY - minY) + (padding * 2);
+            selectionBounds = new RectangleF(minX, minY, maxX - minX, maxY - minY);
+            selectionCenter = new PointF(
+                selectionBounds.X + selectionBounds.Width / 2,
+                selectionBounds.Y + selectionBounds.Height / 2
+            );
+        }
 
-            bool[,] mask = new bool[width, height];
+        public static float Distance(Point p1, PointF p2)
+        {
+            float dx = p1.X - p2.X;
+            float dy = p1.Y - p2.Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
 
-            foreach (var poly in selectionPoints)
-            {
-                List<Point> offsetPoly = poly.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding)).ToList();
-                FillPolygonInMask(mask, offsetPoly);
-            }
-
-            List<List<Point>> mergedOutlines = GetSelectionPointsFromMask(mask, true);
-
-            selectionPoints.Clear();
-            foreach (var outline in mergedOutlines)
-            {
-                selectionPoints.Add([.. outline.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]);
-            }
+        public static float CalculateRotationAngle(Point mousePosition)
+        {
+            float dx = mousePosition.X - GetSelectionCenter().X;
+            float dy = mousePosition.Y - GetSelectionCenter().Y;
+            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
         }
 
         private static void FillPolygonInMask(bool[,] mask, List<Point> points)
@@ -156,9 +250,9 @@ namespace PixelEditor
 
         public static int IsPointInSelection(Point point)
         {
-            for (int i = 0; i < selectionPoints.Count; i++)
+            for (int i = 0; i < selectionPolygons.Count; i++)
             {
-                if (IsPointInPolygon(point, selectionPoints[i]))
+                if (IsPointInPolygon(point, selectionPolygons[i]))
                 {
                     return i;
                 }
@@ -181,7 +275,7 @@ namespace PixelEditor
             return inside;
         }
 
-        public static List<List<Point>> GetSelectionPointsFromMask(bool[,] mask, bool inner)
+        public static List<List<Point>> GetSelectionPointsFromMask(bool[,] mask, Point position)
         {
             List<List<Point>> regions = [];
 
@@ -190,6 +284,13 @@ namespace PixelEditor
 
             int width = mask.GetLength(0);
             int height = mask.GetLength(1);
+
+            if (position != Point.Empty &&
+                position.X >= 0 && position.X < width &&
+                position.Y >= 0 && position.Y < height)
+            {
+                isInnerSelection = mask[position.X, position.Y] != mask[0, 0];
+            }
 
             int[] dx = [1, 0, -1, 0];
             int[] dy = [0, 1, 0, -1];
@@ -200,11 +301,11 @@ namespace PixelEditor
             {
                 for (int x = 0; x < width; x++)
                 {
-                    if (mask[x, y] == inner && !visited[x, y])
+                    if (mask[x, y] == isInnerSelection && !visited[x, y])
                     {
                         Point? start = null;
 
-                        if (y == 0 || mask[x, y - 1] != inner)
+                        if (y == 0 || mask[x, y - 1] != isInnerSelection)
                         {
                             start = new Point(x, y);
                         }
@@ -228,7 +329,7 @@ namespace PixelEditor
 
                             bool pixelLeft = checkX >= 0 && checkX < width &&
                                             checkY >= 0 && checkY < height &&
-                                            mask[checkX, checkY] == inner;
+                                            mask[checkX, checkY] == isInnerSelection;
 
                             if (pixelLeft)
                             {
@@ -245,7 +346,7 @@ namespace PixelEditor
 
                                 bool pixelForward = forwardX >= 0 && forwardX < width &&
                                                    forwardY >= 0 && forwardY < height &&
-                                                   mask[forwardX, forwardY] == inner;
+                                                   mask[forwardX, forwardY] == isInnerSelection;
 
                                 if (pixelForward)
                                 {
