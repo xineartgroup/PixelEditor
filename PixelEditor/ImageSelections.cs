@@ -148,7 +148,7 @@ namespace PixelEditor
                     }
                 }
 
-                int padding = 2;
+                int padding = 0; //2
                 int width = (maxX - minX) + (padding * 2);
                 int height = (maxY - minY) + (padding * 2);
 

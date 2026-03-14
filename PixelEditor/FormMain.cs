@@ -107,6 +107,7 @@ namespace PixelEditor
 
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
+            layersControl.LayerCountChanged += LayersControl_LayerCountChanged;
         }
 
         private void InitializeComponentGroupFill()
@@ -518,6 +519,7 @@ namespace PixelEditor
 
         private void FormMain_Load(object sender, EventArgs e)
         {
+            HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Form1_Resize(sender, e);
             UpdateTitleBar();
             cboBlendMode.Items.Clear();
@@ -550,14 +552,23 @@ namespace PixelEditor
         {
             Console.WriteLine($"Layer change from {e.OldIndex} to {e.NewIndex}. '{e.NewLayer?.Name}' was picked");
 
-            //btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
-            //btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
-            //                   && layersControl.GetSelectedLayerIndex() >= 0;
+            btnMoveUp.Enabled = e.NewIndex > 0;
+            btnMoveDown.Enabled = e.NewIndex < layersControl.GetLayers().Count - 1 && e.NewIndex >= 0;
 
-            HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            // Do NOT PUT HistoryManager.RecordState Here!!!
             UpdateControls();
 
             RedrawImage();
+        }
+
+        private void LayersControl_LayerCountChanged(object? sender, LayersCountChangedEventArgs e)
+        {
+            Console.WriteLine($"Layers count changed from {e.OldCount} to {e.NewCount}.");
+
+            btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
+            btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1 && layersControl.GetSelectedLayerIndex() >= 0;
+
+            // Do NOT PUT HistoryManager.RecordState Here!!!
         }
 
         private void ReloadBrushes()
@@ -1225,7 +1236,9 @@ namespace PixelEditor
             {
                 Image = bmp
             };
+
             layersControl.InsertLayer(0, layer);
+
             RedrawImage();
         }
 
@@ -1239,10 +1252,7 @@ namespace PixelEditor
 
         private void BtnMoveUp_Click(object sender, EventArgs e)
         {
-            if (layersControl.GetSelectedLayerIndex() <= 0) return;
-
             int currentIndex = layersControl.GetSelectedLayerIndex();
-            int newIndex = currentIndex - 1;
 
             var layerToMove = layersControl.GetLayer(currentIndex);
 
@@ -1250,10 +1260,7 @@ namespace PixelEditor
             {
                 HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                layersControl.RemoveLayerAt(currentIndex);
-                layersControl.InsertLayer(newIndex, layerToMove);
-
-                layersControl.SetSelectedLayerIndex(newIndex);
+                layersControl.MoveLayerUp();
 
                 RedrawImage();
             }
@@ -1261,11 +1268,7 @@ namespace PixelEditor
 
         private void BtnMoveDown_Click(object sender, EventArgs e)
         {
-            if (layersControl.GetSelectedLayerIndex() < 0 ||
-                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
-
             int currentIndex = layersControl.GetSelectedLayerIndex();
-            int newIndex = currentIndex + 1;
 
             var layerToMove = layersControl.GetLayer(currentIndex);
 
@@ -1273,10 +1276,7 @@ namespace PixelEditor
             {
                 HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                layersControl.RemoveLayerAt(currentIndex);
-                layersControl.InsertLayer(newIndex, layerToMove);
-
-                layersControl.SetSelectedLayerIndex(newIndex);
+                layersControl.MoveLayerDown();
 
                 RedrawImage();
             }
@@ -1284,11 +1284,7 @@ namespace PixelEditor
 
         private void MoveToTopToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (layersControl.GetSelectedLayerIndex() < 0 ||
-                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
-
             int currentIndex = layersControl.GetSelectedLayerIndex();
-            int newIndex = 0;
 
             var layerToMove = layersControl.GetLayer(currentIndex);
 
@@ -1296,10 +1292,7 @@ namespace PixelEditor
             {
                 HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                layersControl.RemoveLayerAt(currentIndex);
-                layersControl.InsertLayer(newIndex, layerToMove);
-
-                layersControl.SetSelectedLayerIndex(newIndex);
+                layersControl.MoveLayerToTop();
 
                 RedrawImage();
             }
@@ -1307,11 +1300,7 @@ namespace PixelEditor
 
         private void MoveToBottomToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (layersControl.GetSelectedLayerIndex() < 0 ||
-                layersControl.GetSelectedLayerIndex() >= layersControl.GetLayers().Count - 1) return;
-
             int currentIndex = layersControl.GetSelectedLayerIndex();
-            int newIndex = layersControl.GetLayers().Count - 2;
 
             var layerToMove = layersControl.GetLayer(currentIndex);
 
@@ -1319,10 +1308,7 @@ namespace PixelEditor
             {
                 HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                layersControl.RemoveLayerAt(currentIndex);
-                layersControl.InsertLayer(newIndex, layerToMove);
-
-                layersControl.SetSelectedLayerIndex(newIndex);
+                layersControl.MoveLayerToBottom();
 
                 RedrawImage();
             }
@@ -1363,10 +1349,6 @@ namespace PixelEditor
 
             if (selectedIndex < 0 || selectedIndex >= layersControl.GetLayers().Count - 1)
                 return;
-
-            //btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
-            //btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1
-            //                   && layersControl.GetSelectedLayerIndex() >= 0;
 
             var top = layersControl.GetLayer(selectedIndex);
             var bottom = layersControl.GetLayer(selectedIndex + 1);
@@ -1848,11 +1830,18 @@ namespace PixelEditor
             {
                 if (selectedLayer.Image != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
-                    selectedLayer.Image.Dispose();
-                    selectedLayer.Image = blurred;
-                    RedrawImage();
+                    FormBlur frm = new()
+                    {
+                        Image = selectedLayer.Image
+                    };
+                    if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Bitmap blurred = new(frm.Image); //Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = blurred;
+                        RedrawImage();
+                    }
                 }
             }
         }
@@ -1864,7 +1853,25 @@ namespace PixelEditor
 
         private void BrightnessToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.Image != null)
+                {
+                    FormBrightness frm = new()
+                    {
+                        Image = selectedLayer.Image
+                    };
+                    if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Bitmap result = new(frm.Image); //Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = result;
+                        RedrawImage();
+                    }
+                }
+            }
         }
 
         private void UpdateTransformMatrix()
@@ -2460,7 +2467,6 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object sender, MouseEventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             if (isLassoSelecting)
             {
                 if (ImageSelections.GetLastSelection().Count > 1)
@@ -2474,7 +2480,8 @@ namespace PixelEditor
             isRectSelecting = false;
             isRotating = false;
             isScaling = false;
-            Cursor.Current = Cursors.Default;
+            //Cursor.Current = Cursors.Default;
+            HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             LayersManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
             ImageSelections.MergeIntersections();

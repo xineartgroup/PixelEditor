@@ -79,7 +79,6 @@
             grayscaleToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem16 = new ToolStripSeparator();
             brightnessToolStripMenuItem = new ToolStripMenuItem();
-            contrastToolStripMenuItem = new ToolStripMenuItem();
             blurImageToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem9 = new ToolStripSeparator();
             channelsToolStripMenuItem = new ToolStripMenuItem();
@@ -158,7 +157,9 @@
             cboBlendMode = new ComboBox();
             btnAddLayer = new Button();
             btnSubtractLayer = new Button();
+            btnToTop = new Button();
             btnMoveUp = new Button();
+            btnToBottom = new Button();
             label2 = new Label();
             btnMoveDown = new Button();
             label1 = new Label();
@@ -510,7 +511,7 @@
             // 
             // adjustmentsToolStripMenuItem
             // 
-            adjustmentsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { invertToolStripMenuItem, grayscaleToolStripMenuItem, toolStripMenuItem16, brightnessToolStripMenuItem, contrastToolStripMenuItem, blurImageToolStripMenuItem });
+            adjustmentsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { invertToolStripMenuItem, grayscaleToolStripMenuItem, toolStripMenuItem16, brightnessToolStripMenuItem, blurImageToolStripMenuItem });
             adjustmentsToolStripMenuItem.Name = "adjustmentsToolStripMenuItem";
             adjustmentsToolStripMenuItem.Size = new Size(180, 22);
             adjustmentsToolStripMenuItem.Text = "Adjustments";
@@ -518,41 +519,34 @@
             // invertToolStripMenuItem
             // 
             invertToolStripMenuItem.Name = "invertToolStripMenuItem";
-            invertToolStripMenuItem.Size = new Size(154, 22);
+            invertToolStripMenuItem.Size = new Size(188, 22);
             invertToolStripMenuItem.Text = "Invert";
             invertToolStripMenuItem.Click += InvertToolStripMenuItem_Click;
             // 
             // grayscaleToolStripMenuItem
             // 
             grayscaleToolStripMenuItem.Name = "grayscaleToolStripMenuItem";
-            grayscaleToolStripMenuItem.Size = new Size(154, 22);
+            grayscaleToolStripMenuItem.Size = new Size(188, 22);
             grayscaleToolStripMenuItem.Text = "Grayscale";
             grayscaleToolStripMenuItem.Click += GrayscaleToolStripMenuItem_Click;
             // 
             // toolStripMenuItem16
             // 
             toolStripMenuItem16.Name = "toolStripMenuItem16";
-            toolStripMenuItem16.Size = new Size(151, 6);
+            toolStripMenuItem16.Size = new Size(185, 6);
             // 
             // brightnessToolStripMenuItem
             // 
             brightnessToolStripMenuItem.Name = "brightnessToolStripMenuItem";
-            brightnessToolStripMenuItem.Size = new Size(154, 22);
-            brightnessToolStripMenuItem.Text = "Brightness...";
+            brightnessToolStripMenuItem.Size = new Size(188, 22);
+            brightnessToolStripMenuItem.Text = "Brightness-Contrast...";
             brightnessToolStripMenuItem.Click += BrightnessToolStripMenuItem_Click;
-            // 
-            // contrastToolStripMenuItem
-            // 
-            contrastToolStripMenuItem.Name = "contrastToolStripMenuItem";
-            contrastToolStripMenuItem.Size = new Size(154, 22);
-            contrastToolStripMenuItem.Text = "Contrast...";
-            contrastToolStripMenuItem.Click += ContrastToolStripMenuItem_Click;
             // 
             // blurImageToolStripMenuItem
             // 
             blurImageToolStripMenuItem.Name = "blurImageToolStripMenuItem";
-            blurImageToolStripMenuItem.Size = new Size(154, 22);
-            blurImageToolStripMenuItem.Text = "Gaussian Blur...";
+            blurImageToolStripMenuItem.Size = new Size(188, 22);
+            blurImageToolStripMenuItem.Text = "Blur...";
             blurImageToolStripMenuItem.Click += BlurImageToolStripMenuItem_Click;
             // 
             // toolStripMenuItem9
@@ -1081,7 +1075,9 @@
             tabPage1.Controls.Add(cboBlendMode);
             tabPage1.Controls.Add(btnAddLayer);
             tabPage1.Controls.Add(btnSubtractLayer);
+            tabPage1.Controls.Add(btnToTop);
             tabPage1.Controls.Add(btnMoveUp);
+            tabPage1.Controls.Add(btnToBottom);
             tabPage1.Controls.Add(label2);
             tabPage1.Controls.Add(btnMoveDown);
             tabPage1.Controls.Add(label1);
@@ -1117,9 +1113,11 @@
             // btnAddLayer
             // 
             btnAddLayer.FlatStyle = FlatStyle.Popup;
-            btnAddLayer.Location = new Point(3, 67);
+            btnAddLayer.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnAddLayer.Location = new Point(4, 79);
+            btnAddLayer.Margin = new Padding(0);
             btnAddLayer.Name = "btnAddLayer";
-            btnAddLayer.Size = new Size(30, 30);
+            btnAddLayer.Size = new Size(24, 24);
             btnAddLayer.TabIndex = 31;
             btnAddLayer.Text = "+";
             btnAddLayer.UseVisualStyleBackColor = true;
@@ -1128,24 +1126,54 @@
             // btnSubtractLayer
             // 
             btnSubtractLayer.FlatStyle = FlatStyle.Popup;
-            btnSubtractLayer.Location = new Point(39, 67);
+            btnSubtractLayer.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnSubtractLayer.Location = new Point(28, 79);
+            btnSubtractLayer.Margin = new Padding(0);
             btnSubtractLayer.Name = "btnSubtractLayer";
-            btnSubtractLayer.Size = new Size(30, 30);
+            btnSubtractLayer.Size = new Size(24, 24);
             btnSubtractLayer.TabIndex = 32;
             btnSubtractLayer.Text = "-";
             btnSubtractLayer.UseVisualStyleBackColor = true;
             btnSubtractLayer.Click += BtnSubtractLayer_Click;
             // 
+            // btnToTop
+            // 
+            btnToTop.FlatStyle = FlatStyle.Popup;
+            btnToTop.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnToTop.Location = new Point(100, 79);
+            btnToTop.Margin = new Padding(0);
+            btnToTop.Name = "btnToTop";
+            btnToTop.Size = new Size(24, 24);
+            btnToTop.TabIndex = 33;
+            btnToTop.Text = "T";
+            btnToTop.UseVisualStyleBackColor = true;
+            btnToTop.Click += MoveToTopToolStripMenuItem_Click;
+            // 
             // btnMoveUp
             // 
             btnMoveUp.FlatStyle = FlatStyle.Popup;
-            btnMoveUp.Location = new Point(75, 67);
+            btnMoveUp.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnMoveUp.Location = new Point(52, 79);
+            btnMoveUp.Margin = new Padding(0);
             btnMoveUp.Name = "btnMoveUp";
-            btnMoveUp.Size = new Size(30, 30);
+            btnMoveUp.Size = new Size(24, 24);
             btnMoveUp.TabIndex = 33;
             btnMoveUp.Text = "↑";
             btnMoveUp.UseVisualStyleBackColor = true;
             btnMoveUp.Click += BtnMoveUp_Click;
+            // 
+            // btnToBottom
+            // 
+            btnToBottom.FlatStyle = FlatStyle.Popup;
+            btnToBottom.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnToBottom.Location = new Point(124, 79);
+            btnToBottom.Margin = new Padding(0);
+            btnToBottom.Name = "btnToBottom";
+            btnToBottom.Size = new Size(24, 24);
+            btnToBottom.TabIndex = 34;
+            btnToBottom.Text = "B";
+            btnToBottom.UseVisualStyleBackColor = true;
+            btnToBottom.Click += MoveToBottomToolStripMenuItem_Click;
             // 
             // label2
             // 
@@ -1159,9 +1187,11 @@
             // btnMoveDown
             // 
             btnMoveDown.FlatStyle = FlatStyle.Popup;
-            btnMoveDown.Location = new Point(111, 67);
+            btnMoveDown.Font = new Font("Microsoft Sans Serif", 9.75F);
+            btnMoveDown.Location = new Point(76, 79);
+            btnMoveDown.Margin = new Padding(0);
             btnMoveDown.Name = "btnMoveDown";
-            btnMoveDown.Size = new Size(30, 30);
+            btnMoveDown.Size = new Size(24, 24);
             btnMoveDown.TabIndex = 34;
             btnMoveDown.Text = "↓";
             btnMoveDown.UseVisualStyleBackColor = true;
@@ -1179,9 +1209,11 @@
             // btnMergeDown
             // 
             btnMergeDown.FlatStyle = FlatStyle.Popup;
-            btnMergeDown.Location = new Point(158, 68);
+            btnMergeDown.Font = new Font("Microsoft Sans Serif", 9.75F);
+            btnMergeDown.Location = new Point(164, 79);
+            btnMergeDown.Margin = new Padding(0);
             btnMergeDown.Name = "btnMergeDown";
-            btnMergeDown.Size = new Size(30, 30);
+            btnMergeDown.Size = new Size(24, 24);
             btnMergeDown.TabIndex = 35;
             btnMergeDown.Text = "▼";
             btnMergeDown.UseVisualStyleBackColor = true;
@@ -1427,7 +1459,6 @@
         private ToolStripMenuItem adjustmentsToolStripMenuItem;
         private ToolStripMenuItem blurImageToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem9;
-        private ToolStripMenuItem contrastToolStripMenuItem;
         private ToolStripMenuItem brightnessToolStripMenuItem;
         private ToolStripMenuItem invertToolStripMenuItem;
         private ToolStripMenuItem grayscaleToolStripMenuItem;
@@ -1499,5 +1530,7 @@
         private RadioButton rdoGreen;
         private RadioButton rdoRed;
         private RadioButton rdoAll;
+        private Button btnToTop;
+        private Button btnToBottom;
     }
 }

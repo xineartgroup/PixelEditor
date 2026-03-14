@@ -6,6 +6,7 @@
         private int selectedLayerIndex = -1;
         public event EventHandler<LayerVisibilityChangedEventArgs>? LayerVisibilityChanged;
         public event EventHandler<SelectedLayerChangedEventArgs>? SelectedLayerChanged;
+        public event EventHandler<LayersCountChangedEventArgs>? LayerCountChanged;
 
         public LayersControl()
         {
@@ -171,6 +172,11 @@
             SelectedLayerChanged?.Invoke(this, e);
         }
 
+        protected virtual void OnLayersCountChanged(LayersCountChangedEventArgs e)
+        {
+            LayerCountChanged?.Invoke(this, e);
+        }
+
         public List<Layer> GetLayers() => imageLayers;
 
         public Layer? GetLayer(int index)
@@ -200,17 +206,25 @@
             {
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, layer));
             }
+            OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count - 1, imageLayers.Count));
         }
 
         public void AddRange(List<Layer> layers)
         {
-            imageLayers.AddRange(layers);
-            RefreshLayersDisplay();
-            int oldSelectedIndex = selectedLayerIndex;
-            selectedLayerIndex = imageLayers.Count - 1;
-            if (oldSelectedIndex != selectedLayerIndex && layers.Count > 0)
+            if (layers.Count > 0)
             {
-                OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, layers.Last()));
+                imageLayers.AddRange(layers);
+                RefreshLayersDisplay();
+                int oldSelectedIndex = selectedLayerIndex;
+                selectedLayerIndex = imageLayers.Count - 1;
+                if (oldSelectedIndex != selectedLayerIndex && layers.Count > 0)
+                {
+                    OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, layers.Last()));
+                }
+                if (layers.Count > 0)
+                {
+                    OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count - layers.Count, imageLayers.Count));
+                }
             }
         }
 
@@ -225,6 +239,7 @@
             {
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, layer));
             }
+            OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count - 1, imageLayers.Count));
         }
 
         public void UpdateLayer(int index, Layer layer)
@@ -250,6 +265,83 @@
                 Layer? newSelectedLayer = selectedLayerIndex >= 0 ? imageLayers[selectedLayerIndex] : null;
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, newSelectedLayer));
             }
+            OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count + 1, imageLayers.Count));
+        }
+
+        public void MoveLayerUp()
+        {
+            if (selectedLayerIndex <= 0) return;
+
+            int currentIndex = selectedLayerIndex;
+            int newIndex = currentIndex - 1;
+
+            var layerToMove = GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                imageLayers.RemoveAt(currentIndex);
+                imageLayers.Insert(newIndex, layerToMove);
+                selectedLayerIndex = newIndex;
+                RefreshLayersDisplay();
+                OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+            }
+        }
+
+        public void MoveLayerDown()
+        {
+            if (selectedLayerIndex < 0 || selectedLayerIndex >= imageLayers.Count - 1) return;
+
+            int currentIndex = selectedLayerIndex;
+            int newIndex = currentIndex + 1;
+
+            var layerToMove = GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                imageLayers.RemoveAt(currentIndex);
+                imageLayers.Insert(newIndex, layerToMove);
+                selectedLayerIndex = newIndex;
+                RefreshLayersDisplay();
+                OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+            }
+        }
+
+        public void MoveLayerToTop()
+        {
+            if (selectedLayerIndex < 0) return;
+
+            int currentIndex = selectedLayerIndex;
+            int newIndex = 0;
+
+            var layerToMove = GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                imageLayers.RemoveAt(currentIndex);
+                imageLayers.Insert(newIndex, layerToMove);
+                selectedLayerIndex = newIndex;
+                RefreshLayersDisplay();
+                OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+            }
+        }
+
+        public void MoveLayerToBottom()
+        {
+            if (selectedLayerIndex < 0 || selectedLayerIndex >= imageLayers.Count - 1) return;
+
+            int currentIndex = selectedLayerIndex;
+            int newIndex = imageLayers.Count - 1;
+
+            var layerToMove = GetLayer(currentIndex);
+
+            if (layerToMove != null)
+            {
+                imageLayers.RemoveAt(currentIndex);
+                imageLayers.Insert(newIndex, layerToMove);
+                selectedLayerIndex = newIndex;
+                RefreshLayersDisplay();
+                OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+            }
         }
 
         public void RemoveSelectedLayer()
@@ -262,6 +354,7 @@
 
         public void ClearLayers()
         {
+            int oldCount = imageLayers.Count;
             imageLayers.Clear();
             flowLayers.Controls.Clear();
             int oldSelectedIndex = selectedLayerIndex;
@@ -269,6 +362,10 @@
             if (oldSelectedIndex != selectedLayerIndex)
             {
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, null));
+            }
+            if (oldCount != imageLayers.Count)
+            {
+                OnLayersCountChanged(new LayersCountChangedEventArgs(oldCount, imageLayers.Count));
             }
         }
 
@@ -338,5 +435,11 @@
         public int OldIndex { get; } = oldIndex;
         public int NewIndex { get; } = newIndex;
         public Layer? NewLayer { get; } = newLayer;
+    }
+
+    public class LayersCountChangedEventArgs(int oldCount, int newCount) : EventArgs
+    {
+        public int OldCount { get; } = oldCount;
+        public int NewCount { get; } = newCount;
     }
 }
