@@ -127,17 +127,21 @@ namespace PixelEditor
                         byte* targetPixel = targetPtr + y * targetStride + x * 4;
 
                         float inv = 1f - desired;
+                        float baseAlpha = basePixel[3] / 255f;
+                        float outAlpha = desired + baseAlpha * inv;
                         //targetPixel[0] = (byte)(basePixel[0] * inv + brushPixel[0] * desired);
                         //targetPixel[1] = (byte)(basePixel[1] * inv + brushPixel[1] * desired);
                         //targetPixel[2] = (byte)(basePixel[2] * inv + brushPixel[2] * desired);
                         //targetPixel[3] = basePixel[3];
-                        float baseAlpha = basePixel[3] / 255f;
-                        float outAlpha = baseAlpha + brushAlpha * desired * (1 - baseAlpha);
                         if (outAlpha > 0)
                         {
-                            targetPixel[0] = (byte)((basePixel[0] * baseAlpha * inv + brushPixel[0] * brushAlpha * desired) / outAlpha);
-                            targetPixel[1] = (byte)((basePixel[1] * baseAlpha * inv + brushPixel[1] * brushAlpha * desired) / outAlpha);
-                            targetPixel[2] = (byte)((basePixel[2] * baseAlpha * inv + brushPixel[2] * brushAlpha * desired) / outAlpha);
+                            // When baseAlpha is 0, base pixel RGB is meaningless - ignore it entirely
+                            float baseWeight = baseAlpha * inv;
+                            float totalWeight = desired + baseWeight;
+
+                            targetPixel[0] = (byte)((brushPixel[0] * desired + basePixel[0] * baseWeight) / totalWeight);
+                            targetPixel[1] = (byte)((brushPixel[1] * desired + basePixel[1] * baseWeight) / totalWeight);
+                            targetPixel[2] = (byte)((brushPixel[2] * desired + basePixel[2] * baseWeight) / totalWeight);
                         }
                         targetPixel[3] = (byte)(outAlpha * 255);
                     }

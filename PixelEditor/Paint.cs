@@ -55,7 +55,7 @@ namespace PixelEditor
                 }
             }
         }
-
+        
         private static Bitmap SoftenEdges(Bitmap input, Color color, int radius)
         {
             int width = input.Width;
@@ -66,8 +66,7 @@ namespace PixelEditor
             int[,] distanceFromEdge = CalculateDistanceFromEdge(isBrush, width, height);
 
             Bitmap result = new(width, height, PixelFormat.Format32bppArgb);
-            BitmapData resultData = result.LockBits(new Rectangle(0, 0, width, height),
-                ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            BitmapData resultData = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
 
             try
             {
@@ -79,35 +78,26 @@ namespace PixelEditor
                     {
                         int index = y * resultData.Stride + x * 4;
 
+                        byte alpha = 0; // Background - transparent
+
                         if (isBrush[x, y])
                         {
                             int dist = distanceFromEdge[x, y];
 
-                            if (dist >= radius) // Interior - solid color
+                            if (dist >= radius)
                             {
-                                pixels[index + 0] = color.B;  // B
-                                pixels[index + 1] = color.G;  // G
-                                pixels[index + 2] = color.R;  // R
-                                pixels[index + 3] = color.A;  // A
+                                alpha = color.A; // Interior - solid color
                             }
-                            else // Edge - gradient based on distance
+                            else
                             {
-                                float factor = (float)dist / radius;
-                                byte alpha = (byte)(255 * factor);
+                                alpha = (byte)(color.A * (float)dist / radius); // Edge - gradient based on distance
+                            }
+                        }
 
-                                pixels[index + 0] = color.B;
-                                pixels[index + 1] = color.G;
-                                pixels[index + 2] = color.R;
-                                pixels[index + 3] = alpha;
-                            }
-                        }
-                        else // Background - transparent
-                        {
-                            pixels[index + 0] = 0;
-                            pixels[index + 1] = 0;
-                            pixels[index + 2] = 0;
-                            pixels[index + 3] = 0;
-                        }
+                        pixels[index + 0] = color.B; // B
+                        pixels[index + 1] = color.G; // G
+                        pixels[index + 2] = color.R; // R
+                        pixels[index + 3] = alpha; // A
                     }
                 }
 
@@ -117,6 +107,8 @@ namespace PixelEditor
             {
                 result.UnlockBits(resultData);
             }
+
+            result.Save("cursor.png", ImageFormat.Png);
 
             return result;
         }
