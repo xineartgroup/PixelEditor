@@ -29,10 +29,12 @@
         private void InitializeComponent()
         {
             groupBox1 = new GroupBox();
+            btnAutoResizeCanvas = new Button();
             label1 = new Label();
             canvasHeight = new NumericUpDown();
             canvasWidth = new NumericUpDown();
             groupBox2 = new GroupBox();
+            btnAutoResizeLayer = new Button();
             label2 = new Label();
             layerHeight = new NumericUpDown();
             layerWidth = new NumericUpDown();
@@ -48,15 +50,27 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(btnAutoResizeCanvas);
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(canvasHeight);
             groupBox1.Controls.Add(canvasWidth);
             groupBox1.Location = new Point(12, 12);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(187, 67);
+            groupBox1.Size = new Size(360, 67);
             groupBox1.TabIndex = 1;
             groupBox1.TabStop = false;
             groupBox1.Text = "Canvas Size:";
+            // 
+            // btnAutoResizeCanvas
+            // 
+            btnAutoResizeCanvas.FlatStyle = FlatStyle.Popup;
+            btnAutoResizeCanvas.Location = new Point(196, 22);
+            btnAutoResizeCanvas.Name = "btnAutoResizeCanvas";
+            btnAutoResizeCanvas.Size = new Size(117, 23);
+            btnAutoResizeCanvas.TabIndex = 3;
+            btnAutoResizeCanvas.Text = "Resize to Layer";
+            btnAutoResizeCanvas.UseVisualStyleBackColor = true;
+            btnAutoResizeCanvas.Click += BtnAutoResizeCanvas_Click;
             // 
             // label1
             // 
@@ -77,6 +91,7 @@
             canvasHeight.TabIndex = 0;
             canvasHeight.TextAlign = HorizontalAlignment.Right;
             canvasHeight.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            canvasHeight.ValueChanged += Values_ValueChanged;
             // 
             // canvasWidth
             // 
@@ -88,18 +103,31 @@
             canvasWidth.TabIndex = 0;
             canvasWidth.TextAlign = HorizontalAlignment.Right;
             canvasWidth.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            canvasWidth.ValueChanged += Values_ValueChanged;
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(btnAutoResizeLayer);
             groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(layerHeight);
             groupBox2.Controls.Add(layerWidth);
             groupBox2.Location = new Point(12, 85);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(187, 67);
+            groupBox2.Size = new Size(360, 67);
             groupBox2.TabIndex = 1;
             groupBox2.TabStop = false;
             groupBox2.Text = "Layer Size:";
+            // 
+            // btnAutoResizeLayer
+            // 
+            btnAutoResizeLayer.FlatStyle = FlatStyle.Popup;
+            btnAutoResizeLayer.Location = new Point(196, 20);
+            btnAutoResizeLayer.Name = "btnAutoResizeLayer";
+            btnAutoResizeLayer.Size = new Size(117, 23);
+            btnAutoResizeLayer.TabIndex = 3;
+            btnAutoResizeLayer.Text = "Resize to Canvas";
+            btnAutoResizeLayer.UseVisualStyleBackColor = true;
+            btnAutoResizeLayer.Click += BtnAutoResizeLayer_Click;
             // 
             // label2
             // 
@@ -120,6 +148,7 @@
             layerHeight.TabIndex = 0;
             layerHeight.TextAlign = HorizontalAlignment.Right;
             layerHeight.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            layerHeight.ValueChanged += Values_ValueChanged;
             // 
             // layerWidth
             // 
@@ -131,6 +160,7 @@
             layerWidth.TabIndex = 0;
             layerWidth.TextAlign = HorizontalAlignment.Right;
             layerWidth.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            layerWidth.ValueChanged += Values_ValueChanged;
             // 
             // btnOK
             // 
@@ -163,7 +193,7 @@
             Controls.Add(btnOK);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            FormBorderStyle = FormBorderStyle.FixedToolWindow;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FormSettings";
@@ -192,5 +222,7 @@
         private Label label2;
         private Button btnOK;
         private Button btnCancel;
+        private Button btnAutoResizeCanvas;
+        private Button btnAutoResizeLayer;
     }
 }

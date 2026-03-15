@@ -17,32 +17,33 @@ namespace PixelEditor
             return isInnerSelection;
         }
 
-        public static bool IsOverRotationHandle(Point point)
+        public static bool IsOverRotationHandle(Point screenPoint, int canvasWidth, int canvasHeight)
         {
-            PointF rotationHandle = new(
+            PointF worldHandle = new(
                 GetSelectionCenter().X,
-                GetSelectionBounds().Y - ROTATION_HANDLE_SIZE
+                GetSelectionBounds().Y - ROTATION_HANDLE_SIZE / GetScreenToWorldScale(canvasWidth, canvasHeight)
             );
-
-            float distance = Distance(point, rotationHandle);
+            Point screenHandle = LayersManipulator.WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
+            float distance = Distance(screenPoint, screenHandle);
             return distance < ROTATION_HANDLE_SIZE;
         }
 
-        public static bool IsOverScaleHandle(Point point, out string handle)
+        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
         {
             handle = "";
 
             var corners = new[]
             {
-                new { Name = "topLeft", Point = new PointF(GetSelectionBounds().X, GetSelectionBounds().Y) },
-                new { Name = "topRight", Point = new PointF(GetSelectionBounds().Right, GetSelectionBounds().Y) },
-                new { Name = "bottomLeft", Point = new PointF(GetSelectionBounds().X, GetSelectionBounds().Bottom) },
-                new { Name = "bottomRight", Point = new PointF(GetSelectionBounds().Right, GetSelectionBounds().Bottom) }
+                new { Name = "topLeft",     World = new PointF(GetSelectionBounds().X,     GetSelectionBounds().Y) },
+                new { Name = "topRight",    World = new PointF(GetSelectionBounds().Right,  GetSelectionBounds().Y) },
+                new { Name = "bottomLeft",  World = new PointF(GetSelectionBounds().X,     GetSelectionBounds().Bottom) },
+                new { Name = "bottomRight", World = new PointF(GetSelectionBounds().Right,  GetSelectionBounds().Bottom) }
             };
 
             foreach (var corner in corners)
             {
-                if (Distance(point, corner.Point) < SCALE_HANDLE_SIZE)
+                Point screenCorner = LayersManipulator.WorldToScreen(Point.Round(corner.World), canvasWidth, canvasHeight);
+                if (Distance(screenPoint, screenCorner) < SCALE_HANDLE_SIZE)
                 {
                     handle = corner.Name;
                     return true;
@@ -57,9 +58,22 @@ namespace PixelEditor
             return selectionBounds;
         }
 
+        public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
+        {
+            Point topLeft = LayersManipulator.WorldToScreen(new Point((int)selectionBounds.X, (int)selectionBounds.Y), canvasWidth, canvasHeight);
+            Point bottomRight = LayersManipulator.WorldToScreen(new Point((int)selectionBounds.Right, (int)selectionBounds.Bottom), canvasWidth, canvasHeight);
+            return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+        }
+
         public static PointF GetSelectionCenter()
         {
             return selectionCenter;
+        }
+
+        public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
+        {
+            Point p = LayersManipulator.WorldToScreen(Point.Round(selectionCenter), canvasWidth, canvasHeight);
+            return p;
         }
 
         public static bool ContainsSelection()
@@ -74,20 +88,20 @@ namespace PixelEditor
             return false;
         }
 
-        public static void AddSelectionPoint(Point point)
+        public static void AddSelectionPoint(Point worldPoint)
         {
             if (selectionPolygons.Count == 0)
             {
                 selectionPolygons.Add([]);
             }
-            selectionPolygons[^1].Add(point);
+            selectionPolygons[^1].Add(worldPoint);
         }
 
-        public static void UpdateSelectionPoint(int index, Point point)
+        public static void UpdateSelectionPoint(int index, Point worldPoint)
         {
             if (selectionPolygons.Count > 0)
             {
-                selectionPolygons[^1][index] = point;
+                selectionPolygons[^1][index] = worldPoint;
             }
         }
 
@@ -115,17 +129,18 @@ namespace PixelEditor
             return [];
         }
 
-        public static void MoveSelection(float dx, float dy)
+        public static void MoveSelection(float worldDx, float worldDy)
         {
             for (int i = 0; i < selectionPolygons.Count; i++)
             {
                 for (int j = 0; j < selectionPolygons[i].Count; j++)
                 {
-                    selectionPolygons[i][j] = new Point((int)(selectionPolygons[i][j].X + dx), (int)(selectionPolygons[i][j].Y + dy));
+                    selectionPolygons[i][j] = new Point(
+                        (int)(selectionPolygons[i][j].X + worldDx),
+                        (int)(selectionPolygons[i][j].Y + worldDy));
                 }
             }
             CalculateSelectionBounds();
-            selectionCenter = new PointF(selectionCenter.X + dx, selectionCenter.Y + dy);
         }
 
         public static void MergeIntersections()
@@ -148,7 +163,7 @@ namespace PixelEditor
                     }
                 }
 
-                int padding = 0; //2
+                int padding = 0;
                 int width = (maxX - minX) + (padding * 2);
                 int height = (maxY - minY) + (padding * 2);
 
@@ -203,11 +218,35 @@ namespace PixelEditor
             return (float)Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public static float CalculateRotationAngle(Point mousePosition)
+        public static float CalculateRotationAngle(Point screenMousePosition, int canvasWidth, int canvasHeight)
         {
-            float dx = mousePosition.X - GetSelectionCenter().X;
-            float dy = mousePosition.Y - GetSelectionCenter().Y;
+            PointF screenCenter = GetSelectionCenterScreen(canvasWidth, canvasHeight);
+            float dx = screenMousePosition.X - screenCenter.X;
+            float dy = screenMousePosition.Y - screenCenter.Y;
             return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+        }
+
+        public static int IsPointInSelection(Point screenPoint, int canvasWidth, int canvasHeight)
+        {
+            Point worldPoint = LayersManipulator.ScreenToWorld(screenPoint, canvasWidth, canvasHeight);
+            for (int i = 0; i < selectionPolygons.Count; i++)
+            {
+                if (IsPointInPolygon(worldPoint, selectionPolygons[i]))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private static float GetScreenToWorldScale(int canvasWidth, int canvasHeight)
+        {
+            float aspectRatio = (float)LayersManipulator.Width / LayersManipulator.Height;
+            float containerAspectRatio = (float)canvasWidth / canvasHeight;
+            float scaledWidth = aspectRatio > containerAspectRatio
+                ? canvasWidth * LayersManipulator.Zoom
+                : canvasHeight * LayersManipulator.Zoom * aspectRatio;
+            return scaledWidth / LayersManipulator.Width;
         }
 
         private static void FillPolygonInMask(bool[,] mask, List<Point> points)
@@ -246,18 +285,6 @@ namespace PixelEditor
                     }
                 }
             }
-        }
-
-        public static int IsPointInSelection(Point point)
-        {
-            for (int i = 0; i < selectionPolygons.Count; i++)
-            {
-                if (IsPointInPolygon(point, selectionPolygons[i]))
-                {
-                    return i;
-                }
-            }
-            return -1;
         }
 
         private static bool IsPointInPolygon(Point point, List<Point> points)

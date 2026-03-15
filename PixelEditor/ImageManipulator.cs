@@ -5,6 +5,31 @@ namespace PixelEditor
 {
     public static class ImageManipulator
     {
+        public static Image? GetImage(Color color, int width, int height)
+        {
+            if (width <= 0 || height <= 0) return null;
+
+            Bitmap bitmap = new(width, height, PixelFormat.Format32bppArgb);
+            Rectangle rect = new(0, 0, bitmap.Width, bitmap.Height);
+            BitmapData data = bitmap.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            int totalBytes = data.Stride * bitmap.Height;
+            byte[] pixels = new byte[totalBytes];
+
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                pixels[i] = color.B;
+                pixels[i + 1] = color.G;
+                pixels[i + 2] = color.R;
+                pixels[i + 3] = color.A;
+            }
+
+            Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
+            bitmap.UnlockBits(data);
+
+            return bitmap;
+        }
+
         public static Bitmap FillColor(Image image, int imgX, int imgY, float screenWidth, float screenHeight, float layerScaleWidth, float layerScaleHeight, ImageBlending blend, Color color, float opacity, Point startPoint, List<Point> selectionPoints, Control canvas, float zoom, PointF imageOffset)
         {
             Bitmap bitmap = new(image);
@@ -35,7 +60,7 @@ namespace PixelEditor
             float screenOriginX = ((canvas.Width - screenScaledWidth) / 2) + imageOffset.X;
             float screenOriginY = ((canvas.Height - screenScaledHeight) / 2) + imageOffset.Y;
 
-            PointF CanvasToImage(Point p)
+            PointF ScreenToImage(Point p)
             {
                 float screenCoordX = (p.X - screenOriginX) / screenScaledWidth * screenWidth;
                 float screenCoordY = (p.Y - screenOriginY) / screenScaledHeight * screenHeight;
@@ -46,7 +71,14 @@ namespace PixelEditor
                 return new PointF(layerPixelX, layerPixelY);
             }
 
-            PointF startF = CanvasToImage(startPoint);
+            PointF WorldToImage(Point p)
+            {
+                float layerPixelX = (p.X - imgX) / layerScaleWidth;
+                float layerPixelY = (p.Y - imgY) / layerScaleHeight;
+                return new PointF(layerPixelX, layerPixelY);
+            }
+
+            PointF startF = ScreenToImage(startPoint);
             Point startI = new((int)Math.Floor(startF.X), (int)Math.Floor(startF.Y));
 
             if (startI.X < 0 || startI.X >= width || startI.Y < 0 || startI.Y >= height)
@@ -55,8 +87,8 @@ namespace PixelEditor
                 return bitmap;
             }
 
-            bool usePointSelection = selectionPoints != null && selectionPoints.Count > 2;
-            byte[] mask = null;
+            bool usePointSelection = selectionPoints.Count > 2;
+            byte[] mask = [];
 
             if (usePointSelection)
             {
@@ -65,9 +97,9 @@ namespace PixelEditor
                 using (Graphics g = Graphics.FromImage(maskBmp))
                 {
                     g.Clear(Color.Transparent);
-                    PointF[] pts = selectionPoints.Select(CanvasToImage).ToArray();
-                    using (Brush b = new SolidBrush(Color.White))
-                        g.FillPolygon(b, pts);
+                    PointF[] pts = [.. selectionPoints.Select(WorldToImage)];
+                    using Brush b = new SolidBrush(Color.White);
+                    g.FillPolygon(b, pts);
                 }
 
                 BitmapData mData = maskBmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -123,6 +155,7 @@ namespace PixelEditor
                 pixels[idx] = (byte)(bb * alpha + b * invAlpha);
                 pixels[idx + 1] = (byte)(bg * alpha + g * invAlpha);
                 pixels[idx + 2] = (byte)(br * alpha + r * invAlpha);
+                pixels[idx + 3] = (byte)Math.Min(255, pixels[idx + 3] + color.A * alpha);
             }
 
             if (usePointSelection)

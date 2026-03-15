@@ -90,15 +90,15 @@ namespace PixelEditor
 
             System.Windows.Forms.Timer animationTimer = new()
             {
-                Interval = 100 // Roughly 10 frames per second
+                Interval = 100
             };
             animationTimer.Tick += (s, e) =>
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    _dashOffset += 1.0f; // Decrement to move forward, increment to move backward
+                    _dashOffset += 1.0f;
 
-                    if (_dashOffset > 100.0f) _dashOffset = 0; // Reset offset to prevent it from growing into a massive number over time
+                    if (_dashOffset > 100.0f) _dashOffset = 0;
 
                     RedrawImage();
                 }
@@ -115,9 +115,6 @@ namespace PixelEditor
             groupFillDetail.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)fillOpacity).BeginInit();
             SuspendLayout();
-            // 
-            // groupFillDetail
-            // 
             groupFillDetail.Controls.Add(cboFillBlendMode);
             groupFillDetail.Controls.Add(label5);
             groupFillDetail.Controls.Add(label4);
@@ -135,9 +132,6 @@ namespace PixelEditor
             groupFillDetail.TabStop = false;
             groupFillDetail.Text = "Fill Detail";
             groupFillDetail.Visible = false;
-            // 
-            // cboFillBlendMode
-            // 
             cboFillBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboFillBlendMode.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboFillBlendMode.FormattingEnabled = true;
@@ -145,9 +139,6 @@ namespace PixelEditor
             cboFillBlendMode.Name = "cboFillBlendMode";
             cboFillBlendMode.Size = new Size(150, 21);
             cboFillBlendMode.TabIndex = 31;
-            // 
-            // label5
-            // 
             label5.AutoSize = true;
             label5.Font = new Font("Segoe UI", 8.25F);
             label5.Location = new Point(9, 108);
@@ -155,9 +146,6 @@ namespace PixelEditor
             label5.Size = new Size(47, 13);
             label5.TabIndex = 29;
             label5.Text = "Pattern:";
-            // 
-            // label4
-            // 
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI", 8.25F);
             label4.Location = new Point(8, 82);
@@ -165,9 +153,6 @@ namespace PixelEditor
             label4.Size = new Size(38, 13);
             label4.TabIndex = 29;
             label4.Text = "Color:";
-            // 
-            // label3
-            // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 8.25F);
             label3.Location = new Point(7, 52);
@@ -175,17 +160,11 @@ namespace PixelEditor
             label3.Size = new Size(49, 13);
             label3.TabIndex = 29;
             label3.Text = "Opacity:";
-            // 
-            // fillOpacity
-            // 
             fillOpacity.Location = new Point(172, 49);
             fillOpacity.Name = "fillOpacity";
             fillOpacity.Size = new Size(47, 23);
             fillOpacity.TabIndex = 26;
             fillOpacity.Value = new decimal([100, 0, 0, 0]);
-            // 
-            // label7
-            // 
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 8.25F);
             label7.Location = new Point(7, 27);
@@ -193,9 +172,6 @@ namespace PixelEditor
             label7.Size = new Size(40, 13);
             label7.TabIndex = 29;
             label7.Text = "Blend:";
-            // 
-            // btnFillColor1
-            // 
             btnFillColor1.BackColor = Color.White;
             btnFillColor1.Enabled = false;
             btnFillColor1.FlatStyle = FlatStyle.Popup;
@@ -206,9 +182,6 @@ namespace PixelEditor
             btnFillColor1.TabIndex = 25;
             btnFillColor1.UseVisualStyleBackColor = false;
             btnFillColor1.Click += BtnFillColor1_Click;
-            // 
-            // btnFillColor
-            // 
             btnFillColor.BackColor = Color.Black;
             btnFillColor.FlatStyle = FlatStyle.Popup;
             btnFillColor.Location = new Point(69, 79);
@@ -217,9 +190,6 @@ namespace PixelEditor
             btnFillColor.TabIndex = 25;
             btnFillColor.UseVisualStyleBackColor = false;
             btnFillColor.Click += BtnFillColor_Click;
-            // 
-            // cboFIllGradient
-            // 
             cboFIllGradient.DropDownStyle = ComboBoxStyle.DropDownList;
             cboFIllGradient.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboFIllGradient.FormattingEnabled = true;
@@ -228,9 +198,6 @@ namespace PixelEditor
             cboFIllGradient.Name = "cboFIllGradient";
             cboFIllGradient.Size = new Size(105, 21);
             cboFIllGradient.TabIndex = 20;
-            // 
-            // comboBox1
-            // 
             comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox1.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             comboBox1.FormattingEnabled = true;
@@ -238,9 +205,6 @@ namespace PixelEditor
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(150, 21);
             comboBox1.TabIndex = 20;
-            // 
-            // FormBrushSettings
-            // 
             Controls.Add(groupFillDetail);
             groupFillDetail.ResumeLayout(false);
             groupFillDetail.PerformLayout();
@@ -256,9 +220,6 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)brush_hardness).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_smoothness).BeginInit();
             SuspendLayout();
-            // 
-            // groupBrushDetail
-            // 
             groupBrushDetail.Controls.Add(lblBrushHardness);
             groupBrushDetail.Controls.Add(lblBrushSmoothness);
             groupBrushDetail.Controls.Add(lblBrushOpacity);
@@ -280,9 +241,6 @@ namespace PixelEditor
             groupBrushDetail.TabStop = false;
             groupBrushDetail.Text = "Brush Detail";
             groupBrushDetail.Visible = false;
-            // 
-            // lblBrushHardness
-            // 
             lblBrushHardness.BackColor = Color.White;
             lblBrushHardness.BorderStyle = BorderStyle.Fixed3D;
             lblBrushHardness.FlatStyle = FlatStyle.Flat;
@@ -292,9 +250,6 @@ namespace PixelEditor
             lblBrushHardness.Size = new Size(32, 24);
             lblBrushHardness.TabIndex = 30;
             lblBrushHardness.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblBrushSmoothness
-            // 
             lblBrushSmoothness.BackColor = Color.White;
             lblBrushSmoothness.BorderStyle = BorderStyle.Fixed3D;
             lblBrushSmoothness.FlatStyle = FlatStyle.Flat;
@@ -304,9 +259,6 @@ namespace PixelEditor
             lblBrushSmoothness.Size = new Size(32, 24);
             lblBrushSmoothness.TabIndex = 30;
             lblBrushSmoothness.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblBrushOpacity
-            // 
             lblBrushOpacity.BackColor = Color.White;
             lblBrushOpacity.BorderStyle = BorderStyle.Fixed3D;
             lblBrushOpacity.FlatStyle = FlatStyle.Flat;
@@ -316,9 +268,6 @@ namespace PixelEditor
             lblBrushOpacity.Size = new Size(32, 24);
             lblBrushOpacity.TabIndex = 30;
             lblBrushOpacity.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblBrushSize
-            // 
             lblBrushSize.BackColor = Color.White;
             lblBrushSize.BorderStyle = BorderStyle.Fixed3D;
             lblBrushSize.FlatStyle = FlatStyle.Flat;
@@ -328,9 +277,6 @@ namespace PixelEditor
             lblBrushSize.Size = new Size(32, 24);
             lblBrushSize.TabIndex = 30;
             lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // btnPenColor
-            // 
             btnPenColor.BackColor = Color.Black;
             btnPenColor.FlatStyle = FlatStyle.Popup;
             btnPenColor.Location = new Point(73, 22);
@@ -339,18 +285,12 @@ namespace PixelEditor
             btnPenColor.TabIndex = 24;
             btnPenColor.UseVisualStyleBackColor = false;
             btnPenColor.Click += BtnPenColor_Click;
-            // 
-            // panel2
-            // 
             panel2.BackColor = Color.White;
             panel2.BorderStyle = BorderStyle.FixedSingle;
             panel2.Location = new Point(12, 51);
             panel2.Name = "panel2";
             panel2.Size = new Size(155, 139);
             panel2.TabIndex = 22;
-            // 
-            // brush_size
-            // 
             brush_size.Location = new Point(76, 196);
             brush_size.Maximum = 100;
             brush_size.Minimum = 1;
@@ -360,9 +300,6 @@ namespace PixelEditor
             brush_size.TickStyle = TickStyle.None;
             brush_size.Value = 12;
             brush_size.Scroll += Brush_size_Scroll;
-            // 
-            // brush_opacity
-            // 
             brush_opacity.Location = new Point(76, 247);
             brush_opacity.Maximum = 100;
             brush_opacity.Name = "brush_opacity";
@@ -371,9 +308,6 @@ namespace PixelEditor
             brush_opacity.TickStyle = TickStyle.None;
             brush_opacity.Value = 100;
             brush_opacity.Scroll += Brush_opacity_Scroll;
-            // 
-            // label10
-            // 
             label10.AutoSize = true;
             label10.Font = new Font("Segoe UI", 8.25F);
             label10.Location = new Point(7, 349);
@@ -381,9 +315,6 @@ namespace PixelEditor
             label10.Size = new Size(58, 13);
             label10.TabIndex = 29;
             label10.Text = "Hardness:";
-            // 
-            // label9
-            // 
             label9.AutoSize = true;
             label9.Font = new Font("Segoe UI", 8.25F);
             label9.Location = new Point(6, 298);
@@ -391,9 +322,6 @@ namespace PixelEditor
             label9.Size = new Size(73, 13);
             label9.TabIndex = 29;
             label9.Text = "Smoothness:";
-            // 
-            // label11
-            // 
             label11.AutoSize = true;
             label11.Font = new Font("Segoe UI", 8.25F);
             label11.Location = new Point(7, 196);
@@ -401,9 +329,6 @@ namespace PixelEditor
             label11.Size = new Size(30, 13);
             label11.TabIndex = 29;
             label11.Text = "Size:";
-            // 
-            // label8
-            // 
             label8.AutoSize = true;
             label8.Font = new Font("Segoe UI", 8.25F);
             label8.Location = new Point(7, 247);
@@ -411,9 +336,6 @@ namespace PixelEditor
             label8.Size = new Size(49, 13);
             label8.TabIndex = 29;
             label8.Text = "Opacity:";
-            // 
-            // brush_hardness
-            // 
             brush_hardness.Location = new Point(76, 349);
             brush_hardness.Maximum = 100;
             brush_hardness.Minimum = 1;
@@ -423,9 +345,6 @@ namespace PixelEditor
             brush_hardness.TickStyle = TickStyle.None;
             brush_hardness.Value = 80;
             brush_hardness.Scroll += Brush_hardness_Scroll;
-            // 
-            // brush_smoothness
-            // 
             brush_smoothness.Location = new Point(76, 298);
             brush_smoothness.Maximum = 100;
             brush_smoothness.Name = "brush_smoothness";
@@ -434,9 +353,6 @@ namespace PixelEditor
             brush_smoothness.TickStyle = TickStyle.None;
             brush_smoothness.Value = 22;
             brush_smoothness.Scroll += Brush_smoothness_Scroll;
-            // 
-            // FormBrushSettings
-            // 
             Controls.Add(groupBrushDetail);
             groupBrushDetail.ResumeLayout(false);
             groupBrushDetail.PerformLayout();
@@ -452,9 +368,6 @@ namespace PixelEditor
             groupMagicWand.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)selectionThreshold).BeginInit();
             SuspendLayout();
-            // 
-            // groupMagicWand
-            // 
             groupMagicWand.Controls.Add(selectionThreshold);
             groupMagicWand.Controls.Add(label12);
             groupMagicWand.Controls.Add(label13);
@@ -466,9 +379,6 @@ namespace PixelEditor
             groupMagicWand.TabStop = false;
             groupMagicWand.Text = "Magic Wand";
             groupMagicWand.Visible = false;
-            // 
-            // selectionThreshold
-            // 
             selectionThreshold.Location = new Point(74, 65);
             selectionThreshold.Name = "selectionThreshold";
             selectionThreshold.Size = new Size(150, 45);
@@ -478,27 +388,18 @@ namespace PixelEditor
             selectionThreshold.Maximum = 100;
             selectionThreshold.Value = 5;
             selectionThreshold.Scroll += SelectionThreshold_Scroll;
-            // 
-            // label12
-            // 
             label12.AutoSize = true;
             label12.Location = new Point(6, 65);
             label12.Name = "label12";
             label12.Size = new Size(63, 15);
             label12.TabIndex = 1;
             label12.Text = "Threshold:";
-            // 
-            // label13
-            // 
             label13.AutoSize = true;
             label13.Location = new Point(6, 25);
             label13.Name = "label13";
             label13.Size = new Size(57, 15);
             label13.TabIndex = 1;
             label13.Text = "Select By:";
-            // 
-            // cboMWSelectionMode
-            // 
             cboMWSelectionMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboMWSelectionMode.FormattingEnabled = true;
             cboMWSelectionMode.Items.AddRange(["All", "Red", "Green", "Blue", "Alpha"]);
@@ -507,9 +408,6 @@ namespace PixelEditor
             cboMWSelectionMode.Name = "cboMWSelectionMode";
             cboMWSelectionMode.Size = new Size(150, 23);
             cboMWSelectionMode.TabIndex = 0;
-            // 
-            // FormBrushSettings
-            // 
             Controls.Add(groupMagicWand);
             groupMagicWand.ResumeLayout(false);
             groupMagicWand.PerformLayout();
@@ -555,7 +453,6 @@ namespace PixelEditor
             btnMoveUp.Enabled = e.NewIndex > 0;
             btnMoveDown.Enabled = e.NewIndex < layersControl.GetLayers().Count - 1 && e.NewIndex >= 0;
 
-            // Do NOT PUT HistoryManager.RecordState Here!!!
             UpdateControls();
 
             RedrawImage();
@@ -567,8 +464,6 @@ namespace PixelEditor
 
             btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
             btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1 && layersControl.GetSelectedLayerIndex() >= 0;
-
-            // Do NOT PUT HistoryManager.RecordState Here!!!
         }
 
         private void ReloadBrushes()
@@ -672,10 +567,6 @@ namespace PixelEditor
             };
             if (c.ShowDialog() == DialogResult.OK)
             {
-                //btnFillColor.BackColor = c.Color;
-                //paint.SetFillColor(btnFillColor.BackColor);
-                //PaintingEngine.SetBrush(paint);
-                //UpdateCursor(btnFiller.Image);
             }
         }
 
@@ -767,7 +658,7 @@ namespace PixelEditor
                 bitmap.MakeTransparent(Color.White);
                 for (int i = 128; i < 256; i++)
                 {
-                    bitmap.MakeTransparent(Color.FromArgb(i, i, i)); //Make all gray-scale pixels that are nearly white transparent
+                    bitmap.MakeTransparent(Color.FromArgb(i, i, i));
                 }
                 for (int y = 0; y < bitmap.Height; y++)
                 {
@@ -820,21 +711,19 @@ namespace PixelEditor
 
         private void UpdateCursor(Point mousePosition)
         {
-            if (ImageSelections.IsOverRotationHandle(mousePosition))
+            if (ImageSelections.IsOverRotationHandle(mousePosition, canvas.Width, canvas.Height))
             {
-                canvas.Cursor = Cursors.Hand; //Cursor.Current = Cursors.Hand;
+                canvas.Cursor = Cursors.Hand;
             }
-            else if (ImageSelections.IsOverScaleHandle(mousePosition, out string handle))
+            else if (ImageSelections.IsOverScaleHandle(mousePosition, canvas.Width, canvas.Height, out string handle))
             {
-                canvas.Cursor = GetCursor(handle); //Cursor.Current = GetScaleCursor(handle);
+                canvas.Cursor = GetCursor(handle);
             }
-            else if (ImageSelections.IsPointInSelection(mousePosition) >= 0)
+            else if (ImageSelections.IsPointInSelection(mousePosition, canvas.Width, canvas.Height) >= 0)
             {
-
             }
             else
             {
-
             }
         }
 
@@ -889,7 +778,6 @@ namespace PixelEditor
 
         private void SelectionThreshold_Scroll(object? sender, EventArgs e)
         {
-
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -1589,8 +1477,10 @@ namespace PixelEditor
                 else
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    int width = selectedLayer.Image.Width;
+                    int height = selectedLayer.Image.Height;
                     selectedLayer.Image?.Dispose();
-                    selectedLayer.Image = null;
+                    selectedLayer.Image = ImageManipulator.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;
                     scaleFactor = 1.0f;
                     RedrawImage();
@@ -1726,37 +1616,16 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                    float aspectRatio = (float)LayersManipulator.Width / LayersManipulator.Height;
-                    float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                    float imageAspectRatio = (float)selectedLayer.Image.Width / selectedLayer.Image.Height;
-                    float scaledWidth, scaledHeight;
-                    float scaledImageWidth, scaledImageHeight;
+                    int imgW = selectedLayer.Image.Width;
+                    int imgH = selectedLayer.Image.Height;
+                    int x0 = selectedLayer.X;
+                    int y0 = selectedLayer.Y;
 
-                    if (aspectRatio > containerAspectRatio)
-                    {
-                        scaledImageWidth = selectedLayer.Image.Width * (float)canvas.Width / (float)LayersManipulator.Width * LayersManipulator.Zoom;
-                        scaledImageHeight = scaledImageWidth / imageAspectRatio;
-                        scaledWidth = canvas.Width * LayersManipulator.Zoom;
-                        scaledHeight = scaledWidth / aspectRatio;
-                    }
-                    else
-                    {
-                        scaledImageHeight = selectedLayer.Image.Height * (float)canvas.Height / (float)LayersManipulator.Height * LayersManipulator.Zoom;
-                        scaledImageWidth = scaledImageHeight * imageAspectRatio;
-                        scaledHeight = canvas.Height * LayersManipulator.Zoom;
-                        scaledWidth = scaledHeight * aspectRatio;
-                    }
-
-                    float centerX = (canvas.Width - scaledWidth) / 2;
-                    float centerY = (canvas.Height - scaledHeight) / 2;
-
-                    RectangleF destRect = new(centerX + LayersManipulator.ImageOffset.X, centerY + LayersManipulator.ImageOffset.Y, scaledImageWidth, scaledImageHeight);
-
-                    ImageSelections.AddSelectionPoint(new Point((int)destRect.X, (int)destRect.Y));
-                    ImageSelections.AddSelectionPoint(new Point((int)destRect.X, (int)(destRect.Y + destRect.Height)));
-                    ImageSelections.AddSelectionPoint(new Point((int)(destRect.X + destRect.Width), (int)(destRect.Y + destRect.Height)));
-                    ImageSelections.AddSelectionPoint(new Point((int)(destRect.X + destRect.Width), (int)destRect.Y));
-                    ImageSelections.AddSelectionPoint(new Point((int)destRect.X, (int)destRect.Y));
+                    ImageSelections.AddSelectionPoint(new Point(x0, y0));
+                    ImageSelections.AddSelectionPoint(new Point(x0, y0 + imgH));
+                    ImageSelections.AddSelectionPoint(new Point(x0 + imgW, y0 + imgH));
+                    ImageSelections.AddSelectionPoint(new Point(x0 + imgW, y0));
+                    ImageSelections.AddSelectionPoint(new Point(x0, y0));
                 }
             }
         }
@@ -1769,9 +1638,13 @@ namespace PixelEditor
             {
                 formSettings.LayerHeight = selectedLayer.Image?.Height ?? 2;
                 formSettings.LayerWidth = selectedLayer.Image?.Width ?? 2;
+                formSettings.LayerX = selectedLayer.X;
+                formSettings.LayerY = selectedLayer.Y;
                 if (formSettings.ShowDialog(this) == DialogResult.OK)
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    selectedLayer.X = formSettings.LayerX;
+                    selectedLayer.Y = formSettings.LayerY;
                     selectedLayer.ResizeContainer(formSettings.LayerWidth, formSettings.LayerHeight);
                     RedrawImage();
                 }
@@ -1901,24 +1774,26 @@ namespace PixelEditor
 
         private void UpdateTransformMatrix()
         {
+            PointF worldCenter = ImageSelections.GetSelectionCenter();
+            PointF screenCenter = ImageSelections.GetSelectionCenterScreen(canvas.Width, canvas.Height);
+
             transformMatrix.Reset();
-            transformMatrix.Translate(-ImageSelections.GetSelectionCenter().X, -ImageSelections.GetSelectionCenter().Y, MatrixOrder.Append);
+            transformMatrix.Translate(-screenCenter.X, -screenCenter.Y, MatrixOrder.Append);
             transformMatrix.Rotate(rotationAngle, MatrixOrder.Append);
             transformMatrix.Scale(scaleFactor, scaleFactor, MatrixOrder.Append);
-            transformMatrix.Translate(ImageSelections.GetSelectionCenter().X, ImageSelections.GetSelectionCenter().Y, MatrixOrder.Append);
+            transformMatrix.Translate(screenCenter.X, screenCenter.Y, MatrixOrder.Append);
         }
 
-        private Bitmap? ExtractSelectedArea(Layer selectedLayer)
+        private static Bitmap? ExtractSelectedArea(Layer selectedLayer)
         {
             if (selectedLayer.Image == null) return null;
 
-            Point layerTopLeft = LayersManipulator.ScreenToWorld(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvas.Width, canvas.Height);
-            layerTopLeft.X -= selectedLayer.X;
-            layerTopLeft.Y -= selectedLayer.Y;
+            RectangleF worldBounds = ImageSelections.GetSelectionBounds();
 
-            float ratio = GetCanvasToWorldRatio();
-            int srcW = (int)(ImageSelections.GetSelectionBounds().Width / ratio);
-            int srcH = (int)(ImageSelections.GetSelectionBounds().Height / ratio);
+            int srcX = (int)worldBounds.X - selectedLayer.X;
+            int srcY = (int)worldBounds.Y - selectedLayer.Y;
+            int srcW = (int)worldBounds.Width;
+            int srcH = (int)worldBounds.Height;
 
             Bitmap result = new(srcW, srcH);
 
@@ -1928,19 +1803,17 @@ namespace PixelEditor
             for (int i = 0; i < selectionPoints.Count; i++)
             {
                 if (selectionPoints[i].Count < 3) continue;
-                using GraphicsPath path = new();
-                PointF[] sourcePoints = [.. selectionPoints[i].Select(p => {
-                    Point worldP = LayersManipulator.ScreenToWorld(p, canvas.Width, canvas.Height);
-                    return new PointF(worldP.X - selectedLayer.X - layerTopLeft.X,
-                                      worldP.Y - selectedLayer.Y - layerTopLeft.Y);
-                })];
 
-                path.AddPolygon(sourcePoints);
+                using GraphicsPath path = new();
+                PointF[] localPoints = [.. selectionPoints[i].Select(p =>
+                    new PointF(p.X - selectedLayer.X - srcX, p.Y - selectedLayer.Y - srcY))];
+
+                path.AddPolygon(localPoints);
                 g.SetClip(path);
 
                 g.DrawImage(selectedLayer.Image,
                     new Rectangle(0, 0, srcW, srcH),
-                    new Rectangle(layerTopLeft.X, layerTopLeft.Y, srcW, srcH),
+                    new Rectangle(srcX, srcY, srcW, srcH),
                     GraphicsUnit.Pixel);
             }
 
@@ -1964,14 +1837,11 @@ namespace PixelEditor
                     {
                         if (selectionPoints[i].Count < 3) continue;
                         PointF[] layerPoints = [.. selectionPoints[i].Select(p =>
-                        {
-                            Point worldP = LayersManipulator.ScreenToWorld(p, canvas.Width, canvas.Height);
-                            return new PointF(worldP.X - selectedLayer.X, worldP.Y - selectedLayer.Y);
-                        })];
+                            new PointF(p.X - selectedLayer.X, p.Y - selectedLayer.Y))];
 
                         using GraphicsPath path = new();
                         path.AddPolygon(layerPoints);
-                        g.CompositingMode = CompositingMode.SourceCopy;
+                        g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
                         using Brush transparentBrush = new SolidBrush(fillColor);
                         g.FillPath(transparentBrush, path);
                     }
@@ -1995,14 +1865,7 @@ namespace PixelEditor
                     {
                         if (polygon.Count < 3) continue;
                         PointF[] layerPoints = [.. polygon.Select(p =>
-                        {
-                            Point worldP = LayersManipulator.ScreenToWorld(p, canvas.Width, canvas.Height);
-
-                            float localX = worldP.X - selectedLayer.X;
-                            float localY = worldP.Y - selectedLayer.Y;
-
-                            return new PointF(localX, localY);
-                        })];
+                            new PointF(p.X - selectedLayer.X, p.Y - selectedLayer.Y))];
 
                         clipPath.AddPolygon(layerPoints);
                         hasValidPolygon = true;
@@ -2033,25 +1896,18 @@ namespace PixelEditor
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
-                float ratio = GetCanvasToWorldRatio();
-                Point worldPos = LayersManipulator.ScreenToWorld(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvas.Width, canvas.Height);
+                RectangleF worldBounds = ImageSelections.GetSelectionBounds();
 
-                float localX = worldPos.X - selectedLayer.X;
-                float localY = worldPos.Y - selectedLayer.Y;
+                float localX = worldBounds.X - selectedLayer.X;
+                float localY = worldBounds.Y - selectedLayer.Y;
 
-                using Matrix layerMatrix = transformMatrix.Clone();
-                float[] elements = layerMatrix.Elements;
-
-                float worldOffsetX = (ImageSelections.GetSelectionCenter().X - lastMousePosition.X) / ratio;
-                float worldOffsetY = (ImageSelections.GetSelectionCenter().Y - lastMousePosition.Y) / ratio;
-
-                layerMatrix.Reset();
+                using Matrix layerMatrix = new();
                 layerMatrix.Translate(localX + (selectedAreaBitmap.Width / 2f),
-                                     localY + (selectedAreaBitmap.Height / 2f));
+                                      localY + (selectedAreaBitmap.Height / 2f));
                 layerMatrix.Rotate(rotationAngle);
                 layerMatrix.Scale(scaleFactor, scaleFactor);
                 layerMatrix.Translate(-(selectedAreaBitmap.Width / 2f),
-                                     -(selectedAreaBitmap.Height / 2f));
+                                      -(selectedAreaBitmap.Height / 2f));
 
                 g.Transform = layerMatrix;
                 g.DrawImage(selectedAreaBitmap, 0, 0);
@@ -2066,7 +1922,8 @@ namespace PixelEditor
 
         private float CalculateScaleFactor(Point mousePosition)
         {
-            float currentDistance = ImageSelections.Distance(Point.Round(ImageSelections.GetSelectionCenter()), mousePosition);
+            Point worldMouse = LayersManipulator.ScreenToWorld(mousePosition, canvas.Width, canvas.Height);
+            float currentDistance = ImageSelections.Distance(worldMouse, ImageSelections.GetSelectionCenter());
 
             if (initialScaleDistance > 0)
             {
@@ -2099,20 +1956,21 @@ namespace PixelEditor
                         {
                             if (selectedLayer.Image == null) return;
 
-                            if (ImageSelections.IsOverRotationHandle(e.Location))
+                            if (ImageSelections.IsOverRotationHandle(e.Location, canvas.Width, canvas.Height))
                             {
                                 isRotating = true;
                                 Cursor.Current = Cursors.SizeAll;
-                                startMouseAngle = ImageSelections.CalculateRotationAngle(e.Location) - rotationAngle;
+                                startMouseAngle = ImageSelections.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
                             }
-                            else if (ImageSelections.IsOverScaleHandle(e.Location, out string handle))
+                            else if (ImageSelections.IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
                             {
                                 isScaling = true;
                                 Cursor.Current = GetCursor(handle);
-                                initialScaleDistance = ImageSelections.Distance(Point.Round(ImageSelections.GetSelectionCenter()), e.Location);
+                                Point worldMouse = LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                                initialScaleDistance = ImageSelections.Distance(worldMouse, ImageSelections.GetSelectionCenter());
                                 initialScaleFactor = scaleFactor;
                             }
-                            else if (ImageSelections.IsPointInSelection(e.Location) >= 0)
+                            else if (ImageSelections.IsPointInSelection(e.Location, canvas.Width, canvas.Height) >= 0)
                             {
                                 isDragging = true;
                                 Cursor.Current = Cursors.SizeAll;
@@ -2188,7 +2046,7 @@ namespace PixelEditor
                         ImageSelections.ClearSelections();
                     }
 
-                    ImageSelections.AddSelectionPoint(lastMousePosition);
+                    ImageSelections.AddSelectionPoint(LayersManipulator.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
                 }
                 else if (btnRectangleSelect.Checked)
                 {
@@ -2203,7 +2061,7 @@ namespace PixelEditor
                         ImageSelections.ClearSelections();
                     }
 
-                    ImageSelections.AddSelectionPoint(lastMousePosition);
+                    ImageSelections.AddSelectionPoint(LayersManipulator.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
                 }
                 else if (btnMagicWand.Checked)
                 {
@@ -2216,29 +2074,6 @@ namespace PixelEditor
                             position.Y -= selectedLayer.Y;
 
                             bool[,] mask = ImageManipulator.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
-
-                            //ColorGrid grid = LayersManipulator.DarkPixelGrid(mask, selectedLayer.Image.Width, selectedLayer.Image.Height);
-                            //selectedLayer.Image = new Bitmap(LayersManipulator.GetImage(grid));
-
-                            float aspectRatio = (float)LayersManipulator.Width / LayersManipulator.Height;
-                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                            float scaledWidth, scaledHeight;
-
-                            if (aspectRatio > containerAspectRatio)
-                            {
-                                scaledWidth = canvas.Width * LayersManipulator.Zoom;
-                                scaledHeight = scaledWidth / aspectRatio;
-                            }
-                            else
-                            {
-                                scaledHeight = canvas.Height * LayersManipulator.Zoom;
-                                scaledWidth = scaledHeight * aspectRatio;
-                            }
-
-                            int centerX = (int)(canvas.Width - scaledWidth) / 2;
-                            int centerY = (int)(canvas.Height - scaledHeight) / 2;
-
-                            Point screenL = LayersManipulator.WorldToScreen(new Point(selectedLayer.X, selectedLayer.Y), canvas.Width, canvas.Height);
 
                             if (ModifierKeys.HasFlag(Keys.Shift))
                             {
@@ -2255,10 +2090,7 @@ namespace PixelEditor
                                 ImageSelections.IncreaseSelectionPoints();
                                 foreach (Point point in points)
                                 {
-                                    Point screenP = LayersManipulator.WorldToScreen(point, canvas.Width, canvas.Height);
-                                    screenP.X += screenL.X - centerX;
-                                    screenP.Y += screenL.Y - centerY;
-                                    ImageSelections.AddSelectionPoint(screenP);
+                                    ImageSelections.AddSelectionPoint(new Point(point.X + selectedLayer.X, point.Y + selectedLayer.Y));
                                 }
                             }
                         }
@@ -2300,7 +2132,10 @@ namespace PixelEditor
                     {
                         if (ImageSelections.ContainsSelection())
                         {
-                            ImageSelections.MoveSelection(dx, dy);
+                            float ratio = GetCanvasToWorldRatio();
+                            float worldDx = dx / ratio;
+                            float worldDy = dy / ratio;
+                            ImageSelections.MoveSelection(worldDx, worldDy);
                             UpdateTransformMatrix();
                             RedrawImage();
                         }
@@ -2310,7 +2145,7 @@ namespace PixelEditor
                             selectedLayer.X += (int)Math.Round(dx / ratio);
                             selectedLayer.Y += (int)Math.Round(dy / ratio);
 
-                            int minPaintIntervalMs = 16; // 60 fps
+                            int minPaintIntervalMs = 16;
                             if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                             {
                                 RedrawImage(layersControl.GetSelectedLayerIndex());
@@ -2324,11 +2159,8 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    rotationAngle = ImageSelections.CalculateRotationAngle(e.Location) - startMouseAngle;
+                    rotationAngle = ImageSelections.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
                     UpdateTransformMatrix();
-                }
-                else
-                {
                 }
             }
             else if (isScaling)
@@ -2338,9 +2170,6 @@ namespace PixelEditor
                     scaleFactor = CalculateScaleFactor(e.Location);
                     UpdateTransformMatrix();
                 }
-                else
-                {
-                }
             }
             else if (isPainting)
             {
@@ -2348,7 +2177,7 @@ namespace PixelEditor
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                    float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum; //0.22f
+                    float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum;
 
                     Point currentWorldPos = LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
@@ -2360,7 +2189,6 @@ namespace PixelEditor
                         strokeLastInterpolated = localCurrentRaw;
                         lastMousePosition = e.Location;
 
-                        // Start the stroke once at the beginning
                         PaintingEngine.SetTarget(selectedLayer.Image);
                         PaintingEngine.BeginStroke();
                         return;
@@ -2412,7 +2240,7 @@ namespace PixelEditor
                             PointF p2 = strokePoints[n - 1];
                             PointF p3 = p2;
 
-                            const int segments = 1; // Increased for smoother curves, allegedly (intitialy set to 8 - too slow)
+                            const int segments = 1;
 
                             PointF previousPos = strokeLastInterpolated;
 
@@ -2424,7 +2252,6 @@ namespace PixelEditor
                                 Point prevRounded = Point.Round(previousPos);
                                 Point currRounded = Point.Round(pos);
 
-                                // Only paint if we've moved at least 1 pixel
                                 if (prevRounded != currRounded)
                                 {
                                     PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity);
@@ -2445,12 +2272,12 @@ namespace PixelEditor
                     sw.Stop();
                     Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
 
-                    const int minPaintIntervalMs = 32; // 30 fps
+                    const int minPaintIntervalMs = 32;
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
                     {
                         RedrawImage(layersControl.GetSelectedLayerIndex());
                         LayersManipulator.DirtyRegions.Clear();
-                        LayersManipulator.DirtyRegions.Add(dirty); // Keep the last dirty region for the next paint
+                        LayersManipulator.DirtyRegions.Add(dirty);
                         lastPaintTime = DateTime.Now;
                     }
                 }
@@ -2459,25 +2286,30 @@ namespace PixelEditor
             {
                 if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
                 {
-                    ImageSelections.AddSelectionPoint(e.Location); // You don't need to call RedrawImage() here since the selection is drawn with the timer for selectionPoints.Count > 1
+                    ImageSelections.AddSelectionPoint(LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height));
                 }
             }
             else if (isRectSelecting)
             {
                 if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
                 {
+                    Point worldCurrent = LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    Point worldAnchor = ImageSelections.GetLastSelection().Count > 0
+                        ? ImageSelections.GetLastSelection()[0]
+                        : worldCurrent;
+
                     if (ImageSelections.GetLastSelection().Count == 1)
                     {
-                        ImageSelections.AddSelectionPoint(new Point(e.X, ImageSelections.GetLastSelection()[0].Y));
-                        ImageSelections.AddSelectionPoint(e.Location);
-                        ImageSelections.AddSelectionPoint(new Point(ImageSelections.GetLastSelection()[0].X, e.Y));
-                        ImageSelections.AddSelectionPoint(ImageSelections.GetLastSelection()[0]);
+                        ImageSelections.AddSelectionPoint(new Point(worldCurrent.X, worldAnchor.Y));
+                        ImageSelections.AddSelectionPoint(worldCurrent);
+                        ImageSelections.AddSelectionPoint(new Point(worldAnchor.X, worldCurrent.Y));
+                        ImageSelections.AddSelectionPoint(worldAnchor);
                     }
                     else if (ImageSelections.GetLastSelection().Count == 5)
                     {
-                        ImageSelections.UpdateSelectionPoint(1, new Point(e.X, ImageSelections.GetLastSelection()[0].Y));
-                        ImageSelections.UpdateSelectionPoint(2, e.Location);
-                        ImageSelections.UpdateSelectionPoint(3, new Point(ImageSelections.GetLastSelection()[0].X, e.Y));
+                        ImageSelections.UpdateSelectionPoint(1, new Point(worldCurrent.X, worldAnchor.Y));
+                        ImageSelections.UpdateSelectionPoint(2, worldCurrent);
+                        ImageSelections.UpdateSelectionPoint(3, new Point(worldAnchor.X, worldCurrent.Y));
                     }
                 }
             }
@@ -2507,7 +2339,6 @@ namespace PixelEditor
             isRectSelecting = false;
             isRotating = false;
             isScaling = false;
-            //Cursor.Current = Cursors.Default;
             HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             LayersManipulator.UpdateBuffers();
             PaintingEngine.EndStroke();
@@ -2607,8 +2438,9 @@ namespace PixelEditor
 
                 if (selectedAreaBitmap != null)
                 {
+                    RectangleF screenBounds = ImageSelections.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
                     g.MultiplyTransform(transformMatrix);
-                    g.DrawImage(selectedAreaBitmap, ImageSelections.GetSelectionBounds());
+                    g.DrawImage(selectedAreaBitmap, screenBounds);
                     g.ResetTransform();
                 }
             }
@@ -2629,10 +2461,13 @@ namespace PixelEditor
                 {
                     if (selectionPoints[i].Count > 2)
                     {
+                        Point[] screenPoints = [.. selectionPoints[i].Select(p =>
+                            LayersManipulator.WorldToScreen(p, canvas.Width, canvas.Height))];
+
                         using Pen selectionPen = new(Color.Blue, 2f);
                         selectionPen.DashPattern = [5, 5];
                         selectionPen.DashOffset = _dashOffset;
-                        g.DrawLines(selectionPen, selectionPoints[i].ToArray());
+                        g.DrawLines(selectionPen, screenPoints);
                     }
 
                     g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -2641,12 +2476,14 @@ namespace PixelEditor
                     using Brush scaleBrush = new SolidBrush(Color.FromArgb(0, 120, 215));
                     using Brush rotateBrush = new SolidBrush(Color.Gold);
 
+                    RectangleF screenBounds = ImageSelections.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+
                     PointF[] corners =
                     [
-                        new(ImageSelections.GetSelectionBounds().X, ImageSelections.GetSelectionBounds().Y),
-                        new(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Y),
-                        new(ImageSelections.GetSelectionBounds().X, ImageSelections.GetSelectionBounds().Bottom),
-                        new(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Bottom)
+                        new(screenBounds.X, screenBounds.Y),
+                        new(screenBounds.Right, screenBounds.Y),
+                        new(screenBounds.X, screenBounds.Bottom),
+                        new(screenBounds.Right, screenBounds.Bottom)
                     ];
 
                     foreach (var corner in corners)
@@ -2661,10 +2498,10 @@ namespace PixelEditor
                         g.DrawRectangle(handlePen, rect.X, rect.Y, rect.Width, rect.Height);
                     }
 
-                    float centerX = ImageSelections.GetSelectionBounds().X + ImageSelections.GetSelectionBounds().Width / 2;
-                    float handleCenterY = ImageSelections.GetSelectionBounds().Y - ImageSelections.ROTATION_HANDLE_SIZE;
+                    float centerX = screenBounds.X + screenBounds.Width / 2;
+                    float handleCenterY = screenBounds.Y - ImageSelections.ROTATION_HANDLE_SIZE;
 
-                    g.DrawLine(handlePen, centerX, ImageSelections.GetSelectionBounds().Y, centerX, handleCenterY);
+                    g.DrawLine(handlePen, centerX, screenBounds.Y, centerX, handleCenterY);
 
                     RectangleF rotRect = new(
                         centerX - ImageSelections.ROTATION_HANDLE_SIZE / 2,
