@@ -1,10 +1,10 @@
 ﻿namespace PixelEditor
 {
-    public partial class FormBlur : Form
+    public partial class FormColorBalance : Form
     {
         public Image? Image = null;
 
-        public FormBlur()
+        public FormColorBalance()
         {
             InitializeComponent();
         }
@@ -33,9 +33,14 @@
         {
             if (Image != null)
             {
-                lblRadius.Text = $"{trackBar1.Value}";
+                lblBrightness.Text = $"{trackBar1.Value}";
+                lblWarmth.Text = $"{trackBar2.Value}";
+                lblTint.Text = $"{trackBar3.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = ImageManipulator.GaussianBlur((Bitmap)pictureSample.Image, trackBar1.Value, trackBar2.Value);
+                pictureSample.Image = ImageManipulator.AdjustColorBalance((Bitmap)pictureSample.Image, 
+                    (float)trackBar1.Value / trackBar1.Maximum, 
+                    (float)trackBar2.Value - 50, 
+                    (float)trackBar3.Value - 50);
             }
         }
     }

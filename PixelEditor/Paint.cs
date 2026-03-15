@@ -108,7 +108,7 @@ namespace PixelEditor
                 result.UnlockBits(resultData);
             }
 
-            result.Save("cursor.png", ImageFormat.Png);
+            //result.Save("cursor.png", ImageFormat.Png);
 
             return result;
         }

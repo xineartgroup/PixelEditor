@@ -830,11 +830,11 @@ namespace PixelEditor
             }
             else if (ImageSelections.IsPointInSelection(mousePosition) >= 0)
             {
-                
+
             }
             else
             {
-                
+
             }
         }
 
@@ -1571,19 +1571,6 @@ namespace PixelEditor
             }
         }
 
-        private void DarkToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null)
-            {
-                HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                bool[,] mask = LayersManipulator.GetDarkPixels(LayersManipulator.Screen, 0.0f, 1.0f);
-                ColorGrid grid = LayersManipulator.DarkPixelGrid(mask, LayersManipulator.Width, LayersManipulator.Height);
-                selectedLayer.Image = new Bitmap(LayersManipulator.GetImage(grid));
-                RedrawImage();
-            }
-        }
-
         private void DeleteImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -1791,6 +1778,19 @@ namespace PixelEditor
             }
         }
 
+        private void DarkToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                bool[,] mask = LayersManipulator.GetDarkPixels(LayersManipulator.Screen, 0.0f, 1.0f);
+                ColorGrid grid = LayersManipulator.DarkPixelGrid(mask, LayersManipulator.Width, LayersManipulator.Height);
+                selectedLayer.Image = new Bitmap(LayersManipulator.GetImage(grid));
+                RedrawImage();
+            }
+        }
+
         private void InvertToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -1807,18 +1807,48 @@ namespace PixelEditor
             }
         }
 
-        private void GrayscaleToolStripMenuItem_Click(object sender, EventArgs e)
+        private void LightingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
                 if (selectedLayer.Image != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    Bitmap greyed = ImageManipulator.Grayscale((Bitmap)selectedLayer.Image);
-                    selectedLayer.Image.Dispose();
-                    selectedLayer.Image = greyed;
-                    RedrawImage();
+                    FormLighting frm = new()
+                    {
+                        Image = selectedLayer.Image
+                    };
+                    if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Bitmap result = new(frm.Image);
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = result;
+                        RedrawImage();
+                    }
+                }
+            }
+        }
+
+        private void SaturationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.Image != null)
+                {
+                    FormColorBalance frm = new()
+                    {
+                        Image = selectedLayer.Image
+                    };
+                    if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Bitmap result = new(frm.Image);
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = result;
+                        RedrawImage();
+                    }
                 }
             }
         }
@@ -1837,7 +1867,7 @@ namespace PixelEditor
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        Bitmap blurred = new(frm.Image); //Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
+                        Bitmap blurred = new(frm.Image);
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = blurred;
                         RedrawImage();
@@ -1846,28 +1876,23 @@ namespace PixelEditor
             }
         }
 
-        private void ContrastToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void BrightnessToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SharpnessToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
                 if (selectedLayer.Image != null)
                 {
-                    FormBrightness frm = new()
+                    FormSharpness frm = new()
                     {
                         Image = selectedLayer.Image
                     };
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        Bitmap result = new(frm.Image); //Bitmap blurred = ImageManipulator.GaussianBlur((Bitmap)selectedLayer.Image, radius: 16);
+                        Bitmap blurred = new(frm.Image);
                         selectedLayer.Image.Dispose();
-                        selectedLayer.Image = result;
+                        selectedLayer.Image = blurred;
                         RedrawImage();
                     }
                 }
@@ -2117,20 +2142,22 @@ namespace PixelEditor
                             var selectionPolygons = ImageSelections.GetSelections();
                             if (selectionPolygons.Count == 0)
                             {
-                                bitmap = ImageManipulator.FillColor(selectedLayer.Image,
-                                (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
-                                (float)(fillOpacity.Value / fillOpacity.Maximum),
-                                lastMousePosition,
-                                [],
-                                canvas,
-                                LayersManipulator.Zoom,
-                                LayersManipulator.ImageOffset);
+                                bitmap = ImageManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                    LayersManipulator.Width, LayersManipulator.Height, selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
+                                    (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
+                                    (float)(fillOpacity.Value / fillOpacity.Maximum),
+                                    lastMousePosition,
+                                    [],
+                                    canvas,
+                                    LayersManipulator.Zoom,
+                                    LayersManipulator.ImageOffset);
                             }
                             else
                             {
                                 for (int i = 0; i < selectionPolygons.Count; i++)
                                 {
-                                    bitmap = ImageManipulator.FillColor(selectedLayer.Image,
+                                    bitmap = ImageManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                    LayersManipulator.Width, LayersManipulator.Height, selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
                                     (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
                                     (float)(fillOpacity.Value / fillOpacity.Maximum),
                                     lastMousePosition,

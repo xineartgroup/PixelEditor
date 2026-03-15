@@ -10,7 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Update="FormBrightness.cs">
+    <Compile Update="FormSharpness.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="FormColorBalance.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="FormLighting.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

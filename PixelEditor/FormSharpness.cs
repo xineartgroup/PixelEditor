@@ -1,15 +1,15 @@
 ﻿namespace PixelEditor
 {
-    public partial class FormBrightness : Form
+    public partial class FormSharpness : Form
     {
         public Image? Image = null;
 
-        public FormBrightness()
+        public FormSharpness()
         {
             InitializeComponent();
         }
 
-        private void FormBlur_Load(object sender, EventArgs e)
+        private void FormLighting_Load(object sender, EventArgs e)
         {
             TrackBar1_Scroll(sender, e);
         }
@@ -33,11 +33,9 @@
         {
             if (Image != null)
             {
-                lblBrightness.Text = $"{trackBar1.Value}";
-                lblContrast.Text = $"{trackBar2.Value}";
+                lblSharpness.Text = $"{trackBar6.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = ImageManipulator.AdjustBrightness((Bitmap)pictureSample.Image, (float)trackBar1.Value / trackBar1.Maximum);
-                pictureSample.Image = ImageManipulator.AdjustContrast((Bitmap)pictureSample.Image, (float)trackBar2.Value / trackBar2.Maximum);
+                pictureSample.Image = ImageManipulator.AdjustSharpness((Bitmap)pictureSample.Image, (float)trackBar6.Value / 100);
             }
         }
     }
