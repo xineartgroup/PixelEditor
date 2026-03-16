@@ -134,16 +134,20 @@
 
         private void BtnEditCaption_Click(object? sender, EventArgs e)
         {
-            FormName formName = new();
+            FormLayer frm = new()
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
+
             var layer = GetLayer(selectedLayerIndex);
 
             if (layer != null)
             {
-                formName.StrokeName = layer.Name;
-                if (formName.ShowDialog() == DialogResult.OK)
+                frm.Layer = layer;
+                if (frm.ShowDialog() == DialogResult.OK)
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
-                    layer.Name = formName.StrokeName;
+                    layer = frm.Layer;
                     UpdateLayer(selectedLayerIndex, layer);
                 }
             }

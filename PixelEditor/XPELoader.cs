@@ -2,7 +2,7 @@
 
 namespace PixelEditor
 {
-    public static class PTVLoader
+    public static class XPELoader
     {
         private const string MagicString = "BNDATA";
 

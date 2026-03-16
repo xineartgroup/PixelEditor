@@ -10,7 +10,7 @@
             try
             {
                 using MemoryStream ms = new();
-                PTVSaver.Save(ms, history.Zoom, history.Offset, history.Layers, history.SelectedLayerIndex);
+                XPESaver.Save(ms, history.Zoom, history.Offset, history.Layers, history.SelectedLayerIndex);
                 undoStack.Push(ms.ToArray());
                 redoStack.Clear();
             }
@@ -33,7 +33,7 @@
                 using MemoryStream ms = new();
                 byte[] data = undoStack.Pop();
                 using MemoryStream restoreMs = new(data);
-                PTVLoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
+                XPELoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
                 redoStack.Push(data);
                 return new HistoryItem(zoom, offset, layers, selectedLayerIndex);
             }
@@ -57,7 +57,7 @@
                 using MemoryStream ms = new();
                 byte[] data = redoStack.Pop();
                 using MemoryStream restoreMs = new(data);
-                PTVLoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
+                XPELoader.Load(restoreMs, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex);
                 undoStack.Push(data);
                 return new HistoryItem(zoom, offset, layers, selectedLayerIndex);
             }

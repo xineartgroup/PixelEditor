@@ -10,7 +10,7 @@
     <Compile Update="FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="FormName.cs">
+    <Compile Update="FormLayer.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="FormSettings.cs">

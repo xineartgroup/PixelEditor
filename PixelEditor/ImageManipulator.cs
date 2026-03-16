@@ -5,6 +5,68 @@ namespace PixelEditor
 {
     public static class ImageManipulator
     {
+        public static Bitmap CropFromCenter(Image sourceImage, int newWidth, int newHeight)
+        {
+            if (sourceImage == null)
+                throw new ArgumentNullException(nameof(sourceImage));
+
+            Bitmap newBitmap = new Bitmap(newWidth, newHeight, PixelFormat.Format32bppArgb);
+
+            using (Bitmap sourceBitmap = new Bitmap(sourceImage))
+            {
+                BitmapData sourceData = sourceBitmap.LockBits(
+                    new Rectangle(0, 0, sourceBitmap.Width, sourceBitmap.Height),
+                    ImageLockMode.ReadOnly,
+                    PixelFormat.Format32bppArgb);
+
+                BitmapData destData = newBitmap.LockBits(
+                    new Rectangle(0, 0, newWidth, newHeight),
+                    ImageLockMode.WriteOnly,
+                    PixelFormat.Format32bppArgb);
+
+                try
+                {
+                    int sourceX = Math.Max(0, (sourceBitmap.Width - newWidth) / 2);
+                    int sourceY = Math.Max(0, (sourceBitmap.Height - newHeight) / 2);
+                    int sourceWidth = Math.Min(newWidth, sourceBitmap.Width);
+                    int sourceHeight = Math.Min(newHeight, sourceBitmap.Height);
+
+                    int destX = Math.Max(0, (newWidth - sourceWidth) / 2);
+                    int destY = Math.Max(0, (newHeight - sourceHeight) / 2);
+
+                    unsafe
+                    {
+                        byte* sourcePtr = (byte*)sourceData.Scan0;
+                        byte* destPtr = (byte*)destData.Scan0;
+
+                        for (int y = 0; y < sourceHeight; y++)
+                        {
+                            int sourceRow = (sourceY + y) * sourceData.Stride;
+                            int destRow = (destY + y) * destData.Stride;
+
+                            for (int x = 0; x < sourceWidth; x++)
+                            {
+                                int sourceCol = (sourceX + x) * 4;
+                                int destCol = (destX + x) * 4;
+
+                                destPtr[destRow + destCol] = sourcePtr[sourceRow + sourceCol];
+                                destPtr[destRow + destCol + 1] = sourcePtr[sourceRow + sourceCol + 1];
+                                destPtr[destRow + destCol + 2] = sourcePtr[sourceRow + sourceCol + 2];
+                                destPtr[destRow + destCol + 3] = sourcePtr[sourceRow + sourceCol + 3];
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    sourceBitmap.UnlockBits(sourceData);
+                    newBitmap.UnlockBits(destData);
+                }
+            }
+
+            return newBitmap;
+        }
+
         public static Image? GetImage(Color color, int width, int height)
         {
             if (width <= 0 || height <= 0) return null;

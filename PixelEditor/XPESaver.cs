@@ -2,7 +2,7 @@
 
 namespace PixelEditor
 {
-    public static class PTVSaver
+    public static class XPESaver
     {
         private const int FormatMajorVersion = 1;
         private const int FormatMinorVersion = 1;

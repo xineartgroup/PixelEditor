@@ -87,7 +87,14 @@ namespace PixelEditor
             InitializeComponentGroupFill();
             InitializeComponentGroupBrush();
             InitializeComponentGroupMagicWand();
+            InitializeTimer();
+            layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
+            layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
+            layersControl.LayerCountChanged += LayersControl_LayerCountChanged;
+        }
 
+        private void InitializeTimer()
+        {
             System.Windows.Forms.Timer animationTimer = new()
             {
                 Interval = 100
@@ -104,10 +111,6 @@ namespace PixelEditor
                 }
             };
             animationTimer.Start();
-
-            layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
-            layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
-            layersControl.LayerCountChanged += LayersControl_LayerCountChanged;
         }
 
         private void InitializeComponentGroupFill()
@@ -946,7 +949,7 @@ namespace PixelEditor
             if (!ConfirmAbandonChanges()) return;
 
             using OpenFileDialog ofd = new();
-            ofd.Filter = "Paint++ Files (*.ptv)|*.ptv";
+            ofd.Filter = "Paint++ Files (*.xpe)|*.xpe";
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
@@ -956,7 +959,7 @@ namespace PixelEditor
 
                     using FileStream fs = File.Open(ofd.FileName, FileMode.Open);
 
-                    PTVLoader.Load(fs, out float zoom, out PointF imageOffset, out var layers, out int selectedLayerIndex);
+                    XPELoader.Load(fs, out float zoom, out PointF imageOffset, out var layers, out int selectedLayerIndex);
                     LayersManipulator.Zoom = zoom;
                     LayersManipulator.ImageOffset = imageOffset;
 
@@ -982,7 +985,7 @@ namespace PixelEditor
             if (string.IsNullOrEmpty(currentFilePath))
             {
                 using SaveFileDialog sfd = new();
-                sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
+                sfd.Filter = "Paint++ Files (*.xpe)|*.xpe";
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -998,7 +1001,7 @@ namespace PixelEditor
         private void SaveAsProjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using SaveFileDialog sfd = new();
-            sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
+            sfd.Filter = "Paint++ Files (*.xpe)|*.xpe";
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
@@ -1016,7 +1019,7 @@ namespace PixelEditor
             try
             {
                 using FileStream fs = File.Open(fileName, FileMode.Create);
-                PTVSaver.Save(fs, LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex());
+                XPESaver.Save(fs, LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex());
                 currentFilePath = fileName;
                 isDirty = false;
                 UpdateTitleBar();
@@ -1037,9 +1040,9 @@ namespace PixelEditor
 
             string dirtyMarker = isDirty && HistoryManager.CanUndo ? " *" : "";
 
-            if (displayName.EndsWith(".ptv", StringComparison.OrdinalIgnoreCase) && displayName.ToLower().LastIndexOf(".ptv") > 0)
+            if (displayName.EndsWith(".xpe", StringComparison.OrdinalIgnoreCase) && displayName.ToLower().LastIndexOf(".xpe") > 0)
             {
-                displayName = displayName[..displayName.LastIndexOf(".ptv")];
+                displayName = displayName[..displayName.LastIndexOf(".xpe")];
             }
 
             Text = $"{displayName}{dirtyMarker}";
@@ -1060,7 +1063,7 @@ namespace PixelEditor
                 if (string.IsNullOrEmpty(currentFilePath))
                 {
                     using SaveFileDialog sfd = new();
-                    sfd.Filter = "Paint++ Files (*.ptv)|*.ptv";
+                    sfd.Filter = "Paint++ Files (*.xpe)|*.xpe";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
                         PerformSave(sfd.FileName);
@@ -1111,23 +1114,20 @@ namespace PixelEditor
 
         private void BtnAddLayer_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
-            Bitmap bmp = new(LayersManipulator.Width, LayersManipulator.Height);
-
-            using (Graphics g = Graphics.FromImage(bmp))
+            FormLayer frm = new()
             {
-                g.Clear(Color.White);
-            }
-
-            var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
-            {
-                Image = bmp
+                Layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true),
+                StartPosition = FormStartPosition.CenterParent
             };
 
-            layersControl.InsertLayer(0, layer);
+            if (frm.ShowDialog(this) == DialogResult.OK)
+            {
+                HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-            RedrawImage();
+                layersControl.InsertLayer(0, frm.Layer);
+
+                RedrawImage();
+            }
         }
 
         private void BtnSubtractLayer_Click(object sender, EventArgs e)
@@ -1477,8 +1477,8 @@ namespace PixelEditor
                 else
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    int width = selectedLayer.Image.Width;
-                    int height = selectedLayer.Image.Height;
+                    int width = selectedLayer.Image != null ? selectedLayer.Image.Width : LayersManipulator.Width;
+                    int height = selectedLayer.Image != null ? selectedLayer.Image.Height : LayersManipulator.Height;
                     selectedLayer.Image?.Dispose();
                     selectedLayer.Image = ImageManipulator.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;

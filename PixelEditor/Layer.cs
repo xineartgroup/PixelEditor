@@ -13,6 +13,8 @@
         private bool _blueFilter = false;
         private LayerChannel _channel = LayerChannel.RGB;
         private ImageBlending _blendMode = ImageBlending.Normal;
+        private FillType _fillType = FillType.Color;
+        private Color _fillColor = Color.White;
 
         public event Action<Rectangle>? OnLayerChanged;
 
@@ -41,6 +43,10 @@
         public LayerChannel Channel { get => _channel; set => SetProperty(ref _channel, value); }
 
         public ImageBlending BlendMode { get => _blendMode; set => SetProperty(ref _blendMode, value); }
+
+        public FillType FillType { get => _fillType; set => SetProperty(ref _fillType, value); }
+
+        public Color FillColor { get => _fillColor; set => SetProperty(ref _fillColor, value); }
 
         private void SetProperty<T>(ref T field, T value)
         {
