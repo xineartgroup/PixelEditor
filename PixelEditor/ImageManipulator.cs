@@ -644,6 +644,7 @@ namespace PixelEditor
             int width = bmp.Width;
             int height = bmp.Height;
             bool[,] mask = new bool[width, height];
+            bool[,] visited = new bool[width, height];
 
             if (startPosition.X < 0 || startPosition.X >= width || startPosition.Y < 0 || startPosition.Y >= height)
                 return mask;
@@ -658,22 +659,24 @@ namespace PixelEditor
 
             Queue<Point> pixels = [];
             pixels.Enqueue(startPosition);
+            visited[startPosition.X, startPosition.Y] = true;
             mask[startPosition.X, startPosition.Y] = true;
 
-            int[] dx = [0, 0, 1, -1, 1, 1, -1, -1];
-            int[] dy = [1, -1, 0, 0, 1, -1, 1, -1];
+            int[] dx = [0, 0, 1, -1];
+            int[] dy = [1, -1, 0, 0];
 
             while (pixels.Count > 0)
             {
                 Point current = pixels.Dequeue();
 
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < 4; i++)
                 {
                     int nx = current.X + dx[i];
                     int ny = current.Y + dy[i];
 
-                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && !mask[nx, ny])
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && !visited[nx, ny])
                     {
+                        visited[nx, ny] = true;
                         byte* cP = ptr + (ny * stride) + (nx * 4);
                         byte b = cP[0], g = cP[1], r = cP[2], a = cP[3];
 
@@ -690,15 +693,14 @@ namespace PixelEditor
                                 break;
                             case "All":
                             default:
-                                // Max Euclidean distance for RGB is sqrt(255^2 * 3) ≈ 441.67
                                 double diff = Math.Sqrt(Math.Pow(sR - r, 2) + Math.Pow(sG - g, 2) + Math.Pow(sB - b, 2));
                                 match = (diff / 441.6729559300637) <= threshold;
                                 break;
                         }
 
+                        mask[nx, ny] = true;
                         if (match)
                         {
-                            mask[nx, ny] = true;
                             pixels.Enqueue(new Point(nx, ny));
                         }
                     }
@@ -706,7 +708,48 @@ namespace PixelEditor
             }
 
             bmp.UnlockBits(data);
-            return mask;
+            return Dilate(mask, width, height, 2);
+        }
+
+        private static bool[,] Dilate(bool[,] mask, int width, int height, int radius = 1)
+        {
+            if (radius <= 0) return mask;
+
+            bool[,] horizontalPass = new bool[width, height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (mask[x, y])
+                    {
+                        int start = Math.Max(0, x - radius);
+                        int end = Math.Min(width - 1, x + radius);
+                        for (int nx = start; nx <= end; nx++)
+                        {
+                            horizontalPass[nx, y] = true;
+                        }
+                    }
+                }
+            }
+
+            bool[,] result = new bool[width, height];
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (horizontalPass[x, y])
+                    {
+                        int start = Math.Max(0, y - radius);
+                        int end = Math.Min(height - 1, y + radius);
+                        for (int ny = start; ny <= end; ny++)
+                        {
+                            result[x, ny] = true;
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
 
         public static bool HasTransparentPixels(Bitmap? selectedAreaBitmap)

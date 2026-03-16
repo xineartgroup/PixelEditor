@@ -28,13 +28,34 @@
             Layer.Name = textBoxName.Text;
             Layer.BlendMode = !string.IsNullOrEmpty(cboBlendMode.Text) ? Enum.Parse<ImageBlending>(cboBlendMode.Text) : ImageBlending.Normal;
             Layer.Opacity = opacity.Value;
-            Layer.FillColor = btnBackgroundColor.BackColor;
+            Layer.FillColor = cboFillWith.Text == "Transparency" ? Color.Transparent : btnBackgroundColor.BackColor;
             Layer.FillType = cboFillWith.Text == "Transparency" ? FillType.Transparency : FillType.Color;
-            Layer.Image = (Layer.Image != null) ?
-                ImageManipulator.CropFromCenter(Layer.Image, (int)width.Value, (int)height.Value) :
-                ImageManipulator.GetImage(Layer.FillType == FillType.Transparency ? Color.Transparent : Layer.FillColor, (int)width.Value, (int)height.Value);
             Layer.X = (int)offsetX.Value;
             Layer.Y = (int)offsetY.Value;
+
+            Image image = ImageManipulator.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
+            if (Layer.Image != null)
+            {
+                using (Graphics g = Graphics.FromImage(image))
+                {
+                    float ratioX = (float)image.Width / Layer.Image.Width;
+                    float ratioY = (float)image.Height / Layer.Image.Height;
+                    float ratio = Math.Min(ratioX, ratioY);
+
+                    int newWidth = (int)(Layer.Image.Width * ratio);
+                    int newHeight = (int)(Layer.Image.Height * ratio);
+
+                    int posX = (image.Width - newWidth) / 2;
+                    int posY = (image.Height - newHeight) / 2;
+
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+                    g.DrawImage(Layer.Image, posX, posY, newWidth, newHeight);
+                }
+
+                Layer.Image.Dispose();
+            }
+            Layer.Image = image;
 
             DialogResult = DialogResult.OK;
         }
@@ -65,6 +86,16 @@
         private void BtnCenterY_Click(object sender, EventArgs e)
         {
             offsetY.Value = (LayersManipulator.Height - height.Value) / 2;
+        }
+
+        private void BtnAutoWidth_Click(object sender, EventArgs e)
+        {
+            width.Value = LayersManipulator.Width;
+        }
+
+        private void BtnAutoHeight_Click(object sender, EventArgs e)
+        {
+            height.Value = LayersManipulator.Height;
         }
     }
 }

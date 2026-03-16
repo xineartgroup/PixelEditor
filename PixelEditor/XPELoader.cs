@@ -6,7 +6,7 @@ namespace PixelEditor
     {
         private const string MagicString = "BNDATA";
 
-        public static void Load(Stream source, out float zoom, out PointF offset, out List<Layer> layers, out int selectedLayerIndex)
+        public static void Load(Stream source, out List<Layer> layers, out int selectedLayerIndex)
         {
             try
             {
@@ -28,8 +28,11 @@ namespace PixelEditor
                 int versionMajor = reader.ReadInt32();
                 int versionMinor = reader.ReadInt32();
 
-                zoom = reader.ReadSingle();
-                offset = new PointF(reader.ReadSingle(), reader.ReadSingle());
+                LayersManipulator.Zoom = reader.ReadSingle();
+                LayersManipulator.ImageOffset = new PointF(reader.ReadSingle(), reader.ReadSingle());
+                LayersManipulator.Width = reader.ReadInt32();
+                LayersManipulator.Height = reader.ReadInt32();
+
                 selectedLayerIndex = reader.ReadInt32();
 
                 int layerCount = reader.ReadInt32();

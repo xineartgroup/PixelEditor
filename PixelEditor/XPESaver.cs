@@ -8,7 +8,7 @@ namespace PixelEditor
         private const int FormatMinorVersion = 1;
         private const string MagicString = "BNDATA";
 
-        public static void Save(Stream destination, float zoom, PointF offset, List<Layer> layers, int selectedLayerIndex)
+        public static void Save(Stream destination, List<Layer> layers, int selectedLayerIndex)
         {
             try
             {
@@ -19,9 +19,11 @@ namespace PixelEditor
                     writer.Write(FormatMajorVersion);
                     writer.Write(FormatMinorVersion);
 
-                    writer.Write(zoom);
-                    writer.Write(offset.X);
-                    writer.Write(offset.Y);
+                    writer.Write(LayersManipulator.Zoom);
+                    writer.Write(LayersManipulator.ImageOffset.X);
+                    writer.Write(LayersManipulator.ImageOffset.Y);
+                    writer.Write(LayersManipulator.Width);
+                    writer.Write(LayersManipulator.Height);
 
                     writer.Write(selectedLayerIndex);
 

@@ -26,6 +26,18 @@ namespace PixelEditor
         private static Bitmap? _screenBitmap;
         private static Bitmap? _canvasBitmap;
 
+        public static float ScreenToWorldRatio(int width, int height)
+        {
+            float aspectRatio = (float)Width / Height;
+            float containerAspectRatio = (float)width / height;
+
+            float scaledWidth = aspectRatio > containerAspectRatio
+                ? width * Zoom
+                : height * Zoom * aspectRatio;
+
+            return scaledWidth / Width;
+        }
+
         public static Point ScreenToWorld(Point screenPt, int width, int height)
         {
             float aspectRatio = (float)Width / Height;

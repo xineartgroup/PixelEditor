@@ -79,5 +79,31 @@
             Image = newImage;
             OnLayerChanged?.Invoke(GetBounds());
         }
+
+        public Layer Clone()
+        {
+            Layer clone = new Layer(Name, IsVisible)
+            {
+                _x = _x,
+                _y = _y,
+                _scaleWidth = _scaleWidth,
+                _scaleHeight = _scaleHeight,
+                _opacity = _opacity,
+                _redFilter = _redFilter,
+                _greenFilter = _greenFilter,
+                _blueFilter = _blueFilter,
+                _channel = _channel,
+                _blendMode = _blendMode,
+                _fillType = _fillType,
+                _fillColor = _fillColor
+            };
+
+            if (Image != null)
+            {
+                clone.Image = new Bitmap(Image);
+            }
+
+            return clone;
+        }
     }
 }

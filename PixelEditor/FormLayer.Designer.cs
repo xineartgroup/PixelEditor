@@ -51,6 +51,8 @@
             opacity = new TrackBar();
             btnCenterX = new Button();
             btnCenterY = new Button();
+            btnAutoWidth = new Button();
+            btnAutoHeight = new Button();
             ((System.ComponentModel.ISupportInitialize)width).BeginInit();
             ((System.ComponentModel.ISupportInitialize)height).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetX).BeginInit();
@@ -71,7 +73,7 @@
             btnOK.Location = new Point(66, 326);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(75, 23);
-            btnOK.TabIndex = 1;
+            btnOK.TabIndex = 13;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;
             btnOK.Click += BtnOK_Click;
@@ -82,7 +84,7 @@
             btnCancel.Location = new Point(147, 326);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 23);
-            btnCancel.TabIndex = 1;
+            btnCancel.TabIndex = 14;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += BtnCancel_Click;
@@ -95,7 +97,7 @@
             cboBlendMode.Location = new Point(97, 41);
             cboBlendMode.Name = "cboBlendMode";
             cboBlendMode.Size = new Size(128, 21);
-            cboBlendMode.TabIndex = 40;
+            cboBlendMode.TabIndex = 1;
             // 
             // label1
             // 
@@ -124,7 +126,7 @@
             cboFillWith.Location = new Point(97, 68);
             cboFillWith.Name = "cboFillWith";
             cboFillWith.Size = new Size(128, 21);
-            cboFillWith.TabIndex = 40;
+            cboFillWith.TabIndex = 2;
             // 
             // label4
             // 
@@ -141,7 +143,7 @@
             btnBackgroundColor.Location = new Point(201, 95);
             btnBackgroundColor.Name = "btnBackgroundColor";
             btnBackgroundColor.Size = new Size(24, 24);
-            btnBackgroundColor.TabIndex = 43;
+            btnBackgroundColor.TabIndex = 3;
             btnBackgroundColor.UseVisualStyleBackColor = false;
             btnBackgroundColor.Click += BtnBackgroundColor_Click;
             // 
@@ -157,11 +159,11 @@
             // width
             // 
             width.Location = new Point(97, 185);
-            width.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
-            width.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            width.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            width.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             width.Name = "width";
             width.Size = new Size(65, 23);
-            width.TabIndex = 44;
+            width.TabIndex = 5;
             width.Value = new decimal(new int[] { 2, 0, 0, 0 });
             // 
             // label6
@@ -185,11 +187,11 @@
             // height
             // 
             height.Location = new Point(97, 216);
-            height.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
-            height.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            height.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            height.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             height.Name = "height";
             height.Size = new Size(65, 23);
-            height.TabIndex = 44;
+            height.TabIndex = 7;
             height.Value = new decimal(new int[] { 2, 0, 0, 0 });
             // 
             // label8
@@ -213,18 +215,20 @@
             // offsetX
             // 
             offsetX.Location = new Point(97, 245);
-            offsetX.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
+            offsetX.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            offsetX.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetX.Name = "offsetX";
             offsetX.Size = new Size(65, 23);
-            offsetX.TabIndex = 44;
+            offsetX.TabIndex = 9;
             // 
             // offsetY
             // 
             offsetY.Location = new Point(97, 276);
-            offsetY.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
+            offsetY.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            offsetY.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetY.Name = "offsetY";
             offsetY.Size = new Size(65, 23);
-            offsetY.TabIndex = 44;
+            offsetY.TabIndex = 11;
             // 
             // label3
             // 
@@ -250,7 +254,7 @@
             opacity.Maximum = 100;
             opacity.Name = "opacity";
             opacity.Size = new Size(128, 45);
-            opacity.TabIndex = 42;
+            opacity.TabIndex = 4;
             opacity.TickStyle = TickStyle.None;
             opacity.Value = 100;
             // 
@@ -258,8 +262,8 @@
             // 
             btnCenterX.Location = new Point(171, 245);
             btnCenterX.Name = "btnCenterX";
-            btnCenterX.Size = new Size(54, 23);
-            btnCenterX.TabIndex = 45;
+            btnCenterX.Size = new Size(75, 23);
+            btnCenterX.TabIndex = 10;
             btnCenterX.Text = "Center";
             btnCenterX.UseVisualStyleBackColor = true;
             btnCenterX.Click += BtnCenterX_Click;
@@ -268,11 +272,31 @@
             // 
             btnCenterY.Location = new Point(171, 276);
             btnCenterY.Name = "btnCenterY";
-            btnCenterY.Size = new Size(54, 23);
-            btnCenterY.TabIndex = 45;
+            btnCenterY.Size = new Size(75, 23);
+            btnCenterY.TabIndex = 12;
             btnCenterY.Text = "Center";
             btnCenterY.UseVisualStyleBackColor = true;
             btnCenterY.Click += BtnCenterY_Click;
+            // 
+            // btnAutoWidth
+            // 
+            btnAutoWidth.Location = new Point(171, 183);
+            btnAutoWidth.Name = "btnAutoWidth";
+            btnAutoWidth.Size = new Size(75, 23);
+            btnAutoWidth.TabIndex = 6;
+            btnAutoWidth.Text = "Auto Size";
+            btnAutoWidth.UseVisualStyleBackColor = true;
+            btnAutoWidth.Click += BtnAutoWidth_Click;
+            // 
+            // btnAutoHeight
+            // 
+            btnAutoHeight.Location = new Point(171, 214);
+            btnAutoHeight.Name = "btnAutoHeight";
+            btnAutoHeight.Size = new Size(75, 23);
+            btnAutoHeight.TabIndex = 8;
+            btnAutoHeight.Text = "Auto Size";
+            btnAutoHeight.UseVisualStyleBackColor = true;
+            btnAutoHeight.Click += BtnAutoHeight_Click;
             // 
             // FormLayer
             // 
@@ -281,7 +305,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
             ClientSize = new Size(284, 361);
+            Controls.Add(btnAutoHeight);
             Controls.Add(btnCenterY);
+            Controls.Add(btnAutoWidth);
             Controls.Add(btnCenterX);
             Controls.Add(offsetY);
             Controls.Add(height);
@@ -343,5 +369,7 @@
         private TrackBar opacity;
         private Button btnCenterX;
         private Button btnCenterY;
+        private Button btnAutoWidth;
+        private Button btnAutoHeight;
     }
 }
