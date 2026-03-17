@@ -714,16 +714,13 @@ namespace PixelEditor
 
         private void UpdateCursor(Point mousePosition)
         {
-            if (ImageSelections.IsOverRotationHandle(mousePosition, canvas.Width, canvas.Height))
+            if (IsOverRotationHandle(mousePosition, LayersManipulator.Width, LayersManipulator.Height, canvas.Width, canvas.Height, LayersManipulator.Zoom))
             {
                 canvas.Cursor = Cursors.Hand;
             }
-            else if (ImageSelections.IsOverScaleHandle(mousePosition, canvas.Width, canvas.Height, out string handle))
+            else if (IsOverScaleHandle(mousePosition, canvas.Width, canvas.Height, out string handle))
             {
                 canvas.Cursor = GetCursor(handle);
-            }
-            else if (ImageSelections.IsPointInSelection(mousePosition, canvas.Width, canvas.Height) >= 0)
-            {
             }
             else
             {
@@ -1127,6 +1124,7 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), frm.Layer);
+                    RedrawImage();
                 }
             }
         }
@@ -1143,6 +1141,7 @@ namespace PixelEditor
             {
                 HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 layersControl.InsertLayer(0, frm.Layer);
+                RedrawImage();
             }
         }
 
@@ -1515,7 +1514,7 @@ namespace PixelEditor
                     int width = selectedLayer.Image != null ? selectedLayer.Image.Width : LayersManipulator.Width;
                     int height = selectedLayer.Image != null ? selectedLayer.Image.Height : LayersManipulator.Height;
                     selectedLayer.Image?.Dispose();
-                    selectedLayer.Image = ImageManipulator.GetImage(Color.Transparent, width, height);
+                    selectedLayer.Image = LayersManipulator.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;
                     scaleFactor = 1.0f;
                     RedrawImage();
@@ -1681,8 +1680,8 @@ namespace PixelEditor
                     selectedLayer.X = formSettings.LayerX;
                     selectedLayer.Y = formSettings.LayerY;
                     selectedLayer.Image = (selectedLayer.Image != null) ?
-                        ImageManipulator.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
-                        ImageManipulator.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
+                        LayersManipulator.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
+                        LayersManipulator.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
                     RedrawImage();
                 }
             }
@@ -1709,7 +1708,7 @@ namespace PixelEditor
                 if (selectedLayer.Image != null)
                 {
                     HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    Bitmap inverted = ImageManipulator.InvertColors((Bitmap)selectedLayer.Image);
+                    Bitmap inverted = LayersManipulator.InvertColors((Bitmap)selectedLayer.Image);
                     selectedLayer.Image.Dispose();
                     selectedLayer.Image = inverted;
                     RedrawImage();
@@ -1811,7 +1810,7 @@ namespace PixelEditor
 
         private void UpdateTransformMatrix()
         {
-            PointF screenCenter = ImageSelections.GetSelectionCenterScreen(canvas.Width, canvas.Height);
+            PointF screenCenter = GetSelectionCenterScreen(canvas.Width, canvas.Height);
 
             transformMatrix.Reset();
             transformMatrix.Translate(-screenCenter.X, -screenCenter.Y, MatrixOrder.Append);
@@ -1968,6 +1967,63 @@ namespace PixelEditor
             return 1.0f;
         }
 
+        public static bool IsOverRotationHandle(Point screenPoint, int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
+        {
+            PointF worldHandle = new(
+                ImageSelections.GetSelectionCenter().X,
+                ImageSelections.GetSelectionBounds().Y - ImageSelections.ROTATION_HANDLE_SIZE / ImageSelections.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
+            );
+            Point screenHandle = LayersManipulator.WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
+            float distance = ImageSelections.Distance(screenPoint, screenHandle);
+            return distance < ImageSelections.ROTATION_HANDLE_SIZE;
+        }
+
+        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
+        {
+            handle = "";
+
+            var corners = new[]
+            {
+                new { Name = "topLeft",     World = new PointF(ImageSelections.GetSelectionBounds().X,     ImageSelections.GetSelectionBounds().Y) },
+                new { Name = "topRight",    World = new PointF(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Y) },
+                new { Name = "bottomLeft",  World = new PointF(ImageSelections.GetSelectionBounds().X,     ImageSelections.GetSelectionBounds().Bottom) },
+                new { Name = "bottomRight", World = new PointF(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Bottom) }
+            };
+
+            foreach (var corner in corners)
+            {
+                Point screenCorner = LayersManipulator.WorldToScreen(Point.Round(corner.World), canvasWidth, canvasHeight);
+                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
+                {
+                    handle = corner.Name;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
+        {
+            Point topLeft = LayersManipulator.WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvasWidth, canvasHeight);
+            Point bottomRight = LayersManipulator.WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().Right, (int)ImageSelections.GetSelectionBounds().Bottom), canvasWidth, canvasHeight);
+            return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+        }
+
+        public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
+        {
+            Point p = LayersManipulator.WorldToScreen(Point.Round(ImageSelections.GetSelectionCenter()), canvasWidth, canvasHeight);
+            return p;
+        }
+
+        public static float CalculateRotationAngle(Point screenMousePosition, int canvasWidth, int canvasHeight)
+        {
+            PointF screenCenter = GetSelectionCenterScreen(canvasWidth, canvasHeight);
+            float dx = screenMousePosition.X - screenCenter.X;
+            float dy = screenMousePosition.Y - screenCenter.Y;
+            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+        }
+
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
@@ -1992,13 +2048,13 @@ namespace PixelEditor
                         {
                             if (selectedLayer.Image == null) return;
 
-                            if (ImageSelections.IsOverRotationHandle(e.Location, canvas.Width, canvas.Height))
+                            if (IsOverRotationHandle(e.Location, LayersManipulator.Width, LayersManipulator.Height, canvas.Width, canvas.Height, LayersManipulator.Zoom))
                             {
                                 isRotating = true;
                                 Cursor.Current = Cursors.SizeAll;
-                                startMouseAngle = ImageSelections.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
+                                startMouseAngle = CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
                             }
-                            else if (ImageSelections.IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
+                            else if (IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
                             {
                                 isScaling = true;
                                 Cursor.Current = GetCursor(handle);
@@ -2006,7 +2062,7 @@ namespace PixelEditor
                                 initialScaleDistance = ImageSelections.Distance(worldMouse, ImageSelections.GetSelectionCenter());
                                 initialScaleFactor = scaleFactor;
                             }
-                            else if (ImageSelections.IsPointInSelection(e.Location, canvas.Width, canvas.Height) >= 0)
+                            else if (ImageSelections.IsPointInSelection(LayersManipulator.ScreenToWorld(e.Location, canvas.Width, canvas.Height)) >= 0)
                             {
                                 isDragging = true;
                                 Cursor.Current = Cursors.SizeAll;
@@ -2016,7 +2072,7 @@ namespace PixelEditor
                             {
                                 ImageSelections.CalculateSelectionBounds();
                                 selectedAreaBitmap = ExtractSelectedArea(selectedLayer);
-                                bool hasTransparentPixels = ImageManipulator.HasTransparentPixels(selectedAreaBitmap);
+                                bool hasTransparentPixels = LayersManipulator.HasTransparentPixels(selectedAreaBitmap);
                                 selectedLayer.Image = CutSelectionFromLayer(selectedLayer, hasTransparentPixels);
                             }
                         }
@@ -2036,34 +2092,36 @@ namespace PixelEditor
                             var selectionPolygons = ImageSelections.GetSelections();
                             if (selectionPolygons.Count == 0)
                             {
-                                bitmap = ImageManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
-                                    LayersManipulator.Width, LayersManipulator.Height, selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
+                                bitmap = LayersManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                    canvas.Width, canvas.Height,
+                                    selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
                                     (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
                                     (float)(fillOpacity.Value / fillOpacity.Maximum),
                                     lastMousePosition,
-                                    [],
-                                    canvas,
-                                    LayersManipulator.Zoom,
-                                    LayersManipulator.ImageOffset);
+                                    []);
                             }
                             else
                             {
                                 for (int i = 0; i < selectionPolygons.Count; i++)
                                 {
-                                    bitmap = ImageManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
-                                    LayersManipulator.Width, LayersManipulator.Height, selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
-                                    (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
-                                    (float)(fillOpacity.Value / fillOpacity.Maximum),
-                                    lastMousePosition,
-                                    selectionPolygons[i],
-                                    canvas,
-                                    LayersManipulator.Zoom,
-                                    LayersManipulator.ImageOffset);
+                                    if (ImageSelections.IsPointInPolygon(LayersManipulator.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height), selectionPolygons[i]))
+                                    {
+                                        bitmap = LayersManipulator.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                        canvas.Width, canvas.Height,
+                                        selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
+                                        (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
+                                        (float)(fillOpacity.Value / fillOpacity.Maximum),
+                                        lastMousePosition,
+                                        selectionPolygons[i]);
+                                    }
                                 }
                             }
-                            var old = selectedLayer.Image;
-                            selectedLayer.Image = bitmap;
-                            old?.Dispose();
+                            if (bitmap != null)
+                            {
+                                var old = selectedLayer.Image;
+                                selectedLayer.Image = bitmap;
+                                old?.Dispose();
+                            }
                             PaintingEngine.SetTarget(selectedLayer.Image);
                             RedrawImage();
                         }
@@ -2109,7 +2167,7 @@ namespace PixelEditor
                             position.X -= selectedLayer.X;
                             position.Y -= selectedLayer.Y;
 
-                            bool[,] mask = ImageManipulator.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
+                            bool[,] mask = LayersManipulator.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
 
                             if (ModifierKeys.HasFlag(Keys.Shift))
                             {
@@ -2195,7 +2253,7 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    rotationAngle = ImageSelections.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
+                    rotationAngle = CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
                     UpdateTransformMatrix();
                 }
             }
@@ -2353,7 +2411,7 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    UpdateCursor(e.Location);
+                    //UpdateCursor(e.Location);
                 }
             }
 
@@ -2467,7 +2525,7 @@ namespace PixelEditor
 
                 if (selectedAreaBitmap != null)
                 {
-                    RectangleF screenBounds = ImageSelections.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+                    RectangleF screenBounds = GetSelectionBoundsScreen(canvas.Width, canvas.Height);
                     g.MultiplyTransform(transformMatrix);
                     g.DrawImage(selectedAreaBitmap, screenBounds);
                     g.ResetTransform();
@@ -2524,7 +2582,7 @@ namespace PixelEditor
                     using Brush scaleBrush = new SolidBrush(Color.FromArgb(0, 120, 215));
                     using Brush rotateBrush = new SolidBrush(Color.Gold);
 
-                    RectangleF screenBounds = ImageSelections.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+                    RectangleF screenBounds = GetSelectionBoundsScreen(canvas.Width, canvas.Height);
 
                     PointF[] corners =
                     [

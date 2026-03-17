@@ -37,7 +37,7 @@
                 lblWarmth.Text = $"{trackBar2.Value}";
                 lblTint.Text = $"{trackBar3.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = ImageManipulator.AdjustColorBalance((Bitmap)pictureSample.Image, 
+                pictureSample.Image = LayersManipulator.AdjustColorBalance((Bitmap)pictureSample.Image, 
                     (float)trackBar1.Value / trackBar1.Maximum, 
                     (float)trackBar2.Value - 50, 
                     (float)trackBar3.Value - 50);

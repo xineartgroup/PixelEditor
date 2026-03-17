@@ -35,7 +35,7 @@
             {
                 lblRadius.Text = $"{trackBar1.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = ImageManipulator.GaussianBlur((Bitmap)pictureSample.Image, trackBar1.Value, trackBar2.Value);
+                pictureSample.Image = LayersManipulator.GaussianBlur((Bitmap)pictureSample.Image, trackBar1.Value, trackBar2.Value);
             }
         }
     }

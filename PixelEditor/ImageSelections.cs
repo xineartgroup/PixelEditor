@@ -17,63 +17,14 @@ namespace PixelEditor
             return isInnerSelection;
         }
 
-        public static bool IsOverRotationHandle(Point screenPoint, int canvasWidth, int canvasHeight)
-        {
-            PointF worldHandle = new(
-                GetSelectionCenter().X,
-                GetSelectionBounds().Y - ROTATION_HANDLE_SIZE / GetScreenToWorldScale(canvasWidth, canvasHeight)
-            );
-            Point screenHandle = LayersManipulator.WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
-            float distance = Distance(screenPoint, screenHandle);
-            return distance < ROTATION_HANDLE_SIZE;
-        }
-
-        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
-        {
-            handle = "";
-
-            var corners = new[]
-            {
-                new { Name = "topLeft",     World = new PointF(GetSelectionBounds().X,     GetSelectionBounds().Y) },
-                new { Name = "topRight",    World = new PointF(GetSelectionBounds().Right,  GetSelectionBounds().Y) },
-                new { Name = "bottomLeft",  World = new PointF(GetSelectionBounds().X,     GetSelectionBounds().Bottom) },
-                new { Name = "bottomRight", World = new PointF(GetSelectionBounds().Right,  GetSelectionBounds().Bottom) }
-            };
-
-            foreach (var corner in corners)
-            {
-                Point screenCorner = LayersManipulator.WorldToScreen(Point.Round(corner.World), canvasWidth, canvasHeight);
-                if (Distance(screenPoint, screenCorner) < SCALE_HANDLE_SIZE)
-                {
-                    handle = corner.Name;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         public static RectangleF GetSelectionBounds()
         {
             return selectionBounds;
         }
 
-        public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
-        {
-            Point topLeft = LayersManipulator.WorldToScreen(new Point((int)selectionBounds.X, (int)selectionBounds.Y), canvasWidth, canvasHeight);
-            Point bottomRight = LayersManipulator.WorldToScreen(new Point((int)selectionBounds.Right, (int)selectionBounds.Bottom), canvasWidth, canvasHeight);
-            return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-        }
-
         public static PointF GetSelectionCenter()
         {
             return selectionCenter;
-        }
-
-        public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
-        {
-            Point p = LayersManipulator.WorldToScreen(Point.Round(selectionCenter), canvasWidth, canvasHeight);
-            return p;
         }
 
         public static bool ContainsSelection()
@@ -218,17 +169,8 @@ namespace PixelEditor
             return (float)Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public static float CalculateRotationAngle(Point screenMousePosition, int canvasWidth, int canvasHeight)
+        public static int IsPointInSelection(Point worldPoint)
         {
-            PointF screenCenter = GetSelectionCenterScreen(canvasWidth, canvasHeight);
-            float dx = screenMousePosition.X - screenCenter.X;
-            float dy = screenMousePosition.Y - screenCenter.Y;
-            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
-        }
-
-        public static int IsPointInSelection(Point screenPoint, int canvasWidth, int canvasHeight)
-        {
-            Point worldPoint = LayersManipulator.ScreenToWorld(screenPoint, canvasWidth, canvasHeight);
             for (int i = 0; i < selectionPolygons.Count; i++)
             {
                 if (IsPointInPolygon(worldPoint, selectionPolygons[i]))
@@ -239,14 +181,29 @@ namespace PixelEditor
             return -1;
         }
 
-        private static float GetScreenToWorldScale(int canvasWidth, int canvasHeight)
+        public static bool IsPointInPolygon(Point point, List<Point> points)
         {
-            float aspectRatio = (float)LayersManipulator.Width / LayersManipulator.Height;
+            int n = points.Count;
+            bool inside = false;
+            for (int i = 0, j = n - 1; i < n; j = i++)
+            {
+                if ((points[i].Y > point.Y) != (points[j].Y > point.Y) &&
+                    (point.X < (points[j].X - points[i].X) * (point.Y - points[i].Y) / (points[j].Y - points[i].Y) + points[i].X))
+                {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        public static float GetScreenToWorldScale(int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
+        {
+            float aspectRatio = (float)worldWidth / worldHeight;
             float containerAspectRatio = (float)canvasWidth / canvasHeight;
             float scaledWidth = aspectRatio > containerAspectRatio
-                ? canvasWidth * LayersManipulator.Zoom
-                : canvasHeight * LayersManipulator.Zoom * aspectRatio;
-            return scaledWidth / LayersManipulator.Width;
+                ? canvasWidth * zoom
+                : canvasHeight * zoom * aspectRatio;
+            return scaledWidth / worldWidth;
         }
 
         private static void FillPolygonInMask(bool[,] mask, List<Point> points)
@@ -285,21 +242,6 @@ namespace PixelEditor
                     }
                 }
             }
-        }
-
-        private static bool IsPointInPolygon(Point point, List<Point> points)
-        {
-            int n = points.Count;
-            bool inside = false;
-            for (int i = 0, j = n - 1; i < n; j = i++)
-            {
-                if ((points[i].Y > point.Y) != (points[j].Y > point.Y) &&
-                    (point.X < (points[j].X - points[i].X) * (point.Y - points[i].Y) / (points[j].Y - points[i].Y) + points[i].X))
-                {
-                    inside = !inside;
-                }
-            }
-            return inside;
         }
 
         public static List<List<Point>> GetSelectionPointsFromMask(bool[,] mask, Point position)

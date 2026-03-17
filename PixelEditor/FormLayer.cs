@@ -33,7 +33,7 @@
             Layer.X = (int)offsetX.Value;
             Layer.Y = (int)offsetY.Value;
 
-            Image image = ImageManipulator.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
+            Image image = LayersManipulator.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
             if (Layer.Image != null)
             {
                 using (Graphics g = Graphics.FromImage(image))

@@ -35,7 +35,7 @@
             {
                 lblSharpness.Text = $"{trackBar6.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = ImageManipulator.AdjustSharpness((Bitmap)pictureSample.Image, (float)trackBar6.Value / 100);
+                pictureSample.Image = LayersManipulator.AdjustSharpness((Bitmap)pictureSample.Image, (float)trackBar6.Value / 100);
             }
         }
     }
