@@ -804,9 +804,6 @@ namespace PixelEditor
                     DialogResult result = DialogResult.Yes;
                     if (result != DialogResult.Cancel)
                     {
-                        LayersManipulator.Zoom = 0.95f;
-                        LayersManipulator.ImageOffset = new PointF(0, 0);
-
                         redToolStripMenuItem1.Checked = false;
                         greenToolStripMenuItem1.Checked = false;
                         blueToolStripMenuItem1.Checked = false;
@@ -1833,24 +1830,84 @@ namespace PixelEditor
 
             Bitmap result = new(srcW, srcH);
 
-            using Graphics g = Graphics.FromImage(result);
+            var selections = ImageSelections.GetSelections();
+            var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
 
-            var selectionPoints = ImageSelections.GetSelections();
-            for (int i = 0; i < selectionPoints.Count; i++)
+            if (selectionPolygons.Count == 0) return result;
+
+            bool[,] mask = new bool[srcW, srcH];
+
+            SelectionPolygon first = selectionPolygons.First();
+
+            if (!first.Inner)
             {
-                if (selectionPoints[i].Points.Count < 3) continue;
+                for (int x = 0; x < srcW; x++)
+                {
+                    for (int y = 0; y < srcH; y++)
+                    {
+                        mask[x, y] = true;
+                    }
+                }
+            }
 
-                using GraphicsPath path = new();
-                PointF[] localPoints = [.. selectionPoints[i].Points.Select(p =>
-                    new PointF(p.X - selectedLayer.X - srcX, p.Y - selectedLayer.Y - srcY))];
+            int minX = (int)worldBounds.X;
+            int minY = (int)worldBounds.Y;
 
-                path.AddPolygon(localPoints);
-                g.SetClip(path);
+            foreach (var poly in selectionPolygons)
+            {
+                ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(
+                    p.X - minX,
+                    p.Y - minY))],
+                    poly.Inner);
+            }
 
-                g.DrawImage(selectedLayer.Image,
-                    new Rectangle(0, 0, srcW, srcH),
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                Bitmap sourceBitmap = new(selectedLayer.Image);
+
+                BitmapData sourceData = sourceBitmap.LockBits(
                     new Rectangle(srcX, srcY, srcW, srcH),
-                    GraphicsUnit.Pixel);
+                    ImageLockMode.ReadOnly,
+                    PixelFormat.Format32bppPArgb);
+
+                BitmapData resultData = result.LockBits(
+                    new Rectangle(0, 0, srcW, srcH),
+                    ImageLockMode.WriteOnly,
+                    PixelFormat.Format32bppPArgb);
+
+                int stride = sourceData.Stride;
+                IntPtr sourcePtr = sourceData.Scan0;
+                IntPtr resultPtr = resultData.Scan0;
+
+                try
+                {
+                    Parallel.For(0, srcH, y =>
+                    {
+                        unsafe
+                        {
+                            byte* sourceRow = (byte*)sourcePtr + (y * stride);
+                            byte* resultRow = (byte*)resultPtr + (y * stride);
+
+                            for (int x = 0; x < srcW; x++)
+                            {
+                                if (mask[x, y])
+                                {
+                                    int offset = x * 4;
+                                    resultRow[offset] = sourceRow[offset];
+                                    resultRow[offset + 1] = sourceRow[offset + 1];
+                                    resultRow[offset + 2] = sourceRow[offset + 2];
+                                    resultRow[offset + 3] = sourceRow[offset + 3];
+                                }
+                            }
+                        }
+                    });
+                }
+                finally
+                {
+                    sourceBitmap.UnlockBits(sourceData);
+                    result.UnlockBits(resultData);
+                    sourceBitmap.Dispose();
+                }
             }
 
             return result;
@@ -1868,7 +1925,51 @@ namespace PixelEditor
             byte fillR = 255; byte fillG = 255; byte fillB = 255;
 
             var selections = ImageSelections.GetSelections();
-            var polygons = selections.Where(s => s.Points.Count >= 3).ToList();
+            var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
+
+            if (selectionPolygons.Count == 0) return result;
+
+            var allPoints = selectionPolygons.SelectMany(p => p.Points).ToList();
+            int minX = allPoints.Min(p => p.X);
+            int minY = allPoints.Min(p => p.Y);
+            int maxX = allPoints.Max(p => p.X);
+            int maxY = allPoints.Max(p => p.Y);
+
+            int padding = 2;
+            int maskWidth = maxX - minX + 1 + (padding * 2);
+            int maskHeight = maxY - minY + 1 + (padding * 2);
+
+            bool[,] mask = new bool[width, height];
+
+            SelectionPolygon first = selectionPolygons.First();
+
+            if (!first.Inner)
+            {
+                minX = selectedLayer.X;
+                minY = selectedLayer.Y;
+                maxX = width + selectedLayer.X;
+                maxY = height + selectedLayer.Y;
+
+                padding = 0;
+                maskWidth = width;
+                maskHeight = height;
+
+                for (int x = 0; x < maskWidth; x++)
+                {
+                    for (int y = 0; y < maskHeight; y++)
+                    {
+                        mask[x, y] = true;
+                    }
+                }
+            }
+
+            foreach (var poly in selectionPolygons)
+            {
+                ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(
+                    p.X - minX + padding,
+                    p.Y - minY + padding))],
+                    poly.Inner);
+            }
 
             BitmapData data = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
             int stride = data.Stride;
@@ -1878,62 +1979,19 @@ namespace PixelEditor
             {
                 Parallel.For(0, height, y =>
                 {
-                    int canvasY = y + selectedLayer.Y;
-                    var cutIntervals = new List<(int Start, int End)>();
-
-                    foreach (var poly in polygons)
-                    {
-                        bool isHole = false;
-                        foreach (var other in polygons)
-                        {
-                            if (other == poly) continue;
-                            if (IsPolygonContained(poly, other))
-                            {
-                                isHole = !isHole;
-                            }
-                        }
-
-                        var intervals = GetScanlineIntervals(new List<SelectionPolygon> { poly }, canvasY, selectedLayer.X, width);
-
-                        if (!isHole)
-                        {
-                            cutIntervals.AddRange(intervals);
-                        }
-                    }
-
-                    cutIntervals = MergeIntervals(cutIntervals);
-
-                    var holeIntervals = new List<(int Start, int End)>();
-                    foreach (var poly in polygons)
-                    {
-                        bool isHole = false;
-                        foreach (var other in polygons)
-                        {
-                            if (other == poly) continue;
-                            if (IsPolygonContained(poly, other))
-                            {
-                                isHole = !isHole;
-                            }
-                        }
-
-                        if (isHole)
-                        {
-                            var intervals = GetScanlineIntervals(new List<SelectionPolygon> { poly }, canvasY, selectedLayer.X, width);
-                            holeIntervals.AddRange(intervals);
-                        }
-                    }
-
-                    holeIntervals = MergeIntervals(holeIntervals);
+                    int maskY = y + selectedLayer.Y - minY + padding;
 
                     unsafe
                     {
                         byte* row = (byte*)ptr + (y * stride);
+
                         for (int x = 0; x < width; x++)
                         {
-                            bool inCut = IsInIntervals(cutIntervals, x);
-                            bool inHole = IsInIntervals(holeIntervals, x);
+                            int maskX = x + selectedLayer.X - minX + padding;
 
-                            if (inCut && !inHole)
+                            if (maskX >= 0 && maskX < maskWidth &&
+                                maskY >= 0 && maskY < maskHeight &&
+                                mask[maskX, maskY])
                             {
                                 int offset = x * 4;
                                 row[offset] = fillB;
@@ -1951,101 +2009,6 @@ namespace PixelEditor
             }
 
             return result;
-        }
-
-        private List<(int Start, int End)> MergeIntervals(List<(int Start, int End)> intervals)
-        {
-            if (intervals.Count <= 1) return intervals;
-
-            var sorted = intervals.OrderBy(i => i.Start).ToList();
-            var merged = new List<(int Start, int End)> { sorted[0] };
-
-            for (int i = 1; i < sorted.Count; i++)
-            {
-                var last = merged[merged.Count - 1];
-                var current = sorted[i];
-
-                if (current.Start <= last.End + 1)
-                {
-                    merged[merged.Count - 1] = (last.Start, Math.Max(last.End, current.End));
-                }
-                else
-                {
-                    merged.Add(current);
-                }
-            }
-
-            return merged;
-        }
-
-        private bool IsPolygonContained(SelectionPolygon inner, SelectionPolygon outer)
-        {
-            var randomPoint = inner.Points[inner.Points.Count / 2];
-            return IsPointInPolygon(randomPoint, outer.Points);
-        }
-
-        private bool IsPointInPolygon(Point point, List<Point> polygon)
-        {
-            bool result = false;
-            int j = polygon.Count - 1;
-            for (int i = 0; i < polygon.Count; i++)
-            {
-                if ((polygon[i].Y < point.Y && polygon[j].Y >= point.Y) ||
-                    (polygon[j].Y < point.Y && polygon[i].Y >= point.Y))
-                {
-                    float xIntersection = polygon[i].X +
-                        ((float)(point.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y)) *
-                        (polygon[j].X - polygon[i].X);
-
-                    if (xIntersection < point.X)
-                    {
-                        result = !result;
-                    }
-                }
-                j = i;
-            }
-            return result;
-        }
-
-        private static List<(int Start, int End)> GetScanlineIntervals(List<SelectionPolygon> polygons, int y, int layerX, int maxW)
-        {
-            var intervals = new List<(int, int)>();
-            foreach (var poly in polygons)
-            {
-                var xIntersections = new List<int>();
-                for (int i = 0; i < poly.Points.Count; i++)
-                {
-                    Point p1 = poly.Points[i];
-                    Point p2 = poly.Points[(i + 1) % poly.Points.Count];
-
-                    if ((p1.Y <= y && p2.Y > y) || (p2.Y <= y && p1.Y > y))
-                    {
-                        if (p2.Y == p1.Y) continue;
-                        float x = p1.X + (float)(y - p1.Y) / (p2.Y - p1.Y) * (p2.X - p1.X);
-                        xIntersections.Add((int)x - layerX);
-                    }
-                }
-                xIntersections.Sort();
-                for (int i = 0; i < xIntersections.Count - 1; i += 2)
-                {
-                    int start = Math.Max(0, xIntersections[i]);
-                    int end = Math.Min(maxW - 1, xIntersections[i + 1]);
-                    if (start <= end)
-                    {
-                        intervals.Add((start, end));
-                    }
-                }
-            }
-            return intervals;
-        }
-
-        private static bool IsInIntervals(List<(int Start, int End)> intervals, int x)
-        {
-            foreach (var interval in intervals)
-            {
-                if (x >= interval.Start && x <= interval.End) return true;
-            }
-            return false;
         }
 
         private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
@@ -2260,7 +2223,11 @@ namespace PixelEditor
 
                     if (ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        ImageSelections.IncreaseSelectionPolygons();
+                        ImageSelections.IncreaseSelectionPolygons(Point.Empty);
+                    }
+                    else if (ModifierKeys.HasFlag(Keys.Alt))
+                    {
+                        ImageSelections.IncreaseSelectionPolygons(Point.Empty, true, false);
                     }
                     else
                     {
@@ -2275,7 +2242,11 @@ namespace PixelEditor
 
                     if (ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        ImageSelections.IncreaseSelectionPolygons();
+                        ImageSelections.IncreaseSelectionPolygons(Point.Empty);
+                    }
+                    else if (ModifierKeys.HasFlag(Keys.Alt))
+                    {
+                        ImageSelections.IncreaseSelectionPolygons(Point.Empty, true, false);
                     }
                     else
                     {
@@ -2286,6 +2257,11 @@ namespace PixelEditor
                 }
                 else if (btnMagicWand.Checked)
                 {
+                    bool adding = true;
+                    if (ModifierKeys.HasFlag(Keys.Alt))
+                    {
+                        adding = false;
+                    }
                     if (selectedLayer != null)
                     {
                         if (selectedLayer.Image != null)
@@ -2296,11 +2272,7 @@ namespace PixelEditor
 
                             bool[,] mask = LayersManipulator.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
 
-                            if (ModifierKeys.HasFlag(Keys.Shift))
-                            {
-                                ImageSelections.IncreaseSelectionPolygons();
-                            }
-                            else
+                            if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Alt))
                             {
                                 ImageSelections.ClearSelections();
                             }
@@ -2308,7 +2280,7 @@ namespace PixelEditor
                             List<SelectionPolygon> polygons = ImageSelections.GetSelectionPointsFromMask(mask, position);
                             foreach (var polygon in polygons)
                             {
-                                ImageSelections.IncreaseSelectionPolygons(polygon.Inwards);
+                                ImageSelections.IncreaseSelectionPolygons(polygon.SelectionPoint, polygon.Inner, adding);
                                 foreach (Point point in polygon.Points)
                                 {
                                     ImageSelections.AddSelectionPoint(new Point(point.X + selectedLayer.X, point.Y + selectedLayer.Y));
@@ -2565,8 +2537,8 @@ namespace PixelEditor
             PaintingEngine.EndStroke();
             ImageSelections.MergeIntersections();
             ImageSelections.CalculateSelectionBounds();
-            RedrawImage();
             layersControl.RefreshLayersDisplay();
+            RedrawImage();
         }
 
         private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)

@@ -9,15 +9,6 @@
         public const float ROTATION_HANDLE_SIZE = 15;
         public const float SCALE_HANDLE_SIZE = 10;
 
-        public static bool IsInnerSelection()
-        {
-            if (selectionPolygons.Count > 0)
-            {
-                return selectionPolygons[^1].Inwards;
-            }
-            return true;
-        }
-
         public static RectangleF GetSelectionBounds()
         {
             return selectionBounds;
@@ -57,9 +48,9 @@
             }
         }
 
-        public static void IncreaseSelectionPolygons(bool inner = true)
+        public static void IncreaseSelectionPolygons(Point point, bool inner = true, bool adding = true)
         {
-            selectionPolygons.Add(new SelectionPolygon(inner, []));
+            selectionPolygons.Add(new SelectionPolygon(point, inner, adding, []));
         }
 
         public static void ClearSelections()
@@ -97,44 +88,56 @@
 
         public static void MergeIntersections()
         {
-            if (IsInnerSelection())
+            if (selectionPolygons.Count < 2) return;
+
+            int minX = int.MaxValue, minY = int.MaxValue;
+            int maxX = int.MinValue, maxY = int.MinValue;
+
+            foreach (var poly in selectionPolygons)
             {
-                if (selectionPolygons.Count < 2) return;
-
-                int minX = int.MaxValue, minY = int.MaxValue;
-                int maxX = int.MinValue, maxY = int.MinValue;
-
-                foreach (var poly in selectionPolygons)
+                foreach (var p in poly.Points)
                 {
-                    foreach (var p in poly.Points)
+                    if (p.X < minX) minX = p.X;
+                    if (p.Y < minY) minY = p.Y;
+                    if (p.X > maxX) maxX = p.X;
+                    if (p.Y > maxY) maxY = p.Y;
+                }
+            }
+
+            int padding = 0;
+            int width = (maxX - minX) + (padding * 2);
+            int height = (maxY - minY) + (padding * 2);
+
+            bool[,] mask = new bool[width, height];
+
+            SelectionPolygon first = selectionPolygons.First();
+
+            if (!first.Inner)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
                     {
-                        if (p.X < minX) minX = p.X;
-                        if (p.Y < minY) minY = p.Y;
-                        if (p.X > maxX) maxX = p.X;
-                        if (p.Y > maxY) maxY = p.Y;
+                        mask[x, y] = true;
                     }
                 }
+            }
 
-                int padding = 0;
-                int width = (maxX - minX) + (padding * 2);
-                int height = (maxY - minY) + (padding * 2);
+            foreach (var poly in selectionPolygons)
+            {
+                FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))], poly.Inner && poly.Adding);
+            }
 
-                bool[,] mask = new bool[width, height];
+            Point point = (selectionPolygons.Count > 0) ? selectionPolygons[^1].SelectionPoint : Point.Empty;
 
-                foreach (var poly in selectionPolygons)
+            List <SelectionPolygon> mergedOutlines = GetSelectionPointsFromMask(mask, point);
+
+            if (mergedOutlines.Count < selectionPolygons.Count)
+            {
+                selectionPolygons.Clear();
+                foreach (var outline in mergedOutlines)
                 {
-                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))]);
-                }
-
-                List<SelectionPolygon> mergedOutlines = GetSelectionPointsFromMask(mask, Point.Empty);
-
-                if (mergedOutlines.Count < selectionPolygons.Count)
-                {
-                    selectionPolygons.Clear();
-                    foreach (var outline in mergedOutlines)
-                    {
-                        selectionPolygons.Add(new SelectionPolygon(outline.Inwards, [.. outline.Points.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]));
-                    }
+                    selectionPolygons.Add(new SelectionPolygon(outline.SelectionPoint, outline.Inner, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]));
                 }
             }
         }
@@ -209,7 +212,7 @@
             return scaledWidth / worldWidth;
         }
 
-        private static void FillPolygonInMask(bool[,] mask, List<Point> points)
+        public static void FillPolygonInMask(bool[,] mask, List<Point> points, bool fill)
         {
             int width = mask.GetLength(0);
             int height = mask.GetLength(1);
@@ -241,7 +244,10 @@
                     int endX = Math.Min(width - 1, xIntersections[i + 1]);
                     for (int x = startX; x <= endX; x++)
                     {
-                        mask[x, y] = true;
+                        if (x >= 0 && x < width && y >= 0 && y < height)
+                        {
+                            mask[x, y] = fill;
+                        }
                     }
                 }
             }
@@ -254,21 +260,23 @@
             if (mask == null)
                 return regions;
 
+            bool inner = true;
+            bool flip = position == Point.Empty;
+
             int width = mask.GetLength(0);
             int height = mask.GetLength(1);
-
-            bool targetValue = false;
-            bool backgroundValue = mask[0, 0];
 
             if (position != Point.Empty &&
                 position.X >= 0 && position.X < width &&
                 position.Y >= 0 && position.Y < height)
             {
-                targetValue = mask[position.X, position.Y];
+                inner = mask[position.X, position.Y] != mask[0, 0];
+                flip = position == Point.Empty || mask[position.X, position.Y];
+                if (mask[0, 0] && mask[position.X, position.Y])
+                {
+                    flip = false; //outer
+                }
             }
-
-            bool inner = targetValue;
-            bool isInwards = (targetValue != backgroundValue);
 
             int[] dx = [1, 0, -1, 0];
             int[] dy = [0, 1, 0, -1];
@@ -343,7 +351,15 @@
 
                         if (outline.Points.Count > 2)
                         {
-                            outline.Inwards = isInwards;
+                            if (regions.Count > 0)
+                            {
+                                if (IsContainedWithinFast(outline, regions[^1]))
+                                {
+                                    flip = !flip;
+                                }
+                            }
+                            outline.SelectionPoint = position;
+                            outline.Inner = flip;
                             regions.Add(outline);
                         }
                     }
@@ -351,6 +367,140 @@
             }
 
             return regions;
+        }
+
+        public static bool IsContainedWithinFast(SelectionPolygon inner, SelectionPolygon outer)
+        {
+            var thisBounds = GetBounds(inner);
+            var otherBounds = GetBounds(outer);
+
+            if (!IsContainedWithin(thisBounds, otherBounds))
+                return false;
+
+            if (inner.Points.Count < 20)
+            {
+                foreach (var point in inner.Points)
+                {
+                    if (!ContainsPoint(outer, point))
+                        return false;
+                }
+                return true;
+            }
+
+            return IsContainedByEdgeTest(inner, outer);
+        }
+
+        private static bool IsContainedByEdgeTest(SelectionPolygon inner, SelectionPolygon outer)
+        {
+            Point interiorPoint = GetInteriorPoint(inner);
+
+            if (!ContainsPoint(outer, interiorPoint))
+                return false;
+
+            for (int i = 0; i < inner.Points.Count; i++)
+            {
+                var p1 = inner.Points[i];
+                var p2 = inner.Points[(i + 1) % inner.Points.Count];
+
+                Point outsidePoint = GetPointOutsideEdge(p1, p2);
+
+                if (ContainsPoint(outer, outsidePoint))
+                {
+                    if (!IsEdgeInside(outer, p1, p2))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static Rectangle GetBounds(SelectionPolygon polygon)
+        {
+            if (polygon.Points.Count == 0)
+                return Rectangle.Empty;
+
+            int minX = polygon.Points.Min(p => p.X);
+            int minY = polygon.Points.Min(p => p.Y);
+            int maxX = polygon.Points.Max(p => p.X);
+            int maxY = polygon.Points.Max(p => p.Y);
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        public static bool ContainsPoint(SelectionPolygon polygon, Point point)
+        {
+            if (polygon.Points.Count < 3)
+                return false;
+
+            bool inside = false;
+            for (int i = 0, j = polygon.Points.Count - 1; i < polygon.Points.Count; j = i++)
+            {
+                if (((polygon.Points[i].Y > point.Y) != (polygon.Points[j].Y > point.Y)) &&
+                    (point.X < (polygon.Points[j].X - polygon.Points[i].X) * (point.Y - polygon.Points[i].Y) / (polygon.Points[j].Y - polygon.Points[i].Y) + polygon.Points[i].X))
+                {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        private static Point GetInteriorPoint(SelectionPolygon polygon)
+        {
+            if (polygon.Points.Count == 0)
+                return Point.Empty;
+
+            int sumX = 0, sumY = 0;
+            foreach (var point in polygon.Points)
+            {
+                sumX += point.X;
+                sumY += point.Y;
+            }
+
+            return new Point(sumX / polygon.Points.Count, sumY / polygon.Points.Count);
+        }
+
+        private static Point GetPointOutsideEdge(Point p1, Point p2)
+        {
+            int dx = p2.X - p1.X;
+            int dy = p2.Y - p1.Y;
+
+            int perpX = -dy;
+            int perpY = dx;
+
+            double length = Math.Sqrt(perpX * perpX + perpY * perpY);
+            if (length > 0)
+            {
+                perpX = (int)(perpX / length * 2);
+                perpY = (int)(perpY / length * 2);
+            }
+
+            int midX = (p1.X + p2.X) / 2;
+            int midY = (p1.Y + p2.Y) / 2;
+
+            return new Point(midX + perpX, midY + perpY);
+        }
+
+        private static bool IsEdgeInside(SelectionPolygon outer, Point p1, Point p2)
+        {
+            int steps = 5;
+            for (int i = 1; i < steps; i++)
+            {
+                double t = (double)i / steps;
+                int x = (int)(p1.X + t * (p2.X - p1.X));
+                int y = (int)(p1.Y + t * (p2.Y - p1.Y));
+
+                if (!ContainsPoint(outer, new Point(x, y)))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool IsContainedWithin(Rectangle inner, Rectangle outer)
+        {
+            return inner.Left >= outer.Left &&
+                   inner.Right <= outer.Right &&
+                   inner.Top >= outer.Top &&
+                   inner.Bottom <= outer.Bottom;
         }
     }
 }
