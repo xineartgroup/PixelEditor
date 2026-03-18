@@ -937,7 +937,7 @@ namespace PixelEditor
             return bitmap;
         }
 
-        public static Bitmap FillColor(Image image, int imgX, int imgY, int canvasWidth, int canvasHeight, float layerScaleWidth, float layerScaleHeight, ImageBlending blend, Color color, float opacity, Point startPoint, List<Point> selectionPoints)
+        public static Bitmap FillColor(Image image, int imgX, int imgY, int canvasWidth, int canvasHeight, float layerScaleWidth, float layerScaleHeight, ImageBlending blend, Color color, float opacity, Point startPoint, SelectionPolygon selectionPoints)
         {
             Bitmap bitmap = new(image);
             int width = bitmap.Width;
@@ -984,7 +984,7 @@ namespace PixelEditor
                 return bitmap;
             }
 
-            bool usePointSelection = selectionPoints.Count > 2;
+            bool usePointSelection = selectionPoints.Points.Count > 2;
             byte[] mask = [];
 
             if (usePointSelection)
@@ -994,7 +994,7 @@ namespace PixelEditor
                 using (Graphics g = Graphics.FromImage(maskBmp))
                 {
                     g.Clear(Color.Transparent);
-                    PointF[] pts = [.. selectionPoints.Select(WorldToImage)];
+                    PointF[] pts = [.. selectionPoints.Points.Select(WorldToImage)];
                     using Brush b = new SolidBrush(Color.White);
                     g.FillPolygon(b, pts);
                 }

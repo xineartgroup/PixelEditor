@@ -1,20 +1,21 @@
-﻿using System.Windows.Forms.VisualStyles;
-
-namespace PixelEditor
+﻿namespace PixelEditor
 {
     public static class ImageSelections
     {
-        private static readonly List<List<Point>> selectionPolygons = [];
-        private static bool isInnerSelection = true;
+        private static readonly List<SelectionPolygon> selectionPolygons = [];
         private static RectangleF selectionBounds;
         private static PointF selectionCenter;
 
-        public const float ROTATION_HANDLE_SIZE = 20;
-        public const float SCALE_HANDLE_SIZE = 15;
+        public const float ROTATION_HANDLE_SIZE = 15;
+        public const float SCALE_HANDLE_SIZE = 10;
 
         public static bool IsInnerSelection()
         {
-            return isInnerSelection;
+            if (selectionPolygons.Count > 0)
+            {
+                return selectionPolygons[^1].Inwards;
+            }
+            return true;
         }
 
         public static RectangleF GetSelectionBounds()
@@ -31,7 +32,7 @@ namespace PixelEditor
         {
             for (int i = 0; i < selectionPolygons.Count; i++)
             {
-                if (selectionPolygons[i].Count > 0)
+                if (selectionPolygons[i].Points.Count > 0)
                 {
                     return true;
                 }
@@ -43,22 +44,22 @@ namespace PixelEditor
         {
             if (selectionPolygons.Count == 0)
             {
-                selectionPolygons.Add([]);
+                selectionPolygons.Add(new SelectionPolygon());
             }
-            selectionPolygons[^1].Add(worldPoint);
+            selectionPolygons[^1].Points.Add(worldPoint);
         }
 
         public static void UpdateSelectionPoint(int index, Point worldPoint)
         {
             if (selectionPolygons.Count > 0)
             {
-                selectionPolygons[^1][index] = worldPoint;
+                selectionPolygons[^1].Points[index] = worldPoint;
             }
         }
 
-        public static void IncreaseSelectionPoints()
+        public static void IncreaseSelectionPolygons(bool inner = true)
         {
-            selectionPolygons.Add([]);
+            selectionPolygons.Add(new SelectionPolygon(inner, []));
         }
 
         public static void ClearSelections()
@@ -66,7 +67,7 @@ namespace PixelEditor
             selectionPolygons.Clear();
         }
 
-        public static List<List<Point>> GetSelections()
+        public static List<SelectionPolygon> GetSelections()
         {
             return selectionPolygons;
         }
@@ -75,7 +76,7 @@ namespace PixelEditor
         {
             if (selectionPolygons.Count > 0)
             {
-                return selectionPolygons[^1];
+                return selectionPolygons[^1].Points;
             }
             return [];
         }
@@ -84,11 +85,11 @@ namespace PixelEditor
         {
             for (int i = 0; i < selectionPolygons.Count; i++)
             {
-                for (int j = 0; j < selectionPolygons[i].Count; j++)
+                for (int j = 0; j < selectionPolygons[i].Points.Count; j++)
                 {
-                    selectionPolygons[i][j] = new Point(
-                        (int)(selectionPolygons[i][j].X + worldDx),
-                        (int)(selectionPolygons[i][j].Y + worldDy));
+                    selectionPolygons[i].Points[j] = new Point(
+                        (int)(selectionPolygons[i].Points[j].X + worldDx),
+                        (int)(selectionPolygons[i].Points[j].Y + worldDy));
                 }
             }
             CalculateSelectionBounds();
@@ -96,7 +97,7 @@ namespace PixelEditor
 
         public static void MergeIntersections()
         {
-            if (isInnerSelection)
+            if (IsInnerSelection())
             {
                 if (selectionPolygons.Count < 2) return;
 
@@ -105,7 +106,7 @@ namespace PixelEditor
 
                 foreach (var poly in selectionPolygons)
                 {
-                    foreach (var p in poly)
+                    foreach (var p in poly.Points)
                     {
                         if (p.X < minX) minX = p.X;
                         if (p.Y < minY) minY = p.Y;
@@ -122,16 +123,18 @@ namespace PixelEditor
 
                 foreach (var poly in selectionPolygons)
                 {
-                    List<Point> offsetPoly = [.. poly.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))];
-                    FillPolygonInMask(mask, offsetPoly);
+                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))]);
                 }
 
-                List<List<Point>> mergedOutlines = GetSelectionPointsFromMask(mask, Point.Empty);
+                List<SelectionPolygon> mergedOutlines = GetSelectionPointsFromMask(mask, Point.Empty);
 
-                selectionPolygons.Clear();
-                foreach (var outline in mergedOutlines)
+                if (mergedOutlines.Count < selectionPolygons.Count)
                 {
-                    selectionPolygons.Add([.. outline.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]);
+                    selectionPolygons.Clear();
+                    foreach (var outline in mergedOutlines)
+                    {
+                        selectionPolygons.Add(new SelectionPolygon(outline.Inwards, [.. outline.Points.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]));
+                    }
                 }
             }
         }
@@ -146,7 +149,7 @@ namespace PixelEditor
             var selectionPoints = GetSelections();
             for (int i = 0; i < selectionPoints.Count; i++)
             {
-                foreach (var point in selectionPoints[i])
+                foreach (var point in selectionPoints[i].Points)
                 {
                     minX = Math.Min(minX, point.X);
                     minY = Math.Min(minY, point.Y);
@@ -181,14 +184,14 @@ namespace PixelEditor
             return -1;
         }
 
-        public static bool IsPointInPolygon(Point point, List<Point> points)
+        public static bool IsPointInPolygon(Point point, SelectionPolygon polygon)
         {
-            int n = points.Count;
+            int n = polygon.Points.Count;
             bool inside = false;
             for (int i = 0, j = n - 1; i < n; j = i++)
             {
-                if ((points[i].Y > point.Y) != (points[j].Y > point.Y) &&
-                    (point.X < (points[j].X - points[i].X) * (point.Y - points[i].Y) / (points[j].Y - points[i].Y) + points[i].X))
+                if ((polygon.Points[i].Y > point.Y) != (polygon.Points[j].Y > point.Y) &&
+                    (point.X < (polygon.Points[j].X - polygon.Points[i].X) * (point.Y - polygon.Points[i].Y) / (polygon.Points[j].Y - polygon.Points[i].Y) + polygon.Points[i].X))
                 {
                     inside = !inside;
                 }
@@ -244,9 +247,9 @@ namespace PixelEditor
             }
         }
 
-        public static List<List<Point>> GetSelectionPointsFromMask(bool[,] mask, Point position)
+        public static List<SelectionPolygon> GetSelectionPointsFromMask(bool[,] mask, Point position)
         {
-            List<List<Point>> regions = [];
+            List<SelectionPolygon> regions = [];
 
             if (mask == null)
                 return regions;
@@ -254,12 +257,18 @@ namespace PixelEditor
             int width = mask.GetLength(0);
             int height = mask.GetLength(1);
 
+            bool targetValue = false;
+            bool backgroundValue = mask[0, 0];
+
             if (position != Point.Empty &&
                 position.X >= 0 && position.X < width &&
                 position.Y >= 0 && position.Y < height)
             {
-                isInnerSelection = mask[position.X, position.Y] != mask[0, 0];
+                targetValue = mask[position.X, position.Y];
             }
+
+            bool inner = targetValue;
+            bool isInwards = (targetValue != backgroundValue);
 
             int[] dx = [1, 0, -1, 0];
             int[] dy = [0, 1, 0, -1];
@@ -270,11 +279,11 @@ namespace PixelEditor
             {
                 for (int x = 0; x < width; x++)
                 {
-                    if (mask[x, y] == isInnerSelection && !visited[x, y])
+                    if (mask[x, y] == inner && !visited[x, y])
                     {
                         Point? start = null;
 
-                        if (y == 0 || mask[x, y - 1] != isInnerSelection)
+                        if (y == 0 || mask[x, y - 1] != inner)
                         {
                             start = new Point(x, y);
                         }
@@ -282,12 +291,12 @@ namespace PixelEditor
                         if (!start.HasValue)
                             continue;
 
-                        List<Point> outline = [];
+                        SelectionPolygon outline = new();
                         int currentX = start.Value.X;
                         int currentY = start.Value.Y;
                         int dir = 0;
 
-                        outline.Add(new Point(currentX, currentY));
+                        outline.Points.Add(new Point(currentX, currentY));
                         visited[currentX, currentY] = true;
 
                         do
@@ -298,14 +307,14 @@ namespace PixelEditor
 
                             bool pixelLeft = checkX >= 0 && checkX < width &&
                                             checkY >= 0 && checkY < height &&
-                                            mask[checkX, checkY] == isInnerSelection;
+                                            mask[checkX, checkY] == inner;
 
                             if (pixelLeft)
                             {
                                 dir = leftDir;
                                 currentX += dx[dir];
                                 currentY += dy[dir];
-                                outline.Add(new Point(currentX, currentY));
+                                outline.Points.Add(new Point(currentX, currentY));
                                 visited[currentX, currentY] = true;
                             }
                             else
@@ -315,13 +324,13 @@ namespace PixelEditor
 
                                 bool pixelForward = forwardX >= 0 && forwardX < width &&
                                                    forwardY >= 0 && forwardY < height &&
-                                                   mask[forwardX, forwardY] == isInnerSelection;
+                                                   mask[forwardX, forwardY] == inner;
 
                                 if (pixelForward)
                                 {
                                     currentX = forwardX;
                                     currentY = forwardY;
-                                    outline.Add(new Point(currentX, currentY));
+                                    outline.Points.Add(new Point(currentX, currentY));
                                     visited[currentX, currentY] = true;
                                 }
                                 else
@@ -332,7 +341,11 @@ namespace PixelEditor
 
                         } while (!(currentX == start.Value.X && currentY == start.Value.Y && dir == 0));
 
-                        regions.Add(outline);
+                        if (outline.Points.Count > 2)
+                        {
+                            outline.Inwards = isInwards;
+                            regions.Add(outline);
+                        }
                     }
                 }
             }
