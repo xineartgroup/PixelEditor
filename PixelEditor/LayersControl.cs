@@ -47,25 +47,40 @@
                 Tag = "preview"
             };
 
+            PictureBox maskBox = new()
+            {
+                Image = layer.ImageMask,
+                Size = picSize,
+                Location = new Point(pictureBox.Right + 5, 10),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Black,
+                BorderStyle = BorderStyle.FixedSingle,
+                Tag = "mask",
+                Visible = layer.ImageMask != null
+            };
+
             Label lblName = new()
             {
                 Text = layer.Name,
                 AutoSize = true,
-                Location = new Point(pictureBox.Left + pictureBox.Width + 5, 15),
+                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 15),
                 Tag = "name"
             };
 
             chkVisible.Click += ChkVisible_Click;
             panelLayer.Click += GroupLayer_Click;
             pictureBox.Click += GroupLayer_Click;
+            maskBox.Click += GroupLayer_Click;
             lblName.Click += GroupLayer_Click;
 
             panelLayer.DoubleClick += BtnEditCaption_Click;
             pictureBox.DoubleClick += BtnEditCaption_Click;
+            maskBox.DoubleClick += BtnEditCaption_Click;
             lblName.DoubleClick += BtnEditCaption_Click;
 
             panelLayer.Controls.Add(chkVisible);
             panelLayer.Controls.Add(pictureBox);
+            panelLayer.Controls.Add(maskBox);
             panelLayer.Controls.Add(lblName);
 
             return panelLayer;
@@ -383,8 +398,6 @@
         {
             flowLayers.SuspendLayout();
 
-            // Calculate the new target size for the preview thumbnails once
-            // to avoid repeating the math inside the loop.
             Size newPicSize = new((int)(Document.Width * (float)IMAGE_SIZE / Document.Height), IMAGE_SIZE);
 
             for (int i = 0; i < imageLayers.Count; i++)
@@ -395,7 +408,6 @@
                 {
                     if (flowLayers.Controls[i] is Panel existingPanel)
                     {
-                        // Pass the new size to the update method
                         UpdatePanelContent(existingPanel, layer, newPicSize);
                     }
                 }
@@ -419,32 +431,41 @@
             p.Tag = layer;
             p.Name = layer.Name;
 
-            PictureBox? pictureBox = null;
-            Label? nameLabel = null;
+            PictureBox? mainPic = null;
+            PictureBox? maskPic = null;
+            Label? lblName = null;
 
             foreach (Control child in p.Controls)
             {
-                if (child is CheckBox chk && child.Tag?.ToString() == "visibility")
+                switch (child.Tag?.ToString())
                 {
-                    chk.Checked = layer.IsVisible;
-                }
-                else if (child is PictureBox pic && child.Tag?.ToString() == "preview")
-                {
-                    pic.Image = layer.Image;
-                    pic.Size = picSize; // Update the width/height based on document aspect ratio
-                    pictureBox = pic;
-                }
-                else if (child is Label lbl && child.Tag?.ToString() == "name")
-                {
-                    lbl.Text = layer.Name;
-                    nameLabel = lbl;
+                    case "visibility":
+                        ((CheckBox)child).Checked = layer.IsVisible;
+                        break;
+                    case "preview":
+                        mainPic = (PictureBox)child;
+                        mainPic.Image = layer.GetBasicImage();
+                        mainPic.Size = picSize;
+                        break;
+                    case "mask":
+                        maskPic = (PictureBox)child;
+                        maskPic.Image = layer.ImageMask;
+                        maskPic.Size = picSize;
+                        maskPic.Visible = layer.ImageMask != null;
+                        maskPic.Location = new Point(mainPic!.Right + 5, 10);
+                        break;
+                    case "name":
+                        lblName = (Label)child;
+                        lblName.Text = layer.Name;
+                        break;
                 }
             }
 
-            // Adjust the label position in case the PictureBox width changed
-            if (pictureBox != null && nameLabel != null)
+            // Recalculate label position based on whether mask is visible
+            if (lblName != null && mainPic != null && maskPic != null)
             {
-                nameLabel.Location = new Point(pictureBox.Left + pictureBox.Width + 5, 15);
+                int labelX = (maskPic.Visible ? maskPic.Right : mainPic.Right) + 5;
+                lblName.Location = new Point(labelX, 15);
             }
         }
     }

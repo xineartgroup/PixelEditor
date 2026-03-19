@@ -56,6 +56,20 @@ namespace PixelEditor
                         {
                             writer.Write(false);
                         }
+
+                        if (layer.ImageMask != null)
+                        {
+                            writer.Write(true);
+                            using var msImage = new MemoryStream();
+                            layer.ImageMask.Save(msImage, System.Drawing.Imaging.ImageFormat.Png);
+                            byte[] imageBytes = msImage.ToArray();
+                            writer.Write(imageBytes.Length);
+                            writer.Write(imageBytes);
+                        }
+                        else
+                        {
+                            writer.Write(false);
+                        }
                     }
                 }
 

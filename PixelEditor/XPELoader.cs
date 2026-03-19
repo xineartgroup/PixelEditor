@@ -36,7 +36,7 @@ namespace PixelEditor
                 selectedLayerIndex = reader.ReadInt32();
 
                 int layerCount = reader.ReadInt32();
-                layers = new List<Layer>(layerCount);
+                layers = [];
                 for (int i = 0; i < layerCount; i++)
                 {
                     string name = reader.ReadString();
@@ -73,6 +73,15 @@ namespace PixelEditor
                         byte[] imageBytes = reader.ReadBytes(imageLength);
                         using var msImage = new MemoryStream(imageBytes);
                         layer.Image = Image.FromStream(msImage);
+                    }
+
+                    hasImage = reader.ReadBoolean();
+                    if (hasImage)
+                    {
+                        int imageLength = reader.ReadInt32();
+                        byte[] imageBytes = reader.ReadBytes(imageLength);
+                        using var msImage = new MemoryStream(imageBytes);
+                        layer.ImageMask = Image.FromStream(msImage);
                     }
 
                     layers.Add(layer);

@@ -48,8 +48,8 @@
             {
                 using (Graphics g = Graphics.FromImage(image))
                 {
-                    float ratioX = (float)image.Width / Layer.Image.Width;
-                    float ratioY = (float)image.Height / Layer.Image.Height;
+                    float ratioX = (float)image.Width / basicImage.Width;
+                    float ratioY = (float)image.Height / basicImage.Height;
                     float ratio = Math.Min(ratioX, ratioY);
 
                     int newWidth = (int)(basicImage.Width * ratio);
@@ -63,7 +63,7 @@
                     g.DrawImage(basicImage, posX, posY, newWidth, newHeight);
                 }
 
-                Layer.Image.Dispose();
+                basicImage.Dispose();
             }
             Layer.Image = image;
 
