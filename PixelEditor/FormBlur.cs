@@ -33,7 +33,8 @@
         {
             if (Image != null)
             {
-                lblRadius.Text = $"{trackBar1.Value}";
+                lblSizeX.Text = $"{trackBar1.Value}";
+                lblSizeY.Text = $"{trackBar2.Value}";
                 pictureSample.Image = new Bitmap(Image);
                 pictureSample.Image = ManipulatorLighting.GaussianBlur((Bitmap)pictureSample.Image, trackBar1.Value, trackBar2.Value);
             }

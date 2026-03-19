@@ -53,11 +53,15 @@
             btnCenterY = new Button();
             btnAutoWidth = new Button();
             btnAutoHeight = new Button();
+            pictureMask = new PictureBox();
+            label10 = new Label();
+            cboLayers = new ComboBox();
             ((System.ComponentModel.ISupportInitialize)width).BeginInit();
             ((System.ComponentModel.ISupportInitialize)height).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetX).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetY).BeginInit();
             ((System.ComponentModel.ISupportInitialize)opacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureMask).BeginInit();
             SuspendLayout();
             // 
             // textBoxName
@@ -70,7 +74,7 @@
             // btnOK
             // 
             btnOK.DialogResult = DialogResult.OK;
-            btnOK.Location = new Point(66, 326);
+            btnOK.Location = new Point(120, 326);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(75, 23);
             btnOK.TabIndex = 13;
@@ -81,7 +85,7 @@
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(147, 326);
+            btnCancel.Location = new Point(201, 326);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 23);
             btnCancel.TabIndex = 14;
@@ -298,13 +302,45 @@
             btnAutoHeight.UseVisualStyleBackColor = true;
             btnAutoHeight.Click += BtnAutoHeight_Click;
             // 
+            // pictureMask
+            // 
+            pictureMask.BackColor = Color.White;
+            pictureMask.BorderStyle = BorderStyle.Fixed3D;
+            pictureMask.Location = new Point(272, 60);
+            pictureMask.Name = "pictureMask";
+            pictureMask.Size = new Size(150, 150);
+            pictureMask.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureMask.TabIndex = 42;
+            pictureMask.TabStop = false;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(271, 15);
+            label10.Name = "label10";
+            label10.Size = new Size(35, 15);
+            label10.TabIndex = 41;
+            label10.Text = "Mask";
+            // 
+            // cboLayers
+            // 
+            cboLayers.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboLayers.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cboLayers.FormattingEnabled = true;
+            cboLayers.Location = new Point(272, 33);
+            cboLayers.Name = "cboLayers";
+            cboLayers.Size = new Size(150, 21);
+            cboLayers.TabIndex = 2;
+            cboLayers.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
+            // 
             // FormLayer
             // 
             AcceptButton = btnOK;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(284, 361);
+            ClientSize = new Size(434, 361);
+            Controls.Add(pictureMask);
             Controls.Add(btnAutoHeight);
             Controls.Add(btnCenterY);
             Controls.Add(btnAutoWidth);
@@ -315,9 +351,11 @@
             Controls.Add(width);
             Controls.Add(btnBackgroundColor);
             Controls.Add(opacity);
+            Controls.Add(cboLayers);
             Controls.Add(cboFillWith);
             Controls.Add(cboBlendMode);
             Controls.Add(label2);
+            Controls.Add(label10);
             Controls.Add(label9);
             Controls.Add(lblOpacity);
             Controls.Add(label8);
@@ -340,6 +378,7 @@
             ((System.ComponentModel.ISupportInitialize)offsetX).EndInit();
             ((System.ComponentModel.ISupportInitialize)offsetY).EndInit();
             ((System.ComponentModel.ISupportInitialize)opacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureMask).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -371,5 +410,8 @@
         private Button btnCenterY;
         private Button btnAutoWidth;
         private Button btnAutoHeight;
+        private PictureBox pictureMask;
+        private Label label10;
+        private ComboBox cboLayers;
     }
 }

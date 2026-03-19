@@ -3,6 +3,7 @@
     public partial class FormLayer : Form
     {
         public Layer Layer = new("Layer 1", true);
+        public List<Layer> Layers = [];
 
         public FormLayer()
         {
@@ -21,6 +22,14 @@
             height.Value = Layer.Image?.Height ?? ManipulatorGeneral.Height;
             offsetX.Value = Layer.X;
             offsetY.Value = Layer.Y;
+            cboLayers.Items.Add("None");
+            foreach (Layer layer in Layers)
+            {
+                if (layer.Name != Layer.Name)
+                {
+                    cboLayers.Items.Add(layer.Name);
+                }
+            }
         }
 
         private void BtnOK_Click(object sender, EventArgs e)
@@ -56,6 +65,15 @@
                 Layer.Image.Dispose();
             }
             Layer.Image = image;
+
+            if (pictureMask.Image != null)
+            {
+                Layer.ImageMask = new Bitmap(pictureMask.Image);
+            }
+            else
+            {
+                Layer.ImageMask = null;
+            }
 
             DialogResult = DialogResult.OK;
         }
@@ -96,6 +114,22 @@
         private void BtnAutoHeight_Click(object sender, EventArgs e)
         {
             height.Value = ManipulatorGeneral.Height;
+        }
+
+        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cboLayers.SelectedIndex == 0)
+            {
+                pictureMask.Image = null;
+            }
+            else if (cboLayers.SelectedIndex - 1 >= 0 && cboLayers.SelectedIndex - 1 < Layers.Count)
+            {
+                pictureMask.Image = Layers[cboLayers.SelectedIndex - 1].Image;
+            }
+            else
+            {
+                pictureMask.Image = null;
+            }
         }
     }
 }

@@ -30,8 +30,8 @@
         {
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
-            label3 = new Label();
-            lblRadius = new Label();
+            lblSizeY = new Label();
+            lblSizeX = new Label();
             label2 = new Label();
             label1 = new Label();
             trackBar2 = new TrackBar();
@@ -60,8 +60,8 @@
             // tabPage1
             // 
             tabPage1.BackColor = Color.White;
-            tabPage1.Controls.Add(label3);
-            tabPage1.Controls.Add(lblRadius);
+            tabPage1.Controls.Add(lblSizeY);
+            tabPage1.Controls.Add(lblSizeX);
             tabPage1.Controls.Add(label2);
             tabPage1.Controls.Add(label1);
             tabPage1.Controls.Add(trackBar2);
@@ -73,23 +73,23 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Gaussian";
             // 
-            // label3
+            // lblSizeY
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(415, 83);
-            label3.Name = "label3";
-            label3.Size = new Size(15, 15);
-            label3.TabIndex = 1;
-            label3.Text = "[]";
+            lblSizeY.AutoSize = true;
+            lblSizeY.Location = new Point(415, 83);
+            lblSizeY.Name = "lblSizeY";
+            lblSizeY.Size = new Size(15, 15);
+            lblSizeY.TabIndex = 1;
+            lblSizeY.Text = "[]";
             // 
-            // lblRadius
+            // lblSizeX
             // 
-            lblRadius.AutoSize = true;
-            lblRadius.Location = new Point(415, 32);
-            lblRadius.Name = "lblRadius";
-            lblRadius.Size = new Size(15, 15);
-            lblRadius.TabIndex = 1;
-            lblRadius.Text = "[]";
+            lblSizeX.AutoSize = true;
+            lblSizeX.Location = new Point(415, 32);
+            lblSizeX.Name = "lblSizeX";
+            lblSizeX.Size = new Size(15, 15);
+            lblSizeX.TabIndex = 1;
+            lblSizeX.Text = "[]";
             // 
             // label2
             // 
@@ -140,7 +140,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(452, 159);
+            tabPage2.Size = new Size(452, 294);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Other";
             tabPage2.UseVisualStyleBackColor = true;
@@ -205,13 +205,13 @@
         private TabControl tabControl1;
         private TabPage tabPage1;
         private TabPage tabPage2;
-        private Label lblRadius;
+        private Label lblSizeX;
         private Label label1;
         private TrackBar trackBar1;
         private Button btnOK;
         private Button btnCancel;
         private PictureBox pictureSample;
-        private Label label3;
+        private Label lblSizeY;
         private Label label2;
         private TrackBar trackBar2;
     }

@@ -23,6 +23,8 @@
 
         public Image? Image { get { return GetImageComposite(); } set => SetProperty(ref _image, value); }
 
+        public Image? ImageMask { get => _imageMask; set => SetProperty(ref _imageMask, value); }
+
         public string Name { get => _name; set => SetProperty(ref _name, value); }
 
         public int X { get => _x; set => SetProperty(ref _x, value); }

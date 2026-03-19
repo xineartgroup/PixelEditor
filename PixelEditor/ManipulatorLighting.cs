@@ -450,40 +450,47 @@ namespace PixelEditor
             if (image.Width != mask.Width || image.Height != mask.Height)
                 return image;
 
-            Bitmap result = new(image);
-            Rectangle rect = new(0, 0, result.Width, result.Height);
-            BitmapData resultData = result.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            Bitmap result = new(image.Width, image.Height, PixelFormat.Format32bppArgb);
 
-            BitmapData maskData = mask.LockBits(new Rectangle(0, 0, mask.Width, mask.Height),
-                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            Rectangle rect = new(0, 0, image.Width, image.Height);
+            BitmapData imageData = image.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            BitmapData maskData = mask.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            BitmapData resultData = result.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
 
-            int height = result.Height;
-            int resultStride = resultData.Stride;
+            int height = image.Height;
+            int width = image.Width;
+            int imageStride = imageData.Stride;
             int maskStride = maskData.Stride;
+            int resultStride = resultData.Stride;
 
-            byte* resultPtr = (byte*)resultData.Scan0;
+            byte* imagePtr = (byte*)imageData.Scan0;
             byte* maskPtr = (byte*)maskData.Scan0;
+            byte* resultPtr = (byte*)resultData.Scan0;
 
             Parallel.For(0, height, y =>
             {
-                byte* resultRow = resultPtr + y * resultStride;
+                byte* imageRow = imagePtr + y * imageStride;
                 byte* maskRow = maskPtr + y * maskStride;
+                byte* resultRow = resultPtr + y * resultStride;
 
-                for (int x = 0; x < result.Width; x++)
+                for (int x = 0; x < width; x++)
                 {
-                    byte* resultPixel = resultRow + x * 4;
+                    byte* imagePixel = imageRow + x * 4;
                     byte* maskPixel = maskRow + x * 4;
+                    byte* resultPixel = resultRow + x * 4;
 
-                    float maskAlpha = maskPixel[0] / 255f;
+                    byte maskValue = (byte)((maskPixel[0] + maskPixel[1] + maskPixel[2]) / 3);
 
-                    resultPixel[0] = (byte)(resultPixel[0] * maskAlpha);
-                    resultPixel[1] = (byte)(resultPixel[1] * maskAlpha);
-                    resultPixel[2] = (byte)(resultPixel[2] * maskAlpha);
+                    resultPixel[0] = imagePixel[0];
+                    resultPixel[1] = imagePixel[1];
+                    resultPixel[2] = imagePixel[2];
+                    resultPixel[3] = maskValue;
                 }
             });
 
-            result.UnlockBits(resultData);
+            image.UnlockBits(imageData);
             mask.UnlockBits(maskData);
+            result.UnlockBits(resultData);
 
             return result;
         }

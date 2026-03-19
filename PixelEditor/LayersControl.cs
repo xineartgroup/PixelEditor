@@ -144,6 +144,7 @@
             if (layer != null)
             {
                 frm.Layer = layer;
+                frm.Layers = imageLayers;
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
                     HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
