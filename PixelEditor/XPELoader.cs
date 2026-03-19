@@ -28,10 +28,10 @@ namespace PixelEditor
                 int versionMajor = reader.ReadInt32();
                 int versionMinor = reader.ReadInt32();
 
-                ManipulatorGeneral.Zoom = reader.ReadSingle();
-                ManipulatorGeneral.ImageOffset = new PointF(reader.ReadSingle(), reader.ReadSingle());
-                ManipulatorGeneral.Width = reader.ReadInt32();
-                ManipulatorGeneral.Height = reader.ReadInt32();
+                Document.Zoom = reader.ReadSingle();
+                Document.ImageOffset = new PointF(reader.ReadSingle(), reader.ReadSingle());
+                Document.Width = reader.ReadInt32();
+                Document.Height = reader.ReadInt32();
 
                 selectedLayerIndex = reader.ReadInt32();
 

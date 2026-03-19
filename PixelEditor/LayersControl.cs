@@ -2,6 +2,8 @@
 {
     public partial class LayersControl : UserControl
     {
+        private const int IMAGE_SIZE = 24;
+
         private readonly List<Layer> imageLayers = [];
         private int selectedLayerIndex = -1;
         public event EventHandler<LayerVisibilityChangedEventArgs>? LayerVisibilityChanged;
@@ -15,6 +17,8 @@
 
         private Panel GetLayerPanel(Layer layer)
         {
+            Size picSize = new((int)(Document.Width * (float)IMAGE_SIZE / Document.Height), IMAGE_SIZE);
+
             Panel panelLayer = new()
             {
                 Name = layer.Name,
@@ -27,7 +31,7 @@
             CheckBox chkVisible = new()
             {
                 Checked = layer.IsVisible,
-                Location = new Point(5, 17),
+                Location = new Point(5, 15),
                 Size = new Size(15, 15),
                 Tag = "visibility"
             };
@@ -35,7 +39,7 @@
             PictureBox pictureBox = new()
             {
                 Image = layer.Image,
-                Size = new Size(30, 30),
+                Size = picSize,
                 Location = Point.Add(new Point(30, 10), new Size(0, 0)),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.White,
@@ -47,7 +51,7 @@
             {
                 Text = layer.Name,
                 AutoSize = true,
-                Location = new Point(70, 18),
+                Location = new Point(pictureBox.Left + pictureBox.Width + 5, 15),
                 Tag = "name"
             };
 
@@ -147,9 +151,10 @@
                 frm.Layers = imageLayers;
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
                     layer = frm.Layer;
                     UpdateLayer(selectedLayerIndex, layer);
+                    HistoryManager.CurrentState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
                 }
             }
         }
@@ -378,6 +383,10 @@
         {
             flowLayers.SuspendLayout();
 
+            // Calculate the new target size for the preview thumbnails once
+            // to avoid repeating the math inside the loop.
+            Size newPicSize = new((int)(Document.Width * (float)IMAGE_SIZE / Document.Height), IMAGE_SIZE);
+
             for (int i = 0; i < imageLayers.Count; i++)
             {
                 Layer layer = imageLayers[i];
@@ -386,7 +395,8 @@
                 {
                     if (flowLayers.Controls[i] is Panel existingPanel)
                     {
-                        UpdatePanelContent(existingPanel, layer);
+                        // Pass the new size to the update method
+                        UpdatePanelContent(existingPanel, layer, newPicSize);
                     }
                 }
                 else
@@ -404,10 +414,13 @@
             flowLayers.ResumeLayout();
         }
 
-        private static void UpdatePanelContent(Panel p, Layer layer)
+        private static void UpdatePanelContent(Panel p, Layer layer, Size picSize)
         {
             p.Tag = layer;
             p.Name = layer.Name;
+
+            PictureBox? pictureBox = null;
+            Label? nameLabel = null;
 
             foreach (Control child in p.Controls)
             {
@@ -418,11 +431,20 @@
                 else if (child is PictureBox pic && child.Tag?.ToString() == "preview")
                 {
                     pic.Image = layer.Image;
+                    pic.Size = picSize; // Update the width/height based on document aspect ratio
+                    pictureBox = pic;
                 }
                 else if (child is Label lbl && child.Tag?.ToString() == "name")
                 {
                     lbl.Text = layer.Name;
+                    nameLabel = lbl;
                 }
+            }
+
+            // Adjust the label position in case the PictureBox width changed
+            if (pictureBox != null && nameLabel != null)
+            {
+                nameLabel.Location = new Point(pictureBox.Left + pictureBox.Width + 5, 15);
             }
         }
     }

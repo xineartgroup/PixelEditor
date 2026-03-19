@@ -421,7 +421,7 @@ namespace PixelEditor
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Form1_Resize(sender, e);
             UpdateTitleBar();
             cboBlendMode.Items.Clear();
@@ -440,14 +440,16 @@ namespace PixelEditor
             Brush_smoothness_Scroll(sender, e);
             Brush_hardness_Scroll(sender, e);
             ReloadBrushes();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void LayersControl_LayerVisibilityChanged(object? sender, LayerVisibilityChangedEventArgs e)
         {
             Console.WriteLine($"Layer {e.Layer.Name}'s visibility changed from {e.OldValue} to {e.NewValue}");
 
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void LayersControl_LayerOrderChanged(object? sender, SelectedLayerChangedEventArgs e)
@@ -534,7 +536,8 @@ namespace PixelEditor
         {
             ColorDialog c = new()
             {
-                Color = btnPenColor.BackColor
+                Color = btnPenColor.BackColor,
+                FullOpen = true
             };
             if (c.ShowDialog() == DialogResult.OK)
             {
@@ -552,7 +555,8 @@ namespace PixelEditor
         {
             ColorDialog c = new()
             {
-                Color = btnFillColor.BackColor
+                Color = btnFillColor.BackColor,
+                FullOpen = true
             };
             if (c.ShowDialog() == DialogResult.OK)
             {
@@ -567,7 +571,8 @@ namespace PixelEditor
         {
             ColorDialog c = new()
             {
-                Color = btnFillColor.BackColor
+                Color = btnFillColor.BackColor,
+                FullOpen = true
             };
             if (c.ShowDialog() == DialogResult.OK)
             {
@@ -715,7 +720,7 @@ namespace PixelEditor
 
         private void UpdateCursor(Point mousePosition)
         {
-            if (IsOverRotationHandle(mousePosition, ManipulatorGeneral.Width, ManipulatorGeneral.Height, canvas.Width, canvas.Height, ManipulatorGeneral.Zoom))
+            if (IsOverRotationHandle(mousePosition, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
             {
                 canvas.Cursor = Cursors.Hand;
             }
@@ -811,8 +816,8 @@ namespace PixelEditor
                         var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
                         {
                             Image = new Bitmap(image, image.Width, image.Height),
-                            X = ManipulatorGeneral.Width / 2 - image.Width / 2,
-                            Y = ManipulatorGeneral.Height / 2 - image.Height / 2
+                            X = Document.Width / 2 - image.Width / 2,
+                            Y = Document.Height / 2 - image.Height / 2
                         };
                         layersControl.InsertLayer(0, layer);
 
@@ -835,7 +840,7 @@ namespace PixelEditor
                 {
                     ManipulatorGeneral.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
 
-                    var rect = new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height);
+                    var rect = new Rectangle(0, 0, Document.Width, Document.Height);
 
                     Bitmap bitmap = ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect);
                     bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Png);
@@ -860,7 +865,7 @@ namespace PixelEditor
                 {
                     ManipulatorGeneral.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
 
-                    var rect = new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height);
+                    var rect = new Rectangle(0, 0, Document.Width, Document.Height);
 
                     Bitmap bitmap = ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect);
                     bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -885,7 +890,7 @@ namespace PixelEditor
                 {
                     ManipulatorGeneral.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
 
-                    var rect = new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height);
+                    var rect = new Rectangle(0, 0, Document.Width, Document.Height);
 
                     Bitmap bitmap = ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect);
                     bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
@@ -910,7 +915,7 @@ namespace PixelEditor
                 {
                     ManipulatorGeneral.PopulateColorGrid(layersControl.GetLayers(), -1, includeBackground: false);
 
-                    var rect = new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height);
+                    var rect = new Rectangle(0, 0, Document.Width, Document.Height);
 
                     Bitmap bitmap = ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect);
                     bitmap.Save(saveFileDialog1.FileName, System.Drawing.Imaging.ImageFormat.Gif);
@@ -927,8 +932,8 @@ namespace PixelEditor
         {
             if (!ConfirmAbandonChanges()) return;
 
-            ManipulatorGeneral.Zoom = 0.95f;
-            ManipulatorGeneral.ImageOffset = new PointF(0, 0);
+            Document.Zoom = 0.95f;
+            Document.ImageOffset = new PointF(0, 0);
 
             HistoryManager.Clear();
             layersControl.ClearLayers();
@@ -1120,9 +1125,10 @@ namespace PixelEditor
                 frm.Layer = selectedLayer;
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), frm.Layer);
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1137,18 +1143,21 @@ namespace PixelEditor
 
             if (frm.ShowDialog(this) == DialogResult.OK)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 layersControl.InsertLayer(0, frm.Layer);
                 RedrawImage();
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
         private void BtnSubtractLayer_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
             layersControl.RemoveLayerAt(layersControl.GetSelectedLayerIndex());
             RedrawImage();
+
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void BtnMoveUp_Click(object sender, EventArgs e)
@@ -1159,11 +1168,12 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 layersControl.MoveLayerUp();
-
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1175,11 +1185,12 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 layersControl.MoveLayerDown();
-
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1191,11 +1202,12 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 layersControl.MoveLayerToTop();
-
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1207,11 +1219,12 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 layersControl.MoveLayerToBottom();
-
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1221,10 +1234,11 @@ namespace PixelEditor
 
             if (layer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 layer.IsVisible = true;
                 layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
                 RedrawImage();
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1234,10 +1248,11 @@ namespace PixelEditor
 
             if (layer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 layer.IsVisible = false;
                 layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), layer);
                 RedrawImage();
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1248,7 +1263,7 @@ namespace PixelEditor
             var layer = layersControl.GetLayer(selectedIndex);
             if (layer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 Layer clone = layer.Clone();
                 clone.Name += "_Clone";
@@ -1257,6 +1272,8 @@ namespace PixelEditor
                 UpdateControls();
 
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1274,7 +1291,7 @@ namespace PixelEditor
             var bottom = layersControl.GetLayer(selectedIndex + 1);
             if (top != null && bottom != null)
             {
-                HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                 top = ManipulatorGeneral.MergeLayers(top, bottom);
                 layersControl.UpdateLayer(selectedIndex, top);
@@ -1283,6 +1300,8 @@ namespace PixelEditor
                 UpdateControls();
 
                 RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -1305,26 +1324,29 @@ namespace PixelEditor
 
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
-            ManipulatorGeneral.Zoom = Math.Max(0.1f, Math.Min(10.0f, ManipulatorGeneral.Zoom + zoomDelta));
+            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom + zoomDelta));
             RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
-            ManipulatorGeneral.Zoom = Math.Max(0.1f, Math.Min(10.0f, ManipulatorGeneral.Zoom - zoomDelta));
+            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom - zoomDelta));
             RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void BtnResetZoom_Click(object sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-            ManipulatorGeneral.Zoom = 0.95f;
-            ManipulatorGeneral.ImageOffset = new(0, 0);
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            Document.Zoom = 0.95f;
+            Document.ImageOffset = new(0, 0);
             RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void AllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1498,24 +1520,26 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     ImageSelections.CalculateSelectionBounds();
                     selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
                     rotationAngle = 0;
                     scaleFactor = 1.0f;
                     ImageSelections.ClearSelections();
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
                 else
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    int width = selectedLayer.Image != null ? selectedLayer.Image.Width : ManipulatorGeneral.Width;
-                    int height = selectedLayer.Image != null ? selectedLayer.Image.Height : ManipulatorGeneral.Height;
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    int width = selectedLayer.Image != null ? selectedLayer.Image.Width : Document.Width;
+                    int height = selectedLayer.Image != null ? selectedLayer.Image.Height : Document.Height;
                     selectedLayer.Image?.Dispose();
                     selectedLayer.Image = ManipulatorGeneral.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;
                     scaleFactor = 1.0f;
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1527,7 +1551,7 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     ImageSelections.CalculateSelectionBounds();
                     Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
                     selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
@@ -1537,16 +1561,18 @@ namespace PixelEditor
                         ImageSelections.ClearSelections();
                         RedrawImage();
                     }
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
                 else
                 {
                     Image? tempImage = selectedLayer.Image;
                     if (tempImage != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Clipboard.SetImage(tempImage);
                         DeleteImageToolStripMenuItem_Click(sender, e);
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1559,7 +1585,7 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     ImageSelections.CalculateSelectionBounds();
                     Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
                     if (tempImage != null)
@@ -1568,15 +1594,17 @@ namespace PixelEditor
                         ImageSelections.ClearSelections();
                         RedrawImage();
                     }
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
                 else
                 {
                     Image? tempImage = selectedLayer.Image;
                     if (tempImage != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Clipboard.SetImage(tempImage);
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1590,11 +1618,12 @@ namespace PixelEditor
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
                 if (selectedLayer != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                     selectedLayer.Image = new Bitmap(clipboardImage);
-
                     RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1609,8 +1638,8 @@ namespace PixelEditor
                 {
                     layersControl.ClearLayers();
                     layersControl.AddRange(history.Layers);
-                    ManipulatorGeneral.Zoom = history.Zoom;
-                    ManipulatorGeneral.ImageOffset = history.Offset;
+                    Document.Zoom = history.Zoom;
+                    Document.ImageOffset = history.Offset;
                     layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
@@ -1629,8 +1658,8 @@ namespace PixelEditor
                 {
                     layersControl.ClearLayers();
                     layersControl.AddRange(history.Layers);
-                    ManipulatorGeneral.Zoom = history.Zoom;
-                    ManipulatorGeneral.ImageOffset = history.Offset;
+                    Document.Zoom = history.Zoom;
+                    Document.ImageOffset = history.Offset;
                     layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
@@ -1646,7 +1675,7 @@ namespace PixelEditor
             {
                 if (selectedLayer.Image != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
                     int imgW = selectedLayer.Image.Width;
                     int imgH = selectedLayer.Image.Height;
@@ -1658,6 +1687,8 @@ namespace PixelEditor
                     ImageSelections.AddSelectionPoint(new Point(x0 + imgW, y0 + imgH));
                     ImageSelections.AddSelectionPoint(new Point(x0 + imgW, y0));
                     ImageSelections.AddSelectionPoint(new Point(x0, y0));
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1674,13 +1705,15 @@ namespace PixelEditor
                 formSettings.LayerY = selectedLayer.Y;
                 if (formSettings.ShowDialog(this) == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     selectedLayer.X = formSettings.LayerX;
                     selectedLayer.Y = formSettings.LayerY;
                     selectedLayer.Image = (selectedLayer.Image != null) ?
                         ManipulatorLighting.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
                         ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
+                    layersControl.RefreshLayersDisplay();
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1692,11 +1725,12 @@ namespace PixelEditor
             {
                 if (selectedLayer.Image != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     Bitmap inverted = ManipulatorLighting.DarkImage((Bitmap)selectedLayer.Image);
                     selectedLayer.Image.Dispose();
                     selectedLayer.Image = inverted;
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1708,11 +1742,12 @@ namespace PixelEditor
             {
                 if (selectedLayer.Image != null)
                 {
-                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     Bitmap inverted = ManipulatorLighting.InvertColors((Bitmap)selectedLayer.Image);
                     selectedLayer.Image.Dispose();
                     selectedLayer.Image = inverted;
                     RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
         }
@@ -1730,11 +1765,12 @@ namespace PixelEditor
                     };
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Bitmap result = new(frm.Image);
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = result;
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1753,11 +1789,12 @@ namespace PixelEditor
                     };
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Bitmap result = new(frm.Image);
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = result;
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1776,11 +1813,12 @@ namespace PixelEditor
                     };
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Bitmap blurred = new(frm.Image);
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = blurred;
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1799,11 +1837,12 @@ namespace PixelEditor
                     };
                     if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         Bitmap blurred = new(frm.Image);
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = blurred;
                         RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -1947,7 +1986,7 @@ namespace PixelEditor
                         {
                             if (selectedLayer.Image == null) return;
 
-                            if (IsOverRotationHandle(e.Location, ManipulatorGeneral.Width, ManipulatorGeneral.Height, canvas.Width, canvas.Height, ManipulatorGeneral.Zoom))
+                            if (IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
                             {
                                 isRotating = true;
                                 Cursor.Current = Cursors.SizeAll;
@@ -2104,7 +2143,7 @@ namespace PixelEditor
         private void PixelImage_MouseMove(object sender, MouseEventArgs e)
         {
             labelMousePosition.Text = $"({e.X}, {e.Y})";
-            labelDocStatus.Text = $"Zoom: {ManipulatorGeneral.Zoom * 100:F1}% Offset {ManipulatorGeneral.ImageOffset}";
+            labelDocStatus.Text = $"Zoom: {Document.Zoom * 100:F1}% Offset {Document.ImageOffset}";
 
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -2116,15 +2155,15 @@ namespace PixelEditor
                 if (ModifierKeys.HasFlag(Keys.Control))
                 {
                     float zoomDelta = dy * 0.01f;
-                    ManipulatorGeneral.Zoom = Math.Max(0.1f, Math.Min(10.0f, ManipulatorGeneral.Zoom - zoomDelta));
+                    Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom - zoomDelta));
                     ManipulatorGeneral.InvalidateCompositeBuffers();
                     RedrawImage(selectedLayerIndex: -1, repopulateImage: false);
                 }
                 else if (ModifierKeys.HasFlag(Keys.Shift))
                 {
-                    float x = ManipulatorGeneral.ImageOffset.X + dx;
-                    float y = ManipulatorGeneral.ImageOffset.Y + dy;
-                    ManipulatorGeneral.ImageOffset = new PointF(x, y);
+                    float x = Document.ImageOffset.X + dx;
+                    float y = Document.ImageOffset.Y + dy;
+                    Document.ImageOffset = new PointF(x, y);
                     ManipulatorGeneral.InvalidateCompositeBuffers();
                     RedrawImage(selectedLayerIndex: -1, repopulateImage: false);
                 }
@@ -2226,7 +2265,7 @@ namespace PixelEditor
 
                         dirty = new(minX + selectedLayer.X, minY + selectedLayer.Y, maxX - minX, maxY - minY);
 
-                        dirty.Intersect(new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height));
+                        dirty.Intersect(new Rectangle(0, 0, Document.Width, Document.Height));
 
                         if (strokePoints.Count == 2)
                         {
@@ -2341,13 +2380,14 @@ namespace PixelEditor
             isRectSelecting = false;
             isRotating = false;
             isScaling = false;
-            HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             ManipulatorGeneral.UpdateBuffers();
             PaintingEngine.EndStroke();
             ImageSelections.MergeIntersections();
             ImageSelections.CalculateSelectionBounds();
             layersControl.RefreshLayersDisplay();
             RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -2381,7 +2421,7 @@ namespace PixelEditor
             }
 
             var rect = repopulateImage ?
-                new Rectangle(0, 0, ManipulatorGeneral.Width, ManipulatorGeneral.Height) :
+                new Rectangle(0, 0, Document.Width, Document.Height) :
                 new Rectangle(0, 0, 0, 0);
 
             RedrawRasterImage(ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect));
@@ -2414,21 +2454,21 @@ namespace PixelEditor
 
                 if (aspectRatio > containerAspectRatio)
                 {
-                    scaledWidth = canvas.Width * ManipulatorGeneral.Zoom;
+                    scaledWidth = canvas.Width * Document.Zoom;
                     scaledHeight = scaledWidth / aspectRatio;
                 }
                 else
                 {
-                    scaledHeight = canvas.Height * ManipulatorGeneral.Zoom;
+                    scaledHeight = canvas.Height * Document.Zoom;
                     scaledWidth = scaledHeight * aspectRatio;
                 }
 
                 float centerX = (canvas.Width - scaledWidth) / 2;
                 float centerY = (canvas.Height - scaledHeight) / 2;
 
-                RectangleF destRect = new(centerX + ManipulatorGeneral.ImageOffset.X, centerY + ManipulatorGeneral.ImageOffset.Y, scaledWidth, scaledHeight);
+                RectangleF destRect = new(centerX + Document.ImageOffset.X, centerY + Document.ImageOffset.Y, scaledWidth, scaledHeight);
 
-                g.InterpolationMode = (ManipulatorGeneral.Zoom < 0.5f || ManipulatorGeneral.Zoom > 2.0f) ? InterpolationMode.HighQualityBicubic : InterpolationMode.NearestNeighbor;
+                g.InterpolationMode = (Document.Zoom < 0.5f || Document.Zoom > 2.0f) ? InterpolationMode.HighQualityBicubic : InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = PixelOffsetMode.Half;
                 g.DrawImage(image, destRect);
 

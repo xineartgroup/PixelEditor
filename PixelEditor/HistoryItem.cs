@@ -1,11 +1,11 @@
 ﻿
 namespace PixelEditor
 {
-    public class HistoryItem(float zoom, PointF offset, List<Layer> layers, int selectedLayerIndex)
+    public class HistoryItem(List<Layer> layers, int selectedLayerIndex)
     {
-        public float Zoom { get; set; } = zoom;
+        public float Zoom { get; set; } = Document.Zoom;
 
-        public PointF Offset { get; set; } = offset;
+        public PointF Offset { get; set; } = Document.ImageOffset;
 
         public int SelectedLayerIndex { get; set; } = selectedLayerIndex;
 
@@ -20,7 +20,7 @@ namespace PixelEditor
 
         public HistoryItem GetCopy()
         {
-            HistoryItem item = new(Zoom, Offset, CopyLayers(Layers), SelectedLayerIndex);
+            HistoryItem item = new(CopyLayers(Layers), SelectedLayerIndex);
             return item;
         }
     }

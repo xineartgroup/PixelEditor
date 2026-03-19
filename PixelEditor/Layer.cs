@@ -21,6 +21,11 @@
 
         public event Action<Rectangle>? OnLayerChanged;
 
+        public Image? GetBasicImage()
+        {
+            return _image;
+        }
+
         public Image? Image { get { return GetImageComposite(); } set => SetProperty(ref _image, value); }
 
         public Image? ImageMask { get => _imageMask; set => SetProperty(ref _imageMask, value); }

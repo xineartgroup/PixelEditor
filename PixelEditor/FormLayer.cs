@@ -18,8 +18,8 @@
             opacity.Value = Layer.Opacity;
             btnBackgroundColor.BackColor = Layer.FillColor;
             cboFillWith.Text = Layer.FillType == FillType.Transparency ? "Transparency" : "Color";
-            width.Value = Layer.Image?.Width ?? ManipulatorGeneral.Width;
-            height.Value = Layer.Image?.Height ?? ManipulatorGeneral.Height;
+            width.Value = Layer.Image?.Width ?? Document.Width;
+            height.Value = Layer.Image?.Height ?? Document.Height;
             offsetX.Value = Layer.X;
             offsetY.Value = Layer.Y;
             cboLayers.Items.Add("None");
@@ -43,7 +43,8 @@
             Layer.Y = (int)offsetY.Value;
 
             Image image = ManipulatorGeneral.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
-            if (Layer.Image != null)
+            Image? basicImage = Layer.GetBasicImage();
+            if (basicImage != null)
             {
                 using (Graphics g = Graphics.FromImage(image))
                 {
@@ -51,15 +52,15 @@
                     float ratioY = (float)image.Height / Layer.Image.Height;
                     float ratio = Math.Min(ratioX, ratioY);
 
-                    int newWidth = (int)(Layer.Image.Width * ratio);
-                    int newHeight = (int)(Layer.Image.Height * ratio);
+                    int newWidth = (int)(basicImage.Width * ratio);
+                    int newHeight = (int)(basicImage.Height * ratio);
 
                     int posX = (image.Width - newWidth) / 2;
                     int posY = (image.Height - newHeight) / 2;
 
                     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 
-                    g.DrawImage(Layer.Image, posX, posY, newWidth, newHeight);
+                    g.DrawImage(basicImage, posX, posY, newWidth, newHeight);
                 }
 
                 Layer.Image.Dispose();
@@ -88,7 +89,8 @@
         {
             ColorDialog colorDialog = new()
             {
-                Color = btnBackgroundColor.BackColor
+                Color = btnBackgroundColor.BackColor,
+                FullOpen = true
             };
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
@@ -98,22 +100,22 @@
 
         private void BtnCenterX_Click(object sender, EventArgs e)
         {
-            offsetX.Value = (ManipulatorGeneral.Width - width.Value) / 2;
+            offsetX.Value = (Document.Width - width.Value) / 2;
         }
 
         private void BtnCenterY_Click(object sender, EventArgs e)
         {
-            offsetY.Value = (ManipulatorGeneral.Height - height.Value) / 2;
+            offsetY.Value = (Document.Height - height.Value) / 2;
         }
 
         private void BtnAutoWidth_Click(object sender, EventArgs e)
         {
-            width.Value = ManipulatorGeneral.Width;
+            width.Value = Document.Width;
         }
 
         private void BtnAutoHeight_Click(object sender, EventArgs e)
         {
-            height.Value = ManipulatorGeneral.Height;
+            height.Value = Document.Height;
         }
 
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)

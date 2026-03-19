@@ -4,15 +4,37 @@
     {
         private static readonly Stack<byte[]> undoStack = new();
         private static readonly Stack<byte[]> redoStack = new();
+        private static byte[] current = [];
 
         public static void RecordState(HistoryItem history)
         {
             try
             {
+                if (current.Length == 0)
+                {
+                    using MemoryStream ms = new();
+                    XPESaver.Save(ms, history.Layers, history.SelectedLayerIndex);
+                    undoStack.Push(ms.ToArray());
+                    redoStack.Clear();
+                }
+                else
+                {
+                    undoStack.Push(current);
+                    redoStack.Clear();
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        public static void CurrentState(HistoryItem history)
+        {
+            try
+            {
                 using MemoryStream ms = new();
                 XPESaver.Save(ms, history.Layers, history.SelectedLayerIndex);
-                undoStack.Push(ms.ToArray());
-                redoStack.Clear();
+                current = ms.ToArray();
             }
             catch
             {
@@ -25,17 +47,13 @@
             {
                 if (undoStack.Count == 0) return null;
 
-                if (redoStack.Count == 0)
-                {
-                    redoStack.Push(undoStack.Pop()); //remove the current state from undo and put it in redo
-                }
+                redoStack.Push(current);
+                current = undoStack.Pop();
 
-                using MemoryStream ms = new();
-                byte[] data = undoStack.Pop();
-                using MemoryStream restoreMs = new(data);
+                using MemoryStream restoreMs = new(current);
                 XPELoader.Load(restoreMs, out List<Layer> layers, out int selectedLayerIndex);
-                redoStack.Push(data);
-                return new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layers, selectedLayerIndex);
+
+                return new HistoryItem(layers, selectedLayerIndex);
             }
             catch
             {
@@ -49,17 +67,13 @@
             {
                 if (redoStack.Count == 0) return null;
 
-                if (undoStack.Count == 0)
-                {
-                    undoStack.Push(redoStack.Pop()); //remove the first state from redo and put it in undo
-                }
+                undoStack.Push(current);
+                current = redoStack.Pop();
 
-                using MemoryStream ms = new();
-                byte[] data = redoStack.Pop();
-                using MemoryStream restoreMs = new(data);
+                using MemoryStream restoreMs = new(current);
                 XPELoader.Load(restoreMs, out List<Layer> layers, out int selectedLayerIndex);
-                undoStack.Push(data);
-                return new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layers, selectedLayerIndex);
+
+                return new HistoryItem(layers, selectedLayerIndex);
             }
             catch
             {
@@ -71,6 +85,7 @@
         {
             undoStack.Clear();
             redoStack.Clear();
+            current = [];
         }
 
         public static bool CanUndo => undoStack.Count > 0;

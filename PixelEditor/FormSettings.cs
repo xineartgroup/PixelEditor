@@ -17,8 +17,8 @@
 
         private void FormSettings_Load(object sender, EventArgs e)
         {
-            canvasWidth.Value = ManipulatorGeneral.Width;
-            canvasHeight.Value = ManipulatorGeneral.Height;
+            canvasWidth.Value = Document.Width;
+            canvasHeight.Value = Document.Height;
             layerWidth.Value = LayerWidth >= layerWidth.Minimum && LayerWidth <= layerWidth.Maximum ? LayerWidth : 2;
             layerHeight.Value = LayerHeight >= layerHeight.Minimum && LayerHeight <= layerHeight.Maximum ? LayerHeight : 2;
             tempLayerX = LayerX;
@@ -27,11 +27,11 @@
 
         private void BtnOK_Click(object sender, EventArgs e)
         {
-            ManipulatorGeneral.Width = (int)canvasWidth.Value;
-            ManipulatorGeneral.Height = (int)canvasHeight.Value;
+            Document.Width = (int)canvasWidth.Value;
+            Document.Height = (int)canvasHeight.Value;
             LayerWidth = (int)layerWidth.Value;
             LayerHeight = (int)layerHeight.Value;
-            if (ManipulatorGeneral.Width == LayerWidth && ManipulatorGeneral.Height == LayerHeight)
+            if (Document.Width == LayerWidth && Document.Height == LayerHeight)
             {
                 LayerX = tempLayerX;
                 LayerY = tempLayerY;

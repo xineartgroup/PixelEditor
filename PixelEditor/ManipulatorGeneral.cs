@@ -5,14 +5,6 @@ namespace PixelEditor
 {
     public static class ManipulatorGeneral
     {
-        public static PointF ImageOffset { get; set; } = new(0, 0);
-
-        public static float Zoom { get; set; } = 0.95f;
-
-        public static int Width { get; set; } = 1920;
-
-        public static int Height { get; set; } = 1080;
-
         public static ColorGrid Screen { get; set; } = new(0, 0);
 
         public static Dictionary<string, (ColorGrid Cache, int Hash)> LayerCache { get; set; } = [];
@@ -29,69 +21,69 @@ namespace PixelEditor
 
         public static float ScreenToWorldRatio(int width, int height)
         {
-            float aspectRatio = (float)Width / Height;
+            float aspectRatio = (float)Document.Width / Document.Height;
             float containerAspectRatio = (float)width / height;
 
             float scaledWidth = aspectRatio > containerAspectRatio
-                ? width * Zoom
-                : height * Zoom * aspectRatio;
+                ? width * Document.Zoom
+                : height * Document.Zoom * aspectRatio;
 
-            return scaledWidth / Width;
+            return scaledWidth / Document.Width;
         }
 
         public static Point ScreenToWorld(Point screenPt, int width, int height)
         {
-            float aspectRatio = (float)Width / Height;
+            float aspectRatio = (float)Document.Width / Document.Height;
             float containerAspectRatio = (float)width / height;
 
             float scaledWidth, scaledHeight;
             if (aspectRatio > containerAspectRatio)
             {
-                scaledWidth = width * Zoom;
+                scaledWidth = width * Document.Zoom;
                 scaledHeight = scaledWidth / aspectRatio;
             }
             else
             {
-                scaledHeight = height * Zoom;
+                scaledHeight = height * Document.Zoom;
                 scaledWidth = scaledHeight * aspectRatio;
             }
 
             float centerX = (width - scaledWidth) / 2;
             float centerY = (height - scaledHeight) / 2;
 
-            float ratio = scaledWidth / Width;
+            float ratio = scaledWidth / Document.Width;
 
-            int worldX = (int)((screenPt.X - (centerX + ImageOffset.X)) / ratio);
-            int worldY = (int)((screenPt.Y - (centerY + ImageOffset.Y)) / ratio);
+            int worldX = (int)((screenPt.X - (centerX + Document.ImageOffset.X)) / ratio);
+            int worldY = (int)((screenPt.Y - (centerY + Document.ImageOffset.Y)) / ratio);
 
             return new Point(worldX, worldY);
         }
 
         public static Point WorldToScreen(Point worldPt, int width, int height)
         {
-            float aspectRatio = (float)Width / Height;
+            float aspectRatio = (float)Document.Width / Document.Height;
             float containerAspectRatio = (float)width / height;
 
             float scaledWidth, scaledHeight;
 
             if (aspectRatio > containerAspectRatio)
             {
-                scaledWidth = width * Zoom;
+                scaledWidth = width * Document.Zoom;
                 scaledHeight = scaledWidth / aspectRatio;
             }
             else
             {
-                scaledHeight = height * Zoom;
+                scaledHeight = height * Document.Zoom;
                 scaledWidth = scaledHeight * aspectRatio;
             }
 
             float centerX = (width - scaledWidth) / 2;
             float centerY = (height - scaledHeight) / 2;
 
-            float ratio = scaledWidth / Width;
+            float ratio = scaledWidth / Document.Width;
 
-            int screenX = (int)(worldPt.X * ratio + (centerX + ImageOffset.X));
-            int screenY = (int)(worldPt.Y * ratio + (centerY + ImageOffset.Y));
+            int screenX = (int)(worldPt.X * ratio + (centerX + Document.ImageOffset.X));
+            int screenY = (int)(worldPt.Y * ratio + (centerY + Document.ImageOffset.Y));
 
             return new Point(screenX, screenY);
         }
@@ -112,7 +104,7 @@ namespace PixelEditor
 
         public static void PopulateColorGrid(List<Layer> layers, int selectedLayerIndex = -1, bool includeBackground = true)
         {
-            if (_canvasBitmap == null || _canvasBitmap.Width != Width || _canvasBitmap.Height != Height)
+            if (_canvasBitmap == null || _canvasBitmap.Width != Document.Width || _canvasBitmap.Height != Document.Height)
                 PopulateBackgroundImage();
 
             if (selectedLayerIndex >= 0 && selectedLayerIndex < layers.Count)
@@ -121,7 +113,7 @@ namespace PixelEditor
                 return;
             }
 
-            Screen = new ColorGrid(Width, Height);
+            Screen = new ColorGrid(Document.Width, Document.Height);
 
             if (includeBackground)
             {
@@ -145,13 +137,13 @@ namespace PixelEditor
 
                 if (!isDirty && LayerCache.TryGetValue(layer.Name, out var cached) && cached.Hash == stateHash)
                 {
-                    ApplyCachedLayer(Screen, cached.Cache, layerBounds, Width, Height, layer.BlendMode);
+                    ApplyCachedLayer(Screen, cached.Cache, layerBounds, Document.Width, Document.Height, layer.BlendMode);
                     continue;
                 }
 
                 ColorGrid layerBuffer = RasterizeLayer(layer, displayWidth, displayHeight);
                 LayerCache[layer.Name] = (layerBuffer, stateHash);
-                ApplyCachedLayer(Screen, layerBuffer, layerBounds, Width, Height, layer.BlendMode);
+                ApplyCachedLayer(Screen, layerBuffer, layerBounds, Document.Width, Document.Height, layer.BlendMode);
             }
 
             DirtyRegions.Clear();
@@ -159,26 +151,26 @@ namespace PixelEditor
 
         private static void PopulateColorGridOptimized(List<Layer> layers, int selectedLayerIndex)
         {
-            if (Screen.Width != Width || Screen.Height != Height)
-                Screen = new ColorGrid(Width, Height);
+            if (Screen.Width != Document.Width || Screen.Height != Document.Height)
+                Screen = new ColorGrid(Document.Width, Document.Height);
 
             int bgHash = ComputeGroupHash(layers, selectedLayerIndex + 1, layers.Count);
             bool bgValid = _backgroundBuffer != null && _cachedSelectedIndex == selectedLayerIndex && _backgroundHash == bgHash;
 
-            Rectangle compositeRegion = new(0, 0, Width, Height);
+            Rectangle compositeRegion = new(0, 0, Document.Width, Document.Height);
             if (DirtyRegions.Count > 0)
             {
                 Rectangle combined = Rectangle.Empty;
                 foreach (var region in DirtyRegions)
                     combined = combined.IsEmpty ? region : Rectangle.Union(combined, region);
-                combined.Intersect(new Rectangle(0, 0, Width, Height));
+                combined.Intersect(new Rectangle(0, 0, Document.Width, Document.Height));
                 if (!combined.IsEmpty)
                     compositeRegion = combined;
             }
 
             if (!bgValid)
             {
-                _backgroundBuffer = new ColorGrid(Width, Height);
+                _backgroundBuffer = new ColorGrid(Document.Width, Document.Height);
                 InitializeColorGridWithBackground(_backgroundBuffer);
 
                 for (int i = layers.Count - 1; i > selectedLayerIndex; i--)
@@ -199,7 +191,7 @@ namespace PixelEditor
                         LayerCache[layer.Name] = cached;
                     }
 
-                    ApplyCachedLayer(_backgroundBuffer, cached.Cache, lb, Width, Height, layer.BlendMode);
+                    ApplyCachedLayer(_backgroundBuffer, cached.Cache, lb, Document.Width, Document.Height, layer.BlendMode);
                 }
 
                 _backgroundHash = bgHash;
@@ -212,7 +204,7 @@ namespace PixelEditor
 
             for (int y = compositeRegion.Top; y < compositeRegion.Bottom; y++)
             {
-                int rowBase = y * Width;
+                int rowBase = y * Document.Width;
                 Array.Copy(bgPixels, rowBase + compositeRegion.Left, screenPixels, rowBase + compositeRegion.Left, compositeRegion.Width);
             }
 
@@ -254,16 +246,16 @@ namespace PixelEditor
 
         public static void PopulateBackgroundImage()
         {
-            _canvasBitmap = new Bitmap(Width, Height);
+            _canvasBitmap = new Bitmap(Document.Width, Document.Height);
 
             using Graphics g = Graphics.FromImage(_canvasBitmap);
             int squareSize = 20;
             Color lightColor = Color.LightGray;
             Color darkColor = Color.White;
 
-            for (int x = 0; x < Width; x += squareSize)
+            for (int x = 0; x < Document.Width; x += squareSize)
             {
-                for (int y = 0; y < Height; y += squareSize)
+                for (int y = 0; y < Document.Height; y += squareSize)
                 {
                     if ((x / squareSize + y / squareSize) % 2 == 0)
                     {
@@ -550,23 +542,23 @@ namespace PixelEditor
             byte[] pixels = new byte[bytes];
             Marshal.Copy(data.Scan0, pixels, 0, bytes);
 
-            float screenAspectRatio = Width / Height;
+            float screenAspectRatio = Document.Width / Document.Height;
             float containerAspectRatio = (float)canvasWidth / canvasHeight;
             float screenScaledWidth, screenScaledHeight;
 
             if (screenAspectRatio > containerAspectRatio)
             {
-                screenScaledWidth = canvasWidth * Zoom;
+                screenScaledWidth = canvasWidth * Document.Zoom;
                 screenScaledHeight = screenScaledWidth / screenAspectRatio;
             }
             else
             {
-                screenScaledHeight = canvasHeight * Zoom;
+                screenScaledHeight = canvasHeight * Document.Zoom;
                 screenScaledWidth = screenScaledHeight * screenAspectRatio;
             }
 
-            float screenOriginX = ((canvasWidth - screenScaledWidth) / 2) + ImageOffset.X;
-            float screenOriginY = ((canvasHeight - screenScaledHeight) / 2) + ImageOffset.Y;
+            float screenOriginX = ((canvasWidth - screenScaledWidth) / 2) + Document.ImageOffset.X;
+            float screenOriginY = ((canvasHeight - screenScaledHeight) / 2) + Document.ImageOffset.Y;
 
             PointF WorldToImage(Point p)
             {
@@ -890,7 +882,7 @@ namespace PixelEditor
             if (_canvasBitmap == null) return;
 
             var bgData = _canvasBitmap.LockBits(
-                new Rectangle(0, 0, Width, Height),
+                new Rectangle(0, 0, Document.Width, Document.Height),
                 ImageLockMode.ReadOnly,
                 PixelFormat.Format32bppArgb);
 
@@ -905,12 +897,12 @@ namespace PixelEditor
                     byte* bgPtr = (byte*)scan0;
                     int[] screenPixels = Screen.GetRawPixels();
 
-                    for (int y = 0; y < Height; y++)
+                    for (int y = 0; y < Document.Height; y++)
                     {
                         int rowOffset = y * stride;
-                        int screenRowOffset = y * Width;
+                        int screenRowOffset = y * Document.Width;
 
-                        for (int x = 0; x < Width; x++)
+                        for (int x = 0; x < Document.Width; x++)
                         {
                             int pixelOffset = rowOffset + x * bytesPerPixel;
                             int bgColor = (bgPtr[pixelOffset + 2] << 16) |
@@ -934,7 +926,7 @@ namespace PixelEditor
             if (_canvasBitmap == null) return;
 
             var bgData = _canvasBitmap.LockBits(
-                new Rectangle(0, 0, Width, Height),
+                new Rectangle(0, 0, Document.Width, Document.Height),
                 ImageLockMode.ReadOnly,
                 PixelFormat.Format32bppArgb);
 
@@ -949,12 +941,12 @@ namespace PixelEditor
                     byte* bgPtr = (byte*)scan0;
                     int[] gridPixels = grid.GetRawPixels();
 
-                    for (int y = 0; y < Height; y++)
+                    for (int y = 0; y < Document.Height; y++)
                     {
                         int rowOffset = y * stride;
-                        int gridRowOffset = y * Width;
+                        int gridRowOffset = y * Document.Width;
 
-                        for (int x = 0; x < Width; x++)
+                        for (int x = 0; x < Document.Width; x++)
                         {
                             int pixelOffset = rowOffset + x * bytesPerPixel;
                             int bgColor = (bgPtr[pixelOffset + 2] << 16) |
