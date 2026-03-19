@@ -17,8 +17,8 @@
             opacity.Value = Layer.Opacity;
             btnBackgroundColor.BackColor = Layer.FillColor;
             cboFillWith.Text = Layer.FillType == FillType.Transparency ? "Transparency" : "Color";
-            width.Value = Layer.Image?.Width ?? LayersManipulator.Width;
-            height.Value = Layer.Image?.Height ?? LayersManipulator.Height;
+            width.Value = Layer.Image?.Width ?? ManipulatorGeneral.Width;
+            height.Value = Layer.Image?.Height ?? ManipulatorGeneral.Height;
             offsetX.Value = Layer.X;
             offsetY.Value = Layer.Y;
         }
@@ -33,7 +33,7 @@
             Layer.X = (int)offsetX.Value;
             Layer.Y = (int)offsetY.Value;
 
-            Image image = LayersManipulator.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
+            Image image = ManipulatorGeneral.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
             if (Layer.Image != null)
             {
                 using (Graphics g = Graphics.FromImage(image))
@@ -80,22 +80,22 @@
 
         private void BtnCenterX_Click(object sender, EventArgs e)
         {
-            offsetX.Value = (LayersManipulator.Width - width.Value) / 2;
+            offsetX.Value = (ManipulatorGeneral.Width - width.Value) / 2;
         }
 
         private void BtnCenterY_Click(object sender, EventArgs e)
         {
-            offsetY.Value = (LayersManipulator.Height - height.Value) / 2;
+            offsetY.Value = (ManipulatorGeneral.Height - height.Value) / 2;
         }
 
         private void BtnAutoWidth_Click(object sender, EventArgs e)
         {
-            width.Value = LayersManipulator.Width;
+            width.Value = ManipulatorGeneral.Width;
         }
 
         private void BtnAutoHeight_Click(object sender, EventArgs e)
         {
-            height.Value = LayersManipulator.Height;
+            height.Value = ManipulatorGeneral.Height;
         }
     }
 }

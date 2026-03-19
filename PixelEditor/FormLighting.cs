@@ -40,7 +40,7 @@
                 lblShadows.Text = $"{trackBar5.Value}";
                 lblVignette.Text = $"{trackBar6.Value}";
                 pictureSample.Image = new Bitmap(Image);
-                pictureSample.Image = LayersManipulator.ApplyLighting((Bitmap)pictureSample.Image, 
+                pictureSample.Image = ManipulatorLighting.ApplyLighting((Bitmap)pictureSample.Image, 
                     (float)trackBar1.Value / 100,
                     (float)trackBar2.Value / 100,
                     (float)trackBar3.Value / 100,

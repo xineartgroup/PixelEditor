@@ -146,7 +146,7 @@
                 frm.Layer = layer;
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
+                    HistoryManager.RecordState(new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, GetLayers(), GetSelectedLayerIndex()));
                     layer = frm.Layer;
                     UpdateLayer(selectedLayerIndex, layer);
                 }

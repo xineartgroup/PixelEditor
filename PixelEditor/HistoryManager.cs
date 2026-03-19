@@ -35,7 +35,7 @@
                 using MemoryStream restoreMs = new(data);
                 XPELoader.Load(restoreMs, out List<Layer> layers, out int selectedLayerIndex);
                 redoStack.Push(data);
-                return new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layers, selectedLayerIndex);
+                return new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layers, selectedLayerIndex);
             }
             catch
             {
@@ -59,7 +59,7 @@
                 using MemoryStream restoreMs = new(data);
                 XPELoader.Load(restoreMs, out List<Layer> layers, out int selectedLayerIndex);
                 undoStack.Push(data);
-                return new HistoryItem(LayersManipulator.Zoom, LayersManipulator.ImageOffset, layers, selectedLayerIndex);
+                return new HistoryItem(ManipulatorGeneral.Zoom, ManipulatorGeneral.ImageOffset, layers, selectedLayerIndex);
             }
             catch
             {

@@ -19,11 +19,11 @@ namespace PixelEditor
                     writer.Write(FormatMajorVersion);
                     writer.Write(FormatMinorVersion);
 
-                    writer.Write(LayersManipulator.Zoom);
-                    writer.Write(LayersManipulator.ImageOffset.X);
-                    writer.Write(LayersManipulator.ImageOffset.Y);
-                    writer.Write(LayersManipulator.Width);
-                    writer.Write(LayersManipulator.Height);
+                    writer.Write(ManipulatorGeneral.Zoom);
+                    writer.Write(ManipulatorGeneral.ImageOffset.X);
+                    writer.Write(ManipulatorGeneral.ImageOffset.Y);
+                    writer.Write(ManipulatorGeneral.Width);
+                    writer.Write(ManipulatorGeneral.Height);
 
                     writer.Write(selectedLayerIndex);
 

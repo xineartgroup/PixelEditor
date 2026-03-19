@@ -7,6 +7,7 @@
         private int _scaleWidth = 1;
         private int _scaleHeight = 1;
         private int _opacity = 100;
+        private string _name = name;
         private bool _isVisible = isVisible;
         private bool _redFilter = false;
         private bool _greenFilter = false;
@@ -15,12 +16,14 @@
         private ImageBlending _blendMode = ImageBlending.Normal;
         private FillType _fillType = FillType.Color;
         private Color _fillColor = Color.White;
+        private Image? _image = null;
+        private Image? _imageMask = null;
 
         public event Action<Rectangle>? OnLayerChanged;
 
-        public Image? Image { get; set; } = null;
+        public Image? Image { get { return GetImageComposite(); } set => SetProperty(ref _image, value); }
 
-        public string Name { get; set; } = name;
+        public string Name { get => _name; set => SetProperty(ref _name, value); }
 
         public int X { get => _x; set => SetProperty(ref _x, value); }
 
@@ -47,6 +50,21 @@
         public FillType FillType { get => _fillType; set => SetProperty(ref _fillType, value); }
 
         public Color FillColor { get => _fillColor; set => SetProperty(ref _fillColor, value); }
+
+        private Image? GetImageComposite()
+        {
+            if (_imageMask == null)
+            {
+                return _image;
+            }
+            else
+            {
+                if (_image != null)
+                    return ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
+                else
+                    return null;
+            }
+        }
 
         private void SetProperty<T>(ref T field, T value)
         {
@@ -82,7 +100,7 @@
 
         public Layer Clone()
         {
-            Layer clone = new Layer(Name, IsVisible)
+            Layer clone = new(Name, IsVisible)
             {
                 _x = _x,
                 _y = _y,
