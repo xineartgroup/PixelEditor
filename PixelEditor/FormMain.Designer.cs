@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             canvas = new PictureBox();
             contextMenuStrip1 = new ContextMenuStrip(components);
             deleteImageToolStripMenuItem1 = new ToolStripMenuItem();
@@ -178,6 +179,7 @@
             rdoGreen = new RadioButton();
             rdoRed = new RadioButton();
             rdoAll = new RadioButton();
+            btnEraser = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -702,41 +704,41 @@
             // newToolStripMenuItem1
             // 
             newToolStripMenuItem1.Name = "newToolStripMenuItem1";
-            newToolStripMenuItem1.Size = new Size(180, 22);
+            newToolStripMenuItem1.Size = new Size(147, 22);
             newToolStripMenuItem1.Text = "New...";
             newToolStripMenuItem1.Click += BtnAddLayer_Click;
             // 
             // duplicateToolStripMenuItem
             // 
             duplicateToolStripMenuItem.Name = "duplicateToolStripMenuItem";
-            duplicateToolStripMenuItem.Size = new Size(180, 22);
+            duplicateToolStripMenuItem.Size = new Size(147, 22);
             duplicateToolStripMenuItem.Text = "Duplicate";
             duplicateToolStripMenuItem.Click += BtnDuplicate_Click;
             // 
             // mergeDownToolStripMenuItem1
             // 
             mergeDownToolStripMenuItem1.Name = "mergeDownToolStripMenuItem1";
-            mergeDownToolStripMenuItem1.Size = new Size(180, 22);
+            mergeDownToolStripMenuItem1.Size = new Size(147, 22);
             mergeDownToolStripMenuItem1.Text = "Merge Down";
             mergeDownToolStripMenuItem1.Click += BtnMergeDown_Click;
             // 
             // deleteToolStripMenuItem
             // 
             deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            deleteToolStripMenuItem.Size = new Size(180, 22);
+            deleteToolStripMenuItem.Size = new Size(147, 22);
             deleteToolStripMenuItem.Text = "Delete";
             deleteToolStripMenuItem.Click += BtnSubtractLayer_Click;
             // 
             // toolStripMenuItem17
             // 
             toolStripMenuItem17.Name = "toolStripMenuItem17";
-            toolStripMenuItem17.Size = new Size(177, 6);
+            toolStripMenuItem17.Size = new Size(144, 6);
             // 
             // maskToolStripMenuItem
             // 
             maskToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mToolStripMenuItem, applyMaskToolStripMenuItem, deleteMaskToolStripMenuItem });
             maskToolStripMenuItem.Name = "maskToolStripMenuItem";
-            maskToolStripMenuItem.Size = new Size(180, 22);
+            maskToolStripMenuItem.Size = new Size(147, 22);
             maskToolStripMenuItem.Text = "Mask";
             // 
             // mToolStripMenuItem
@@ -761,7 +763,7 @@
             // 
             stackToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { raiseToolStripMenuItem, lowerToolStripMenuItem, toTopToolStripMenuItem, toBottomToolStripMenuItem });
             stackToolStripMenuItem.Name = "stackToolStripMenuItem";
-            stackToolStripMenuItem.Size = new Size(180, 22);
+            stackToolStripMenuItem.Size = new Size(147, 22);
             stackToolStripMenuItem.Text = "Stack";
             // 
             // raiseToolStripMenuItem
@@ -796,7 +798,7 @@
             // 
             transdormToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { flipHorizomtallyToolStripMenuItem, flipVerticallyToolStripMenuItem, toolStripMenuItem18, rotate90DegreesToolStripMenuItem, rotate90DegreesCountereclockwiseToolStripMenuItem, rotate180DegreesToolStripMenuItem, rotateToolStripMenuItem });
             transdormToolStripMenuItem.Name = "transdormToolStripMenuItem";
-            transdormToolStripMenuItem.Size = new Size(180, 22);
+            transdormToolStripMenuItem.Size = new Size(147, 22);
             transdormToolStripMenuItem.Text = "Transdorm";
             // 
             // flipHorizomtallyToolStripMenuItem
@@ -843,12 +845,12 @@
             // toolStripMenuItem27
             // 
             toolStripMenuItem27.Name = "toolStripMenuItem27";
-            toolStripMenuItem27.Size = new Size(177, 6);
+            toolStripMenuItem27.Size = new Size(144, 6);
             // 
             // toolStripMenuItem28
             // 
             toolStripMenuItem28.Name = "toolStripMenuItem28";
-            toolStripMenuItem28.Size = new Size(180, 22);
+            toolStripMenuItem28.Size = new Size(147, 22);
             toolStripMenuItem28.Text = "Layer Settings";
             toolStripMenuItem28.Click += BthUpdateLayer_Click;
             // 
@@ -1042,7 +1044,7 @@
             btnLassoSelect.Appearance = Appearance.Button;
             btnLassoSelect.FlatStyle = FlatStyle.Popup;
             btnLassoSelect.Image = Properties.Resources.Lasso;
-            btnLassoSelect.Location = new Point(126, 27);
+            btnLassoSelect.Location = new Point(164, 27);
             btnLassoSelect.Name = "btnLassoSelect";
             btnLassoSelect.Size = new Size(32, 32);
             btnLassoSelect.TabIndex = 26;
@@ -1055,7 +1057,7 @@
             btnRectangleSelect.Appearance = Appearance.Button;
             btnRectangleSelect.FlatStyle = FlatStyle.Popup;
             btnRectangleSelect.Image = Properties.Resources.Rect;
-            btnRectangleSelect.Location = new Point(162, 27);
+            btnRectangleSelect.Location = new Point(200, 27);
             btnRectangleSelect.Name = "btnRectangleSelect";
             btnRectangleSelect.Size = new Size(32, 32);
             btnRectangleSelect.TabIndex = 26;
@@ -1068,7 +1070,7 @@
             btnMagicWand.Appearance = Appearance.Button;
             btnMagicWand.FlatStyle = FlatStyle.Popup;
             btnMagicWand.Image = Properties.Resources.MagicWand;
-            btnMagicWand.Location = new Point(199, 27);
+            btnMagicWand.Location = new Point(237, 27);
             btnMagicWand.Name = "btnMagicWand";
             btnMagicWand.Size = new Size(32, 32);
             btnMagicWand.TabIndex = 26;
@@ -1372,6 +1374,19 @@
             rdoAll.UseVisualStyleBackColor = true;
             rdoAll.CheckedChanged += RdoAll_CheckedChanged;
             // 
+            // btnEraser
+            // 
+            btnEraser.Appearance = Appearance.Button;
+            btnEraser.FlatStyle = FlatStyle.Popup;
+            btnEraser.Image = (Image)resources.GetObject("btnEraser.Image");
+            btnEraser.Location = new Point(126, 27);
+            btnEraser.Name = "btnEraser";
+            btnEraser.Size = new Size(32, 32);
+            btnEraser.TabIndex = 26;
+            btnEraser.UseVisualStyleBackColor = true;
+            btnEraser.CheckedChanged += BtnTools_CheckedChanged;
+            btnEraser.Click += BtnTools_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1381,6 +1396,7 @@
             Controls.Add(btnMagicWand);
             Controls.Add(btnRectangleSelect);
             Controls.Add(btnLassoSelect);
+            Controls.Add(btnEraser);
             Controls.Add(btnBrusher);
             Controls.Add(btnFiller);
             Controls.Add(btnPointer);
@@ -1567,5 +1583,6 @@
         private ToolStripMenuItem darkToolStripMenuItem;
         private ToolStripMenuItem invertToolStripMenuItem;
         private Button btnDuplicate;
+        private RadioButton btnEraser;
     }
 }

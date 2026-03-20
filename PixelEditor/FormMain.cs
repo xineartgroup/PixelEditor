@@ -21,6 +21,7 @@ namespace PixelEditor
         private PointF strokeLastInterpolated;
         private bool isDragging = false;
         private bool isPainting = false;
+        private bool isErasing = false;
         private bool isRotating = false;
         private bool isScaling = false;
         private bool isLassoSelecting = false;
@@ -33,13 +34,15 @@ namespace PixelEditor
         private float initialScaleFactor = 0f;
         private float scaleFactor = 1.0f;
         private int selectedBrushIndex = 0;
+        private int selectedEraserIndex = 0;
         private string currentFilePath = "";
         private DateTime lastPaintTime = DateTime.MinValue;
         private readonly List<Image> brushes = [];
         private List<PointF> strokePoints = [];
         private Bitmap? selectedAreaBitmap = null;
         private readonly Matrix transformMatrix = new();
-
+        private float brushPixelSize = 0.0f;
+        private float currentOpacity = 1.0f;
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -47,7 +50,7 @@ namespace PixelEditor
         private readonly Label lblBrushOpacity = new();
         private readonly Label lblBrushSize = new();
         private readonly Button btnPenColor = new();
-        private readonly Panel panel2 = new();
+        private readonly Panel panelBrush = new();
         private readonly TrackBar brush_size = new();
         private readonly TrackBar brush_opacity = new();
         private readonly Label label10 = new();
@@ -56,6 +59,22 @@ namespace PixelEditor
         private readonly Label label8 = new();
         private readonly TrackBar brush_hardness = new();
         private readonly TrackBar brush_smoothness = new();
+
+        private readonly GroupBox groupEraserDetail = new();
+        private readonly Button btnEraserColor = new();
+        private readonly Panel panelEraser = new();
+        private readonly TrackBar eraser_size = new();
+        private readonly TrackBar eraser_opacity = new();
+        private readonly TrackBar eraser_hardness = new();
+        private readonly TrackBar eraser_smoothness = new();
+        private readonly Label lblEraserSize = new();
+        private readonly Label lblEraserOpacity = new();
+        private readonly Label lblEraserHardness = new();
+        private readonly Label lblEraserSmoothness = new();
+        private readonly Label labelEraserSize = new();
+        private readonly Label labelEraserOpacity = new();
+        private readonly Label labelEraserHardness = new();
+        private readonly Label labelEraserSmoothness = new();
 
         private readonly GroupBox groupFillDetail = new();
         private readonly ComboBox cboFillBlendMode = new();
@@ -87,6 +106,7 @@ namespace PixelEditor
             InitializeComponent();
             InitializeComponentGroupFill();
             InitializeComponentGroupBrush();
+            InitializeComponentGroupEraser();
             InitializeComponentGroupMagicWand();
             InitializeTimer();
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
@@ -229,7 +249,7 @@ namespace PixelEditor
             groupBrushDetail.Controls.Add(lblBrushOpacity);
             groupBrushDetail.Controls.Add(lblBrushSize);
             groupBrushDetail.Controls.Add(btnPenColor);
-            groupBrushDetail.Controls.Add(panel2);
+            groupBrushDetail.Controls.Add(panelBrush);
             groupBrushDetail.Controls.Add(brush_size);
             groupBrushDetail.Controls.Add(brush_opacity);
             groupBrushDetail.Controls.Add(label10);
@@ -289,12 +309,12 @@ namespace PixelEditor
             btnPenColor.TabIndex = 24;
             btnPenColor.UseVisualStyleBackColor = false;
             btnPenColor.Click += BtnPenColor_Click;
-            panel2.BackColor = Color.White;
-            panel2.BorderStyle = BorderStyle.FixedSingle;
-            panel2.Location = new Point(12, 51);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(155, 139);
-            panel2.TabIndex = 22;
+            panelBrush.BackColor = Color.White;
+            panelBrush.BorderStyle = BorderStyle.FixedSingle;
+            panelBrush.Location = new Point(12, 51);
+            panelBrush.Name = "panel2";
+            panelBrush.Size = new Size(155, 139);
+            panelBrush.TabIndex = 22;
             brush_size.Location = new Point(76, 196);
             brush_size.Maximum = 100;
             brush_size.Minimum = 1;
@@ -302,7 +322,7 @@ namespace PixelEditor
             brush_size.Size = new Size(106, 45);
             brush_size.TabIndex = 23;
             brush_size.TickStyle = TickStyle.None;
-            brush_size.Value = 12;
+            brush_size.Value = 6;
             brush_size.Scroll += Brush_size_Scroll;
             brush_opacity.Location = new Point(76, 247);
             brush_opacity.Maximum = 100;
@@ -367,6 +387,183 @@ namespace PixelEditor
             ResumeLayout(false);
         }
 
+        private void InitializeComponentGroupEraser()
+        {
+            groupEraserDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)eraser_size).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_opacity).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_hardness).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_smoothness).BeginInit();
+            SuspendLayout();
+
+            groupEraserDetail.Controls.Add(lblEraserHardness);
+            groupEraserDetail.Controls.Add(lblEraserSmoothness);
+            groupEraserDetail.Controls.Add(lblEraserOpacity);
+            groupEraserDetail.Controls.Add(lblEraserSize);
+            groupEraserDetail.Controls.Add(btnEraserColor);
+            groupEraserDetail.Controls.Add(panelEraser);
+            groupEraserDetail.Controls.Add(eraser_size);
+            groupEraserDetail.Controls.Add(eraser_opacity);
+            groupEraserDetail.Controls.Add(labelEraserHardness);
+            groupEraserDetail.Controls.Add(labelEraserSmoothness);
+            groupEraserDetail.Controls.Add(labelEraserSize);
+            groupEraserDetail.Controls.Add(labelEraserOpacity);
+            groupEraserDetail.Controls.Add(eraser_hardness);
+            groupEraserDetail.Controls.Add(eraser_smoothness);
+
+            groupEraserDetail.Location = new Point(12, 74);
+            groupEraserDetail.Name = "groupEraserDetail";
+            groupEraserDetail.Size = new Size(230, 430);
+            groupEraserDetail.TabIndex = 29;
+            groupEraserDetail.TabStop = false;
+            groupEraserDetail.Text = "Eraser Detail";
+            groupEraserDetail.Visible = false;
+
+            // Labels for displaying values
+            lblEraserHardness.BackColor = Color.White;
+            lblEraserHardness.BorderStyle = BorderStyle.Fixed3D;
+            lblEraserHardness.FlatStyle = FlatStyle.Flat;
+            lblEraserHardness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEraserHardness.Location = new Point(188, 349);
+            lblEraserHardness.Name = "lblEraserHardness";
+            lblEraserHardness.Size = new Size(32, 24);
+            lblEraserHardness.TabIndex = 30;
+            lblEraserHardness.TextAlign = ContentAlignment.MiddleCenter;
+
+            lblEraserSmoothness.BackColor = Color.White;
+            lblEraserSmoothness.BorderStyle = BorderStyle.Fixed3D;
+            lblEraserSmoothness.FlatStyle = FlatStyle.Flat;
+            lblEraserSmoothness.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEraserSmoothness.Location = new Point(188, 298);
+            lblEraserSmoothness.Name = "lblEraserSmoothness";
+            lblEraserSmoothness.Size = new Size(32, 24);
+            lblEraserSmoothness.TabIndex = 30;
+            lblEraserSmoothness.TextAlign = ContentAlignment.MiddleCenter;
+
+            lblEraserOpacity.BackColor = Color.White;
+            lblEraserOpacity.BorderStyle = BorderStyle.Fixed3D;
+            lblEraserOpacity.FlatStyle = FlatStyle.Flat;
+            lblEraserOpacity.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEraserOpacity.Location = new Point(188, 247);
+            lblEraserOpacity.Name = "lblEraserOpacity";
+            lblEraserOpacity.Size = new Size(32, 24);
+            lblEraserOpacity.TabIndex = 30;
+            lblEraserOpacity.TextAlign = ContentAlignment.MiddleCenter;
+
+            lblEraserSize.BackColor = Color.White;
+            lblEraserSize.BorderStyle = BorderStyle.Fixed3D;
+            lblEraserSize.FlatStyle = FlatStyle.Flat;
+            lblEraserSize.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEraserSize.Location = new Point(188, 196);
+            lblEraserSize.Name = "lblEraserSize";
+            lblEraserSize.Size = new Size(32, 24);
+            lblEraserSize.TabIndex = 30;
+            lblEraserSize.TextAlign = ContentAlignment.MiddleCenter;
+
+            // Eraser Color Button
+            btnEraserColor.BackColor = Color.White;
+            btnEraserColor.FlatStyle = FlatStyle.Popup;
+            btnEraserColor.Location = new Point(73, 22);
+            btnEraserColor.Name = "btnEraserColor";
+            btnEraserColor.Size = new Size(20, 20);
+            btnEraserColor.TabIndex = 24;
+            btnEraserColor.UseVisualStyleBackColor = false;
+            btnEraserColor.Click += BtnEraserColor_Click;
+
+            // Preview panel
+            panelEraser.BackColor = Color.White;
+            panelEraser.BorderStyle = BorderStyle.FixedSingle;
+            panelEraser.Location = new Point(12, 51);
+            panelEraser.Name = "panelEraser";
+            panelEraser.Size = new Size(155, 139);
+            panelEraser.TabIndex = 22;
+
+            // Size control
+            eraser_size.Location = new Point(76, 196);
+            eraser_size.Maximum = 100;
+            eraser_size.Minimum = 1;
+            eraser_size.Name = "eraser_size";
+            eraser_size.Size = new Size(106, 45);
+            eraser_size.TabIndex = 23;
+            eraser_size.TickStyle = TickStyle.None;
+            eraser_size.Value = 12;
+            eraser_size.Scroll += Eraser_size_Scroll;
+
+            // Opacity control
+            eraser_opacity.Location = new Point(76, 247);
+            eraser_opacity.Maximum = 100;
+            eraser_opacity.Name = "eraser_opacity";
+            eraser_opacity.Size = new Size(106, 45);
+            eraser_opacity.TabIndex = 23;
+            eraser_opacity.TickStyle = TickStyle.None;
+            eraser_opacity.Value = 100;
+            eraser_opacity.Scroll += Eraser_opacity_Scroll;
+
+            // Labels
+            labelEraserHardness.AutoSize = true;
+            labelEraserHardness.Font = new Font("Segoe UI", 8.25F);
+            labelEraserHardness.Location = new Point(7, 349);
+            labelEraserHardness.Name = "labelEraserHardness";
+            labelEraserHardness.Size = new Size(58, 13);
+            labelEraserHardness.TabIndex = 29;
+            labelEraserHardness.Text = "Hardness:";
+
+            labelEraserSmoothness.AutoSize = true;
+            labelEraserSmoothness.Font = new Font("Segoe UI", 8.25F);
+            labelEraserSmoothness.Location = new Point(6, 298);
+            labelEraserSmoothness.Name = "labelEraserSmoothness";
+            labelEraserSmoothness.Size = new Size(73, 13);
+            labelEraserSmoothness.TabIndex = 29;
+            labelEraserSmoothness.Text = "Smoothness:";
+
+            labelEraserSize.AutoSize = true;
+            labelEraserSize.Font = new Font("Segoe UI", 8.25F);
+            labelEraserSize.Location = new Point(7, 196);
+            labelEraserSize.Name = "labelEraserSize";
+            labelEraserSize.Size = new Size(30, 13);
+            labelEraserSize.TabIndex = 29;
+            labelEraserSize.Text = "Size:";
+
+            labelEraserOpacity.AutoSize = true;
+            labelEraserOpacity.Font = new Font("Segoe UI", 8.25F);
+            labelEraserOpacity.Location = new Point(7, 247);
+            labelEraserOpacity.Name = "labelEraserOpacity";
+            labelEraserOpacity.Size = new Size(49, 13);
+            labelEraserOpacity.TabIndex = 29;
+            labelEraserOpacity.Text = "Opacity:";
+
+            // Hardness control
+            eraser_hardness.Location = new Point(76, 349);
+            eraser_hardness.Maximum = 100;
+            eraser_hardness.Minimum = 1;
+            eraser_hardness.Name = "eraser_hardness";
+            eraser_hardness.Size = new Size(106, 45);
+            eraser_hardness.TabIndex = 23;
+            eraser_hardness.TickStyle = TickStyle.None;
+            eraser_hardness.Value = 80;
+            eraser_hardness.Scroll += Eraser_hardness_Scroll;
+
+            // Smoothness control
+            eraser_smoothness.Location = new Point(76, 298);
+            eraser_smoothness.Maximum = 100;
+            eraser_smoothness.Name = "eraser_smoothness";
+            eraser_smoothness.Size = new Size(106, 45);
+            eraser_smoothness.TabIndex = 23;
+            eraser_smoothness.TickStyle = TickStyle.None;
+            eraser_smoothness.Value = 22;
+            eraser_smoothness.Scroll += Eraser_smoothness_Scroll;
+
+            Controls.Add(groupEraserDetail);
+
+            groupEraserDetail.ResumeLayout(false);
+            groupEraserDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)eraser_size).EndInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_opacity).EndInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_hardness).EndInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_smoothness).EndInit();
+            ResumeLayout(false);
+        }
+
         private void InitializeComponentGroupMagicWand()
         {
             groupMagicWand.SuspendLayout();
@@ -421,6 +618,7 @@ namespace PixelEditor
 
         private void FormMain_Load(object sender, EventArgs e)
         {
+            LoadNewDocument(true);
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Form1_Resize(sender, e);
             UpdateTitleBar();
@@ -431,14 +629,14 @@ namespace PixelEditor
             cboFillBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
             cboFillBlendMode.SelectedIndex = 0;
             cboFIllGradient.SelectedIndex = 0;
-            brush_size.Value = 12;
-            brush_opacity.Value = 100;
-            brush_smoothness.Value = 22;
-            brush_hardness.Value = 80;
             Brush_size_Scroll(sender, e);
             Brush_opacity_Scroll(sender, e);
             Brush_smoothness_Scroll(sender, e);
             Brush_hardness_Scroll(sender, e);
+            Eraser_size_Scroll(sender, e);
+            Eraser_opacity_Scroll(sender, e);
+            Eraser_smoothness_Scroll(sender, e);
+            Eraser_hardness_Scroll(sender, e);
             ReloadBrushes();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
@@ -482,7 +680,7 @@ namespace PixelEditor
                 int index = 0;
                 foreach (string file in files)
                 {
-                    PictureBox pic = new()
+                    PictureBox picBrush = new()
                     {
                         Image = new Bitmap(file),
                         Size = new Size(24, 24),
@@ -491,9 +689,22 @@ namespace PixelEditor
                         BorderStyle = BorderStyle.None,
                         Tag = index++
                     };
-                    pic.Click += Pic_Click;
-                    panel2.Controls.Add(pic);
-                    brushes.Add(new Bitmap(pic.Image));
+                    picBrush.Click += PicBrush_Click;
+                    panelBrush.Controls.Add(picBrush);
+
+                    PictureBox picEraser = new()
+                    {
+                        Image = new Bitmap(file),
+                        Size = new Size(24, 24),
+                        Location = new Point(x, y),
+                        SizeMode = PictureBoxSizeMode.StretchImage,
+                        BorderStyle = BorderStyle.None,
+                        Tag = index++
+                    };
+                    picEraser.Click += PicEraser_Click;
+                    panelEraser.Controls.Add(picEraser);
+
+                    brushes.Add(new Bitmap(picBrush.Image));
                     x += 24;
                     if (x > 128)
                     {
@@ -507,7 +718,7 @@ namespace PixelEditor
             }
         }
 
-        private void Pic_Click(object? sender, EventArgs e)
+        private void PicBrush_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -532,6 +743,31 @@ namespace PixelEditor
             }
         }
 
+        private void PicEraser_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is not null && sender is PictureBox brush)
+                {
+                    if (brush.Image is not null)
+                    {
+                        selectedEraserIndex = brush.Tag != null ? (int)brush.Tag : -1;
+                        paint.Brush = new Bitmap(brush.Image);
+                        if (paint.Brush != null)
+                        {
+                            paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                            PaintingEngine.SetBrush(paint);
+                        }
+                        UpdateCursor();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
         private void BtnPenColor_Click(object? sender, EventArgs e)
         {
             ColorDialog c = new()
@@ -543,6 +779,25 @@ namespace PixelEditor
             {
                 btnPenColor.BackColor = c.Color;
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+                if (paint.Brush != null)
+                {
+                    PaintingEngine.SetBrush(paint);
+                    UpdateCursor();
+                }
+            }
+        }
+
+        private void BtnEraserColor_Click(object? sender, EventArgs e)
+        {
+            ColorDialog c = new()
+            {
+                Color = btnEraserColor.BackColor,
+                FullOpen = true
+            };
+            if (c.ShowDialog() == DialogResult.OK)
+            {
+                btnEraserColor.BackColor = c.Color;
+                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
                 if (paint.Brush != null)
                 {
                     PaintingEngine.SetBrush(paint);
@@ -597,6 +852,11 @@ namespace PixelEditor
                     btnBrusher.Checked = false;
                     groupBrushDetail.Visible = false;
                 }
+                if (btn != btnEraser)
+                {
+                    btnEraser.Checked = false;
+                    groupEraserDetail.Visible = false;
+                }
                 if (btn != btnLassoSelect)
                 {
                     btnLassoSelect.Checked = false;
@@ -634,7 +894,25 @@ namespace PixelEditor
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
                 groupBrushDetail.Visible = true;
-                UpdateCursor();
+                if (paint.Brush != null)
+                {
+                    int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+                    int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+                    UpdateCursor(cursorWidth, cursorHeight);
+                }
+            }
+            else if (btnEraser.Checked)
+            {
+                paint.Brush = brushes.Count > selectedEraserIndex && selectedEraserIndex >= 0 ? new Bitmap(brushes[selectedEraserIndex]) : null;
+                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                PaintingEngine.SetBrush(paint);
+                groupEraserDetail.Visible = true;
+                if (paint.Brush != null)
+                {
+                    int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+                    int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+                    UpdateCursor(cursorWidth, cursorHeight);
+                }
             }
             else if (btnLassoSelect.Checked)
             {
@@ -700,12 +978,14 @@ namespace PixelEditor
 
         private void UpdateCursor()
         {
+            canvas.Cursor = Cursors.Default;
+        }
+
+        private void UpdateCursor(int cursorWidth, int cursorHeight)
+        {
             if (paint.Brush != null)
             {
                 canvas.Cursor.Dispose();
-
-                int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
-                int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
 
                 int hotSpotX = cursorWidth / 2;
                 int hotSpotY = cursorHeight / 2;
@@ -758,7 +1038,23 @@ namespace PixelEditor
         private void Brush_size_Scroll(object? sender, EventArgs e)
         {
             lblBrushSize.Text = $"{brush_size.Value}";
-            UpdateCursor();
+            if (paint.Brush != null)
+            {
+                int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+                int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+                UpdateCursor(cursorWidth, cursorHeight);
+            }
+        }
+
+        private void Eraser_size_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserSize.Text = $"{eraser_size.Value}";
+            if (paint.Brush != null)
+            {
+                int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+                int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+                UpdateCursor(cursorWidth, cursorHeight);
+            }
         }
 
         private void Brush_opacity_Scroll(object? sender, EventArgs e)
@@ -766,9 +1062,19 @@ namespace PixelEditor
             lblBrushOpacity.Text = $"{brush_opacity.Value}";
         }
 
+        private void Eraser_opacity_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserOpacity.Text = $"{eraser_opacity.Value}";
+        }
+
         private void Brush_smoothness_Scroll(object? sender, EventArgs e)
         {
             lblBrushSmoothness.Text = $"{brush_smoothness.Value}";
+        }
+
+        private void Eraser_smoothness_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserSmoothness.Text = $"{eraser_smoothness.Value}";
         }
 
         private void Brush_hardness_Scroll(object? sender, EventArgs e)
@@ -777,6 +1083,17 @@ namespace PixelEditor
             if (paint.Brush != null)
             {
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+                PaintingEngine.SetBrush(paint);
+                UpdateCursor();
+            }
+        }
+
+        private void Eraser_hardness_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserHardness.Text = $"{eraser_hardness.Value}";
+            if (paint.Brush != null)
+            {
+                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
                 UpdateCursor();
             }
@@ -930,19 +1247,52 @@ namespace PixelEditor
 
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!ConfirmAbandonChanges()) return;
+            LoadNewDocument(false);
+        }
 
-            Document.Zoom = 0.95f;
-            Document.ImageOffset = new PointF(0, 0);
+        private void LoadNewDocument(bool appLaunch)
+        {
+            FormSettings formSettings = new()
+            {
+                StartPosition = FormStartPosition.CenterParent,
+                LayerHeight = Document.Height,
+                LayerWidth = Document.Width,
+                LayerX = 0,
+                LayerY = 0
+            };
+            if (formSettings.ShowDialog(this) == DialogResult.OK)
+            {
+                if (!ConfirmAbandonChanges()) return;
 
-            HistoryManager.Clear();
-            layersControl.ClearLayers();
-            RedrawImage();
+                Document.Zoom = 0.95f;
+                Document.ImageOffset = new PointF(0, 0);
 
-            currentFilePath = "";
-            isDirty = false;
-            UpdateTitleBar();
-            this.Invalidate();
+                HistoryManager.Clear();
+                layersControl.ClearLayers();
+
+                Layer selectedLayer = new($"layer {layersControl.GetLayers().Count + 1}", true)
+                {
+                    X = formSettings.LayerX,
+                    Y = formSettings.LayerY
+                };
+                selectedLayer.Image = (selectedLayer.Image != null) ?
+                    ManipulatorLighting.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
+                    ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
+                layersControl.InsertLayer(0, selectedLayer);
+                layersControl.RefreshLayersDisplay();
+
+                currentFilePath = "";
+                isDirty = false;
+                UpdateTitleBar();
+                RedrawImage();
+            }
+            else
+            {
+                if (appLaunch)
+                {
+                    Application.Exit();
+                }
+            }
         }
 
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1023,7 +1373,7 @@ namespace PixelEditor
                 isDirty = false;
                 UpdateTitleBar();
 
-                labelStatus.Text += " Saved Successfully!";
+                labelStatus.Text = " Saved Successfully!";
             }
             catch (Exception ex)
             {
@@ -1695,7 +2045,10 @@ namespace PixelEditor
 
         private void GeneralSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FormSettings formSettings = new();
+            FormSettings formSettings = new()
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
@@ -1978,6 +2331,14 @@ namespace PixelEditor
                     strokeLastInterpolated = PointF.Empty;
                     PaintingEngine.BeginStroke();
                 }
+                else if (btnEraser.Checked)
+                {
+                    isErasing = true;
+                    strokePoints = [];
+                    lazyLocalPos = PointF.Empty;
+                    strokeLastInterpolated = PointF.Empty;
+                    PaintingEngine.BeginStroke();
+                }
                 else if (btnPointer.Checked)
                 {
                     if (ImageSelections.ContainsSelection())
@@ -2030,9 +2391,8 @@ namespace PixelEditor
                             var selectionPolygons = ImageSelections.GetSelections();
                             if (selectionPolygons.Count == 0)
                             {
-                                bitmap = ManipulatorGeneral.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                bitmap = ManipulatorGeneral.FillColor(selectedLayer,
                                     canvas.Width, canvas.Height,
-                                    selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
                                     (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
                                     (float)(fillOpacity.Value / fillOpacity.Maximum),
                                     lastMousePosition,
@@ -2044,9 +2404,8 @@ namespace PixelEditor
                                 {
                                     if (ImageSelections.IsPointInPolygon(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height), selectionPolygons[i]))
                                     {
-                                        bitmap = ManipulatorGeneral.FillColor(selectedLayer.Image, selectedLayer.X, selectedLayer.Y,
+                                        bitmap = ManipulatorGeneral.FillColor(selectedLayer,
                                         canvas.Width, canvas.Height,
-                                        selectedLayer.ScaleWidth, selectedLayer.ScaleHeight,
                                         (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
                                         (float)(fillOpacity.Value / fillOpacity.Maximum),
                                         lastMousePosition,
@@ -2212,7 +2571,7 @@ namespace PixelEditor
                     UpdateTransformMatrix();
                 }
             }
-            else if (isPainting)
+            else if (isPainting || isErasing)
             {
                 if (selectedLayer != null)
                 {
@@ -2235,23 +2594,42 @@ namespace PixelEditor
                         return;
                     }
 
+                    //if (brushPixelSize == 0)
+                    {
+                        if (isPainting)
+                        {
+                            float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
+                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                            float scale = 1.0f;
+                            if (aspectRatio > containerAspectRatio)
+                                scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
+                            else if (aspectRatio < containerAspectRatio)
+                                scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
+
+                            brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
+                            currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
+                        }
+                        else
+                        {
+                            float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
+                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                            float scale = 1.0f;
+                            if (aspectRatio > containerAspectRatio)
+                                scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
+                            else if (aspectRatio < containerAspectRatio)
+                                scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
+
+                            brushPixelSize = 2 * scale * (float)eraser_size.Value / eraser_size.Maximum;
+                            currentOpacity = (float)eraser_opacity.Value / eraser_opacity.Maximum;
+                        }
+                    }
+
                     PointF delta = new(localCurrentRaw.X - lazyLocalPos.X, localCurrentRaw.Y - lazyLocalPos.Y);
 
                     lazyLocalPos.X += delta.X * lazySmoothing;
                     lazyLocalPos.Y += delta.Y * lazySmoothing;
 
                     strokePoints.Add(lazyLocalPos);
-
-                    float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
-                    float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                    float scale = 1.0f;
-                    if (aspectRatio > containerAspectRatio)
-                        scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
-                    else if (aspectRatio < containerAspectRatio)
-                        scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
-
-                    float brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
-                    float currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
 
                     float radius = paint.Brush != null ? (int)(paint.Brush.Width * brushPixelSize / 2) : 0;
                     Rectangle dirty = new(0, 0, 0, 0);
@@ -2376,6 +2754,7 @@ namespace PixelEditor
             }
             isDragging = false;
             isPainting = false;
+            isErasing = false;
             isLassoSelecting = false;
             isRectSelecting = false;
             isRotating = false;

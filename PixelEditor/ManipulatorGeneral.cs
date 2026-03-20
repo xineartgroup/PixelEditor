@@ -530,9 +530,12 @@ namespace PixelEditor
             return result;
         }
 
-        public static Bitmap FillColor(Image image, int imgX, int imgY, int canvasWidth, int canvasHeight, float layerScaleWidth, float layerScaleHeight, ImageBlending blend, Color color, float opacity, Point startPoint, SelectionPolygon selectionPoints)
+        public static Bitmap? FillColor(Layer selectedLayer, int canvasWidth, int canvasHeight, ImageBlending blend, Color color, float opacity, Point startPoint, SelectionPolygon selectionPoints)
         {
-            Bitmap bitmap = new(image);
+            if (selectedLayer.Image == null)
+                return null;
+
+            Bitmap bitmap = new(selectedLayer.Image);
             int width = bitmap.Width;
             int height = bitmap.Height;
             Rectangle rect = new(0, 0, width, height);
@@ -562,14 +565,14 @@ namespace PixelEditor
 
             PointF WorldToImage(Point p)
             {
-                float layerPixelX = (p.X - imgX) / layerScaleWidth;
-                float layerPixelY = (p.Y - imgY) / layerScaleHeight;
+                float layerPixelX = (p.X - selectedLayer.X) / selectedLayer.ScaleWidth;
+                float layerPixelY = (p.Y - selectedLayer.Y) / selectedLayer.ScaleHeight;
                 return new PointF(layerPixelX, layerPixelY);
             }
 
             Point startI = ScreenToWorld(startPoint, canvasWidth, canvasHeight);
-            startI.X -= imgX;
-            startI.Y -= imgY;
+            startI.X -= selectedLayer.X;
+            startI.Y -= selectedLayer.Y;
 
             if (startI.X < 0 || startI.X >= width || startI.Y < 0 || startI.Y >= height)
             {
@@ -710,7 +713,7 @@ namespace PixelEditor
             return bitmap;
         }
 
-        public static unsafe Layer MergeLayers(Layer top, Layer bottom)
+        public static Layer MergeLayers(Layer top, Layer bottom)
         {
             Rectangle topBounds = top.GetBounds();
             Rectangle bottomBounds = bottom.GetBounds();

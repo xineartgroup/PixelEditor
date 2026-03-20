@@ -66,5 +66,17 @@
         {
 
         }
+
+        private void BtnResetCanvas_Click(object sender, EventArgs e)
+        {
+            canvasWidth.Value = Document.Width;
+            canvasHeight.Value = Document.Height;
+        }
+
+        private void BtnResetLayer_Click(object sender, EventArgs e)
+        {
+            layerWidth.Value = LayerWidth >= layerWidth.Minimum && LayerWidth <= layerWidth.Maximum ? LayerWidth : 2;
+            layerHeight.Value = LayerHeight >= layerHeight.Minimum && LayerHeight <= layerHeight.Maximum ? LayerHeight : 2;
+        }
     }
 }
