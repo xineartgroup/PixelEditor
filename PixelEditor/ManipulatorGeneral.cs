@@ -432,9 +432,11 @@ namespace PixelEditor
             return result;
         }
 
-        public static Bitmap? CutSelectionFromLayer(Layer selectedLayer, bool emptyHole = true)
+        public static Bitmap? CutSelectionFromLayer(Layer selectedLayer)
         {
             if (selectedLayer.Image == null) return null;
+
+            bool emptyHole = selectedLayer.FillType == FillType.Transparency;
 
             int width = selectedLayer.Image.Width;
             int height = selectedLayer.Image.Height;

@@ -1273,7 +1273,8 @@ namespace PixelEditor
                 Layer selectedLayer = new($"layer {layersControl.GetLayers().Count + 1}", true)
                 {
                     X = formSettings.LayerX,
-                    Y = formSettings.LayerY
+                    Y = formSettings.LayerY,
+                    FillType = FillType.Transparency
                 };
                 selectedLayer.Image = (selectedLayer.Image != null) ?
                     ManipulatorLighting.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
@@ -2329,6 +2330,18 @@ namespace PixelEditor
                     strokePoints = [];
                     lazyLocalPos = PointF.Empty;
                     strokeLastInterpolated = PointF.Empty;
+
+                    float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
+                    float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                    float scale = 1.0f;
+                    if (aspectRatio > containerAspectRatio)
+                        scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
+                    else if (aspectRatio < containerAspectRatio)
+                        scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
+
+                    brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
+                    currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
+
                     PaintingEngine.BeginStroke();
                 }
                 else if (btnEraser.Checked)
@@ -2337,6 +2350,18 @@ namespace PixelEditor
                     strokePoints = [];
                     lazyLocalPos = PointF.Empty;
                     strokeLastInterpolated = PointF.Empty;
+
+                    float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
+                    float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                    float scale = 1.0f;
+                    if (aspectRatio > containerAspectRatio)
+                        scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
+                    else if (aspectRatio < containerAspectRatio)
+                        scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
+
+                    brushPixelSize = 2 * scale * (float)eraser_size.Value / eraser_size.Maximum;
+                    currentOpacity = (float)eraser_opacity.Value / eraser_opacity.Maximum;
+
                     PaintingEngine.BeginStroke();
                 }
                 else if (btnPointer.Checked)
@@ -2371,8 +2396,7 @@ namespace PixelEditor
                             {
                                 ImageSelections.CalculateSelectionBounds();
                                 selectedAreaBitmap = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
-                                bool hasTransparentPixels = ManipulatorLighting.HasTransparentPixels(selectedAreaBitmap);
-                                selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer, hasTransparentPixels);
+                                selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
                             }
                         }
                     }
@@ -2592,36 +2616,6 @@ namespace PixelEditor
                         PaintingEngine.SetTarget(selectedLayer.Image);
                         PaintingEngine.BeginStroke();
                         return;
-                    }
-
-                    //if (brushPixelSize == 0)
-                    {
-                        if (isPainting)
-                        {
-                            float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
-                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                            float scale = 1.0f;
-                            if (aspectRatio > containerAspectRatio)
-                                scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
-                            else if (aspectRatio < containerAspectRatio)
-                                scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
-
-                            brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
-                            currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
-                        }
-                        else
-                        {
-                            float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
-                            float containerAspectRatio = (float)canvas.Width / canvas.Height;
-                            float scale = 1.0f;
-                            if (aspectRatio > containerAspectRatio)
-                                scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
-                            else if (aspectRatio < containerAspectRatio)
-                                scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
-
-                            brushPixelSize = 2 * scale * (float)eraser_size.Value / eraser_size.Maximum;
-                            currentOpacity = (float)eraser_opacity.Value / eraser_opacity.Maximum;
-                        }
                     }
 
                     PointF delta = new(localCurrentRaw.X - lazyLocalPos.X, localCurrentRaw.Y - lazyLocalPos.Y);
