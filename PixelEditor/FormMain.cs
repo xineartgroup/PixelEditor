@@ -22,6 +22,7 @@ namespace PixelEditor
         private bool isDragging = false;
         private bool isPainting = false;
         private bool isErasing = false;
+        private bool isWarping = false;
         private bool isRotating = false;
         private bool isScaling = false;
         private bool isLassoSelecting = false;
@@ -43,6 +44,7 @@ namespace PixelEditor
         private readonly Matrix transformMatrix = new();
         private float brushPixelSize = 0.0f;
         private float currentOpacity = 1.0f;
+        private const int ProxyScale = 4;
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -94,6 +96,11 @@ namespace PixelEditor
         private readonly Label label13 = new();
         private readonly ComboBox cboMWSelectionMode = new();
 
+        private readonly GroupBox groupWarpDetail = new();
+        private readonly TrackBar warpBrushSize = new();
+        private readonly Label lblWarpBrushSize = new();
+        private readonly Label labelWarpBrushSize = new();
+
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
 
@@ -108,6 +115,7 @@ namespace PixelEditor
             InitializeComponentGroupBrush();
             InitializeComponentGroupEraser();
             InitializeComponentGroupMagicWand();
+            InitializeComponentGroupWarp();
             InitializeTimer();
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
@@ -616,6 +624,63 @@ namespace PixelEditor
             ResumeLayout(false);
         }
 
+        private void InitializeComponentGroupWarp()
+        {
+            groupWarpDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)warpBrushSize).BeginInit();
+            SuspendLayout();
+
+            groupWarpDetail.Controls.Add(lblWarpBrushSize);
+            groupWarpDetail.Controls.Add(labelWarpBrushSize);
+            groupWarpDetail.Controls.Add(warpBrushSize);
+
+            groupWarpDetail.Location = new Point(12, 74);
+            groupWarpDetail.Name = "groupWarpDetail";
+            groupWarpDetail.Size = new Size(230, 145);
+            groupWarpDetail.TabIndex = 30;
+            groupWarpDetail.TabStop = false;
+            groupWarpDetail.Text = "Warp Detail";
+            groupWarpDetail.Visible = false;
+
+            // Label for displaying the current brush size value
+            lblWarpBrushSize.BackColor = Color.White;
+            lblWarpBrushSize.BorderStyle = BorderStyle.Fixed3D;
+            lblWarpBrushSize.FlatStyle = FlatStyle.Flat;
+            lblWarpBrushSize.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblWarpBrushSize.Location = new Point(188, 40);
+            lblWarpBrushSize.Name = "lblWarpBrushSize";
+            lblWarpBrushSize.Size = new Size(32, 24);
+            lblWarpBrushSize.TabIndex = 30;
+            lblWarpBrushSize.TextAlign = ContentAlignment.MiddleCenter;
+
+            // Text label
+            labelWarpBrushSize.AutoSize = true;
+            labelWarpBrushSize.Font = new Font("Segoe UI", 8.25F);
+            labelWarpBrushSize.Location = new Point(7, 40);
+            labelWarpBrushSize.Name = "labelWarpBrushSize";
+            labelWarpBrushSize.Size = new Size(30, 13);
+            labelWarpBrushSize.TabIndex = 29;
+            labelWarpBrushSize.Text = "Size:";
+
+            // Brush size TrackBar
+            warpBrushSize.Location = new Point(76, 40);
+            warpBrushSize.Maximum = 100;
+            warpBrushSize.Minimum = 1;
+            warpBrushSize.Name = "warpBrushSize";
+            warpBrushSize.Size = new Size(106, 45);
+            warpBrushSize.TabIndex = 23;
+            warpBrushSize.TickStyle = TickStyle.None;
+            warpBrushSize.Value = 12;
+            warpBrushSize.Scroll += WarpBrushSize_Scroll;
+
+            Controls.Add(groupWarpDetail);
+
+            groupWarpDetail.ResumeLayout(false);
+            groupWarpDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)warpBrushSize).EndInit();
+            ResumeLayout(false);
+        }
+
         private void FormMain_Load(object sender, EventArgs e)
         {
             LoadNewDocument(true);
@@ -870,6 +935,11 @@ namespace PixelEditor
                     btnMagicWand.Checked = false;
                     groupMagicWand.Visible = false;
                 }
+                if (btn != btnWarp)
+                {
+                    btnWarp.Checked = false;
+                    groupWarpDetail.Visible = false;
+                }
             }
         }
 
@@ -929,6 +999,12 @@ namespace PixelEditor
                 PaintingEngine.SetBrush(paint);
                 groupMagicWand.Visible = true;
                 UpdateCursor(btnMagicWand.Image);
+            }
+            else if (btnWarp.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                groupWarpDetail.Visible = true;
+                UpdateCursor(btnWarp.Image);
             }
             else
             {
@@ -1101,6 +1177,11 @@ namespace PixelEditor
 
         private void SelectionThreshold_Scroll(object? sender, EventArgs e)
         {
+        }
+
+        private void WarpBrushSize_Scroll(object? sender, EventArgs e)
+        {
+            lblWarpBrushSize.Text = warpBrushSize.Value.ToString();
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -2364,6 +2445,25 @@ namespace PixelEditor
 
                     PaintingEngine.BeginStroke();
                 }
+                else if (btnWarp.Checked)
+                {
+                    if (selectedLayer != null && selectedLayer.GetBasicImage() is Bitmap bmp)
+                    {
+                        isWarping = true;
+                        WarpEngine.WarpSnapshot?.Dispose();
+                        WarpEngine.WarpSnapshot = (Bitmap)bmp.Clone();
+
+                        float aspectRatio = (float)ManipulatorGeneral.Screen.Width / ManipulatorGeneral.Screen.Height;
+                        float containerAspectRatio = (float)canvas.Width / canvas.Height;
+                        float scale = 1.0f;
+                        if (aspectRatio > containerAspectRatio)
+                            scale = (float)ManipulatorGeneral.Screen.Width / canvas.Width;
+                        else if (aspectRatio < containerAspectRatio)
+                            scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
+
+                        brushPixelSize = warpBrushSize.Value * scale;
+                    }
+                }
                 else if (btnPointer.Checked)
                 {
                     if (ImageSelections.ContainsSelection())
@@ -2595,6 +2695,34 @@ namespace PixelEditor
                     UpdateTransformMatrix();
                 }
             }
+            else if (isWarping)
+            {
+                if (selectedLayer != null && selectedLayer.GetBasicImage() is Bitmap bmp && WarpEngine.WarpSnapshot != null)
+                {
+                    Point worldCurrent = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    Point worldLast = ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height);
+                    PointF localCenter = new(worldCurrent.X - selectedLayer.X, worldCurrent.Y - selectedLayer.Y);
+                    float dx = worldCurrent.X - worldLast.X;
+                    float dy = worldCurrent.Y - worldLast.Y;
+                    if (Math.Abs(dx) > 0.01f || Math.Abs(dy) > 0.01f)
+                    {
+                        WarpEngine.ApplyForwardWarp(WarpEngine.WarpSnapshot, bmp, localCenter, dx, dy, brushPixelSize);
+                        WarpEngine.WarpSnapshot.Dispose();
+                        WarpEngine.WarpSnapshot = (Bitmap)bmp.Clone();
+                        ManipulatorGeneral.LayerCache.Remove(selectedLayer.Name);
+                        ManipulatorGeneral.DirtyRegions.Add(new Rectangle(
+                            selectedLayer.X, selectedLayer.Y,
+                            bmp.Width, bmp.Height));
+                        const int minWarpIntervalMs = 32;
+                        if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minWarpIntervalMs)
+                        {
+                            RedrawImage(layersControl.GetSelectedLayerIndex());
+                            lastPaintTime = DateTime.Now;
+                        }
+                    }
+                }
+                lastMousePosition = e.Location;
+            }
             else if (isPainting || isErasing)
             {
                 if (selectedLayer != null)
@@ -2746,6 +2874,9 @@ namespace PixelEditor
                     ImageSelections.AddSelectionPoint(ImageSelections.GetLastSelection()[0]);
                 }
             }
+            isWarping = false;
+            WarpEngine.WarpSnapshot?.Dispose();
+            WarpEngine.WarpSnapshot = null;
             isDragging = false;
             isPainting = false;
             isErasing = false;

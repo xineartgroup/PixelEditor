@@ -740,6 +740,54 @@ namespace PixelEditor
             return result;
         }
 
+        public static ColorGrid RasterizeLayer(Layer layer, int displayWidth, int displayHeight)
+        {
+            ColorGrid layerBuffer = new(displayWidth, displayHeight);
+            int[] pixels = layerBuffer.GetRawPixels();
+            float masterOpacity = layer.Opacity / 100f;
+            LayerChannel channel = layer.Channel;
+
+            unsafe
+            {
+                using Bitmap bmp = new(layer.Image!);
+                BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                    ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                byte* ptr = (byte*)data.Scan0;
+
+                for (int ly = 0; ly < displayHeight; ly++)
+                {
+                    int srcY = ly / layer.ScaleHeight;
+                    byte* row = ptr + (srcY * data.Stride);
+
+                    for (int lx = 0; lx < displayWidth; lx++)
+                    {
+                        int srcX = (lx / layer.ScaleWidth) * 4;
+
+                        byte originalAlpha = row[srcX + 3];
+                        if (originalAlpha == 0) continue;
+
+                        byte finalAlpha = (byte)(originalAlpha * masterOpacity);
+                        if (finalAlpha == 0) continue;
+
+                        byte b = layer.BlueFilter ? (byte)255 : row[srcX];
+                        byte g = layer.GreenFilter ? (byte)255 : row[srcX + 1];
+                        byte r = layer.RedFilter ? (byte)255 : row[srcX + 2];
+
+                        pixels[ly * displayWidth + lx] = channel switch
+                        {
+                            LayerChannel.Red => (finalAlpha << 24) | (r << 16) | (r << 8) | r,
+                            LayerChannel.Green => (finalAlpha << 24) | (g << 16) | (g << 8) | g,
+                            LayerChannel.Blue => (finalAlpha << 24) | (b << 16) | (b << 8) | b,
+                            _ => (finalAlpha << 24) | (r << 16) | (g << 8) | b
+                        };
+                    }
+                }
+                bmp.UnlockBits(data);
+            }
+
+            return layerBuffer;
+        }
+
         public static unsafe void DrawLayerToBuffer(Layer layer, BitmapData destData, Rectangle canvasBounds)
         {
             if (layer.Image == null || !layer.IsVisible) return;
@@ -981,54 +1029,6 @@ namespace PixelEditor
                 hc.Add(l.IsVisible);
             }
             return hc.ToHashCode();
-        }
-
-        private static ColorGrid RasterizeLayer(Layer layer, int displayWidth, int displayHeight)
-        {
-            ColorGrid layerBuffer = new(displayWidth, displayHeight);
-            int[] pixels = layerBuffer.GetRawPixels();
-            float masterOpacity = layer.Opacity / 100f;
-            LayerChannel channel = layer.Channel;
-
-            unsafe
-            {
-                using Bitmap bmp = new(layer.Image!);
-                BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-                    ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                byte* ptr = (byte*)data.Scan0;
-
-                for (int ly = 0; ly < displayHeight; ly++)
-                {
-                    int srcY = ly / layer.ScaleHeight;
-                    byte* row = ptr + (srcY * data.Stride);
-
-                    for (int lx = 0; lx < displayWidth; lx++)
-                    {
-                        int srcX = (lx / layer.ScaleWidth) * 4;
-
-                        byte originalAlpha = row[srcX + 3];
-                        if (originalAlpha == 0) continue;
-
-                        byte finalAlpha = (byte)(originalAlpha * masterOpacity);
-                        if (finalAlpha == 0) continue;
-
-                        byte b = layer.BlueFilter ? (byte)255 : row[srcX];
-                        byte g = layer.GreenFilter ? (byte)255 : row[srcX + 1];
-                        byte r = layer.RedFilter ? (byte)255 : row[srcX + 2];
-
-                        pixels[ly * displayWidth + lx] = channel switch
-                        {
-                            LayerChannel.Red => (finalAlpha << 24) | (r << 16) | (r << 8) | r,
-                            LayerChannel.Green => (finalAlpha << 24) | (g << 16) | (g << 8) | g,
-                            LayerChannel.Blue => (finalAlpha << 24) | (b << 16) | (b << 8) | b,
-                            _ => (finalAlpha << 24) | (r << 16) | (g << 8) | b
-                        };
-                    }
-                }
-                bmp.UnlockBits(data);
-            }
-
-            return layerBuffer;
         }
 
         private static void ApplyCachedLayer(ColorGrid screen, ColorGrid source, Rectangle bounds, int screenW, int screenH, ImageBlending mode)

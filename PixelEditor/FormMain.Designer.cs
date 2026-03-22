@@ -180,6 +180,7 @@
             rdoRed = new RadioButton();
             rdoAll = new RadioButton();
             btnEraser = new RadioButton();
+            btnWarp = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -1387,12 +1388,26 @@
             btnEraser.CheckedChanged += BtnTools_CheckedChanged;
             btnEraser.Click += BtnTools_Click;
             // 
+            // btnWarp
+            // 
+            btnWarp.Appearance = Appearance.Button;
+            btnWarp.FlatStyle = FlatStyle.Popup;
+            btnWarp.Image = (Image)resources.GetObject("btnWarp.Image");
+            btnWarp.Location = new Point(275, 27);
+            btnWarp.Name = "btnWarp";
+            btnWarp.Size = new Size(32, 32);
+            btnWarp.TabIndex = 26;
+            btnWarp.UseVisualStyleBackColor = true;
+            btnWarp.CheckedChanged += BtnTools_CheckedChanged;
+            btnWarp.Click += BtnTools_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 561);
             Controls.Add(tabLayers);
+            Controls.Add(btnWarp);
             Controls.Add(btnMagicWand);
             Controls.Add(btnRectangleSelect);
             Controls.Add(btnLassoSelect);
@@ -1584,5 +1599,6 @@
         private ToolStripMenuItem invertToolStripMenuItem;
         private Button btnDuplicate;
         private RadioButton btnEraser;
+        private RadioButton btnWarp;
     }
 }
