@@ -2554,11 +2554,11 @@ namespace PixelEditor
 
                     if (ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        ImageSelections.IncreaseSelectionPolygons(Point.Empty);
+                        ImageSelections.IncreaseSelectionPolygons(null, Point.Empty);
                     }
                     else if (ModifierKeys.HasFlag(Keys.Alt))
                     {
-                        ImageSelections.IncreaseSelectionPolygons(Point.Empty, true, false);
+                        ImageSelections.IncreaseSelectionPolygons(null, Point.Empty, false);
                     }
                     else
                     {
@@ -2573,11 +2573,11 @@ namespace PixelEditor
 
                     if (ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        ImageSelections.IncreaseSelectionPolygons(Point.Empty);
+                        ImageSelections.IncreaseSelectionPolygons(null, Point.Empty);
                     }
                     else if (ModifierKeys.HasFlag(Keys.Alt))
                     {
-                        ImageSelections.IncreaseSelectionPolygons(Point.Empty, true, false);
+                        ImageSelections.IncreaseSelectionPolygons(null, Point.Empty, false);
                     }
                     else
                     {
@@ -2608,10 +2608,10 @@ namespace PixelEditor
                                 ImageSelections.ClearSelections();
                             }
 
-                            List<SelectionPolygon> polygons = ImageSelections.GetSelectionPointsFromMask(mask, position);
+                            List<SelectionPolygon> polygons = ImageSelections.GetSelectionPointsFromMask(mask, position, adding);
                             foreach (var polygon in polygons)
                             {
-                                ImageSelections.IncreaseSelectionPolygons(polygon.SelectionPoint, polygon.Inner, adding);
+                                ImageSelections.IncreaseSelectionPolygons(polygon.Mask, polygon.SelectionPoint, adding);
                                 foreach (Point point in polygon.Points)
                                 {
                                     ImageSelections.AddSelectionPoint(new Point(point.X + selectedLayer.X, point.Y + selectedLayer.Y));
@@ -2867,6 +2867,7 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object sender, MouseEventArgs e)
         {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (isLassoSelecting)
             {
                 if (ImageSelections.GetLastSelection().Count > 1)
@@ -2884,14 +2885,17 @@ namespace PixelEditor
             isRectSelecting = false;
             isRotating = false;
             isScaling = false;
-            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-            ManipulatorGeneral.UpdateBuffers();
-            PaintingEngine.EndStroke();
-            ImageSelections.MergeIntersections();
-            ImageSelections.CalculateSelectionBounds();
-            layersControl.RefreshLayersDisplay();
-            RedrawImage();
-            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            if (selectedLayer != null && selectedLayer.Image != null)
+            {
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                ManipulatorGeneral.UpdateBuffers();
+                PaintingEngine.EndStroke();
+                ImageSelections.MergeIntersections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                ImageSelections.CalculateSelectionBounds();
+                layersControl.RefreshLayersDisplay();
+                RedrawImage();
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            }
         }
 
         private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)

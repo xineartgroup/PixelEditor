@@ -2,9 +2,9 @@
 {
     public class SelectionPolygon
     {
-        public Point SelectionPoint { get; set; } = Point.Empty;
+        public bool[,]? Mask { get; set; } = null;
 
-        public bool Inner { get; set; } = true;
+        public Point SelectionPoint { get; set; } = Point.Empty;
 
         public bool Adding { get; set; } = true;
 
@@ -13,22 +13,21 @@
         public SelectionPolygon()
         {
             SelectionPoint = Point.Empty;
-            Inner = true;
             Adding = true;
             Points = [];
         }
 
-        public SelectionPolygon(Point selectionPoint, bool inner, bool adding, List<Point> points)
+        public SelectionPolygon(bool[,]? mask, Point selectionPoint, bool adding, List<Point> points)
         {
+            Mask = mask;
             SelectionPoint = selectionPoint;
-            Inner = inner;
             Adding = adding;
             Points = points;
         }
 
         public override string ToString()
         {
-            return $"Count: {Points.Count}. " + (Inner ? "Inner. " : "Outer. ") + (Adding ? "Adding." : "Subtracting.");
+            return $"Count: {Points.Count}. " + (Adding ? "Adding." : "Subtracting.");
         }
     }
 }

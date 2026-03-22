@@ -340,44 +340,38 @@ namespace PixelEditor
         {
             if (selectedLayer.Image == null) return null;
 
-            RectangleF worldBounds = ImageSelections.GetSelectionBounds();
+            int width = selectedLayer.Image.Width;
+            int height = selectedLayer.Image.Height;
 
-            int srcX = (int)worldBounds.X - selectedLayer.X;
-            int srcY = (int)worldBounds.Y - selectedLayer.Y;
-            int srcW = (int)worldBounds.Width;
-            int srcH = (int)worldBounds.Height;
-
-            Bitmap result = new(srcW, srcH);
+            Bitmap result = new(width, height);
 
             var selections = ImageSelections.GetSelections();
             var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
 
             if (selectionPolygons.Count == 0) return result;
 
-            bool[,] mask = new bool[srcW, srcH];
-
-            SelectionPolygon first = selectionPolygons.First();
-
-            if (!first.Inner)
-            {
-                for (int x = 0; x < srcW; x++)
-                {
-                    for (int y = 0; y < srcH; y++)
-                    {
-                        mask[x, y] = true;
-                    }
-                }
-            }
-
-            int minX = (int)worldBounds.X;
-            int minY = (int)worldBounds.Y;
+            bool[,] mask = new bool[width, height];
 
             foreach (var poly in selectionPolygons)
             {
-                ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(
-                    p.X - minX,
-                    p.Y - minY))],
-                    poly.Inner);
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ImageSelections.ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    ImageSelections.AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ImageSelections.ExtendMask(mask, width, height);
+                    }
+                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], true);
+                }
             }
 
             using (Graphics g = Graphics.FromImage(result))
@@ -385,12 +379,12 @@ namespace PixelEditor
                 Bitmap sourceBitmap = new(selectedLayer.Image);
 
                 BitmapData sourceData = sourceBitmap.LockBits(
-                    new Rectangle(srcX, srcY, srcW, srcH),
+                    new Rectangle(0, 0, width, height),
                     ImageLockMode.ReadOnly,
                     PixelFormat.Format32bppPArgb);
 
                 BitmapData resultData = result.LockBits(
-                    new Rectangle(0, 0, srcW, srcH),
+                    new Rectangle(0, 0, width, height),
                     ImageLockMode.WriteOnly,
                     PixelFormat.Format32bppPArgb);
 
@@ -400,14 +394,14 @@ namespace PixelEditor
 
                 try
                 {
-                    Parallel.For(0, srcH, y =>
+                    Parallel.For(0, height, y =>
                     {
                         unsafe
                         {
                             byte* sourceRow = (byte*)sourcePtr + (y * stride);
                             byte* resultRow = (byte*)resultPtr + (y * stride);
 
-                            for (int x = 0; x < srcW; x++)
+                            for (int x = 0; x < width; x++)
                             {
                                 if (mask[x, y])
                                 {
@@ -450,46 +444,28 @@ namespace PixelEditor
 
             if (selectionPolygons.Count == 0) return result;
 
-            var allPoints = selectionPolygons.SelectMany(p => p.Points).ToList();
-            int minX = allPoints.Min(p => p.X);
-            int minY = allPoints.Min(p => p.Y);
-            int maxX = allPoints.Max(p => p.X);
-            int maxY = allPoints.Max(p => p.Y);
-
-            int padding = 2;
-            int maskWidth = maxX - minX + 1 + (padding * 2);
-            int maskHeight = maxY - minY + 1 + (padding * 2);
-
             bool[,] mask = new bool[width, height];
-
-            SelectionPolygon first = selectionPolygons.First();
-
-            if (!first.Inner)
-            {
-                minX = selectedLayer.X;
-                minY = selectedLayer.Y;
-                maxX = width + selectedLayer.X;
-                maxY = height + selectedLayer.Y;
-
-                padding = 0;
-                maskWidth = width;
-                maskHeight = height;
-
-                for (int x = 0; x < maskWidth; x++)
-                {
-                    for (int y = 0; y < maskHeight; y++)
-                    {
-                        mask[x, y] = true;
-                    }
-                }
-            }
 
             foreach (var poly in selectionPolygons)
             {
-                ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(
-                    p.X - minX + padding,
-                    p.Y - minY + padding))],
-                    poly.Inner);
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ImageSelections.ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    ImageSelections.AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ImageSelections.ExtendMask(mask, width, height);
+                    }
+                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], true);
+                }
             }
 
             BitmapData data = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
@@ -500,7 +476,7 @@ namespace PixelEditor
             {
                 Parallel.For(0, height, y =>
                 {
-                    int maskY = y + selectedLayer.Y - minY + padding;
+                    int maskY = y; // + selectedLayer.Y
 
                     unsafe
                     {
@@ -508,10 +484,10 @@ namespace PixelEditor
 
                         for (int x = 0; x < width; x++)
                         {
-                            int maskX = x + selectedLayer.X - minX + padding;
+                            int maskX = x; // + selectedLayer.X
 
-                            if (maskX >= 0 && maskX < maskWidth && maskX < mask.GetLength(0) &&
-                                maskY >= 0 && maskY < maskHeight && maskY < mask.GetLength(1) &&
+                            if (maskX >= 0 && maskX < width && maskX < mask.GetLength(0) &&
+                                maskY >= 0 && maskY < height && maskY < mask.GetLength(1) &&
                                 mask[maskX, maskY])
                             {
                                 int offset = x * 4;

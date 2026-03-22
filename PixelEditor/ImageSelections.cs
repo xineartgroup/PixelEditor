@@ -48,9 +48,9 @@
             }
         }
 
-        public static void IncreaseSelectionPolygons(Point point, bool inner = true, bool adding = true)
+        public static void IncreaseSelectionPolygons(bool[,]? mask, Point point, bool adding = true)
         {
-            selectionPolygons.Add(new SelectionPolygon(point, inner, adding, []));
+            selectionPolygons.Add(new SelectionPolygon(mask, point, adding, []));
         }
 
         public static void ClearSelections()
@@ -86,58 +86,45 @@
             CalculateSelectionBounds();
         }
 
-        public static void MergeIntersections()
+        public static void MergeIntersections(int x, int y, int width, int height)
         {
             if (selectionPolygons.Count < 2) return;
 
-            int minX = int.MaxValue, minY = int.MaxValue;
-            int maxX = int.MinValue, maxY = int.MinValue;
-
-            foreach (var poly in selectionPolygons)
-            {
-                foreach (var p in poly.Points)
-                {
-                    if (p.X < minX) minX = p.X;
-                    if (p.Y < minY) minY = p.Y;
-                    if (p.X > maxX) maxX = p.X;
-                    if (p.Y > maxY) maxY = p.Y;
-                }
-            }
-
-            int padding = 0;
-            int width = (maxX - minX) + (padding * 2);
-            int height = (maxY - minY) + (padding * 2);
-
             bool[,] mask = new bool[width, height];
 
-            SelectionPolygon first = selectionPolygons.First();
-
-            if (!first.Inner)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        mask[x, y] = true;
-                    }
-                }
-            }
-
             foreach (var poly in selectionPolygons)
             {
-                FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - minX + padding, p.Y - minY + padding))], poly.Inner && poly.Adding);
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ExtendMask(mask, width, height);
+                    }
+                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], poly.Adding);
+                }
             }
 
             Point point = (selectionPolygons.Count > 0) ? selectionPolygons[^1].SelectionPoint : Point.Empty;
 
-            List <SelectionPolygon> mergedOutlines = GetSelectionPointsFromMask(mask, point);
+            List <SelectionPolygon> mergedOutlines = GetSelectionPointsFromMask(mask, point, true);
 
             if (mergedOutlines.Count < selectionPolygons.Count)
             {
                 selectionPolygons.Clear();
                 foreach (var outline in mergedOutlines)
                 {
-                    selectionPolygons.Add(new SelectionPolygon(outline.SelectionPoint, outline.Inner, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + minX - padding, p.Y + minY - padding))]));
+                    SelectionPolygon selectionPolygon = new(outline.Mask, outline.SelectionPoint, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + x, p.Y + y))]);
+                    selectionPolygons.Add(selectionPolygon);
                 }
             }
         }
@@ -212,6 +199,58 @@
             return scaledWidth / worldWidth;
         }
 
+        public static bool[,] ExtendMask(bool[,] originalMask, int additionalWidth, int additionalHeight)
+        {
+            int oldRows = originalMask.GetLength(0);
+            int oldCols = originalMask.GetLength(1);
+
+            int newRows = oldRows + additionalHeight;
+            int newCols = oldCols + additionalWidth;
+
+            bool[,] newMask = new bool[newRows, newCols]; // New arrays in C# are initialized to 'false' by default
+
+            for (int i = 0; i < oldRows; i++)
+            {
+                for (int j = 0; j < oldCols; j++)
+                {
+                    newMask[i, j] = originalMask[i, j];
+                }
+            }
+
+            return newMask;
+        }
+
+        public static void AddMask(bool[,] mask1, bool[,] mask2, bool adding)
+        {
+            int rows1 = mask1.GetLength(0);
+            int cols1 = mask1.GetLength(1);
+            int rows2 = mask2.GetLength(0);
+            int cols2 = mask2.GetLength(1);
+
+            if (rows1 != rows2 || cols1 != cols2)
+            {
+                return;
+            }
+
+            for (int i = 0; i < rows1; i++)
+            {
+                for (int j = 0; j < cols1; j++)
+                {
+                    if (adding)
+                    {
+                        mask1[i, j] = mask1[i, j] || mask2[i, j]; // Logical OR: If either is true, result is true
+                    }
+                    else
+                    {
+                        if (mask2[i, j])
+                        {
+                            mask1[i, j] = false; // Subtraction: If mask2 is true, force mask1 to false
+                        }
+                    }
+                }
+            }
+        }
+
         public static void FillPolygonInMask(bool[,] mask, List<Point> points, bool fill)
         {
             int width = mask.GetLength(0);
@@ -253,7 +292,7 @@
             }
         }
 
-        public static List<SelectionPolygon> GetSelectionPointsFromMask(bool[,] mask, Point position)
+        public static List<SelectionPolygon> GetSelectionPointsFromMask(bool[,] mask, Point position, bool adding)
         {
             List<SelectionPolygon> regions = [];
 
@@ -359,7 +398,8 @@
                                 }
                             }
                             outline.SelectionPoint = position;
-                            outline.Inner = flip;
+                            outline.Adding = adding;
+                            outline.Mask = mask;
                             regions.Add(outline);
                         }
                     }
