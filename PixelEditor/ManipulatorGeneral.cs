@@ -343,30 +343,26 @@ namespace PixelEditor
             int width = selectedLayer.Image.Width;
             int height = selectedLayer.Image.Height;
 
-            Bitmap result = new(width, height);
-
             var selections = ImageSelections.GetSelections();
             var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
-
-            if (selectionPolygons.Count == 0) return result;
 
             bool[,] mask = new bool[width, height];
 
             foreach (var poly in selectionPolygons)
             {
-                int rows1 = mask.GetLength(0);
-                int cols1 = mask.GetLength(1);
+                int r = mask.GetLength(0);
+                int c = mask.GetLength(1);
                 if (poly.Mask != null)
                 {
-                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    if (r != poly.Mask.GetLength(0) || c != poly.Mask.GetLength(1))
                     {
-                        mask = ImageSelections.ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                        mask = ImageSelections.ExtendMask(mask, Math.Max(r, poly.Mask.GetLength(0)), Math.Max(c, poly.Mask.GetLength(1)));
                     }
                     ImageSelections.AddMask(mask, poly.Mask, poly.Adding);
                 }
                 else
                 {
-                    if (rows1 < width || cols1 < height)
+                    if (r < width || c < height)
                     {
                         mask = ImageSelections.ExtendMask(mask, width, height);
                     }
@@ -374,42 +370,68 @@ namespace PixelEditor
                 }
             }
 
-            using (Graphics g = Graphics.FromImage(result))
-            {
-                Bitmap sourceBitmap = new(selectedLayer.Image);
+            int minX = width, maxX = 0, minY = height, maxY = 0;
+            bool areaFound = false;
 
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (mask[x, y])
+                    {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        areaFound = true;
+                    }
+                }
+            }
+
+            if (!areaFound) return null;
+
+            int cropWidth = maxX - minX + 1;
+            int cropHeight = maxY - minY + 1;
+            Bitmap result = new(cropWidth, cropHeight, PixelFormat.Format32bppPArgb);
+
+            using (Bitmap sourceBitmap = new(selectedLayer.Image))
+            {
                 BitmapData sourceData = sourceBitmap.LockBits(
                     new Rectangle(0, 0, width, height),
-                    ImageLockMode.ReadOnly,
-                    PixelFormat.Format32bppPArgb);
+                    ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
 
                 BitmapData resultData = result.LockBits(
-                    new Rectangle(0, 0, width, height),
-                    ImageLockMode.WriteOnly,
-                    PixelFormat.Format32bppPArgb);
+                    new Rectangle(0, 0, cropWidth, cropHeight),
+                    ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
 
-                int stride = sourceData.Stride;
-                IntPtr sourcePtr = sourceData.Scan0;
-                IntPtr resultPtr = resultData.Scan0;
+                int sStride = sourceData.Stride;
+                int rStride = resultData.Stride;
+                IntPtr sPtr = sourceData.Scan0;
+                IntPtr rPtr = resultData.Scan0;
 
                 try
                 {
-                    Parallel.For(0, height, y =>
+                    Parallel.For(0, cropHeight, y =>
                     {
+                        int sourceY = y + minY;
                         unsafe
                         {
-                            byte* sourceRow = (byte*)sourcePtr + (y * stride);
-                            byte* resultRow = (byte*)resultPtr + (y * stride);
+                            byte* sRow = (byte*)sPtr + (sourceY * sStride);
+                            byte* rRow = (byte*)rPtr + (y * rStride);
 
-                            for (int x = 0; x < width; x++)
+                            for (int x = 0; x < cropWidth; x++)
                             {
-                                if (mask[x, y])
+                                int sourceX = x + minX;
+                                int rOffset = x * 4;
+
+                                if (mask[sourceX, sourceY])
                                 {
-                                    int offset = x * 4;
-                                    resultRow[offset] = sourceRow[offset];
-                                    resultRow[offset + 1] = sourceRow[offset + 1];
-                                    resultRow[offset + 2] = sourceRow[offset + 2];
-                                    resultRow[offset + 3] = sourceRow[offset + 3];
+                                    int sOffset = sourceX * 4;
+                                    *(uint*)(rRow + rOffset) = *(uint*)(sRow + sOffset);
+                                }
+                                else
+                                {
+                                    *(uint*)(rRow + rOffset) = 0;
                                 }
                             }
                         }
@@ -419,7 +441,6 @@ namespace PixelEditor
                 {
                     sourceBitmap.UnlockBits(sourceData);
                     result.UnlockBits(resultData);
-                    sourceBitmap.Dispose();
                 }
             }
 
@@ -689,6 +710,92 @@ namespace PixelEditor
             Marshal.Copy(pixels, 0, data.Scan0, bytes);
             bitmap.UnlockBits(data);
             return bitmap;
+        }
+
+        public static Bitmap? FillColor(Layer selectedLayer, ImageBlending blend, Color color, float opacity, bool[,]? mask)
+        {
+            if (selectedLayer.Image == null)
+                return null;
+
+            Bitmap bitmap = new(selectedLayer.Image);
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+            Rectangle rect = new(0, 0, width, height);
+            BitmapData data = bitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+
+            int bytes = data.Stride * height;
+            byte[] pixels = new byte[bytes];
+            Marshal.Copy(data.Scan0, pixels, 0, bytes);
+
+            float a = opacity;
+            float ia = 1.0f - opacity;
+            byte cr = color.R, cg = color.G, cb = color.B;
+
+            if (mask != null)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        if (x < mask.GetLength(0) && y < mask.GetLength(1) && mask[x, y])
+                        {
+                            int i = (y * data.Stride) + (x * 4);
+                            ApplyBlend(i, cr, cg, cb, a, ia, blend, pixels, color.A);
+                        }
+                    }
+                }
+            }
+
+            Marshal.Copy(pixels, 0, data.Scan0, bytes);
+            bitmap.UnlockBits(data);
+            return bitmap;
+        }
+
+        private static void ApplyBlend(int idx, byte cr, byte cg, byte cb, float alpha, float invAlpha, ImageBlending blend, byte[] pixels, byte colorA)
+        {
+            byte b = pixels[idx];
+            byte g = pixels[idx + 1];
+            byte r = pixels[idx + 2];
+            byte br, bg, bb;
+
+            switch (blend)
+            {
+                case ImageBlending.Multiply:
+                    br = (byte)(r * cr / 255); bg = (byte)(g * cg / 255); bb = (byte)(b * cb / 255);
+                    break;
+                case ImageBlending.Screen:
+                    br = (byte)(255 - (255 - r) * (255 - cr) / 255); bg = (byte)(255 - (255 - g) * (255 - cg) / 255); bb = (byte)(255 - (255 - b) * (255 - cb) / 255);
+                    break;
+                case ImageBlending.Overlay:
+                    br = (byte)(r < 128 ? (2 * r * cr / 255) : (255 - 2 * (255 - r) * (255 - cr) / 255));
+                    bg = (byte)(g < 128 ? (2 * g * cg / 255) : (255 - 2 * (255 - g) * (255 - cg) / 255));
+                    bb = (byte)(b < 128 ? (2 * b * cb / 255) : (255 - 2 * (255 - b) * (255 - cb) / 255));
+                    break;
+                case ImageBlending.Difference:
+                    br = (byte)Math.Abs(r - cr); bg = (byte)Math.Abs(g - cg); bb = (byte)Math.Abs(b - cb);
+                    break;
+                case ImageBlending.Add:
+                    br = (byte)Math.Min(255, r + cr); bg = (byte)Math.Min(255, g + cg); bb = (byte)Math.Min(255, b + cb);
+                    break;
+                case ImageBlending.Subtract:
+                    br = (byte)Math.Max(0, r - cr); bg = (byte)Math.Max(0, g - cg); bb = (byte)Math.Max(0, b - cb);
+                    break;
+                case ImageBlending.Darken:
+                    br = (byte)Math.Min(r, cr); bg = (byte)Math.Min(g, cg); bb = (byte)Math.Min(b, cb);
+                    break;
+                case ImageBlending.Lighten:
+                    br = (byte)Math.Max(r, cr); bg = (byte)Math.Max(g, cg); bb = (byte)Math.Max(b, cb);
+                    break;
+                default:
+                    br = cr; bg = cg; bb = cb;
+                    break;
+            }
+
+            pixels[idx] = (byte)(bb * alpha + b * invAlpha);
+            pixels[idx + 1] = (byte)(bg * alpha + g * invAlpha);
+            pixels[idx + 2] = (byte)(br * alpha + r * invAlpha);
+            // Maintain or additive alpha
+            pixels[idx + 3] = (byte)Math.Min(255, pixels[idx + 3] + (colorA * alpha));
         }
 
         public static Layer MergeLayers(Layer top, Layer bottom)

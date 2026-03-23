@@ -2524,16 +2524,41 @@ namespace PixelEditor
                             }
                             else
                             {
+                                bool found = false;
                                 for (int i = 0; i < selectionPolygons.Count; i++)
                                 {
                                     if (ImageSelections.IsPointInPolygon(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height), selectionPolygons[i]))
                                     {
                                         bitmap = ManipulatorGeneral.FillColor(selectedLayer,
-                                        canvas.Width, canvas.Height,
-                                        (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
-                                        (float)(fillOpacity.Value / fillOpacity.Maximum),
-                                        lastMousePosition,
-                                        selectionPolygons[i]);
+                                            canvas.Width, canvas.Height,
+                                            (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
+                                            (float)(fillOpacity.Value / fillOpacity.Maximum),
+                                            lastMousePosition,
+                                            selectionPolygons[i]);
+                                        found = true;
+                                    }
+                                }
+
+                                if (!found)
+                                {
+                                    for (int i = 0; i < selectionPolygons.Count; i++)
+                                    {
+                                        bool[,]? mask = selectionPolygons[i].Mask;
+
+                                        if (mask != null)
+                                        {
+                                            Point position = ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height);
+                                            if (position.X >= 0 && position.Y >= 0 &&
+                                                mask.GetLength(0) > position.X && mask.GetLength(1) > position.Y &&
+                                                mask[position.X, position.Y]) // make sure the mouse location is within the region where the mask is true
+                                            {
+                                                bitmap = ManipulatorGeneral.FillColor(selectedLayer,
+                                                    (ImageBlending)cboFillBlendMode.SelectedIndex, paint.GetFillColor(),
+                                                    (float)(fillOpacity.Value / fillOpacity.Maximum),
+                                                    mask);
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }
