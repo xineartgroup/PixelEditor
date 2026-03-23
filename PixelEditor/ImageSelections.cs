@@ -58,6 +58,185 @@
             selectionPolygons.Clear();
         }
 
+        public static void InvertSelections(int x, int y, int width, int height)
+        {
+            bool[,] mask = new bool[width, height];
+
+            foreach (var poly in selectionPolygons)
+            {
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ExtendMask(mask, width, height);
+                    }
+                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], poly.Adding);
+                }
+            }
+
+            for (int xM = 0; xM < width; xM++)
+            {
+                for (int yM = 0; yM < height; yM++)
+                {
+                    mask[xM, yM] = !mask[xM, yM];
+                }
+            }
+
+            List<SelectionPolygon> invertedPolygons = GetSelectionPointsFromMask(mask, Point.Empty, true);
+
+            selectionPolygons.Clear();
+            foreach (var outline in invertedPolygons)
+            {
+                SelectionPolygon selectionPolygon = new(outline.Mask, outline.SelectionPoint, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + x, p.Y + y))]);
+                selectionPolygons.Add(selectionPolygon);
+            }
+        }
+
+        public static void GrowSelections(int x, int y, int width, int height, int count)
+        {
+            bool[,] mask = new bool[width, height];
+
+            foreach (var poly in selectionPolygons)
+            {
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ExtendMask(mask, width, height);
+                    }
+                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], poly.Adding);
+                }
+            }
+
+            bool[,] grownMask = new bool[width, height];
+            int sqDist = count * count;
+
+            for (int my = 0; my < height; my++)
+            {
+                for (int mx = 0; mx < width; mx++)
+                {
+                    if (mask[mx, my])
+                    {
+                        for (int ky = -count; ky <= count; ky++)
+                        {
+                            for (int kx = -count; kx <= count; kx++)
+                            {
+                                if (kx * kx + ky * ky <= sqDist)
+                                {
+                                    int nx = mx + kx;
+                                    int ny = my + ky;
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height)
+                                    {
+                                        grownMask[nx, ny] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            mask = grownMask;
+
+            List<SelectionPolygon> invertedPolygons = GetSelectionPointsFromMask(mask, Point.Empty, true);
+
+            selectionPolygons.Clear();
+            foreach (var outline in invertedPolygons)
+            {
+                SelectionPolygon selectionPolygon = new(outline.Mask, outline.SelectionPoint, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + x, p.Y + y))]);
+                selectionPolygons.Add(selectionPolygon);
+            }
+        }
+
+        public static void ShrinkSelections(int x, int y, int width, int height, int count)
+        {
+            bool[,] mask = new bool[width, height];
+
+            foreach (var poly in selectionPolygons)
+            {
+                int rows1 = mask.GetLength(0);
+                int cols1 = mask.GetLength(1);
+                if (poly.Mask != null)
+                {
+                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    {
+                        mask = ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                    }
+                    AddMask(mask, poly.Mask, poly.Adding);
+                }
+                else
+                {
+                    if (rows1 < width || cols1 < height)
+                    {
+                        mask = ExtendMask(mask, width, height);
+                    }
+                    FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], poly.Adding);
+                }
+            }
+
+            bool[,] shrunkMask = new bool[width, height];
+            int sqDist = count * count;
+
+            for (int my = 0; my < height; my++)
+            {
+                for (int mx = 0; mx < width; mx++)
+                {
+                    if (mask[mx, my])
+                    {
+                        bool keep = true;
+                        for (int ky = -count; ky <= count; ky++)
+                        {
+                            for (int kx = -count; kx <= count; kx++)
+                            {
+                                if (kx * kx + ky * ky <= sqDist)
+                                {
+                                    int nx = mx + kx;
+                                    int ny = my + ky;
+
+                                    if (nx < 0 || nx >= width || ny < 0 || ny < 0 || ny >= height || !mask[nx, ny])
+                                    {
+                                        keep = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!keep) break;
+                        }
+                        if (keep) shrunkMask[mx, my] = true;
+                    }
+                }
+            }
+            mask = shrunkMask;
+
+            List<SelectionPolygon> invertedPolygons = GetSelectionPointsFromMask(mask, Point.Empty, true);
+
+            selectionPolygons.Clear();
+            foreach (var outline in invertedPolygons)
+            {
+                SelectionPolygon selectionPolygon = new(outline.Mask, outline.SelectionPoint, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + x, p.Y + y))]);
+                selectionPolygons.Add(selectionPolygon);
+            }
+        }
+
         public static List<SelectionPolygon> GetSelections()
         {
             return selectionPolygons;
@@ -300,7 +479,6 @@
                 return regions;
 
             bool inner = true;
-            bool flip = position == Point.Empty;
 
             int width = mask.GetLength(0);
             int height = mask.GetLength(1);
@@ -310,11 +488,6 @@
                 position.Y >= 0 && position.Y < height)
             {
                 inner = mask[position.X, position.Y] != mask[0, 0];
-                flip = position == Point.Empty || mask[position.X, position.Y];
-                if (mask[0, 0] && mask[position.X, position.Y])
-                {
-                    flip = false; //outer
-                }
             }
 
             int[] dx = [1, 0, -1, 0];
@@ -390,13 +563,6 @@
 
                         if (outline.Points.Count > 2)
                         {
-                            if (regions.Count > 0)
-                            {
-                                if (IsContainedWithinFast(outline, regions[^1]))
-                                {
-                                    flip = !flip;
-                                }
-                            }
                             outline.SelectionPoint = position;
                             outline.Adding = adding;
                             outline.Mask = mask;

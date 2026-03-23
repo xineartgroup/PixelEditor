@@ -2120,7 +2120,75 @@ namespace PixelEditor
                     ImageSelections.AddSelectionPoint(new Point(x0 + imgW, y0));
                     ImageSelections.AddSelectionPoint(new Point(x0, y0));
 
+                    RedrawImage();
+
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void NoneToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            ImageSelections.ClearSelections();
+            RedrawImage();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void InvertToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.Image != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    ImageSelections.InvertSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ByColorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void GrowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FormSelections frm = new();
+            if (frm.ShowDialog() == DialogResult.OK)
+            {
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    if (selectedLayer.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        ImageSelections.GrowSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height, frm.PixelAmount);
+                        RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
+                }
+            }
+        }
+
+        private void ShrinkToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FormSelections frm = new();
+            if (frm.ShowDialog() == DialogResult.OK)
+            {
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    if (selectedLayer.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        ImageSelections.ShrinkSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height, frm.PixelAmount);
+                        RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
                 }
             }
         }
