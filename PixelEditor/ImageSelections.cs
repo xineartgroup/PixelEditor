@@ -128,34 +128,27 @@
                 }
             }
 
-            bool[,] grownMask = new bool[width, height];
-            int sqDist = count * count;
-
-            for (int my = 0; my < height; my++)
+            for (int step = 0; step < count; step++)
             {
-                for (int mx = 0; mx < width; mx++)
+                bool[,] tempMask = (bool[,])mask.Clone();
+                for (int my = 0; my < height; my++)
                 {
-                    if (mask[mx, my])
+                    for (int mx = 0; mx < width; mx++)
                     {
-                        for (int ky = -count; ky <= count; ky++)
+                        if (!mask[mx, my])
                         {
-                            for (int kx = -count; kx <= count; kx++)
+                            if ((mx > 0 && mask[mx - 1, my]) ||
+                                (mx < width - 1 && mask[mx + 1, my]) ||
+                                (my > 0 && mask[mx, my - 1]) ||
+                                (my < height - 1 && mask[mx, my + 1]))
                             {
-                                if (kx * kx + ky * ky <= sqDist)
-                                {
-                                    int nx = mx + kx;
-                                    int ny = my + ky;
-                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-                                    {
-                                        grownMask[nx, ny] = true;
-                                    }
-                                }
+                                tempMask[mx, my] = true;
                             }
                         }
                     }
                 }
+                mask = tempMask;
             }
-            mask = grownMask;
 
             List<SelectionPolygon> invertedPolygons = GetSelectionPointsFromMask(mask, Point.Empty, true);
 
@@ -193,39 +186,26 @@
                 }
             }
 
-            bool[,] shrunkMask = new bool[width, height];
-            int sqDist = count * count;
-
-            for (int my = 0; my < height; my++)
+            for (int step = 0; step < count; step++)
             {
-                for (int mx = 0; mx < width; mx++)
+                bool[,] tempMask = new bool[width, height];
+                for (int my = 0; my < height; my++)
                 {
-                    if (mask[mx, my])
+                    for (int mx = 0; mx < width; mx++)
                     {
-                        bool keep = true;
-                        for (int ky = -count; ky <= count; ky++)
+                        if (mask[mx, my])
                         {
-                            for (int kx = -count; kx <= count; kx++)
+                            if (mx > 0 && mx < width - 1 && my > 0 && my < height - 1 &&
+                                mask[mx - 1, my] && mask[mx + 1, my] &&
+                                mask[mx, my - 1] && mask[mx, my + 1])
                             {
-                                if (kx * kx + ky * ky <= sqDist)
-                                {
-                                    int nx = mx + kx;
-                                    int ny = my + ky;
-
-                                    if (nx < 0 || nx >= width || ny < 0 || ny < 0 || ny >= height || !mask[nx, ny])
-                                    {
-                                        keep = false;
-                                        break;
-                                    }
-                                }
+                                tempMask[mx, my] = true;
                             }
-                            if (!keep) break;
                         }
-                        if (keep) shrunkMask[mx, my] = true;
                     }
                 }
+                mask = tempMask;
             }
-            mask = shrunkMask;
 
             List<SelectionPolygon> invertedPolygons = GetSelectionPointsFromMask(mask, Point.Empty, true);
 
