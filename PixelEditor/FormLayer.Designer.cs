@@ -126,7 +126,7 @@
             cboFillWith.DropDownStyle = ComboBoxStyle.DropDownList;
             cboFillWith.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboFillWith.FormattingEnabled = true;
-            cboFillWith.Items.AddRange(new object[] { "Color", "Transparency" });
+            cboFillWith.Items.AddRange(new object[] { "Transparency", "Color" });
             cboFillWith.Location = new Point(97, 68);
             cboFillWith.Name = "cboFillWith";
             cboFillWith.Size = new Size(128, 21);

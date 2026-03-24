@@ -104,7 +104,6 @@
             allToolStripMenuItem1 = new ToolStripMenuItem();
             noneToolStripMenuItem = new ToolStripMenuItem();
             invertToolStripMenuItem1 = new ToolStripMenuItem();
-            byColorToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem16 = new ToolStripSeparator();
             growToolStripMenuItem = new ToolStripMenuItem();
             shrinkToolStripMenuItem = new ToolStripMenuItem();
@@ -690,7 +689,7 @@
             // 
             // selectToolStripMenuItem
             // 
-            selectToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem1, noneToolStripMenuItem, invertToolStripMenuItem1, byColorToolStripMenuItem, toolStripMenuItem16, growToolStripMenuItem, shrinkToolStripMenuItem });
+            selectToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem1, noneToolStripMenuItem, invertToolStripMenuItem1, toolStripMenuItem16, growToolStripMenuItem, shrinkToolStripMenuItem });
             selectToolStripMenuItem.Name = "selectToolStripMenuItem";
             selectToolStripMenuItem.Size = new Size(50, 20);
             selectToolStripMenuItem.Text = "Select";
@@ -718,13 +717,6 @@
             invertToolStripMenuItem1.Size = new Size(180, 22);
             invertToolStripMenuItem1.Text = "Invert";
             invertToolStripMenuItem1.Click += InvertToolStripMenuItem1_Click;
-            // 
-            // byColorToolStripMenuItem
-            // 
-            byColorToolStripMenuItem.Name = "byColorToolStripMenuItem";
-            byColorToolStripMenuItem.Size = new Size(180, 22);
-            byColorToolStripMenuItem.Text = "By Color";
-            byColorToolStripMenuItem.Click += ByColorToolStripMenuItem_Click;
             // 
             // toolStripMenuItem16
             // 
@@ -1652,7 +1644,6 @@
         private ToolStripMenuItem allToolStripMenuItem1;
         private ToolStripMenuItem noneToolStripMenuItem;
         private ToolStripMenuItem invertToolStripMenuItem1;
-        private ToolStripMenuItem byColorToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem16;
         private ToolStripMenuItem growToolStripMenuItem;
         private ToolStripMenuItem shrinkToolStripMenuItem;

@@ -40,6 +40,15 @@
             selectionPolygons[^1].Points.Add(worldPoint);
         }
 
+        public static void AddSelectionPoints(IEnumerable<Point> worldPoints)
+        {
+            if (selectionPolygons.Count == 0)
+            {
+                selectionPolygons.Add(new SelectionPolygon());
+            }
+            selectionPolygons[^1].Points.AddRange(worldPoints);
+        }
+
         public static void UpdateSelectionPoint(int index, Point worldPoint)
         {
             if (selectionPolygons.Count > 0)
@@ -249,26 +258,22 @@
         {
             if (selectionPolygons.Count < 2) return;
 
+            if (selectionPolygons.Count > 100) return; // Too many regions will slow it down, no need to merge.
+
             bool[,] mask = new bool[width, height];
 
             foreach (var poly in selectionPolygons)
             {
-                int rows1 = mask.GetLength(0);
-                int cols1 = mask.GetLength(1);
                 if (poly.Mask != null)
                 {
-                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    if (width != poly.Mask.GetLength(0) || height != poly.Mask.GetLength(1))
                     {
-                        mask = ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                        mask = ExtendMask(mask, Math.Max(width, poly.Mask.GetLength(0)), Math.Max(height, poly.Mask.GetLength(1)));
                     }
                     AddMask(mask, poly.Mask, poly.Adding);
                 }
                 else
                 {
-                    if (rows1 < width || cols1 < height)
-                    {
-                        mask = ExtendMask(mask, width, height);
-                    }
                     FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], poly.Adding);
                 }
             }

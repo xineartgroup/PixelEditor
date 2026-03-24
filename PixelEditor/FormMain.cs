@@ -44,7 +44,6 @@ namespace PixelEditor
         private readonly Matrix transformMatrix = new();
         private float brushPixelSize = 0.0f;
         private float currentOpacity = 1.0f;
-        private const int ProxyScale = 4;
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -611,7 +610,7 @@ namespace PixelEditor
             label13.Text = "Select By:";
             cboMWSelectionMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboMWSelectionMode.FormattingEnabled = true;
-            cboMWSelectionMode.Items.AddRange(["All", "Red", "Green", "Blue", "Alpha"]);
+            cboMWSelectionMode.Items.AddRange(["All", "Red", "Green", "Blue", "Alpha", "Color"]);
             cboMWSelectionMode.SelectedIndex = 0;
             cboMWSelectionMode.Location = new Point(74, 22);
             cboMWSelectionMode.Name = "cboMWSelectionMode";
@@ -1215,7 +1214,8 @@ namespace PixelEditor
                         {
                             Image = new Bitmap(image, image.Width, image.Height),
                             X = Document.Width / 2 - image.Width / 2,
-                            Y = Document.Height / 2 - image.Height / 2
+                            Y = Document.Height / 2 - image.Height / 2,
+                            FillType = FillType.Transparency
                         };
                         layersControl.InsertLayer(0, layer);
 
@@ -2150,11 +2150,6 @@ namespace PixelEditor
             }
         }
 
-        private void ByColorToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void GrowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FormSelections frm = new();
@@ -2694,7 +2689,16 @@ namespace PixelEditor
                             position.X -= selectedLayer.X;
                             position.Y -= selectedLayer.Y;
 
-                            bool[,] mask = ManipulatorLighting.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
+                            bool[,] mask;
+
+                            if (cboMWSelectionMode.Text == "Color")
+                            {
+                                mask = ManipulatorLighting.ByColorSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum);
+                            }
+                            else
+                            {
+                                mask = ManipulatorLighting.MagicWandSelect(selectedLayer.Image, position, (float)selectionThreshold.Value / selectionThreshold.Maximum, cboMWSelectionMode.Text);
+                            }
 
                             if (!ModifierKeys.HasFlag(Keys.Shift) && !ModifierKeys.HasFlag(Keys.Alt))
                             {
@@ -2702,13 +2706,12 @@ namespace PixelEditor
                             }
 
                             List<SelectionPolygon> polygons = ImageSelections.GetSelectionPointsFromMask(mask, position, adding);
+
                             foreach (var polygon in polygons)
                             {
                                 ImageSelections.IncreaseSelectionPolygons(polygon.Mask, polygon.SelectionPoint, adding);
-                                foreach (Point point in polygon.Points)
-                                {
-                                    ImageSelections.AddSelectionPoint(new Point(point.X + selectedLayer.X, point.Y + selectedLayer.Y));
-                                }
+                                var transformedPoints = polygon.Points.Select(p => new Point(p.X + selectedLayer.X, p.Y + selectedLayer.Y));
+                                ImageSelections.AddSelectionPoints(transformedPoints);
                             }
                         }
                     }

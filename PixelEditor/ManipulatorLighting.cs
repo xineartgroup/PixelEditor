@@ -558,6 +558,50 @@ namespace PixelEditor
             return Dilate(mask, width, height, 2);
         }
 
+        public static unsafe bool[,] ByColorSelect(Image image, Point startPosition, float threshold)
+        {
+            using Bitmap bitmap = new(image);
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+            bool[,] mask = new bool[width, height];
+
+            if (startPosition.X < 0 || startPosition.X >= width || startPosition.Y < 0 || startPosition.Y >= height)
+                return mask;
+
+            BitmapData data = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            int stride = data.Stride;
+            byte* ptr = (byte*)data.Scan0;
+
+            int seedIdx = (startPosition.Y * stride) + (startPosition.X * 4);
+            byte seedB = ptr[seedIdx];
+            byte seedG = ptr[seedIdx + 1];
+            byte seedR = ptr[seedIdx + 2];
+
+            float maxDiffSq = (threshold * 255) * (threshold * 255);
+
+            Parallel.For(0, height, y =>
+            {
+                byte* row = ptr + (y * stride);
+                for (int x = 0; x < width; x++)
+                {
+                    int offset = x * 4;
+                    int db = row[offset] - seedB;
+                    int dg = row[offset + 1] - seedG;
+                    int dr = row[offset + 2] - seedR;
+
+                    float diffSq = (dr * dr) + (dg * dg) + (db * db);
+
+                    if (diffSq <= maxDiffSq)
+                    {
+                        mask[x, y] = true;
+                    }
+                }
+            });
+
+            bitmap.UnlockBits(data);
+            return mask;
+        }
+
         public static unsafe bool HasTransparentPixels(Bitmap? selectedAreaBitmap)
         {
             if (selectedAreaBitmap == null) return false;
