@@ -186,6 +186,7 @@
             rdoAll = new RadioButton();
             btnEraser = new RadioButton();
             btnWarp = new RadioButton();
+            btnCrop = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -498,26 +499,26 @@
             // generalSettingsToolStripMenuItem
             // 
             generalSettingsToolStripMenuItem.Name = "generalSettingsToolStripMenuItem";
-            generalSettingsToolStripMenuItem.Size = new Size(180, 22);
+            generalSettingsToolStripMenuItem.Size = new Size(152, 22);
             generalSettingsToolStripMenuItem.Text = "Image Settings";
             generalSettingsToolStripMenuItem.Click += GeneralSettingsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem5
             // 
             toolStripMenuItem5.Name = "toolStripMenuItem5";
-            toolStripMenuItem5.Size = new Size(177, 6);
+            toolStripMenuItem5.Size = new Size(149, 6);
             // 
             // darkToolStripMenuItem
             // 
             darkToolStripMenuItem.Name = "darkToolStripMenuItem";
-            darkToolStripMenuItem.Size = new Size(180, 22);
+            darkToolStripMenuItem.Size = new Size(152, 22);
             darkToolStripMenuItem.Text = "Dark";
             darkToolStripMenuItem.Click += DarkToolStripMenuItem_Click;
             // 
             // invertToolStripMenuItem
             // 
             invertToolStripMenuItem.Name = "invertToolStripMenuItem";
-            invertToolStripMenuItem.Size = new Size(180, 22);
+            invertToolStripMenuItem.Size = new Size(152, 22);
             invertToolStripMenuItem.Text = "Invert";
             invertToolStripMenuItem.Click += InvertToolStripMenuItem_Click;
             // 
@@ -525,7 +526,7 @@
             // 
             adjustmentsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { brightnessToolStripMenuItem, grayscaleToolStripMenuItem, blurImageToolStripMenuItem, sharpnessToolStripMenuItem });
             adjustmentsToolStripMenuItem.Name = "adjustmentsToolStripMenuItem";
-            adjustmentsToolStripMenuItem.Size = new Size(180, 22);
+            adjustmentsToolStripMenuItem.Size = new Size(152, 22);
             adjustmentsToolStripMenuItem.Text = "Adjustments";
             // 
             // brightnessToolStripMenuItem
@@ -559,13 +560,13 @@
             // toolStripMenuItem9
             // 
             toolStripMenuItem9.Name = "toolStripMenuItem9";
-            toolStripMenuItem9.Size = new Size(177, 6);
+            toolStripMenuItem9.Size = new Size(149, 6);
             // 
             // channelsToolStripMenuItem
             // 
             channelsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem, redToolStripMenuItem, greenToolStripMenuItem, blueToolStripMenuItem });
             channelsToolStripMenuItem.Name = "channelsToolStripMenuItem";
-            channelsToolStripMenuItem.Size = new Size(180, 22);
+            channelsToolStripMenuItem.Size = new Size(152, 22);
             channelsToolStripMenuItem.Text = "Channels";
             // 
             // allToolStripMenuItem
@@ -602,7 +603,7 @@
             // 
             filtersToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { redToolStripMenuItem1, greenToolStripMenuItem1, blueToolStripMenuItem1, toolStripMenuItem7 });
             filtersToolStripMenuItem.Name = "filtersToolStripMenuItem";
-            filtersToolStripMenuItem.Size = new Size(180, 22);
+            filtersToolStripMenuItem.Size = new Size(152, 22);
             filtersToolStripMenuItem.Text = "Filters";
             // 
             // redToolStripMenuItem1
@@ -637,13 +638,13 @@
             // toolStripMenuItem19
             // 
             toolStripMenuItem19.Name = "toolStripMenuItem19";
-            toolStripMenuItem19.Size = new Size(177, 6);
+            toolStripMenuItem19.Size = new Size(149, 6);
             // 
             // toolStripMenuItem20
             // 
             toolStripMenuItem20.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem21, toolStripMenuItem22, toolStripSeparator1, toolStripMenuItem23, toolStripMenuItem24, toolStripMenuItem25, toolStripMenuItem26 });
             toolStripMenuItem20.Name = "toolStripMenuItem20";
-            toolStripMenuItem20.Size = new Size(180, 22);
+            toolStripMenuItem20.Size = new Size(152, 22);
             toolStripMenuItem20.Text = "Transform";
             // 
             // toolStripMenuItem21
@@ -698,7 +699,7 @@
             // 
             allToolStripMenuItem1.Name = "allToolStripMenuItem1";
             allToolStripMenuItem1.ShortcutKeys = Keys.Control | Keys.A;
-            allToolStripMenuItem1.Size = new Size(180, 22);
+            allToolStripMenuItem1.Size = new Size(177, 22);
             allToolStripMenuItem1.Text = "All";
             allToolStripMenuItem1.Click += SelectAllToolStripMenuItem_Click;
             // 
@@ -706,7 +707,7 @@
             // 
             noneToolStripMenuItem.Name = "noneToolStripMenuItem";
             noneToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.A;
-            noneToolStripMenuItem.Size = new Size(180, 22);
+            noneToolStripMenuItem.Size = new Size(177, 22);
             noneToolStripMenuItem.Text = "None";
             noneToolStripMenuItem.Click += NoneToolStripMenuItem_Click;
             // 
@@ -714,26 +715,26 @@
             // 
             invertToolStripMenuItem1.Name = "invertToolStripMenuItem1";
             invertToolStripMenuItem1.ShortcutKeys = Keys.Control | Keys.I;
-            invertToolStripMenuItem1.Size = new Size(180, 22);
+            invertToolStripMenuItem1.Size = new Size(177, 22);
             invertToolStripMenuItem1.Text = "Invert";
             invertToolStripMenuItem1.Click += InvertToolStripMenuItem1_Click;
             // 
             // toolStripMenuItem16
             // 
             toolStripMenuItem16.Name = "toolStripMenuItem16";
-            toolStripMenuItem16.Size = new Size(177, 6);
+            toolStripMenuItem16.Size = new Size(174, 6);
             // 
             // growToolStripMenuItem
             // 
             growToolStripMenuItem.Name = "growToolStripMenuItem";
-            growToolStripMenuItem.Size = new Size(180, 22);
+            growToolStripMenuItem.Size = new Size(177, 22);
             growToolStripMenuItem.Text = "Grow...";
             growToolStripMenuItem.Click += GrowToolStripMenuItem_Click;
             // 
             // shrinkToolStripMenuItem
             // 
             shrinkToolStripMenuItem.Name = "shrinkToolStripMenuItem";
-            shrinkToolStripMenuItem.Size = new Size(180, 22);
+            shrinkToolStripMenuItem.Size = new Size(177, 22);
             shrinkToolStripMenuItem.Text = "Shrink...";
             shrinkToolStripMenuItem.Click += ShrinkToolStripMenuItem_Click;
             // 
@@ -1443,12 +1444,26 @@
             btnWarp.CheckedChanged += BtnTools_CheckedChanged;
             btnWarp.Click += BtnTools_Click;
             // 
+            // btnCrop
+            // 
+            btnCrop.Appearance = Appearance.Button;
+            btnCrop.FlatStyle = FlatStyle.Popup;
+            btnCrop.Image = (Image)resources.GetObject("btnCrop.Image");
+            btnCrop.Location = new Point(313, 27);
+            btnCrop.Name = "btnCrop";
+            btnCrop.Size = new Size(32, 32);
+            btnCrop.TabIndex = 26;
+            btnCrop.UseVisualStyleBackColor = true;
+            btnCrop.CheckedChanged += BtnTools_CheckedChanged;
+            btnCrop.Click += BtnTools_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 561);
             Controls.Add(tabLayers);
+            Controls.Add(btnCrop);
             Controls.Add(btnWarp);
             Controls.Add(btnMagicWand);
             Controls.Add(btnRectangleSelect);
@@ -1647,5 +1662,6 @@
         private ToolStripSeparator toolStripMenuItem16;
         private ToolStripMenuItem growToolStripMenuItem;
         private ToolStripMenuItem shrinkToolStripMenuItem;
+        private RadioButton btnCrop;
     }
 }

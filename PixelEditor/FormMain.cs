@@ -27,6 +27,7 @@ namespace PixelEditor
         private bool isScaling = false;
         private bool isLassoSelecting = false;
         private bool isRectSelecting = false;
+        private bool isCropping = false;
         private bool isDirty = false;
         private float _dashOffset = 0;
         private float startMouseAngle = 0;
@@ -100,6 +101,9 @@ namespace PixelEditor
         private readonly Label lblWarpBrushSize = new();
         private readonly Label labelWarpBrushSize = new();
 
+        private readonly GroupBox groupCropDetail = new();
+        private readonly Button btnCropAction = new();
+
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
 
@@ -115,6 +119,7 @@ namespace PixelEditor
             InitializeComponentGroupEraser();
             InitializeComponentGroupMagicWand();
             InitializeComponentGroupWarp();
+            InitializeComponentGroupCrop();
             InitializeTimer();
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
@@ -680,6 +685,39 @@ namespace PixelEditor
             ResumeLayout(false);
         }
 
+        private void InitializeComponentGroupCrop()
+        {
+            groupCropDetail.SuspendLayout();
+            SuspendLayout();
+
+            groupCropDetail.Controls.Add(btnCropAction);
+
+            groupCropDetail.Location = new Point(12, 74);
+            groupCropDetail.Name = "groupCropDetail";
+            groupCropDetail.Size = new Size(230, 430);
+            groupCropDetail.TabIndex = 31;
+            groupCropDetail.TabStop = false;
+            groupCropDetail.Text = "Crop Detail";
+            groupCropDetail.Visible = false;
+
+            // Crop Button
+            btnCropAction.BackColor = Color.LightGray;
+            btnCropAction.FlatStyle = FlatStyle.Popup;
+            btnCropAction.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnCropAction.Location = new Point(12, 22);
+            btnCropAction.Name = "btnCropAction";
+            btnCropAction.Size = new Size(206, 40);
+            btnCropAction.TabIndex = 24;
+            btnCropAction.Text = "Crop";
+            btnCropAction.UseVisualStyleBackColor = false;
+            btnCropAction.Click += BtnCrop_Click;
+
+            Controls.Add(groupCropDetail);
+
+            groupCropDetail.ResumeLayout(false);
+            ResumeLayout(false);
+        }
+
         private void FormMain_Load(object sender, EventArgs e)
         {
             LoadNewDocument(true);
@@ -939,6 +977,11 @@ namespace PixelEditor
                     btnWarp.Checked = false;
                     groupWarpDetail.Visible = false;
                 }
+                if (btn != btnCrop)
+                {
+                    btnCrop.Checked = false;
+                    groupCropDetail.Visible = false;
+                }
             }
         }
 
@@ -1004,6 +1047,12 @@ namespace PixelEditor
                 PaintingEngine.SetBrush(paint);
                 groupWarpDetail.Visible = true;
                 UpdateCursor(btnWarp.Image);
+            }
+            else if (btnCrop.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                groupCropDetail.Visible = true;
+                UpdateCursor(btnCrop.Image);
             }
             else
             {
@@ -1183,6 +1232,56 @@ namespace PixelEditor
             lblWarpBrushSize.Text = warpBrushSize.Value.ToString();
         }
 
+        private void BtnCrop_Click(object? sender, EventArgs e)
+        {
+            if (!ImageSelections.ContainsSelection()) return;
+
+            ImageSelections.CalculateSelectionBounds();
+            RectangleF cropRect = ImageSelections.GetSelectionBounds();
+
+            if (cropRect.Width <= 0 || cropRect.Height <= 0) return;
+
+            foreach (var layer in layersControl.GetLayers())
+            {
+                if (layer.Image is Bitmap oldBmp)
+                {
+                    RectangleF intersection = RectangleF.Intersect(new Rectangle(layer.X, layer.Y, oldBmp.Width, oldBmp.Height), cropRect);
+
+                    if (intersection.Width > 0 && intersection.Height > 0)
+                    {
+                        Bitmap croppedBmp = new((int)intersection.Width, (int)intersection.Height);
+                        using (Graphics g = Graphics.FromImage(croppedBmp))
+                        {
+                            g.DrawImage(oldBmp,
+                                new Rectangle(0, 0, (int)intersection.Width, (int)intersection.Height),
+                                new Rectangle((int)(intersection.X - layer.X), (int)(intersection.Y - layer.Y), (int)intersection.Width, (int)intersection.Height),
+                                GraphicsUnit.Pixel);
+                        }
+
+                        layer.Image = croppedBmp;
+                        layer.X = (int)(intersection.X - cropRect.X);
+                        layer.Y = (int)(intersection.Y - cropRect.Y);
+                        oldBmp.Dispose();
+                    }
+                    else
+                    {
+                        layer.Image = new Bitmap(1, 1);
+                    }
+                }
+            }
+
+            Document.Width = (int)cropRect.Width;
+            Document.Height = (int)cropRect.Height;
+
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            ImageSelections.ClearSelections();
+            ManipulatorGeneral.InvalidateCompositeBuffers();
+            RedrawImage();
+
+            labelStatus.Text = "Image Cropped.";
+        }
+
         private void Form1_Resize(object sender, EventArgs e)
         {
             if (WindowState != FormWindowState.Minimized)
@@ -1333,15 +1432,13 @@ namespace PixelEditor
 
         private void LoadNewDocument(bool appLaunch)
         {
-            FormSettings formSettings = new()
+            FormSettings frm = new()
             {
                 StartPosition = FormStartPosition.CenterParent,
                 LayerHeight = Document.Height,
-                LayerWidth = Document.Width,
-                LayerX = 0,
-                LayerY = 0
+                LayerWidth = Document.Width
             };
-            if (formSettings.ShowDialog(this) == DialogResult.OK)
+            if (frm.ShowDialog(this) == DialogResult.OK)
             {
                 if (!ConfirmAbandonChanges()) return;
 
@@ -1353,13 +1450,27 @@ namespace PixelEditor
 
                 Layer selectedLayer = new($"layer {layersControl.GetLayers().Count + 1}", true)
                 {
-                    X = formSettings.LayerX,
-                    Y = formSettings.LayerY,
+                    X = frm.LayerX,
+                    Y = frm.LayerY,
                     FillType = FillType.Transparency
                 };
-                selectedLayer.Image = (selectedLayer.Image != null) ?
-                    ManipulatorLighting.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
-                    ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
+
+                if (selectedLayer.Image == null)
+                {
+                    selectedLayer.Image = ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, frm.LayerWidth, frm.LayerHeight);
+                }
+                else
+                {
+                    if (frm.ResizeImage)
+                    {
+                        selectedLayer.Image = ManipulatorLighting.ResizeImage(selectedLayer.Image, frm.LayerWidth, frm.LayerHeight);
+                    }
+                    else
+                    {
+                        selectedLayer.Image = ManipulatorLighting.CropFromCenter(selectedLayer.Image, frm.LayerWidth, frm.LayerHeight);
+                    }
+                }
+
                 layersControl.InsertLayer(0, selectedLayer);
                 layersControl.RefreshLayersDisplay();
 
@@ -1569,8 +1680,11 @@ namespace PixelEditor
         {
             FormLayer frm = new()
             {
-                Layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true),
-                StartPosition = FormStartPosition.CenterParent
+                StartPosition = FormStartPosition.CenterParent,
+                Layer = new($"layer {layersControl.GetLayers().Count + 1}", true)
+                {
+                    FillType = FillType.Transparency
+                }
             };
 
             if (frm.ShowDialog(this) == DialogResult.OK)
@@ -2190,25 +2304,39 @@ namespace PixelEditor
 
         private void GeneralSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FormSettings formSettings = new()
+            FormSettings frm = new()
             {
                 StartPosition = FormStartPosition.CenterParent
             };
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
-                formSettings.LayerHeight = selectedLayer.Image?.Height ?? 2;
-                formSettings.LayerWidth = selectedLayer.Image?.Width ?? 2;
-                formSettings.LayerX = selectedLayer.X;
-                formSettings.LayerY = selectedLayer.Y;
-                if (formSettings.ShowDialog(this) == DialogResult.OK)
+                frm.LayerHeight = selectedLayer.Image?.Height ?? 2;
+                frm.LayerWidth = selectedLayer.Image?.Width ?? 2;
+                frm.LayerX = selectedLayer.X;
+                frm.LayerY = selectedLayer.Y;
+                if (frm.ShowDialog(this) == DialogResult.OK)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    selectedLayer.X = formSettings.LayerX;
-                    selectedLayer.Y = formSettings.LayerY;
-                    selectedLayer.Image = (selectedLayer.Image != null) ?
-                        ManipulatorLighting.CropFromCenter(selectedLayer.Image, formSettings.LayerWidth, formSettings.LayerHeight) :
-                        ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, formSettings.LayerWidth, formSettings.LayerHeight);
+                    selectedLayer.X = frm.LayerX;
+                    selectedLayer.Y = frm.LayerY;
+
+                    if (selectedLayer.Image == null)
+                    {
+                        selectedLayer.Image = ManipulatorGeneral.GetImage(selectedLayer.FillType == FillType.Transparency ? Color.Transparent : selectedLayer.FillColor, frm.LayerWidth, frm.LayerHeight);
+                    }
+                    else
+                    {
+                        if (frm.ResizeImage)
+                        {
+                            selectedLayer.Image = ManipulatorLighting.ResizeImage(selectedLayer.Image, frm.LayerWidth, frm.LayerHeight);
+                        }
+                        else
+                        {
+                            selectedLayer.Image = ManipulatorLighting.CropFromCenter(selectedLayer.Image, frm.LayerWidth, frm.LayerHeight);
+                        }
+                    }
+
                     layersControl.RefreshLayersDisplay();
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -2526,6 +2654,13 @@ namespace PixelEditor
 
                         brushPixelSize = warpBrushSize.Value * scale;
                     }
+                }
+                else if (btnCrop.Checked)
+                {
+                    isCropping = true;
+                    ImageSelections.ClearSelections();
+                    Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    ImageSelections.AddSelectionPoint(worldPos);
                 }
                 else if (btnPointer.Checked)
                 {
@@ -2950,6 +3085,38 @@ namespace PixelEditor
                     }
                 }
             }
+            else if (isCropping)
+            {
+                if (e.X != lastMousePosition.X || e.Y != lastMousePosition.Y)
+                {
+                    Point worldCurrent = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    var lastSelection = ImageSelections.GetLastSelection();
+
+                    if (lastSelection.Count > 0)
+                    {
+                        Point worldAnchor = lastSelection[0];
+
+                        if (lastSelection.Count == 1)
+                        {
+                            // Initialize the 4 corners of the rectangle (plus closing point)
+                            ImageSelections.AddSelectionPoint(new Point(worldCurrent.X, worldAnchor.Y));
+                            ImageSelections.AddSelectionPoint(worldCurrent);
+                            ImageSelections.AddSelectionPoint(new Point(worldAnchor.X, worldCurrent.Y));
+                            ImageSelections.AddSelectionPoint(worldAnchor);
+                        }
+                        else if (lastSelection.Count == 5)
+                        {
+                            // Update the corners dynamically as we drag
+                            ImageSelections.UpdateSelectionPoint(1, new Point(worldCurrent.X, worldAnchor.Y));
+                            ImageSelections.UpdateSelectionPoint(2, worldCurrent);
+                            ImageSelections.UpdateSelectionPoint(3, new Point(worldAnchor.X, worldCurrent.Y));
+                        }
+
+                        // Refresh the UI to show the crop box
+                        RedrawImage();
+                    }
+                }
+            }
             else
             {
                 if (ImageSelections.ContainsSelection())
@@ -2979,6 +3146,7 @@ namespace PixelEditor
             isErasing = false;
             isLassoSelecting = false;
             isRectSelecting = false;
+            isCropping = false;
             isRotating = false;
             isScaling = false;
             if (selectedLayer != null && selectedLayer.Image != null)

@@ -35,7 +35,11 @@
             canvasHeight = new NumericUpDown();
             canvasWidth = new NumericUpDown();
             groupBox2 = new GroupBox();
+            chkCenterLayer = new CheckBox();
+            chkResizeImage = new CheckBox();
             btnResetLayer = new Button();
+            btnResizeHeight = new Button();
+            btnResizeWidth = new Button();
             btnAutoResizeLayer = new Button();
             label2 = new Label();
             layerHeight = new NumericUpDown();
@@ -123,17 +127,41 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(chkCenterLayer);
+            groupBox2.Controls.Add(chkResizeImage);
             groupBox2.Controls.Add(btnResetLayer);
+            groupBox2.Controls.Add(btnResizeHeight);
+            groupBox2.Controls.Add(btnResizeWidth);
             groupBox2.Controls.Add(btnAutoResizeLayer);
             groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(layerHeight);
             groupBox2.Controls.Add(layerWidth);
             groupBox2.Location = new Point(12, 78);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(360, 60);
+            groupBox2.Size = new Size(360, 164);
             groupBox2.TabIndex = 9;
             groupBox2.TabStop = false;
             groupBox2.Text = "Layer Size:";
+            // 
+            // chkCenterLayer
+            // 
+            chkCenterLayer.AutoSize = true;
+            chkCenterLayer.Location = new Point(6, 137);
+            chkCenterLayer.Name = "chkCenterLayer";
+            chkCenterLayer.Size = new Size(92, 19);
+            chkCenterLayer.TabIndex = 8;
+            chkCenterLayer.Text = "Center Layer";
+            chkCenterLayer.UseVisualStyleBackColor = true;
+            // 
+            // chkResizeImage
+            // 
+            chkResizeImage.AutoSize = true;
+            chkResizeImage.Location = new Point(6, 112);
+            chkResizeImage.Name = "chkResizeImage";
+            chkResizeImage.Size = new Size(125, 19);
+            chkResizeImage.TabIndex = 8;
+            chkResizeImage.Text = "Resize Layer Image";
+            chkResizeImage.UseVisualStyleBackColor = true;
             // 
             // btnResetLayer
             // 
@@ -146,6 +174,30 @@
             btnResetLayer.Text = "Reset";
             btnResetLayer.UseVisualStyleBackColor = true;
             btnResetLayer.Click += BtnResetLayer_Click;
+            // 
+            // btnResizeHeight
+            // 
+            btnResizeHeight.FlatStyle = FlatStyle.Popup;
+            btnResizeHeight.Location = new Point(156, 80);
+            btnResizeHeight.Name = "btnResizeHeight";
+            btnResizeHeight.Size = new Size(117, 23);
+            btnResizeHeight.TabIndex = 7;
+            btnResizeHeight.TabStop = false;
+            btnResizeHeight.Text = "Resize Height";
+            btnResizeHeight.UseVisualStyleBackColor = true;
+            btnResizeHeight.Click += BtnResizeHeight_Click;
+            // 
+            // btnResizeWidth
+            // 
+            btnResizeWidth.FlatStyle = FlatStyle.Popup;
+            btnResizeWidth.Location = new Point(156, 51);
+            btnResizeWidth.Name = "btnResizeWidth";
+            btnResizeWidth.Size = new Size(117, 23);
+            btnResizeWidth.TabIndex = 7;
+            btnResizeWidth.TabStop = false;
+            btnResizeWidth.Text = "Resize Width";
+            btnResizeWidth.UseVisualStyleBackColor = true;
+            btnResizeWidth.Click += BtnResizeWidth_Click;
             // 
             // btnAutoResizeLayer
             // 
@@ -256,5 +308,9 @@
         private Button btnAutoResizeLayer;
         private Button btnResetCanvas;
         private Button btnResetLayer;
+        private CheckBox chkCenterLayer;
+        private CheckBox chkResizeImage;
+        private Button btnResizeHeight;
+        private Button btnResizeWidth;
     }
 }

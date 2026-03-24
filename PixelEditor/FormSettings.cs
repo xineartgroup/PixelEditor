@@ -2,13 +2,11 @@
 {
     public partial class FormSettings : Form
     {
-        private int tempLayerX = 0;
-        private int tempLayerY = 0;
-
         public int LayerWidth = 2;
         public int LayerHeight = 2;
         public int LayerX = 0;
         public int LayerY = 0;
+        public bool ResizeImage = false;
 
         public FormSettings()
         {
@@ -21,8 +19,6 @@
             canvasHeight.Value = Document.Height;
             layerWidth.Value = LayerWidth >= layerWidth.Minimum && LayerWidth <= layerWidth.Maximum ? LayerWidth : 2;
             layerHeight.Value = LayerHeight >= layerHeight.Minimum && LayerHeight <= layerHeight.Maximum ? LayerHeight : 2;
-            tempLayerX = LayerX;
-            tempLayerY = LayerY;
         }
 
         private void BtnOK_Click(object sender, EventArgs e)
@@ -31,10 +27,11 @@
             Document.Height = (int)canvasHeight.Value;
             LayerWidth = (int)layerWidth.Value;
             LayerHeight = (int)layerHeight.Value;
-            if (Document.Width == LayerWidth && Document.Height == LayerHeight)
+            ResizeImage = chkResizeImage.Checked;
+            if (chkCenterLayer.Checked)
             {
-                LayerX = tempLayerX;
-                LayerY = tempLayerY;
+                LayerX = (Document.Width - (int)layerWidth.Value) / 2;
+                LayerY = (Document.Height - (int)layerHeight.Value) / 2;
             }
             DialogResult = DialogResult.OK;
             Close();
@@ -50,16 +47,28 @@
         {
             canvasWidth.Value = layerWidth.Value;
             canvasHeight.Value = layerHeight.Value;
-            tempLayerX = 0;
-            tempLayerY = 0;
         }
 
         private void BtnAutoResizeLayer_Click(object sender, EventArgs e)
         {
             layerWidth.Value = canvasWidth.Value;
             layerHeight.Value = canvasHeight.Value;
-            tempLayerX = 0;
-            tempLayerY = 0;
+        }
+
+        private void BtnResizeWidth_Click(object sender, EventArgs e)
+        {
+            int prevWidth = (int)layerWidth.Value;
+            int prevHeight = (int)layerHeight.Value;
+            layerWidth.Value = canvasWidth.Value;
+            layerHeight.Value = canvasWidth.Value * prevHeight / prevWidth;
+        }
+
+        private void BtnResizeHeight_Click(object sender, EventArgs e)
+        {
+            int prevWidth = (int)layerWidth.Value;
+            int prevHeight = (int)layerHeight.Value;
+            layerWidth.Value = prevWidth * canvasHeight.Value / prevHeight;
+            layerHeight.Value = canvasHeight.Value;
         }
 
         private void Values_ValueChanged(object sender, EventArgs e)
