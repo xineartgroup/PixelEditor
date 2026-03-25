@@ -366,7 +366,10 @@ namespace PixelEditor
                     {
                         mask = ImageSelections.ExtendMask(mask, width, height);
                     }
-                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], true);
+                    var localPoints = poly.Points
+                        .Select(p => new Point(p.X - selectedLayer.X, p.Y - selectedLayer.Y))
+                        .ToList();
+                    ImageSelections.FillPolygonInMask(mask, localPoints, true);
                 }
             }
 
@@ -485,7 +488,7 @@ namespace PixelEditor
                     {
                         mask = ImageSelections.ExtendMask(mask, width, height);
                     }
-                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X, p.Y))], true);
+                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - selectedLayer.X, p.Y - selectedLayer.Y))], true);
                 }
             }
 

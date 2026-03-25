@@ -32,9 +32,6 @@ namespace PixelEditor
         private float _dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
-        private float initialScaleDistance = 0f;
-        private float initialScaleFactor = 0f;
-        private float scaleFactor = 1.0f;
         private int selectedBrushIndex = 0;
         private int selectedEraserIndex = 0;
         private string currentFilePath = "";
@@ -45,6 +42,14 @@ namespace PixelEditor
         private readonly Matrix transformMatrix = new();
         private float brushPixelSize = 0.0f;
         private float currentOpacity = 1.0f;
+
+        private float scaleFactorX = 1.0f;
+        private float scaleFactorY = 1.0f;
+        private float initialScaleDistanceX = 0f;
+        private float initialScaleDistanceY = 0f;
+        private PointF scaleAnchorWorld = PointF.Empty;
+        private Point scaleStartMouseScreen = Point.Empty;
+        private string activeScaleHandle = "";
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -1122,21 +1127,6 @@ namespace PixelEditor
             }
         }
 
-        private void UpdateCursor(Point mousePosition)
-        {
-            if (IsOverRotationHandle(mousePosition, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
-            {
-                canvas.Cursor = Cursors.Hand;
-            }
-            else if (IsOverScaleHandle(mousePosition, canvas.Width, canvas.Height, out string handle))
-            {
-                canvas.Cursor = GetCursor(handle);
-            }
-            else
-            {
-            }
-        }
-
         private static Cursor GetCursor(Bitmap bmp, int xHotSpot, int yHotSpot)
         {
             IntPtr ptr = bmp.GetHicon();
@@ -1155,6 +1145,8 @@ namespace PixelEditor
             {
                 "topLeft" or "bottomRight" => Cursors.SizeNWSE,
                 "topRight" or "bottomLeft" => Cursors.SizeNESW,
+                "topMid" or "bottomMid" => Cursors.SizeNS,
+                "leftMid" or "rightMid" => Cursors.SizeWE,
                 _ => Cursors.SizeAll,
             };
         }
@@ -2070,7 +2062,6 @@ namespace PixelEditor
                     ImageSelections.CalculateSelectionBounds();
                     selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
                     rotationAngle = 0;
-                    scaleFactor = 1.0f;
                     ImageSelections.ClearSelections();
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -2083,7 +2074,6 @@ namespace PixelEditor
                     selectedLayer.Image?.Dispose();
                     selectedLayer.Image = ManipulatorGeneral.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;
-                    scaleFactor = 1.0f;
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -2476,18 +2466,21 @@ namespace PixelEditor
 
         private void UpdateTransformMatrix()
         {
-            PointF screenCenter = GetSelectionCenterScreen(canvas.Width, canvas.Height);
+            Point anchorScreen = ManipulatorGeneral.WorldToScreen(Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
 
             transformMatrix.Reset();
-            transformMatrix.Translate(-screenCenter.X, -screenCenter.Y, MatrixOrder.Append);
+            transformMatrix.Translate(-anchorScreen.X, -anchorScreen.Y, MatrixOrder.Append);
             transformMatrix.Rotate(rotationAngle, MatrixOrder.Append);
-            transformMatrix.Scale(scaleFactor, scaleFactor, MatrixOrder.Append);
-            transformMatrix.Translate(screenCenter.X, screenCenter.Y, MatrixOrder.Append);
+            transformMatrix.Scale(scaleFactorX, scaleFactorY, MatrixOrder.Append);
+            transformMatrix.Translate(anchorScreen.X, anchorScreen.Y, MatrixOrder.Append);
         }
 
         private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
         {
             if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
+
+            if (scaleFactorX != 1.0f || scaleFactorY != 1.0f || rotationAngle != 0f)
+                BakeTransformIntoSelectedArea(selectedLayer);
 
             Bitmap result = new(selectedLayer.Image);
             using (Graphics g = Graphics.FromImage(result))
@@ -2496,20 +2489,10 @@ namespace PixelEditor
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
                 RectangleF worldBounds = ImageSelections.GetSelectionBounds();
-
                 float localX = worldBounds.X - selectedLayer.X;
                 float localY = worldBounds.Y - selectedLayer.Y;
 
-                using Matrix layerMatrix = new();
-                layerMatrix.Translate(localX + (selectedAreaBitmap.Width / 2f),
-                                      localY + (selectedAreaBitmap.Height / 2f));
-                layerMatrix.Rotate(rotationAngle);
-                layerMatrix.Scale(scaleFactor, scaleFactor);
-                layerMatrix.Translate(-(selectedAreaBitmap.Width / 2f),
-                                      -(selectedAreaBitmap.Height / 2f));
-
-                g.Transform = layerMatrix;
-                g.DrawImage(selectedAreaBitmap, 0, 0);
+                g.DrawImage(selectedAreaBitmap, localX, localY);
             }
 
             selectedAreaBitmap?.Dispose();
@@ -2517,18 +2500,6 @@ namespace PixelEditor
             ImageSelections.ClearSelections();
 
             return result;
-        }
-
-        private float CalculateScaleFactor(Point mousePosition)
-        {
-            Point worldMouse = ManipulatorGeneral.ScreenToWorld(mousePosition, canvas.Width, canvas.Height);
-            float currentDistance = ImageSelections.Distance(worldMouse, ImageSelections.GetSelectionCenter());
-
-            if (initialScaleDistance > 0)
-            {
-                return (currentDistance / initialScaleDistance) * initialScaleFactor;
-            }
-            return 1.0f;
         }
 
         public static bool IsOverRotationHandle(Point screenPoint, int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
@@ -2540,31 +2511,6 @@ namespace PixelEditor
             Point screenHandle = ManipulatorGeneral.WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
             float distance = ImageSelections.Distance(screenPoint, screenHandle);
             return distance < ImageSelections.ROTATION_HANDLE_SIZE;
-        }
-
-        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
-        {
-            handle = "";
-
-            var corners = new[]
-            {
-                new { Name = "topLeft",     World = new PointF(ImageSelections.GetSelectionBounds().X,     ImageSelections.GetSelectionBounds().Y) },
-                new { Name = "topRight",    World = new PointF(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Y) },
-                new { Name = "bottomLeft",  World = new PointF(ImageSelections.GetSelectionBounds().X,     ImageSelections.GetSelectionBounds().Bottom) },
-                new { Name = "bottomRight", World = new PointF(ImageSelections.GetSelectionBounds().Right, ImageSelections.GetSelectionBounds().Bottom) }
-            };
-
-            foreach (var corner in corners)
-            {
-                Point screenCorner = ManipulatorGeneral.WorldToScreen(Point.Round(corner.World), canvasWidth, canvasHeight);
-                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
-                {
-                    handle = corner.Name;
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
@@ -2586,6 +2532,172 @@ namespace PixelEditor
             float dx = screenMousePosition.X - screenCenter.X;
             float dy = screenMousePosition.Y - screenCenter.Y;
             return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+        }
+
+        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
+        {
+            handle = "";
+
+            RectangleF b = ImageSelections.GetSelectionBounds();
+
+            float midX = (b.Left + b.Right) / 2f;
+            float midY = (b.Top + b.Bottom) / 2f;
+
+            var handles = new[]
+            {
+        new { Name = "topLeft",     World = new PointF(b.Left,  b.Top) },
+        new { Name = "topRight",    World = new PointF(b.Right, b.Top) },
+        new { Name = "bottomLeft",  World = new PointF(b.Left,  b.Bottom) },
+        new { Name = "bottomRight", World = new PointF(b.Right, b.Bottom) },
+        new { Name = "topMid",      World = new PointF(midX,    b.Top) },
+        new { Name = "bottomMid",   World = new PointF(midX,    b.Bottom) },
+        new { Name = "leftMid",     World = new PointF(b.Left,  midY) },
+        new { Name = "rightMid",    World = new PointF(b.Right, midY) },
+    };
+
+            foreach (var h in handles)
+            {
+                Point screenCorner = ManipulatorGeneral.WorldToScreen(Point.Round(h.World), canvasWidth, canvasHeight);
+                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
+                {
+                    handle = h.Name;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static PointF GetOppositeAnchor(string handle)
+        {
+            RectangleF b = ImageSelections.GetSelectionBounds();
+            float midX = (b.Left + b.Right) / 2f;
+            float midY = (b.Top + b.Bottom) / 2f;
+
+            return handle switch
+            {
+                "topLeft" => new PointF(b.Right, b.Bottom),
+                "topRight" => new PointF(b.Left, b.Bottom),
+                "bottomLeft" => new PointF(b.Right, b.Top),
+                "bottomRight" => new PointF(b.Left, b.Top),
+                "topMid" => new PointF(midX, b.Bottom),
+                "bottomMid" => new PointF(midX, b.Top),
+                "leftMid" => new PointF(b.Right, midY),
+                "rightMid" => new PointF(b.Left, midY),
+                _ => new PointF(midX, midY),
+            };
+        }
+
+        private static (bool affectsX, bool affectsY) GetHandleAxes(string handle) => handle switch
+        {
+            "topMid" or "bottomMid" => (false, true),
+            "leftMid" or "rightMid" => (true, false),
+            _ => (true, true),   // corners affect both
+        };
+
+        private (float newX, float newY) CalculateScaleFactors(Point mouseScreenPos, string handle)
+        {
+            (bool affectsX, bool affectsY) = GetHandleAxes(handle);
+
+            Point anchorScreen = ManipulatorGeneral.WorldToScreen(
+                Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
+
+            float newX = scaleFactorX;
+            float newY = scaleFactorY;
+
+            if (affectsX && initialScaleDistanceX > 0)
+            {
+                float startDX = Math.Abs(scaleStartMouseScreen.X - anchorScreen.X);
+                float currentDX = Math.Abs(mouseScreenPos.X - anchorScreen.X);
+                float ratio = startDX > 0 ? currentDX / startDX : 1f;
+                newX = Math.Max(0.01f, ratio);
+            }
+
+            if (affectsY && initialScaleDistanceY > 0)
+            {
+                float startDY = Math.Abs(scaleStartMouseScreen.Y - anchorScreen.Y);
+                float currentDY = Math.Abs(mouseScreenPos.Y - anchorScreen.Y);
+                float ratio = startDY > 0 ? currentDY / startDY : 1f;
+                newY = Math.Max(0.01f, ratio);
+            }
+
+            return (newX, newY);
+        }
+
+        private void BakeTransformIntoSelectedArea(Layer selectedLayer)
+        {
+            if (selectedAreaBitmap == null) return;
+
+            RectangleF worldBounds = ImageSelections.GetSelectionBounds();
+
+            PointF center = new(
+                scaleAnchorWorld.X,
+                scaleAnchorWorld.Y);
+
+            PointF[] corners =
+            [
+                new(worldBounds.Left,  worldBounds.Top),
+                new(worldBounds.Right, worldBounds.Top),
+                new(worldBounds.Right, worldBounds.Bottom),
+                new(worldBounds.Left,  worldBounds.Bottom),
+            ];
+
+            using Matrix worldTransform = new();
+            worldTransform.Translate(center.X, center.Y);
+            worldTransform.Rotate(rotationAngle);
+            worldTransform.Scale(scaleFactorX, scaleFactorY);
+            worldTransform.Translate(-center.X, -center.Y);
+            worldTransform.TransformPoints(corners);
+
+            float newLeft = corners.Min(p => p.X);
+            float newTop = corners.Min(p => p.Y);
+            float newRight = corners.Max(p => p.X);
+            float newBottom = corners.Max(p => p.Y);
+
+            int newWidth = Math.Max(1, (int)(newRight - newLeft));
+            int newHeight = Math.Max(1, (int)(newBottom - newTop));
+
+            Bitmap baked = new(newWidth, newHeight, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+            using (Graphics g = Graphics.FromImage(baked))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                float localX = worldBounds.X - selectedLayer.X;
+                float localY = worldBounds.Y - selectedLayer.Y;
+                float localAnchorX = scaleAnchorWorld.X - selectedLayer.X;
+                float localAnchorY = scaleAnchorWorld.Y - selectedLayer.Y;
+                float localNewLeft = newLeft - selectedLayer.X;
+                float localNewTop = newTop - selectedLayer.Y;
+
+                using Matrix m = new();
+                m.Translate(localAnchorX - localNewLeft, localAnchorY - localNewTop);
+                m.Rotate(rotationAngle);
+                m.Scale(scaleFactorX, scaleFactorY);
+                m.Translate(-localAnchorX, -localAnchorY);
+                m.Translate(localX, localY);
+
+                g.Transform = m;
+                g.DrawImage(selectedAreaBitmap, 0, 0);
+            }
+
+            selectedAreaBitmap.Dispose();
+            selectedAreaBitmap = baked;
+
+            ImageSelections.ClearSelections();
+            ImageSelections.AddSelectionPoint(new Point((int)newLeft, (int)newTop));
+            ImageSelections.AddSelectionPoint(new Point((int)newRight, (int)newTop));
+            ImageSelections.AddSelectionPoint(new Point((int)newRight, (int)newBottom));
+            ImageSelections.AddSelectionPoint(new Point((int)newLeft, (int)newBottom));
+            ImageSelections.AddSelectionPoint(new Point((int)newLeft, (int)newTop));
+            ImageSelections.CalculateSelectionBounds();
+
+            scaleFactorX = 1.0f;
+            scaleFactorY = 1.0f;
+            rotationAngle = 0f;
+            scaleAnchorWorld = new PointF(
+                (newLeft + newRight) / 2f,
+                (newTop + newBottom) / 2f);
         }
 
         private void PixelImage_MouseDown(object sender, MouseEventArgs e)
@@ -2672,17 +2784,36 @@ namespace PixelEditor
 
                             if (IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
                             {
+                                if (selectedAreaBitmap != null)
+                                    BakeTransformIntoSelectedArea(selectedLayer);
+
                                 isRotating = true;
-                                Cursor.Current = Cursors.SizeAll;
                                 startMouseAngle = CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
                             }
                             else if (IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
                             {
+                                if (selectedAreaBitmap != null)
+                                    BakeTransformIntoSelectedArea(selectedLayer);
+
                                 isScaling = true;
-                                Cursor.Current = GetCursor(handle);
-                                Point worldMouse = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
-                                initialScaleDistance = ImageSelections.Distance(worldMouse, ImageSelections.GetSelectionCenter());
-                                initialScaleFactor = scaleFactor;
+                                activeScaleHandle = handle;
+                                scaleFactorX = 1.0f;
+                                scaleFactorY = 1.0f;
+                                scaleAnchorWorld = GetOppositeAnchor(handle);
+                                scaleStartMouseScreen = e.Location;
+
+                                Point anchorScreen = ManipulatorGeneral.WorldToScreen(
+                                    Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
+
+                                (bool affectsX, bool affectsY) = GetHandleAxes(handle);
+
+                                initialScaleDistanceX = affectsX
+                                    ? Math.Max(1f, Math.Abs(e.Location.X - anchorScreen.X))
+                                    : 1f;
+
+                                initialScaleDistanceY = affectsY
+                                    ? Math.Max(1f, Math.Abs(e.Location.Y - anchorScreen.Y))
+                                    : 1f;
                             }
                             else if (ImageSelections.IsPointInSelection(ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height)) >= 0)
                             {
@@ -2922,8 +3053,9 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    scaleFactor = CalculateScaleFactor(e.Location);
+                    (scaleFactorX, scaleFactorY) = CalculateScaleFactors(e.Location, activeScaleHandle);
                     UpdateTransformMatrix();
+                    RedrawImage();
                 }
             }
             else if (isWarping)
@@ -3179,7 +3311,6 @@ namespace PixelEditor
                 }
 
                 rotationAngle = 0;
-                scaleFactor = 1.0f;
             }
         }
 
@@ -3248,7 +3379,7 @@ namespace PixelEditor
                 {
                     RectangleF screenBounds = GetSelectionBoundsScreen(canvas.Width, canvas.Height);
                     g.MultiplyTransform(transformMatrix);
-                    g.DrawImage(selectedAreaBitmap, screenBounds);
+                    g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
                     g.ResetTransform();
                 }
             }
@@ -3321,6 +3452,25 @@ namespace PixelEditor
                             ImageSelections.SCALE_HANDLE_SIZE,
                             ImageSelections.SCALE_HANDLE_SIZE
                         );
+                        g.FillRectangle(scaleBrush, rect);
+                        g.DrawRectangle(handlePen, rect.X, rect.Y, rect.Width, rect.Height);
+                    }
+
+                    // After drawing corner handles, add inside RedrawHandles():
+
+                    // Mid-point handles
+                    float hSize = ImageSelections.SCALE_HANDLE_SIZE;
+                    PointF[] midPoints =
+                    [
+                        new(screenBounds.X + screenBounds.Width / 2f, screenBounds.Y),          // topMid
+                        new(screenBounds.X + screenBounds.Width / 2f, screenBounds.Bottom),     // bottomMid
+                        new(screenBounds.X,                            screenBounds.Y + screenBounds.Height / 2f), // leftMid
+                        new(screenBounds.Right,                        screenBounds.Y + screenBounds.Height / 2f), // rightMid
+                    ];
+
+                    foreach (var mp in midPoints)
+                    {
+                        RectangleF rect = new(mp.X - hSize / 2, mp.Y - hSize / 2, hSize, hSize);
                         g.FillRectangle(scaleBrush, rect);
                         g.DrawRectangle(handlePen, rect.X, rect.Y, rect.Width, rect.Height);
                     }
