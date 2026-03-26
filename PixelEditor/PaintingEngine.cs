@@ -41,7 +41,7 @@ namespace PixelEditor
             strokeCoverage = null;
         }
 
-        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f)
+        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null)
                 return;
@@ -62,13 +62,13 @@ namespace PixelEditor
                 float lerp = t / distance;
                 int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
                 int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
-                PaintAt(new Point(x, y), brushScale, opacity);
+                PaintAt(new Point(x, y), brushScale, opacity, mask);
             }
 
-            PaintAt(end, brushScale, opacity);
+            PaintAt(end, brushScale, opacity, mask);
         }
 
-        private static void PaintAt(Point location, float brushScale, float opacity)
+        private static void PaintAt(Point location, float brushScale, float opacity, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
                 return;
@@ -106,6 +106,9 @@ namespace PixelEditor
                 {
                     for (int x = startX; x < endX; x++)
                     {
+                        if (mask != null && !mask[x, y])
+                            continue;
+
                         int bx = x - x0;
                         int by = y - y0;
 
@@ -129,13 +132,9 @@ namespace PixelEditor
                         float inv = 1f - desired;
                         float baseAlpha = basePixel[3] / 255f;
                         float outAlpha = desired + baseAlpha * inv;
-                        //targetPixel[0] = (byte)(basePixel[0] * inv + brushPixel[0] * desired);
-                        //targetPixel[1] = (byte)(basePixel[1] * inv + brushPixel[1] * desired);
-                        //targetPixel[2] = (byte)(basePixel[2] * inv + brushPixel[2] * desired);
-                        //targetPixel[3] = basePixel[3];
+
                         if (outAlpha > 0)
                         {
-                            // When baseAlpha is 0, base pixel RGB is meaningless - ignore it entirely
                             float baseWeight = baseAlpha * inv;
                             float totalWeight = desired + baseWeight;
 

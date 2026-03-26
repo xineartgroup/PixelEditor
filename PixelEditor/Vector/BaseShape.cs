@@ -1,6 +1,6 @@
 ﻿namespace PixelEditor.Vector
 {
-    public abstract class BaseShape : IShape
+    public abstract class BaseShape
     {
         public float LineWidth { get; set; } = 1.0f;
         public Color LineColor { get; set; } = Color.Black;

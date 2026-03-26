@@ -1,4 +1,6 @@
-﻿namespace PixelEditor
+﻿using PixelEditor.Vector;
+
+namespace PixelEditor
 {
     public class Layer(string name, bool isVisible)
     {
@@ -18,6 +20,7 @@
         private Color _fillColor = Color.White;
         private Image? _image = null;
         private Image? _imageMask = null;
+        private List<BaseShape> shapes = [];
 
         public event Action<Rectangle>? OnLayerChanged;
 
@@ -57,6 +60,8 @@
         public FillType FillType { get => _fillType; set => SetProperty(ref _fillType, value); }
 
         public Color FillColor { get => _fillColor; set => SetProperty(ref _fillColor, value); }
+
+        public List<BaseShape> Shapes { get => shapes; set => SetProperty(ref shapes, value); }
 
         private Image? GetImageComposite()
         {

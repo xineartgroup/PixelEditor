@@ -1,4 +1,5 @@
-﻿using System.Drawing.Drawing2D;
+﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
@@ -27,14 +28,16 @@ namespace PixelEditor
         private bool isScaling = false;
         private bool isLassoSelecting = false;
         private bool isRectSelecting = false;
+        private bool isDrawing = false;
         private bool isCropping = false;
         private bool isDirty = false;
-        private float _dashOffset = 0;
+        private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
         private int selectedBrushIndex = 0;
         private int selectedEraserIndex = 0;
         private string currentFilePath = "";
+        private BaseShape? currentShape = null;
         private DateTime lastPaintTime = DateTime.MinValue;
         private readonly List<Image> brushes = [];
         private List<PointF> strokePoints = [];
@@ -141,9 +144,9 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    _dashOffset += 1.0f;
+                    dashOffset += 1.0f;
 
-                    if (_dashOffset > 100.0f) _dashOffset = 0;
+                    if (dashOffset > 100.0f) dashOffset = 0;
 
                     RedrawImage();
                 }
@@ -2708,7 +2711,27 @@ namespace PixelEditor
             {
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-                if (btnBrusher.Checked)
+                if (btnShapeRect.Checked)
+                {
+                    isDrawing = true;
+                    currentShape = new ShapeRect { X = e.X, Y = e.Y, LineColor = paint.GetStrokeColor(), FillColor = paint.GetFillColor(), LineWidth = (float)brush_size.Value };
+                }
+                else if (btnShapeEllipse.Checked)
+                {
+                    isDrawing = true;
+                    currentShape = new ShapeEllipse { Cx = e.X, Cy = e.Y, LineColor = paint.GetStrokeColor(), FillColor = paint.GetFillColor(), LineWidth = (float)brush_size.Value };
+                }
+                else if (btnShapePolygon.Checked)
+                {
+                    isDrawing = true;
+                    currentShape = new ShapePolygon { Points = { e.Location, e.Location }, LineColor = paint.GetStrokeColor(), FillColor = paint.GetFillColor(), LineWidth = (float)brush_size.Value };
+                }
+                else if (btnShapeText.Checked)
+                {
+                    isDrawing = true;
+                    currentShape = new ShapeText { X = e.X, Y = e.Y, Content = "New Text", LineColor = paint.GetStrokeColor(), FillColor = paint.GetFillColor() };
+                }
+                else if (btnBrusher.Checked)
                 {
                     isPainting = true;
                     strokePoints = [];
@@ -2992,7 +3015,38 @@ namespace PixelEditor
 
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-            if (isDragging)
+            if (isDrawing)
+            {
+                if (selectedLayer != null)
+                {
+                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+
+                    if (currentShape is ShapeRect rect)
+                    {
+                        rect.X = Math.Min(lastMousePosition.X, localCurrentRaw.X);
+                        rect.Y = Math.Min(lastMousePosition.Y, localCurrentRaw.Y);
+                        rect.Width = Math.Abs(lastMousePosition.X - localCurrentRaw.X);
+                        rect.Height = Math.Abs(lastMousePosition.Y - localCurrentRaw.Y);
+                    }
+                    else if (currentShape is ShapeEllipse ellipse)
+                    {
+                        ellipse.Rx = Math.Abs(lastMousePosition.X - localCurrentRaw.X);
+                        ellipse.Ry = Math.Abs(lastMousePosition.Y - localCurrentRaw.Y);
+                        ellipse.Cx = lastMousePosition.X;
+                        ellipse.Cy = lastMousePosition.Y;
+                    }
+                    else if (currentShape is ShapePolyline polyline)
+                    {
+                        if (polyline.Points.Count > 1) polyline.Points[^1] = localCurrentRaw;
+                    }
+                    else if (currentShape is ShapePolygon polygon)
+                    {
+                        if (polygon.Points.Count > 1) polygon.Points[^1] = localCurrentRaw;
+                    }
+                }
+            }
+            else if (isDragging)
             {
                 int dx = e.X - lastMousePosition.X;
                 int dy = e.Y - lastMousePosition.Y;
@@ -3119,7 +3173,7 @@ namespace PixelEditor
                     float radius = paint.Brush != null ? (int)(paint.Brush.Width * brushPixelSize / 2) : 0;
                     Rectangle dirty = new(0, 0, 0, 0);
 
-                    if (strokePoints.Count >= 2)
+                    if (strokePoints.Count > 1)
                     {
                         int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
                         int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
@@ -3130,16 +3184,19 @@ namespace PixelEditor
 
                         dirty.Intersect(new Rectangle(0, 0, Document.Width, Document.Height));
 
+                        var selectionPolygons = ImageSelections.GetSelections();
+
                         if (strokePoints.Count == 2)
                         {
                             Point start = Point.Round(strokePoints[0]);
                             Point end = Point.Round(strokePoints[1]);
-                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity);
+
+                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                         }
                         else
                         {
                             int n = strokePoints.Count;
-                            PointF p0 = (n >= 3) ? strokePoints[n - 3] : strokePoints[n - 2];
+                            PointF p0 = (n > 2) ? strokePoints[n - 3] : strokePoints[n - 2];
                             PointF p1 = strokePoints[n - 2];
                             PointF p2 = strokePoints[n - 1];
                             PointF p3 = p2;
@@ -3158,7 +3215,7 @@ namespace PixelEditor
 
                                 if (prevRounded != currRounded)
                                 {
-                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity);
+                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                                 }
 
                                 previousPos = pos;
@@ -3270,9 +3327,9 @@ namespace PixelEditor
                     ImageSelections.AddSelectionPoint(ImageSelections.GetLastSelection()[0]);
                 }
             }
-            isWarping = false;
             WarpEngine.WarpSnapshot?.Dispose();
             WarpEngine.WarpSnapshot = null;
+            isWarping = false;
             isDragging = false;
             isPainting = false;
             isErasing = false;
@@ -3281,16 +3338,28 @@ namespace PixelEditor
             isCropping = false;
             isRotating = false;
             isScaling = false;
-            if (selectedLayer != null && selectedLayer.Image != null)
+            isDrawing = false;
+            currentShape = null;
+            if (selectedLayer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                ManipulatorGeneral.UpdateBuffers();
-                PaintingEngine.EndStroke();
-                ImageSelections.MergeIntersections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
-                ImageSelections.CalculateSelectionBounds();
-                layersControl.RefreshLayersDisplay();
-                RedrawImage();
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                if (currentShape != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    selectedLayer.Shapes.Add(currentShape);
+                    RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+                if (selectedLayer.Image != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    ManipulatorGeneral.UpdateBuffers();
+                    PaintingEngine.EndStroke();
+                    ImageSelections.MergeIntersections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    ImageSelections.CalculateSelectionBounds();
+                    layersControl.RefreshLayersDisplay();
+                    RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
             }
         }
 
@@ -3333,7 +3402,7 @@ namespace PixelEditor
 
             sw.Stop();
 
-            if (_dashOffset == 0)
+            if (dashOffset == 0)
             {
                 Console.WriteLine($"PopulateColorGrid: {sw.ElapsedMilliseconds}ms");
             }
@@ -3396,7 +3465,7 @@ namespace PixelEditor
             {
                 using Pen selectionPen = new(Color.Yellow, 2.0f);
                 selectionPen.DashPattern = [2, 2];
-                selectionPen.DashOffset = _dashOffset;
+                selectionPen.DashOffset = dashOffset;
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
                 if (selectedLayer != null && selectedLayer.Image != null)
                 {
@@ -3424,7 +3493,7 @@ namespace PixelEditor
 
                         using Pen selectionPen = new(Color.Blue, 2f);
                         selectionPen.DashPattern = [5, 5];
-                        selectionPen.DashOffset = _dashOffset;
+                        selectionPen.DashOffset = dashOffset;
                         g.DrawLines(selectionPen, screenPoints);
                     }
 

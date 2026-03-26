@@ -187,6 +187,10 @@
             btnEraser = new RadioButton();
             btnWarp = new RadioButton();
             btnCrop = new RadioButton();
+            btnShapeRect = new RadioButton();
+            btnShapeEllipse = new RadioButton();
+            btnShapePolygon = new RadioButton();
+            btnShapeText = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -1457,12 +1461,68 @@
             btnCrop.CheckedChanged += BtnTools_CheckedChanged;
             btnCrop.Click += BtnTools_Click;
             // 
+            // btnShapeRect
+            // 
+            btnShapeRect.Appearance = Appearance.Button;
+            btnShapeRect.FlatStyle = FlatStyle.Popup;
+            btnShapeRect.Image = Properties.Resources.Rectangle;
+            btnShapeRect.Location = new Point(409, 27);
+            btnShapeRect.Name = "btnShapeRect";
+            btnShapeRect.Size = new Size(32, 32);
+            btnShapeRect.TabIndex = 26;
+            btnShapeRect.UseVisualStyleBackColor = true;
+            btnShapeRect.CheckedChanged += BtnTools_CheckedChanged;
+            btnShapeRect.Click += BtnTools_Click;
+            // 
+            // btnShapeEllipse
+            // 
+            btnShapeEllipse.Appearance = Appearance.Button;
+            btnShapeEllipse.FlatStyle = FlatStyle.Popup;
+            btnShapeEllipse.Image = Properties.Resources.Oval;
+            btnShapeEllipse.Location = new Point(447, 27);
+            btnShapeEllipse.Name = "btnShapeEllipse";
+            btnShapeEllipse.Size = new Size(32, 32);
+            btnShapeEllipse.TabIndex = 26;
+            btnShapeEllipse.UseVisualStyleBackColor = true;
+            btnShapeEllipse.CheckedChanged += BtnTools_CheckedChanged;
+            btnShapeEllipse.Click += BtnTools_Click;
+            // 
+            // btnShapePolygon
+            // 
+            btnShapePolygon.Appearance = Appearance.Button;
+            btnShapePolygon.FlatStyle = FlatStyle.Popup;
+            btnShapePolygon.Image = Properties.Resources.Polygon;
+            btnShapePolygon.Location = new Point(485, 27);
+            btnShapePolygon.Name = "btnShapePolygon";
+            btnShapePolygon.Size = new Size(32, 32);
+            btnShapePolygon.TabIndex = 26;
+            btnShapePolygon.UseVisualStyleBackColor = true;
+            btnShapePolygon.CheckedChanged += BtnTools_CheckedChanged;
+            btnShapePolygon.Click += BtnTools_Click;
+            // 
+            // btnShapeText
+            // 
+            btnShapeText.Appearance = Appearance.Button;
+            btnShapeText.FlatStyle = FlatStyle.Popup;
+            btnShapeText.Image = (Image)resources.GetObject("btnShapeText.Image");
+            btnShapeText.Location = new Point(523, 27);
+            btnShapeText.Name = "btnShapeText";
+            btnShapeText.Size = new Size(32, 32);
+            btnShapeText.TabIndex = 26;
+            btnShapeText.UseVisualStyleBackColor = true;
+            btnShapeText.CheckedChanged += BtnTools_CheckedChanged;
+            btnShapeText.Click += BtnTools_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 561);
             Controls.Add(tabLayers);
+            Controls.Add(btnShapeText);
+            Controls.Add(btnShapePolygon);
+            Controls.Add(btnShapeEllipse);
+            Controls.Add(btnShapeRect);
             Controls.Add(btnCrop);
             Controls.Add(btnWarp);
             Controls.Add(btnMagicWand);
@@ -1663,5 +1723,9 @@
         private ToolStripMenuItem growToolStripMenuItem;
         private ToolStripMenuItem shrinkToolStripMenuItem;
         private RadioButton btnCrop;
+        private RadioButton btnShapeRect;
+        private RadioButton btnShapeEllipse;
+        private RadioButton btnShapePolygon;
+        private RadioButton btnShapeText;
     }
 }

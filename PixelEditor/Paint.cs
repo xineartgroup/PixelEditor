@@ -5,6 +5,7 @@ namespace PixelEditor
 {
     public struct Paint
     {
+        private Color strokeColor = Color.Black;
         private Color fillColor = Color.Black;
         private Bitmap? bitmap = null;
         private Bitmap? brush = null;
@@ -35,6 +36,16 @@ namespace PixelEditor
         public readonly Color GetFillColor()
         {
             return fillColor;
+        }
+
+        public void SetStrokeColor(Color color)
+        {
+            strokeColor = color;
+        }
+
+        public readonly Color GetStrokeColor()
+        {
+            return strokeColor;
         }
 
         public Bitmap? Brush

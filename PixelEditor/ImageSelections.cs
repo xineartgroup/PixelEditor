@@ -256,7 +256,7 @@
 
         public static void MergeIntersections(int x, int y, int width, int height)
         {
-            if (selectionPolygons.Count < 2) return;
+            //if (selectionPolygons.Count < 2) return;
 
             if (selectionPolygons.Count > 100) return; // Too many regions will slow it down, no need to merge.
 
@@ -289,6 +289,13 @@
                 {
                     SelectionPolygon selectionPolygon = new(outline.Mask, outline.SelectionPoint, outline.Adding, [.. outline.Points.Select(p => new Point(p.X + x, p.Y + y))]);
                     selectionPolygons.Add(selectionPolygon);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < selectionPolygons.Count; i++)
+                {
+                    selectionPolygons[i].Mask = mask; //all polygons share 1 mask
                 }
             }
         }
