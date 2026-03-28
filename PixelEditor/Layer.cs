@@ -1,4 +1,5 @@
 ﻿using PixelEditor.Vector;
+using System.Reflection.Emit;
 
 namespace PixelEditor
 {
@@ -21,6 +22,7 @@ namespace PixelEditor
         private Image? _image = null;
         private Image? _imageMask = null;
         private List<BaseShape> shapes = [];
+        private BaseShape? currentShape = null;
 
         public event Action<Rectangle>? OnLayerChanged;
 
@@ -63,10 +65,16 @@ namespace PixelEditor
 
         public List<BaseShape> Shapes { get => shapes; set => SetProperty(ref shapes, value); }
 
+        public BaseShape? CurrentShape { get => currentShape; set => SetProperty(ref currentShape, value); }
+
         private Image? GetImageComposite()
         {
             if (_imageMask == null)
             {
+                if (shapes.Count > 0 || currentShape != null)
+                {
+                    return DrawVectorImage(_image ?? new Bitmap(Document.Width, Document.Height));
+                }
                 return _image;
             }
             else
@@ -75,6 +83,51 @@ namespace PixelEditor
                     return ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
                 else
                     return null;
+            }
+        }
+
+        private Image? DrawVectorImage(Image temp)
+        {
+            Image? image = new Bitmap(temp);
+            using (Graphics g = Graphics.FromImage(image))
+            {
+                foreach (BaseShape shape in shapes)
+                {
+                    DrawShape(shape, g);
+                }
+                if (currentShape != null)
+                {
+                    DrawShape(currentShape, g);
+                }
+            }
+            return image;
+        }
+
+        private static void DrawShape(BaseShape shape, Graphics g)
+        {
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using Pen pen = new(shape.LineColor, shape.LineWidth);
+            using SolidBrush brush = new(shape.FillColor);
+
+            if (shape is ShapeRect r)
+            {
+                g.FillRectangle(brush, r.X, r.Y, r.Width, r.Height);
+                g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+            }
+            else if (shape is ShapeEllipse el)
+            {
+                g.FillEllipse(brush, el.Cx, el.Cy, el.Rx, el.Ry);
+                g.DrawEllipse(pen, el.Cx, el.Cy, el.Rx, el.Ry);
+            }
+            else if (shape is ShapePolygon pg && pg.Points.Count > 1)
+            {
+                g.FillPolygon(brush, pg.Points.ToArray());
+                g.DrawPolygon(pen, pg.Points.ToArray());
+            }
+            else if (shape is ShapeText t)
+            {
+                using Font font = new(t.FontFamily, t.FontSize);
+                g.DrawString(t.Content, font, brush, t.X, t.Y);
             }
         }
 

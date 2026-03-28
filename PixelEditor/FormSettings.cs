@@ -71,9 +71,36 @@
             layerHeight.Value = canvasHeight.Value;
         }
 
-        private void Values_ValueChanged(object sender, EventArgs e)
+        private void CanvasWidth_ValueChanged(object sender, EventArgs e)
         {
+            if (chkCanvasRatio.Checked)
+            {
+                canvasHeight.Value = canvasWidth.Value * Document.Height / Document.Width;
+            }
+        }
 
+        private void CanvasHeight_ValueChanged(object sender, EventArgs e)
+        {
+            if (chkCanvasRatio.Checked)
+            {
+                canvasWidth.Value = canvasHeight.Value * Document.Width / Document.Height;
+            }
+        }
+
+        private void LayerWidth_ValueChanged(object sender, EventArgs e)
+        {
+            if (chkLayerRatio.Checked)
+            {
+                layerHeight.Value = layerWidth.Value * LayerHeight / LayerWidth;
+            }
+        }
+
+        private void LayerHeight_ValueChanged(object sender, EventArgs e)
+        {
+            if (chkLayerRatio.Checked)
+            {
+                layerWidth.Value = layerHeight.Value * LayerWidth / LayerHeight;
+            }
         }
 
         private void BtnResetCanvas_Click(object sender, EventArgs e)

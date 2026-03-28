@@ -12,6 +12,7 @@
 
         public SelectionPolygon()
         {
+            Mask = null;
             SelectionPoint = Point.Empty;
             Adding = true;
             Points = [];

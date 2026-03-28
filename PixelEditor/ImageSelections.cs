@@ -254,7 +254,7 @@
             CalculateSelectionBounds();
         }
 
-        public static void MergeIntersections(int x, int y, int width, int height)
+        public static void MasAndMergeSelections(int x, int y, int width, int height)
         {
             //if (selectionPolygons.Count < 2) return;
 

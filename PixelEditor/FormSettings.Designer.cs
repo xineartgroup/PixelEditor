@@ -29,19 +29,19 @@
         private void InitializeComponent()
         {
             groupBox1 = new GroupBox();
+            chkCanvasRatio = new CheckBox();
             btnResetCanvas = new Button();
             btnAutoResizeCanvas = new Button();
-            label1 = new Label();
             canvasHeight = new NumericUpDown();
             canvasWidth = new NumericUpDown();
             groupBox2 = new GroupBox();
+            chkLayerRatio = new CheckBox();
             chkCenterLayer = new CheckBox();
             chkResizeImage = new CheckBox();
             btnResetLayer = new Button();
             btnResizeHeight = new Button();
             btnResizeWidth = new Button();
             btnAutoResizeLayer = new Button();
-            label2 = new Label();
             layerHeight = new NumericUpDown();
             layerWidth = new NumericUpDown();
             btnOK = new Button();
@@ -56,9 +56,9 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(chkCanvasRatio);
             groupBox1.Controls.Add(btnResetCanvas);
             groupBox1.Controls.Add(btnAutoResizeCanvas);
-            groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(canvasHeight);
             groupBox1.Controls.Add(canvasWidth);
             groupBox1.Location = new Point(12, 12);
@@ -68,12 +68,23 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "Canvas Size:";
             // 
+            // chkCanvasRatio
+            // 
+            chkCanvasRatio.Appearance = Appearance.Button;
+            chkCanvasRatio.Location = new Point(72, 22);
+            chkCanvasRatio.Name = "chkCanvasRatio";
+            chkCanvasRatio.Size = new Size(22, 22);
+            chkCanvasRatio.TabIndex = 9;
+            chkCanvasRatio.Text = "x";
+            chkCanvasRatio.TextAlign = ContentAlignment.MiddleCenter;
+            chkCanvasRatio.UseVisualStyleBackColor = true;
+            // 
             // btnResetCanvas
             // 
             btnResetCanvas.FlatStyle = FlatStyle.Popup;
-            btnResetCanvas.Location = new Point(279, 22);
+            btnResetCanvas.Location = new Point(296, 22);
             btnResetCanvas.Name = "btnResetCanvas";
-            btnResetCanvas.Size = new Size(75, 23);
+            btnResetCanvas.Size = new Size(58, 23);
             btnResetCanvas.TabIndex = 6;
             btnResetCanvas.TabStop = false;
             btnResetCanvas.Text = "Reset";
@@ -83,7 +94,7 @@
             // btnAutoResizeCanvas
             // 
             btnAutoResizeCanvas.FlatStyle = FlatStyle.Popup;
-            btnAutoResizeCanvas.Location = new Point(156, 22);
+            btnAutoResizeCanvas.Location = new Point(169, 22);
             btnAutoResizeCanvas.Name = "btnAutoResizeCanvas";
             btnAutoResizeCanvas.Size = new Size(117, 23);
             btnAutoResizeCanvas.TabIndex = 6;
@@ -92,18 +103,9 @@
             btnAutoResizeCanvas.UseVisualStyleBackColor = true;
             btnAutoResizeCanvas.Click += BtnAutoResizeCanvas_Click;
             // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(72, 26);
-            label1.Name = "label1";
-            label1.Size = new Size(12, 15);
-            label1.TabIndex = 1;
-            label1.Text = "x";
-            // 
             // canvasHeight
             // 
-            canvasHeight.Location = new Point(90, 22);
+            canvasHeight.Location = new Point(100, 22);
             canvasHeight.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
             canvasHeight.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             canvasHeight.Name = "canvasHeight";
@@ -111,7 +113,7 @@
             canvasHeight.TabIndex = 1;
             canvasHeight.TextAlign = HorizontalAlignment.Right;
             canvasHeight.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            canvasHeight.ValueChanged += Values_ValueChanged;
+            canvasHeight.ValueChanged += CanvasHeight_ValueChanged;
             // 
             // canvasWidth
             // 
@@ -123,17 +125,17 @@
             canvasWidth.TabIndex = 0;
             canvasWidth.TextAlign = HorizontalAlignment.Right;
             canvasWidth.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            canvasWidth.ValueChanged += Values_ValueChanged;
+            canvasWidth.ValueChanged += CanvasWidth_ValueChanged;
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(chkLayerRatio);
             groupBox2.Controls.Add(chkCenterLayer);
             groupBox2.Controls.Add(chkResizeImage);
             groupBox2.Controls.Add(btnResetLayer);
             groupBox2.Controls.Add(btnResizeHeight);
             groupBox2.Controls.Add(btnResizeWidth);
             groupBox2.Controls.Add(btnAutoResizeLayer);
-            groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(layerHeight);
             groupBox2.Controls.Add(layerWidth);
             groupBox2.Location = new Point(12, 78);
@@ -142,6 +144,17 @@
             groupBox2.TabIndex = 9;
             groupBox2.TabStop = false;
             groupBox2.Text = "Layer Size:";
+            // 
+            // chkLayerRatio
+            // 
+            chkLayerRatio.Appearance = Appearance.Button;
+            chkLayerRatio.Location = new Point(72, 22);
+            chkLayerRatio.Name = "chkLayerRatio";
+            chkLayerRatio.Size = new Size(22, 22);
+            chkLayerRatio.TabIndex = 9;
+            chkLayerRatio.Text = "x";
+            chkLayerRatio.TextAlign = ContentAlignment.MiddleCenter;
+            chkLayerRatio.UseVisualStyleBackColor = true;
             // 
             // chkCenterLayer
             // 
@@ -166,9 +179,9 @@
             // btnResetLayer
             // 
             btnResetLayer.FlatStyle = FlatStyle.Popup;
-            btnResetLayer.Location = new Point(279, 22);
+            btnResetLayer.Location = new Point(296, 22);
             btnResetLayer.Name = "btnResetLayer";
-            btnResetLayer.Size = new Size(75, 23);
+            btnResetLayer.Size = new Size(58, 23);
             btnResetLayer.TabIndex = 7;
             btnResetLayer.TabStop = false;
             btnResetLayer.Text = "Reset";
@@ -178,7 +191,7 @@
             // btnResizeHeight
             // 
             btnResizeHeight.FlatStyle = FlatStyle.Popup;
-            btnResizeHeight.Location = new Point(156, 80);
+            btnResizeHeight.Location = new Point(169, 80);
             btnResizeHeight.Name = "btnResizeHeight";
             btnResizeHeight.Size = new Size(117, 23);
             btnResizeHeight.TabIndex = 7;
@@ -190,7 +203,7 @@
             // btnResizeWidth
             // 
             btnResizeWidth.FlatStyle = FlatStyle.Popup;
-            btnResizeWidth.Location = new Point(156, 51);
+            btnResizeWidth.Location = new Point(169, 51);
             btnResizeWidth.Name = "btnResizeWidth";
             btnResizeWidth.Size = new Size(117, 23);
             btnResizeWidth.TabIndex = 7;
@@ -202,7 +215,7 @@
             // btnAutoResizeLayer
             // 
             btnAutoResizeLayer.FlatStyle = FlatStyle.Popup;
-            btnAutoResizeLayer.Location = new Point(156, 22);
+            btnAutoResizeLayer.Location = new Point(169, 22);
             btnAutoResizeLayer.Name = "btnAutoResizeLayer";
             btnAutoResizeLayer.Size = new Size(117, 23);
             btnAutoResizeLayer.TabIndex = 7;
@@ -211,18 +224,9 @@
             btnAutoResizeLayer.UseVisualStyleBackColor = true;
             btnAutoResizeLayer.Click += BtnAutoResizeLayer_Click;
             // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(72, 24);
-            label2.Name = "label2";
-            label2.Size = new Size(12, 15);
-            label2.TabIndex = 1;
-            label2.Text = "x";
-            // 
             // layerHeight
             // 
-            layerHeight.Location = new Point(90, 22);
+            layerHeight.Location = new Point(100, 22);
             layerHeight.Maximum = new decimal(new int[] { 4096, 0, 0, 0 });
             layerHeight.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             layerHeight.Name = "layerHeight";
@@ -230,7 +234,7 @@
             layerHeight.TabIndex = 3;
             layerHeight.TextAlign = HorizontalAlignment.Right;
             layerHeight.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            layerHeight.ValueChanged += Values_ValueChanged;
+            layerHeight.ValueChanged += LayerHeight_ValueChanged;
             // 
             // layerWidth
             // 
@@ -242,7 +246,7 @@
             layerWidth.TabIndex = 2;
             layerWidth.TextAlign = HorizontalAlignment.Right;
             layerWidth.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            layerWidth.ValueChanged += Values_ValueChanged;
+            layerWidth.ValueChanged += LayerWidth_ValueChanged;
             // 
             // btnOK
             // 
@@ -282,7 +286,6 @@
             Text = "Settings";
             Load += FormSettings_Load;
             groupBox1.ResumeLayout(false);
-            groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)canvasHeight).EndInit();
             ((System.ComponentModel.ISupportInitialize)canvasWidth).EndInit();
             groupBox2.ResumeLayout(false);
@@ -300,8 +303,6 @@
         private GroupBox groupBox2;
         private NumericUpDown layerHeight;
         private NumericUpDown layerWidth;
-        private Label label1;
-        private Label label2;
         private Button btnOK;
         private Button btnCancel;
         private Button btnAutoResizeCanvas;
@@ -312,5 +313,7 @@
         private CheckBox chkResizeImage;
         private Button btnResizeHeight;
         private Button btnResizeWidth;
+        private CheckBox chkLayerRatio;
+        private CheckBox chkCanvasRatio;
     }
 }
