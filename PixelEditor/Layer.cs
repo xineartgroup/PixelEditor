@@ -109,6 +109,8 @@ namespace PixelEditor
             using Pen pen = new(shape.LineColor, shape.LineWidth);
             using SolidBrush brush = new(shape.FillColor);
 
+            pen.DashStyle = shape.DashStyle;
+
             if (shape is ShapeRect r)
             {
                 g.FillRectangle(brush, r.X, r.Y, r.Width, r.Height);
