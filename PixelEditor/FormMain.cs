@@ -1,6 +1,7 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace PixelEditor
@@ -114,20 +115,60 @@ namespace PixelEditor
         private readonly GroupBox groupCropDetail = new();
         private readonly Button btnCropAction = new();
 
-        private readonly GroupBox groupShapeDetail = new();
-        private readonly Label labelLineSize = new();
-        private readonly TrackBar lineSizeTrack = new();
-        private readonly Label lblLineSizeValue = new();
-        private readonly Label labelLineOpacity = new();
-        private readonly NumericUpDown lineOpacityNum = new();
-        private readonly Label labelLineColor = new();
-        private readonly Button btnLineColor = new();
-        private readonly Label labelLinePattern = new();
-        private readonly ComboBox cboLinePattern = new();
-        private readonly Label labelFillOpacity = new();
-        private readonly NumericUpDown fillOpacityNum = new();
-        private readonly Label labelFillColor = new();
-        private readonly Button btnFillColorShape = new();
+        private readonly GroupBox groupRectShapeDetail = new();
+        private readonly Label labelRectLineSize = new();
+        private readonly TrackBar rectLineSizeTrack = new();
+        private readonly Label lblRectLineSizeValue = new();
+        private readonly Label labelRectLineOpacity = new();
+        private readonly NumericUpDown rectLineOpacityNum = new();
+        private readonly Label labelRectLineColor = new();
+        private readonly Button btnRectLineColor = new();
+        private readonly Label labelRectLinePattern = new();
+        private readonly ComboBox cboRectLinePattern = new();
+        private readonly Label labelRectFillOpacity = new();
+        private readonly NumericUpDown fillRectOpacityNum = new();
+        private readonly Label labelRectFillColor = new();
+        private readonly Button btnRectFillColorShape = new();
+
+        private readonly GroupBox groupEllipseShapeDetail = new();
+        private readonly Label labelEllipseLineSize = new();
+        private readonly TrackBar ellipseLineSizeTrack = new();
+        private readonly Label lblEllipseLineSizeValue = new();
+        private readonly Label labelEllipseLineOpacity = new();
+        private readonly NumericUpDown ellipseLineOpacityNum = new();
+        private readonly Label labelEllipseLineColor = new();
+        private readonly Button btnEllipseLineColor = new();
+        private readonly Label labelEllipseLinePattern = new();
+        private readonly ComboBox cboEllipseLinePattern = new();
+        private readonly Label labelEllipseFillOpacity = new();
+        private readonly NumericUpDown fillEllipseOpacityNum = new();
+        private readonly Label labelEllipseFillColor = new();
+        private readonly Button btnEllipseFillColorShape = new();
+
+        private readonly GroupBox groupPolygonShapeDetail = new();
+        private readonly Label labelPolygonLineSize = new();
+        private readonly TrackBar polygonLineSizeTrack = new();
+        private readonly Label lblPolygonLineSizeValue = new();
+        private readonly Label labelPolygonLineOpacity = new();
+        private readonly NumericUpDown polygonLineOpacityNum = new();
+        private readonly Label labelPolygonLineColor = new();
+        private readonly Button btnPolygonLineColor = new();
+        private readonly Label labelPolygonLinePattern = new();
+        private readonly ComboBox cboPolygonLinePattern = new();
+        private readonly Label labelPolygonFillOpacity = new();
+        private readonly NumericUpDown fillPolygonOpacityNum = new();
+        private readonly Label labelPolygonFillColor = new();
+        private readonly Button btnPolygonFillColorShape = new();
+
+        private readonly GroupBox groupTextShapeDetail = new();
+        private readonly Label lblTextLineText = new();
+        private readonly TextBox txtTextLineText = new();
+        private readonly Label lblTextFont = new();
+        private readonly Button btnTextFont = new();
+        private readonly Label lblTextFillOpacity = new();
+        private readonly NumericUpDown numTextFillOpacity = new();
+        private readonly Label lblTextFillColor = new();
+        private readonly Button btnTextFillColor = new();
 
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
@@ -145,7 +186,10 @@ namespace PixelEditor
             InitializeComponentGroupMagicWand();
             InitializeComponentGroupWarp();
             InitializeComponentGroupCrop();
-            InitializeComponentGroupShapes();
+            InitializeComponentGroupRectShape();
+            InitializeComponentGroupEllipseShape();
+            InitializeComponentGroupPolygonShape();
+            InitializeComponentGroupTextShape();
             InitializeTimer();
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
@@ -237,7 +281,7 @@ namespace PixelEditor
             btnFillColor1.BackColor = Color.White;
             btnFillColor1.Enabled = false;
             btnFillColor1.FlatStyle = FlatStyle.Popup;
-            btnFillColor1.ForeColor = btnLineColor.BackColor;
+            btnFillColor1.ForeColor = btnRectLineColor.BackColor;
             btnFillColor1.Location = new Point(91, 79);
             btnFillColor1.Name = "btnFillColor1";
             btnFillColor1.Size = new Size(20, 20);
@@ -744,189 +788,683 @@ namespace PixelEditor
             ResumeLayout(false);
         }
 
-        private void InitializeComponentGroupShapes()
+        private void InitializeComponentGroupRectShape()
         {
-            groupShapeDetail.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)lineSizeTrack).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)lineOpacityNum).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)fillOpacityNum).BeginInit();
+            groupRectShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)rectLineSizeTrack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)rectLineOpacityNum).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)fillRectOpacityNum).BeginInit();
             SuspendLayout();
 
             // Add Controls to Group
-            groupShapeDetail.Controls.Add(lblLineSizeValue);
-            groupShapeDetail.Controls.Add(lineSizeTrack);
-            groupShapeDetail.Controls.Add(lineOpacityNum);
-            groupShapeDetail.Controls.Add(btnLineColor);
-            groupShapeDetail.Controls.Add(cboLinePattern);
-            groupShapeDetail.Controls.Add(fillOpacityNum);
-            groupShapeDetail.Controls.Add(btnFillColorShape);
-            groupShapeDetail.Controls.Add(labelLineSize);
-            groupShapeDetail.Controls.Add(labelLineOpacity);
-            groupShapeDetail.Controls.Add(labelLineColor);
-            groupShapeDetail.Controls.Add(labelLinePattern);
-            groupShapeDetail.Controls.Add(labelFillOpacity);
-            groupShapeDetail.Controls.Add(labelFillColor);
+            groupRectShapeDetail.Controls.Add(lblRectLineSizeValue);
+            groupRectShapeDetail.Controls.Add(rectLineSizeTrack);
+            groupRectShapeDetail.Controls.Add(rectLineOpacityNum);
+            groupRectShapeDetail.Controls.Add(btnRectLineColor);
+            groupRectShapeDetail.Controls.Add(cboRectLinePattern);
+            groupRectShapeDetail.Controls.Add(fillRectOpacityNum);
+            groupRectShapeDetail.Controls.Add(btnRectFillColorShape);
+            groupRectShapeDetail.Controls.Add(labelRectLineSize);
+            groupRectShapeDetail.Controls.Add(labelRectLineOpacity);
+            groupRectShapeDetail.Controls.Add(labelRectLineColor);
+            groupRectShapeDetail.Controls.Add(labelRectLinePattern);
+            groupRectShapeDetail.Controls.Add(labelRectFillOpacity);
+            groupRectShapeDetail.Controls.Add(labelRectFillColor);
 
             // GroupBox Settings
-            groupShapeDetail.Location = new Point(12, 74);
-            groupShapeDetail.Name = "groupShapeDetail";
-            groupShapeDetail.Size = new Size(230, 260);
-            groupShapeDetail.TabIndex = 30;
-            groupShapeDetail.TabStop = false;
-            groupShapeDetail.Text = "Shape Detail";
-            groupShapeDetail.Visible = false;
+            groupRectShapeDetail.Location = new Point(12, 74);
+            groupRectShapeDetail.Name = "groupShapeDetail";
+            groupRectShapeDetail.Size = new Size(230, 260);
+            groupRectShapeDetail.TabIndex = 30;
+            groupRectShapeDetail.TabStop = false;
+            groupRectShapeDetail.Text = "Shape Detail";
+            groupRectShapeDetail.Visible = false;
 
             // --- LINE SECTION ---
 
             // Line Size
-            labelLineSize.AutoSize = true;
-            labelLineSize.Location = new Point(10, 25);
-            labelLineSize.Text = "Line Size:";
+            labelRectLineSize.AutoSize = true;
+            labelRectLineSize.Location = new Point(10, 25);
+            labelRectLineSize.Text = "Line Size:";
 
-            lineSizeTrack.Location = new Point(75, 22);
-            lineSizeTrack.Size = new Size(110, 45);
-            lineSizeTrack.Maximum = 200;
-            lineSizeTrack.Minimum = 1;
-            lineSizeTrack.TickStyle = TickStyle.None;
-            lineSizeTrack.Value = 2;
-            lineSizeTrack.Scroll += LineSize_Scroll;
+            rectLineSizeTrack.Location = new Point(75, 22);
+            rectLineSizeTrack.Size = new Size(110, 45);
+            rectLineSizeTrack.Maximum = 200;
+            rectLineSizeTrack.Minimum = 1;
+            rectLineSizeTrack.TickStyle = TickStyle.None;
+            rectLineSizeTrack.Value = 2;
+            rectLineSizeTrack.Scroll += RectLineSize_Scroll;
 
-            lblLineSizeValue.BackColor = Color.White;
-            lblLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
-            lblLineSizeValue.Location = new Point(188, 22);
-            lblLineSizeValue.Size = new Size(32, 22);
-            lblLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
-            lblLineSizeValue.Text = "2";
+            lblRectLineSizeValue.BackColor = Color.White;
+            lblRectLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblRectLineSizeValue.Location = new Point(188, 22);
+            lblRectLineSizeValue.Size = new Size(32, 22);
+            lblRectLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblRectLineSizeValue.Text = "2";
 
-            labelLineOpacity.AutoSize = true;
-            labelLineOpacity.Location = new Point(10, 73);
-            labelLineOpacity.Text = "Line Opacity:";
+            labelRectLineOpacity.AutoSize = true;
+            labelRectLineOpacity.Location = new Point(10, 73);
+            labelRectLineOpacity.Text = "Line Opacity:";
 
-            lineOpacityNum.Location = new Point(125, 71);
-            lineOpacityNum.Size = new Size(60, 23);
-            lineOpacityNum.Value = new decimal([100, 0, 0, 0]);
-            lineOpacityNum.ValueChanged += OnLineOpacityValueChanged;
+            rectLineOpacityNum.Location = new Point(125, 71);
+            rectLineOpacityNum.Size = new Size(60, 23);
+            rectLineOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            rectLineOpacityNum.ValueChanged += OnRectLineOpacityValueChanged;
 
-            labelLineColor.AutoSize = true;
-            labelLineColor.Location = new Point(10, 103);
-            labelLineColor.Text = "Line Color:";
+            labelRectLineColor.AutoSize = true;
+            labelRectLineColor.Location = new Point(10, 103);
+            labelRectLineColor.Text = "Line Color:";
 
-            btnLineColor.BackColor = Color.Black;
-            btnLineColor.FlatStyle = FlatStyle.Popup;
-            btnLineColor.Location = new Point(125, 100);
-            btnLineColor.Size = new Size(20, 20);
-            btnLineColor.Click += BtnLineColor_Click;
+            btnRectLineColor.BackColor = Color.Black;
+            btnRectLineColor.FlatStyle = FlatStyle.Popup;
+            btnRectLineColor.Location = new Point(125, 100);
+            btnRectLineColor.Size = new Size(20, 20);
+            btnRectLineColor.Click += BtnRectLineColor_Click;
 
-            labelLinePattern.AutoSize = true;
-            labelLinePattern.Location = new Point(10, 133);
-            labelLinePattern.Text = "Pattern:";
+            labelRectLinePattern.AutoSize = true;
+            labelRectLinePattern.Location = new Point(10, 133);
+            labelRectLinePattern.Text = "Pattern:";
 
-            cboLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
-            cboLinePattern.Location = new Point(125, 130);
-            cboLinePattern.Size = new Size(100, 21);
-            cboLinePattern.SelectedIndexChanged += CboLinePattern_SelectedIndexChanged;
+            cboRectLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboRectLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
+            cboRectLinePattern.Location = new Point(125, 130);
+            cboRectLinePattern.Size = new Size(100, 21);
+            cboRectLinePattern.SelectedIndexChanged += CboRectLinePattern_SelectedIndexChanged;
 
             // --- FILL SECTION (All shifted down 8px) ---
 
             // Fill Opacity
-            labelFillOpacity.AutoSize = true;
-            labelFillOpacity.Location = new Point(10, 173);
-            labelFillOpacity.Text = "Fill Opacity:";
+            labelRectFillOpacity.AutoSize = true;
+            labelRectFillOpacity.Location = new Point(10, 173);
+            labelRectFillOpacity.Text = "Fill Opacity:";
 
-            fillOpacityNum.Location = new Point(125, 171);
-            fillOpacityNum.Size = new Size(60, 23);
-            fillOpacityNum.Value = new decimal([100, 0, 0, 0]);
-            fillOpacityNum.ValueChanged += FillOpacityNum_ValueChanged;
+            fillRectOpacityNum.Location = new Point(125, 171);
+            fillRectOpacityNum.Size = new Size(60, 23);
+            fillRectOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            fillRectOpacityNum.ValueChanged += FillRectOpacityNum_ValueChanged;
 
             // Fill Color
-            labelFillColor.AutoSize = true;
-            labelFillColor.Location = new Point(10, 203);
-            labelFillColor.Text = "Fill Color:";
+            labelRectFillColor.AutoSize = true;
+            labelRectFillColor.Location = new Point(10, 203);
+            labelRectFillColor.Text = "Fill Color:";
 
-            btnFillColorShape.BackColor = Color.White;
-            btnFillColorShape.FlatStyle = FlatStyle.Popup;
-            btnFillColorShape.Location = new Point(125, 200);
-            btnFillColorShape.Size = new Size(20, 20);
-            btnFillColorShape.Click += BtnFillColorShape_Click;
+            btnRectFillColorShape.BackColor = Color.White;
+            btnRectFillColorShape.FlatStyle = FlatStyle.Popup;
+            btnRectFillColorShape.Location = new Point(125, 200);
+            btnRectFillColorShape.Size = new Size(20, 20);
+            btnRectFillColorShape.Click += BtnFillRectColorShape_Click;
 
             // Finalize
-            Controls.Add(groupShapeDetail);
-            groupShapeDetail.ResumeLayout(false);
-            groupShapeDetail.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)lineSizeTrack).EndInit();
-            ((System.ComponentModel.ISupportInitialize)lineOpacityNum).EndInit();
-            ((System.ComponentModel.ISupportInitialize)fillOpacityNum).EndInit();
+            Controls.Add(groupRectShapeDetail);
+            groupRectShapeDetail.ResumeLayout(false);
+            groupRectShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)rectLineSizeTrack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)rectLineOpacityNum).EndInit();
+            ((System.ComponentModel.ISupportInitialize)fillRectOpacityNum).EndInit();
             ResumeLayout(false);
         }
 
-        private void CboLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
+        private void InitializeComponentGroupEllipseShape()
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            groupEllipseShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)ellipseLineSizeTrack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ellipseLineOpacityNum).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)fillEllipseOpacityNum).BeginInit();
+            SuspendLayout();
+
+            // Add Controls to Group
+            groupEllipseShapeDetail.Controls.Add(lblEllipseLineSizeValue);
+            groupEllipseShapeDetail.Controls.Add(ellipseLineSizeTrack);
+            groupEllipseShapeDetail.Controls.Add(ellipseLineOpacityNum);
+            groupEllipseShapeDetail.Controls.Add(btnEllipseLineColor);
+            groupEllipseShapeDetail.Controls.Add(cboEllipseLinePattern);
+            groupEllipseShapeDetail.Controls.Add(fillEllipseOpacityNum);
+            groupEllipseShapeDetail.Controls.Add(btnEllipseFillColorShape);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseLineSize);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseLineOpacity);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseLineColor);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseLinePattern);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseFillOpacity);
+            groupEllipseShapeDetail.Controls.Add(labelEllipseFillColor);
+
+            // GroupBox Settings
+            groupEllipseShapeDetail.Location = new Point(12, 74);
+            groupEllipseShapeDetail.Name = "groupShapeDetail";
+            groupEllipseShapeDetail.Size = new Size(230, 260);
+            groupEllipseShapeDetail.TabIndex = 30;
+            groupEllipseShapeDetail.TabStop = false;
+            groupEllipseShapeDetail.Text = "Shape Detail";
+            groupEllipseShapeDetail.Visible = false;
+
+            // --- LINE SECTION ---
+
+            // Line Size
+            labelEllipseLineSize.AutoSize = true;
+            labelEllipseLineSize.Location = new Point(10, 25);
+            labelEllipseLineSize.Text = "Line Size:";
+
+            ellipseLineSizeTrack.Location = new Point(75, 22);
+            ellipseLineSizeTrack.Size = new Size(110, 45);
+            ellipseLineSizeTrack.Maximum = 200;
+            ellipseLineSizeTrack.Minimum = 1;
+            ellipseLineSizeTrack.TickStyle = TickStyle.None;
+            ellipseLineSizeTrack.Value = 2;
+            ellipseLineSizeTrack.Scroll += EllipseLineSize_Scroll;
+
+            lblEllipseLineSizeValue.BackColor = Color.White;
+            lblEllipseLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblEllipseLineSizeValue.Location = new Point(188, 22);
+            lblEllipseLineSizeValue.Size = new Size(32, 22);
+            lblEllipseLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblEllipseLineSizeValue.Text = "2";
+
+            labelEllipseLineOpacity.AutoSize = true;
+            labelEllipseLineOpacity.Location = new Point(10, 73);
+            labelEllipseLineOpacity.Text = "Line Opacity:";
+
+            ellipseLineOpacityNum.Location = new Point(125, 71);
+            ellipseLineOpacityNum.Size = new Size(60, 23);
+            ellipseLineOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            ellipseLineOpacityNum.ValueChanged += OnEllipseLineOpacityValueChanged;
+
+            labelEllipseLineColor.AutoSize = true;
+            labelEllipseLineColor.Location = new Point(10, 103);
+            labelEllipseLineColor.Text = "Line Color:";
+
+            btnEllipseLineColor.BackColor = Color.Black;
+            btnEllipseLineColor.FlatStyle = FlatStyle.Popup;
+            btnEllipseLineColor.Location = new Point(125, 100);
+            btnEllipseLineColor.Size = new Size(20, 20);
+            btnEllipseLineColor.Click += BtnEllipseLineColor_Click;
+
+            labelEllipseLinePattern.AutoSize = true;
+            labelEllipseLinePattern.Location = new Point(10, 133);
+            labelEllipseLinePattern.Text = "Pattern:";
+
+            cboEllipseLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboEllipseLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
+            cboEllipseLinePattern.Location = new Point(125, 130);
+            cboEllipseLinePattern.Size = new Size(100, 21);
+            cboEllipseLinePattern.SelectedIndexChanged += CboEllipseLinePattern_SelectedIndexChanged;
+
+            // --- FILL SECTION (All shifted down 8px) ---
+
+            // Fill Opacity
+            labelEllipseFillOpacity.AutoSize = true;
+            labelEllipseFillOpacity.Location = new Point(10, 173);
+            labelEllipseFillOpacity.Text = "Fill Opacity:";
+
+            fillEllipseOpacityNum.Location = new Point(125, 171);
+            fillEllipseOpacityNum.Size = new Size(60, 23);
+            fillEllipseOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            fillEllipseOpacityNum.ValueChanged += FillEllipseOpacityNum_ValueChanged;
+
+            // Fill Color
+            labelEllipseFillColor.AutoSize = true;
+            labelEllipseFillColor.Location = new Point(10, 203);
+            labelEllipseFillColor.Text = "Fill Color:";
+
+            btnEllipseFillColorShape.BackColor = Color.White;
+            btnEllipseFillColorShape.FlatStyle = FlatStyle.Popup;
+            btnEllipseFillColorShape.Location = new Point(125, 200);
+            btnEllipseFillColorShape.Size = new Size(20, 20);
+            btnEllipseFillColorShape.Click += BtnFillEllipseColorShape_Click;
+
+            // Finalize
+            Controls.Add(groupEllipseShapeDetail);
+            groupEllipseShapeDetail.ResumeLayout(false);
+            groupEllipseShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)ellipseLineSizeTrack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ellipseLineOpacityNum).EndInit();
+            ((System.ComponentModel.ISupportInitialize)fillEllipseOpacityNum).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void InitializeComponentGroupPolygonShape()
+        {
+            groupPolygonShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)polygonLineSizeTrack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)polygonLineOpacityNum).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)fillPolygonOpacityNum).BeginInit();
+            SuspendLayout();
+
+            // Add Controls to Group
+            groupPolygonShapeDetail.Controls.Add(lblPolygonLineSizeValue);
+            groupPolygonShapeDetail.Controls.Add(polygonLineSizeTrack);
+            groupPolygonShapeDetail.Controls.Add(polygonLineOpacityNum);
+            groupPolygonShapeDetail.Controls.Add(btnPolygonLineColor);
+            groupPolygonShapeDetail.Controls.Add(cboPolygonLinePattern);
+            groupPolygonShapeDetail.Controls.Add(fillPolygonOpacityNum);
+            groupPolygonShapeDetail.Controls.Add(btnPolygonFillColorShape);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonLineSize);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonLineOpacity);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonLineColor);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonLinePattern);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonFillOpacity);
+            groupPolygonShapeDetail.Controls.Add(labelPolygonFillColor);
+
+            // GroupBox Settings
+            groupPolygonShapeDetail.Location = new Point(12, 74);
+            groupPolygonShapeDetail.Name = "groupShapeDetail";
+            groupPolygonShapeDetail.Size = new Size(230, 260);
+            groupPolygonShapeDetail.TabIndex = 30;
+            groupPolygonShapeDetail.TabStop = false;
+            groupPolygonShapeDetail.Text = "Shape Detail";
+            groupPolygonShapeDetail.Visible = false;
+
+            // --- LINE SECTION ---
+
+            // Line Size
+            labelPolygonLineSize.AutoSize = true;
+            labelPolygonLineSize.Location = new Point(10, 25);
+            labelPolygonLineSize.Text = "Line Size:";
+
+            polygonLineSizeTrack.Location = new Point(75, 22);
+            polygonLineSizeTrack.Size = new Size(110, 45);
+            polygonLineSizeTrack.Maximum = 200;
+            polygonLineSizeTrack.Minimum = 1;
+            polygonLineSizeTrack.TickStyle = TickStyle.None;
+            polygonLineSizeTrack.Value = 2;
+            polygonLineSizeTrack.Scroll += PolygonLineSize_Scroll;
+
+            lblPolygonLineSizeValue.BackColor = Color.White;
+            lblPolygonLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblPolygonLineSizeValue.Location = new Point(188, 22);
+            lblPolygonLineSizeValue.Size = new Size(32, 22);
+            lblPolygonLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblPolygonLineSizeValue.Text = "2";
+
+            labelPolygonLineOpacity.AutoSize = true;
+            labelPolygonLineOpacity.Location = new Point(10, 73);
+            labelPolygonLineOpacity.Text = "Line Opacity:";
+
+            polygonLineOpacityNum.Location = new Point(125, 71);
+            polygonLineOpacityNum.Size = new Size(60, 23);
+            polygonLineOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            polygonLineOpacityNum.ValueChanged += OnPolygonLineOpacityValueChanged;
+
+            labelPolygonLineColor.AutoSize = true;
+            labelPolygonLineColor.Location = new Point(10, 103);
+            labelPolygonLineColor.Text = "Line Color:";
+
+            btnPolygonLineColor.BackColor = Color.Black;
+            btnPolygonLineColor.FlatStyle = FlatStyle.Popup;
+            btnPolygonLineColor.Location = new Point(125, 100);
+            btnPolygonLineColor.Size = new Size(20, 20);
+            btnPolygonLineColor.Click += BtnPolygonLineColor_Click;
+
+            labelPolygonLinePattern.AutoSize = true;
+            labelPolygonLinePattern.Location = new Point(10, 133);
+            labelPolygonLinePattern.Text = "Pattern:";
+
+            cboPolygonLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboPolygonLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
+            cboPolygonLinePattern.Location = new Point(125, 130);
+            cboPolygonLinePattern.Size = new Size(100, 21);
+            cboPolygonLinePattern.SelectedIndexChanged += CboPolygonLinePattern_SelectedIndexChanged;
+
+            // --- FILL SECTION (All shifted down 8px) ---
+
+            // Fill Opacity
+            labelPolygonFillOpacity.AutoSize = true;
+            labelPolygonFillOpacity.Location = new Point(10, 173);
+            labelPolygonFillOpacity.Text = "Fill Opacity:";
+
+            fillPolygonOpacityNum.Location = new Point(125, 171);
+            fillPolygonOpacityNum.Size = new Size(60, 23);
+            fillPolygonOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            fillPolygonOpacityNum.ValueChanged += FillPolygonOpacityNum_ValueChanged;
+
+            // Fill Color
+            labelPolygonFillColor.AutoSize = true;
+            labelPolygonFillColor.Location = new Point(10, 203);
+            labelPolygonFillColor.Text = "Fill Color:";
+
+            btnPolygonFillColorShape.BackColor = Color.White;
+            btnPolygonFillColorShape.FlatStyle = FlatStyle.Popup;
+            btnPolygonFillColorShape.Location = new Point(125, 200);
+            btnPolygonFillColorShape.Size = new Size(20, 20);
+            btnPolygonFillColorShape.Click += BtnFillPolygonColorShape_Click;
+
+            // Finalize
+            Controls.Add(groupPolygonShapeDetail);
+            groupPolygonShapeDetail.ResumeLayout(false);
+            groupPolygonShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)polygonLineSizeTrack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)polygonLineOpacityNum).EndInit();
+            ((System.ComponentModel.ISupportInitialize)fillPolygonOpacityNum).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void InitializeComponentGroupTextShape()
+        {
+            groupTextShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).BeginInit();
+            SuspendLayout();
+
+            groupTextShapeDetail.Controls.Add(txtTextLineText);
+            groupTextShapeDetail.Controls.Add(btnTextFont);
+            groupTextShapeDetail.Controls.Add(numTextFillOpacity);
+            groupTextShapeDetail.Controls.Add(btnTextFillColor);
+            groupTextShapeDetail.Controls.Add(lblTextLineText);
+            groupTextShapeDetail.Controls.Add(lblTextFont);
+            groupTextShapeDetail.Controls.Add(lblTextFillOpacity);
+            groupTextShapeDetail.Controls.Add(lblTextFillColor);
+
+            groupTextShapeDetail.Location = new Point(12, 74);
+            groupTextShapeDetail.Name = "groupTextShapeDetail";
+            groupTextShapeDetail.Size = new Size(230, 260);
+            groupTextShapeDetail.TabIndex = 30;
+            groupTextShapeDetail.TabStop = false;
+            groupTextShapeDetail.Text = "Text Detail";
+            groupTextShapeDetail.Visible = false;
+
+            lblTextLineText.AutoSize = true;
+            lblTextLineText.Location = new Point(10, 27);
+            lblTextLineText.Text = "Text";
+
+            txtTextLineText.Location = new Point(125, 24);
+            txtTextLineText.Size = new Size(60, 23);
+            txtTextLineText.Text = "Text";
+            txtTextLineText.TextAlign = HorizontalAlignment.Center;
+            txtTextLineText.TextChanged += TxtTextLineSize_TextChanged;
+
+            lblTextFont.AutoSize = true;
+            lblTextFont.Location = new Point(10, 73);
+            lblTextFont.Text = "Font:";
+
+            btnTextFont.BackColor = Color.LightGray;
+            btnTextFont.FlatStyle = FlatStyle.Popup;
+            btnTextFont.Location = new Point(125, 68);
+            btnTextFont.Size = new Size(60, 23);
+            btnTextFont.Text = "";
+            btnTextFont.UseVisualStyleBackColor = false;
+            btnTextFont.Click += BtnTextFont_Click;
+
+            lblTextFillOpacity.AutoSize = true;
+            lblTextFillOpacity.Location = new Point(10, 123);
+            lblTextFillOpacity.Text = "Fill Opacity:";
+
+            numTextFillOpacity.Location = new Point(125, 121);
+            numTextFillOpacity.Size = new Size(60, 23);
+            numTextFillOpacity.Value = new decimal([100, 0, 0, 0]);
+            numTextFillOpacity.ValueChanged += NumTextFillOpacity_ValueChanged;
+
+            lblTextFillColor.AutoSize = true;
+            lblTextFillColor.Location = new Point(10, 153);
+            lblTextFillColor.Text = "Fill Color:";
+
+            btnTextFillColor.BackColor = Color.Black;
+            btnTextFillColor.FlatStyle = FlatStyle.Popup;
+            btnTextFillColor.Location = new Point(125, 150);
+            btnTextFillColor.Size = new Size(20, 20);
+            btnTextFillColor.Click += BtnTextFillColor_Click;
+
+            Controls.Add(groupTextShapeDetail);
+            groupTextShapeDetail.ResumeLayout(false);
+            groupTextShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void TxtTextLineSize_TextChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText textShape)
             {
-                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboLinePattern.Text);
+                textShape.Content = txtTextLineText.Text;
                 RedrawImage();
             }
         }
 
-        private void FillOpacityNum_ValueChanged(object? sender, EventArgs e)
+        private void BtnTextFont_Click(object? sender, EventArgs e)
+        {
+            using FontDialog fontDialog = new();
+            if (fontDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTextFont.Font = fontDialog.Font;
+                if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText textShape)
+                {
+                    textShape.FontFamily = btnTextFont.Font.Name;
+                    textShape.IsBold = btnTextFont.Font.Bold;
+                    textShape.IsItalic = btnTextFont.Font.Italic;
+                    textShape.FontSize = btnTextFont.Font.Size;
+                }
+                NumTextFillOpacity_ValueChanged(sender, e);
+            }
+        }
+
+        private void NumTextFillOpacity_ValueChanged(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null && selectedLayer.CurrentShape != null)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (fillOpacityNum.Value / fillOpacityNum.Maximum)), btnFillColorShape.BackColor);
+                Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
                 selectedLayer.CurrentShape.FillColor = fillColor;
                 RedrawImage();
             }
         }
 
-        private void OnLineOpacityValueChanged(object? sender, EventArgs e)
+        private void BtnTextFillColor_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnTextFillColor.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnTextFillColor.BackColor = cd.Color;
+                FillTextOpacityNum_ValueChanged(sender, e);
+            }
+        }
+
+        private void CboRectLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null && selectedLayer.CurrentShape != null)
             {
-                Color lineColor = Color.FromArgb((int)(255 * (lineOpacityNum.Value / lineOpacityNum.Maximum)), btnLineColor.BackColor);
+                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
+                RedrawImage();
+            }
+        }
+
+        private void CboEllipseLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
+                RedrawImage();
+            }
+        }
+
+        private void CboPolygonLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboPolygonLinePattern.Text);
+                RedrawImage();
+            }
+        }
+
+        private void FillRectOpacityNum_ValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color fillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
+                selectedLayer.CurrentShape.FillColor = fillColor;
+                RedrawImage();
+            }
+        }
+
+        private void FillEllipseOpacityNum_ValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color fillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
+                selectedLayer.CurrentShape.FillColor = fillColor;
+                RedrawImage();
+            }
+        }
+
+        private void FillPolygonOpacityNum_ValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color fillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
+                selectedLayer.CurrentShape.FillColor = fillColor;
+                RedrawImage();
+            }
+        }
+
+        private void FillTextOpacityNum_ValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
+                selectedLayer.CurrentShape.FillColor = fillColor;
+                RedrawImage();
+            }
+        }
+
+        private void OnRectLineOpacityValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color lineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
                 selectedLayer.CurrentShape.LineColor = lineColor;
                 RedrawImage();
             }
         }
 
-        private void BtnFillColorShape_Click(object? sender, EventArgs e)
+        private void OnEllipseLineOpacityValueChanged(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnFillColorShape.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
-            {
-                btnFillColorShape.BackColor = cd.Color;
-                FillOpacityNum_ValueChanged(sender, e);
-            }
-        }
-
-        private void BtnLineColor_Click(object? sender, EventArgs e)
-        {
-            using ColorDialog cd = new();
-            cd.Color = btnLineColor.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
-            {
-                btnLineColor.BackColor = cd.Color;
-                OnLineOpacityValueChanged(sender, e);
-            }
-        }
-
-        private void LineSize_Scroll(object? sender, EventArgs e)
-        {
-            lblLineSizeValue.Text = lineSizeTrack.Value.ToString();
-
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null && selectedLayer.CurrentShape != null)
             {
-                selectedLayer.CurrentShape.LineWidth = lineSizeTrack.Value;
+                Color lineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
+                selectedLayer.CurrentShape.LineColor = lineColor;
                 RedrawImage();
             }
         }
 
-        private void FormMain_Load(object sender, EventArgs e)
+        private void OnPolygonLineOpacityValueChanged(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                Color lineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
+                selectedLayer.CurrentShape.LineColor = lineColor;
+                RedrawImage();
+            }
+        }
+
+        private void BtnFillRectColorShape_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnRectFillColorShape.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnRectFillColorShape.BackColor = cd.Color;
+                FillRectOpacityNum_ValueChanged(sender, e);
+            }
+        }
+
+        private void BtnFillEllipseColorShape_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnEllipseFillColorShape.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnEllipseFillColorShape.BackColor = cd.Color;
+                FillEllipseOpacityNum_ValueChanged(sender, e);
+            }
+        }
+
+        private void BtnFillPolygonColorShape_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnPolygonFillColorShape.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnPolygonFillColorShape.BackColor = cd.Color;
+                FillPolygonOpacityNum_ValueChanged(sender, e);
+            }
+        }
+
+        private void BtnRectLineColor_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnRectLineColor.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnRectLineColor.BackColor = cd.Color;
+                OnRectLineOpacityValueChanged(sender, e);
+            }
+        }
+
+        private void BtnEllipseLineColor_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnEllipseLineColor.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnEllipseLineColor.BackColor = cd.Color;
+                OnEllipseLineOpacityValueChanged(sender, e);
+            }
+        }
+
+        private void BtnPolygonLineColor_Click(object? sender, EventArgs e)
+        {
+            using ColorDialog cd = new();
+            cd.Color = btnRectLineColor.BackColor;
+            if (cd.ShowDialog() == DialogResult.OK)
+            {
+                btnRectLineColor.BackColor = cd.Color;
+                OnPolygonLineOpacityValueChanged(sender, e);
+            }
+        }
+
+        private void RectLineSize_Scroll(object? sender, EventArgs e)
+        {
+            lblRectLineSizeValue.Text = rectLineSizeTrack.Value.ToString();
+
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                selectedLayer.CurrentShape.LineWidth = rectLineSizeTrack.Value;
+                RedrawImage();
+            }
+        }
+
+        private void EllipseLineSize_Scroll(object? sender, EventArgs e)
+        {
+            lblEllipseLineSizeValue.Text = ellipseLineSizeTrack.Value.ToString();
+
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                selectedLayer.CurrentShape.LineWidth = ellipseLineSizeTrack.Value;
+                RedrawImage();
+            }
+        }
+
+        private void PolygonLineSize_Scroll(object? sender, EventArgs e)
+        {
+            lblPolygonLineSizeValue.Text = polygonLineSizeTrack.Value.ToString();
+
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                selectedLayer.CurrentShape.LineWidth = polygonLineSizeTrack.Value;
+                RedrawImage();
+            }
+        }
+
+        private void FormMain_Load(object? sender, EventArgs e)
         {
             LoadNewDocument(true);
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -1092,7 +1630,9 @@ namespace PixelEditor
                 if (paint.Brush != null)
                 {
                     PaintingEngine.SetBrush(paint);
-                    UpdateCursor();
+                    int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+                    int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+                    UpdateCursor(cursorWidth, cursorHeight);
                 }
             }
         }
@@ -1111,7 +1651,9 @@ namespace PixelEditor
                 if (paint.Brush != null)
                 {
                     PaintingEngine.SetBrush(paint);
-                    UpdateCursor();
+                    int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+                    int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+                    UpdateCursor(cursorWidth, cursorHeight);
                 }
             }
         }
@@ -1144,7 +1686,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnTools_Click(object sender, EventArgs e)
+        private void BtnTools_Click(object? sender, EventArgs e)
         {
             if (sender is not null && sender is RadioButton btn)
             {
@@ -1193,27 +1735,27 @@ namespace PixelEditor
                 if (btn != btnShapeRect)
                 {
                     btnShapeRect.Checked = false;
+                    groupRectShapeDetail.Visible = false;
                 }
                 if (btn != btnShapeEllipse)
                 {
                     btnShapeEllipse.Checked = false;
+                    groupEllipseShapeDetail.Visible = false;
                 }
                 if (btn != btnShapePolygon)
                 {
                     btnShapePolygon.Checked = false;
+                    groupPolygonShapeDetail.Visible = false;
                 }
                 if (btn != btnShapeText)
                 {
                     btnShapeText.Checked = false;
-                }
-                if (btn != btnShapeRect && btn != btnShapeEllipse && btn != btnShapePolygon && btn != btnShapeText)
-                {
-                    groupShapeDetail.Visible = false;
+                    groupTextShapeDetail.Visible = false;
                 }
             }
         }
 
-        private void BtnTools_CheckedChanged(object sender, EventArgs e)
+        private void BtnTools_CheckedChanged(object? sender, EventArgs e)
         {
             if (btnPointer.Checked)
             {
@@ -1282,10 +1824,28 @@ namespace PixelEditor
                 groupCropDetail.Visible = true;
                 UpdateCursor(btnCrop.Image);
             }
-            else if (btnShapeRect.Checked || btnShapeEllipse.Checked || btnShapePolygon.Checked || btnShapeText.Checked)
+            else if (btnShapeRect.Checked)
             {
                 PaintingEngine.SetBrush(paint);
-                groupShapeDetail.Visible = true;
+                groupRectShapeDetail.Visible = true;
+                canvas.Cursor = Cursors.Default;
+            }
+            else if (btnShapeEllipse.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                groupEllipseShapeDetail.Visible = true;
+                canvas.Cursor = Cursors.Default;
+            }
+            else if (btnShapePolygon.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                groupPolygonShapeDetail.Visible = true;
+                canvas.Cursor = Cursors.Default;
+            }
+            else if (btnShapeText.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
+                groupTextShapeDetail.Visible = true;
                 canvas.Cursor = Cursors.Default;
             }
             else
@@ -1429,7 +1989,9 @@ namespace PixelEditor
             {
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
-                UpdateCursor();
+                int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+                int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+                UpdateCursor(cursorWidth, cursorHeight);
             }
         }
 
@@ -1440,7 +2002,9 @@ namespace PixelEditor
             {
                 paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
                 PaintingEngine.SetBrush(paint);
-                UpdateCursor();
+                int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+                int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+                UpdateCursor(cursorWidth, cursorHeight);
             }
         }
 
@@ -1503,7 +2067,7 @@ namespace PixelEditor
             labelStatus.Text = "Image Cropped.";
         }
 
-        private void Form1_Resize(object sender, EventArgs e)
+        private void Form1_Resize(object? sender, EventArgs e)
         {
             if (WindowState != FormWindowState.Minimized)
             {
@@ -1512,7 +2076,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnBrowseImage_Click(object sender, EventArgs e)
+        private void BtnBrowseImage_Click(object? sender, EventArgs e)
         {
             OpenFileDialog openFileDialog1 = new()
             {
@@ -1546,7 +2110,7 @@ namespace PixelEditor
             }
         }
 
-        private void PNGPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        private void PNGPictureToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog1 = new()
             {
@@ -1571,7 +2135,7 @@ namespace PixelEditor
             }
         }
 
-        private void JPEGPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        private void JPEGPictureToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog1 = new()
             {
@@ -1596,7 +2160,7 @@ namespace PixelEditor
             }
         }
 
-        private void BMPPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        private void BMPPictureToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog1 = new()
             {
@@ -1621,7 +2185,7 @@ namespace PixelEditor
             }
         }
 
-        private void GIFPictureToolStripMenuItem_Click(object sender, EventArgs e)
+        private void GIFPictureToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog1 = new()
             {
@@ -1646,7 +2210,7 @@ namespace PixelEditor
             }
         }
 
-        private void NewToolStripMenuItem_Click(object sender, EventArgs e)
+        private void NewToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             LoadNewDocument(false);
         }
@@ -1709,7 +2273,7 @@ namespace PixelEditor
             }
         }
 
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (!ConfirmAbandonChanges()) return;
 
@@ -1743,7 +2307,7 @@ namespace PixelEditor
             }
         }
 
-        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(currentFilePath))
             {
@@ -1761,7 +2325,7 @@ namespace PixelEditor
             }
         }
 
-        private void SaveAsProjectToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveAsProjectToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             using SaveFileDialog sfd = new();
             sfd.Filter = "Paint++ Files (*.xpe)|*.xpe";
@@ -1772,7 +2336,7 @@ namespace PixelEditor
             }
         }
 
-        private void CloseToolStripMenuItem_Click(object sender, EventArgs e)
+        private void CloseToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             this.Close();
         }
@@ -1850,7 +2414,7 @@ namespace PixelEditor
             return false;
         }
 
-        private void Opacity_Leave(object sender, EventArgs e)
+        private void Opacity_Leave(object? sender, EventArgs e)
         {
             Layer? layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (layer != null)
@@ -1861,7 +2425,7 @@ namespace PixelEditor
             }
         }
 
-        private void CboBlendMode_SelectedIndexChanged(object sender, EventArgs e)
+        private void CboBlendMode_SelectedIndexChanged(object? sender, EventArgs e)
         {
             Layer? layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (layer != null)
@@ -1875,7 +2439,7 @@ namespace PixelEditor
             }
         }
 
-        private void BthUpdateLayer_Click(object sender, EventArgs e)
+        private void BthUpdateLayer_Click(object? sender, EventArgs e)
         {
             FormLayer frm = new()
             {
@@ -1897,7 +2461,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnAddLayer_Click(object sender, EventArgs e)
+        private void BtnAddLayer_Click(object? sender, EventArgs e)
         {
             FormLayer frm = new()
             {
@@ -1917,7 +2481,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnSubtractLayer_Click(object sender, EventArgs e)
+        private void BtnSubtractLayer_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
@@ -1927,7 +2491,7 @@ namespace PixelEditor
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
-        private void BtnMoveUp_Click(object sender, EventArgs e)
+        private void BtnMoveUp_Click(object? sender, EventArgs e)
         {
             int currentIndex = layersControl.GetSelectedLayerIndex();
 
@@ -1944,7 +2508,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnMoveDown_Click(object sender, EventArgs e)
+        private void BtnMoveDown_Click(object? sender, EventArgs e)
         {
             int currentIndex = layersControl.GetSelectedLayerIndex();
 
@@ -1961,7 +2525,7 @@ namespace PixelEditor
             }
         }
 
-        private void MoveToTopToolStripMenuItem_Click(object sender, EventArgs e)
+        private void MoveToTopToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int currentIndex = layersControl.GetSelectedLayerIndex();
 
@@ -1978,7 +2542,7 @@ namespace PixelEditor
             }
         }
 
-        private void MoveToBottomToolStripMenuItem_Click(object sender, EventArgs e)
+        private void MoveToBottomToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int currentIndex = layersControl.GetSelectedLayerIndex();
 
@@ -1995,7 +2559,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnShowLayer_Click(object sender, EventArgs e)
+        private void BtnShowLayer_Click(object? sender, EventArgs e)
         {
             var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -2009,7 +2573,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnHideLayer_Click(object sender, EventArgs e)
+        private void BtnHideLayer_Click(object? sender, EventArgs e)
         {
             var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -2023,7 +2587,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnDuplicate_Click(object sender, EventArgs e)
+        private void BtnDuplicate_Click(object? sender, EventArgs e)
         {
             int selectedIndex = layersControl.GetSelectedLayerIndex();
 
@@ -2044,7 +2608,7 @@ namespace PixelEditor
             }
         }
 
-        private void BtnMergeDown_Click(object sender, EventArgs e)
+        private void BtnMergeDown_Click(object? sender, EventArgs e)
         {
             if (layersControl.GetLayers().Count < 2)
                 return;
@@ -2089,7 +2653,7 @@ namespace PixelEditor
             }
         }
 
-        private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ZoomInToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
@@ -2098,7 +2662,7 @@ namespace PixelEditor
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
-        private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ZoomOutToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             float zoomDelta = 0.1f;
@@ -2107,7 +2671,7 @@ namespace PixelEditor
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
-        private void BtnResetZoom_Click(object sender, EventArgs e)
+        private void BtnResetZoom_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Document.Zoom = 0.95f;
@@ -2116,7 +2680,7 @@ namespace PixelEditor
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
-        private void AllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void AllToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2131,7 +2695,7 @@ namespace PixelEditor
             }
         }
 
-        private void RedToolStripMenuItem_Click(object sender, EventArgs e)
+        private void RedToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2146,7 +2710,7 @@ namespace PixelEditor
             }
         }
 
-        private void GreenToolStripMenuItem_Click(object sender, EventArgs e)
+        private void GreenToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2161,7 +2725,7 @@ namespace PixelEditor
             }
         }
 
-        private void BlueToolStripMenuItem_Click(object sender, EventArgs e)
+        private void BlueToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2176,7 +2740,7 @@ namespace PixelEditor
             }
         }
 
-        private void RdoAll_CheckedChanged(object sender, EventArgs e)
+        private void RdoAll_CheckedChanged(object? sender, EventArgs e)
         {
             if (rdoAll.Checked)
             {
@@ -2236,22 +2800,22 @@ namespace PixelEditor
             }
         }
 
-        private void RedToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void RedToolStripMenuItem1_Click(object? sender, EventArgs e)
         {
             redToolStripMenuItem1.Checked = !redToolStripMenuItem1.Checked;
         }
 
-        private void GreenToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void GreenToolStripMenuItem1_Click(object? sender, EventArgs e)
         {
             greenToolStripMenuItem1.Checked = !greenToolStripMenuItem1.Checked;
         }
 
-        private void BlueToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void BlueToolStripMenuItem1_Click(object? sender, EventArgs e)
         {
             blueToolStripMenuItem1.Checked = !blueToolStripMenuItem1.Checked;
         }
 
-        private void ChkFilter1_CheckedChanged(object sender, EventArgs e)
+        private void ChkFilter1_CheckedChanged(object? sender, EventArgs e)
         {
             if (redToolStripMenuItem1.Checked != chkRed.Checked)
             {
@@ -2267,7 +2831,7 @@ namespace PixelEditor
             }
         }
 
-        private void ChkFilter_CheckedChanged(object sender, EventArgs e)
+        private void ChkFilter_CheckedChanged(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2280,7 +2844,7 @@ namespace PixelEditor
             }
         }
 
-        private void DeleteImageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void DeleteImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2309,7 +2873,7 @@ namespace PixelEditor
             }
         }
 
-        private void CutImageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void CutImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2343,7 +2907,7 @@ namespace PixelEditor
             }
         }
 
-        private void CopyImageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void CopyImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2375,7 +2939,7 @@ namespace PixelEditor
             }
         }
 
-        private void PasteImageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void PasteImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             Image? clipboardImage = Clipboard.GetImage();
             if (clipboardImage != null)
@@ -2393,7 +2957,7 @@ namespace PixelEditor
             }
         }
 
-        private void UndoToolStripMenuItem_Click(object sender, EventArgs e)
+        private void UndoToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (HistoryManager.CanUndo)
             {
@@ -2413,7 +2977,7 @@ namespace PixelEditor
             }
         }
 
-        private void RedoToolStripMenuItem_Click(object sender, EventArgs e)
+        private void RedoToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (HistoryManager.CanRedo)
             {
@@ -2433,7 +2997,7 @@ namespace PixelEditor
             }
         }
 
-        private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SelectAllToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2460,7 +3024,7 @@ namespace PixelEditor
             }
         }
 
-        private void NoneToolStripMenuItem_Click(object sender, EventArgs e)
+        private void NoneToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             ImageSelections.ClearSelections();
@@ -2468,7 +3032,7 @@ namespace PixelEditor
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
-        private void InvertToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void InvertToolStripMenuItem1_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2483,7 +3047,7 @@ namespace PixelEditor
             }
         }
 
-        private void GrowToolStripMenuItem_Click(object sender, EventArgs e)
+        private void GrowToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             FormSelections frm = new();
             if (frm.ShowDialog() == DialogResult.OK)
@@ -2502,7 +3066,7 @@ namespace PixelEditor
             }
         }
 
-        private void ShrinkToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ShrinkToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             FormSelections frm = new();
             if (frm.ShowDialog() == DialogResult.OK)
@@ -2521,7 +3085,7 @@ namespace PixelEditor
             }
         }
 
-        private void GeneralSettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void GeneralSettingsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             FormSettings frm = new()
             {
@@ -2563,7 +3127,7 @@ namespace PixelEditor
             }
         }
 
-        private void DarkToolStripMenuItem_Click(object sender, EventArgs e)
+        private void DarkToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2580,7 +3144,7 @@ namespace PixelEditor
             }
         }
 
-        private void InvertToolStripMenuItem_Click(object sender, EventArgs e)
+        private void InvertToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2597,7 +3161,7 @@ namespace PixelEditor
             }
         }
 
-        private void LightingToolStripMenuItem_Click(object sender, EventArgs e)
+        private void LightingToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2621,7 +3185,7 @@ namespace PixelEditor
             }
         }
 
-        private void SaturationToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaturationToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2645,7 +3209,7 @@ namespace PixelEditor
             }
         }
 
-        private void BlurImageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void BlurImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2669,7 +3233,7 @@ namespace PixelEditor
             }
         }
 
-        private void SharpnessToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SharpnessToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
@@ -2951,8 +3515,8 @@ namespace PixelEditor
 
             if (shape is ShapeText t)
             {
-                return p.X >= t.X && p.X <= t.X + 100 &&
-                       p.Y >= t.Y - 20 && p.Y <= t.Y;
+                return p.X >= t.X && p.X <= t.X + t.Width &&
+                       p.Y >= t.Y && p.Y <= t.Y + t.Height;
             }
 
             return false;
@@ -2983,11 +3547,12 @@ namespace PixelEditor
                 "Dot" => DashStyle.Dot,
                 "DashDot" => DashStyle.DashDot,
                 "DashDotDot" => DashStyle.DashDotDot,
+                "Custom" => DashStyle.Custom,
                 _ => DashStyle.Solid,
             };
         }
 
-        private void PixelImage_MouseDown(object sender, MouseEventArgs e)
+        private void PixelImage_MouseDown(object? sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
 
@@ -3001,16 +3566,16 @@ namespace PixelEditor
                     {
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
-                        Color lineColor = Color.FromArgb((int)(255 * (lineOpacityNum.Value / lineOpacityNum.Maximum)), btnLineColor.BackColor);
-                        Color fillColor = Color.FromArgb((int)(255 * (fillOpacityNum.Value / fillOpacityNum.Maximum)), btnFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        Color lineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
+                        Color fillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
+                        DashStyle dashStyle = GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
                         selectedLayer.CurrentShape = new ShapeRect
                         {
                             X = startPoint.X,
                             Y = startPoint.Y,
                             LineColor = lineColor,
                             FillColor = fillColor,
-                            LineWidth = lineSizeTrack.Value,
+                            LineWidth = rectLineSizeTrack.Value,
                             DashStyle = dashStyle
                         };
                     }
@@ -3018,16 +3583,16 @@ namespace PixelEditor
                     {
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
-                        Color lineColor = Color.FromArgb((int)(255 * (lineOpacityNum.Value / lineOpacityNum.Maximum)), btnLineColor.BackColor);
-                        Color fillColor = Color.FromArgb((int)(255 * (fillOpacityNum.Value / fillOpacityNum.Maximum)), btnFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        Color lineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
+                        Color fillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
+                        DashStyle dashStyle = GetDashStyle(cboEllipseLinePattern.SelectedItem?.ToString() ?? "Solid");
                         selectedLayer.CurrentShape = new ShapeEllipse
                         {
                             Cx = startPoint.X,
                             Cy = startPoint.Y,
                             LineColor = lineColor,
                             FillColor = fillColor,
-                            LineWidth = lineSizeTrack.Value,
+                            LineWidth = ellipseLineSizeTrack.Value,
                             DashStyle = dashStyle
                         };
                     }
@@ -3035,34 +3600,38 @@ namespace PixelEditor
                     {
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
-                        Color lineColor = Color.FromArgb((int)(255 * (lineOpacityNum.Value / lineOpacityNum.Maximum)), btnLineColor.BackColor);
-                        Color fillColor = Color.FromArgb((int)(255 * (fillOpacityNum.Value / fillOpacityNum.Maximum)), btnFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboLinePattern.SelectedItem?.ToString() ?? "Solid");
-                        selectedLayer.CurrentShape = new ShapePolygon
+                        Color lineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
+                        Color fillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
+                        DashStyle dashStyle = GetDashStyle(cboPolygonLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        ShapePolygon? polygon = (selectedLayer.CurrentShape is not null && selectedLayer.CurrentShape is ShapePolygon) ? selectedLayer.CurrentShape as ShapePolygon : new ShapePolygon()
                         {
-                            Points = { startPoint },
                             LineColor = lineColor,
                             FillColor = fillColor,
-                            LineWidth = lineSizeTrack.Value,
+                            LineWidth = polygonLineSizeTrack.Value,
                             DashStyle = dashStyle
                         };
+                        polygon?.Points.Add(startPoint);
+                        selectedLayer.CurrentShape = polygon;
                     }
                     else if (btnShapeText.Checked)
                     {
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
-                        Color lineColor = Color.FromArgb((int)(255 * (lineOpacityNum.Value / lineOpacityNum.Maximum)), btnLineColor.BackColor);
-                        Color fillColor = Color.FromArgb((int)(255 * (fillOpacityNum.Value / fillOpacityNum.Maximum)), btnFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboLinePattern.SelectedItem?.ToString() ?? "Solid");
-                        selectedLayer.CurrentShape = new ShapeText
+                        Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
+                        DashStyle dashStyle = GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        ShapeText shapeText = new()
                         {
                             X = startPoint.X,
                             Y = startPoint.Y,
-                            Content = "Text",
-                            LineColor = lineColor,
+                            Content = txtTextLineText.Text,
+                            FontFamily = btnTextFont.Font.Name,
+                            IsBold = btnTextFont.Font.Bold,
+                            IsItalic = btnTextFont.Font.Italic,
+                            FontSize = btnTextFont.Font.Size,
                             FillColor = fillColor,
                             DashStyle = dashStyle
                         };
+                        selectedLayer.CurrentShape = shapeText;
                     }
                     else if (btnPointer.Checked)
                     {
@@ -3355,7 +3924,7 @@ namespace PixelEditor
             }
         }
 
-        private void PixelImage_MouseMove(object sender, MouseEventArgs e)
+        private void PixelImage_MouseMove(object? sender, MouseEventArgs e)
         {
             labelMousePosition.Text = $"({e.X}, {e.Y})";
             labelDocStatus.Text = $"Zoom: {Document.Zoom * 100:F1}% Offset {Document.ImageOffset}";
@@ -3383,13 +3952,12 @@ namespace PixelEditor
                         ellipse.Rx = Math.Abs(startPoint.X - localCurrentRaw.X);
                         ellipse.Ry = Math.Abs(startPoint.Y - localCurrentRaw.Y);
                     }
-                    else if (selectedLayer.CurrentShape is ShapePolygon polygon)
-                    {
-                        
-                    }
                     else if (selectedLayer.CurrentShape is ShapeText text)
                     {
-                        
+                        text.X = Math.Min(startPoint.X, localCurrentRaw.X);
+                        text.Y = Math.Min(startPoint.Y, localCurrentRaw.Y);
+                        text.Width = Math.Abs(startPoint.X - localCurrentRaw.X);
+                        text.Height = Math.Abs(startPoint.Y - localCurrentRaw.Y);
                     }
 
                     const int minPaintIntervalMs = 32;
@@ -3700,7 +4268,7 @@ namespace PixelEditor
             lastMousePosition = e.Location;
         }
 
-        private void PixelImage_MouseUp(object sender, MouseEventArgs e)
+        private void PixelImage_MouseUp(object? sender, MouseEventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (isLassoSelecting)
@@ -3723,11 +4291,12 @@ namespace PixelEditor
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
-                if (selectedLayer.CurrentShape != null)
+                if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
                     RedrawImage();
+                    isDraggingShape = false;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
                 //selectedLayer.CurrentShape = null;
@@ -3744,10 +4313,9 @@ namespace PixelEditor
             isRotating = false;
             isScaling = false;
             isDrawing = false;
-            isDraggingShape = false;
         }
 
-        private void Canvas_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void Canvas_MouseDoubleClick(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
@@ -3761,6 +4329,16 @@ namespace PixelEditor
                 if (selectedAreaBitmap != null)
                 {
                     selectedLayer?.Image = MergeSelectionToLayer(selectedLayer);
+                }
+
+                if (selectedLayer != null && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                    selectedLayer.CurrentShape = null;
+                    RedrawImage();
+                    isDraggingShape = false;
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
 
                 rotationAngle = 0;
@@ -3948,7 +4526,7 @@ namespace PixelEditor
             canvas.Invalidate();
         }
 
-        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        private void FormMain_FormClosing(object? sender, FormClosingEventArgs e)
         {
             if (!ConfirmAbandonChanges())
             {
@@ -3956,7 +4534,7 @@ namespace PixelEditor
             }
         }
 
-        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ExitToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             Application.Exit();
         }

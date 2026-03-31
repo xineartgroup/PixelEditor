@@ -111,26 +111,59 @@ namespace PixelEditor
 
             pen.DashStyle = shape.DashStyle;
 
-            if (shape is ShapeRect r)
+            if (shape is ShapeRect rect)
             {
-                g.FillRectangle(brush, r.X, r.Y, r.Width, r.Height);
-                g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+                g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
+                g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
             }
-            else if (shape is ShapeEllipse el)
+            else if (shape is ShapeEllipse ellipse)
             {
-                g.FillEllipse(brush, el.Cx, el.Cy, el.Rx, el.Ry);
-                g.DrawEllipse(pen, el.Cx, el.Cy, el.Rx, el.Ry);
+                g.FillEllipse(brush, ellipse.Cx, ellipse.Cy, ellipse.Rx, ellipse.Ry);
+                g.DrawEllipse(pen, ellipse.Cx, ellipse.Cy, ellipse.Rx, ellipse.Ry);
             }
-            else if (shape is ShapePolygon pg && pg.Points.Count > 1)
+            else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
-                g.FillPolygon(brush, pg.Points.ToArray());
-                g.DrawPolygon(pen, pg.Points.ToArray());
+                g.FillPolygon(brush, polygon.Points.ToArray());
+                g.DrawPolygon(pen, polygon.Points.ToArray());
             }
-            else if (shape is ShapeText t)
+            else if (shape is ShapeText text)
             {
-                using Font font = new(t.FontFamily, t.FontSize);
-                g.DrawString(t.Content, font, brush, t.X, t.Y);
+                using Font font = CreateScaledFont(text);
+                g.DrawString(text.Content, font, brush, text.X, text.Y);
             }
+        }
+
+        private static Font CreateScaledFont(ShapeText text)
+        {
+            using Font tempFont = new(text.FontFamily, text.FontSize, GetFontStyle(text));
+
+            using StringFormat stringFormat = new()
+            {
+                Alignment = StringAlignment.Near,
+                LineAlignment = StringAlignment.Near,
+                Trimming = StringTrimming.None
+            };
+
+            using Graphics g = Graphics.FromImage(new Bitmap(1, 1));
+
+            SizeF textSize = g.MeasureString(text.Content, tempFont, new SizeF(text.Width, text.Height), stringFormat);
+
+            float widthScale = text.Width > 0 ? text.Width / textSize.Width : 1f;
+            float heightScale = text.Height > 0 ? text.Height / textSize.Height : 1f;
+
+            float scale = Math.Max(widthScale, heightScale);
+
+            float scaledFontSize = Math.Max(4, Math.Min(text.FontSize * scale, 4000));
+
+            return new Font(text.FontFamily, scaledFontSize, GetFontStyle(text));
+        }
+
+        private static FontStyle GetFontStyle(ShapeText text)
+        {
+            FontStyle style = FontStyle.Regular;
+            if (text.IsBold) style |= FontStyle.Bold;
+            if (text.IsItalic) style |= FontStyle.Italic;
+            return style;
         }
 
         private void SetProperty<T>(ref T field, T value)
