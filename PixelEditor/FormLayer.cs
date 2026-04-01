@@ -12,6 +12,7 @@
 
         private void FormName_Load(object sender, EventArgs e)
         {
+            cboType.SelectedIndex = Layer.LayerType == LayerType.Vector ? 1 : 0;
             textBoxName.Text = Layer.Name;
             cboBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
             cboBlendMode.SelectedItem = Layer.BlendMode.ToString();
@@ -34,6 +35,7 @@
 
         private void BtnOK_Click(object sender, EventArgs e)
         {
+            Layer.LayerType = cboType.SelectedIndex == 1 ? LayerType.Vector : LayerType.Image;
             Layer.Name = textBoxName.Text;
             Layer.BlendMode = !string.IsNullOrEmpty(cboBlendMode.Text) ? Enum.Parse<ImageBlending>(cboBlendMode.Text) : ImageBlending.Normal;
             Layer.Opacity = opacity.Value;

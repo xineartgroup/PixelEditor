@@ -34,7 +34,9 @@ namespace PixelEditor
         private bool isDrawing = false;
         private bool isCropping = false;
         private bool isDirty = false;
+        private bool isDrawingShape = false;
         private bool isDraggingShape = false;
+        private bool isUpdatingPolygonShape = false;
         private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
@@ -191,6 +193,7 @@ namespace PixelEditor
             InitializeComponentGroupPolygonShape();
             InitializeComponentGroupTextShape();
             InitializeTimer();
+            layersControl.LayerChanged += LayersControl_LayerChanged;
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
             layersControl.LayerCountChanged += LayersControl_LayerCountChanged;
@@ -211,6 +214,12 @@ namespace PixelEditor
                     if (dashOffset > 100.0f) dashOffset = 0;
 
                     RedrawImage();
+                }
+                if (isDrawingShape)
+                {
+                    RedrawImage(layersControl.GetSelectedLayerIndex());
+
+                    isDrawingShape = false;
                 }
             };
             animationTimer.Start();
@@ -1402,10 +1411,10 @@ namespace PixelEditor
         private void BtnPolygonLineColor_Click(object? sender, EventArgs e)
         {
             using ColorDialog cd = new();
-            cd.Color = btnRectLineColor.BackColor;
+            cd.Color = btnPolygonLineColor.BackColor;
             if (cd.ShowDialog() == DialogResult.OK)
             {
-                btnRectLineColor.BackColor = cd.Color;
+                btnPolygonLineColor.BackColor = cd.Color;
                 OnPolygonLineOpacityValueChanged(sender, e);
             }
         }
@@ -1465,6 +1474,16 @@ namespace PixelEditor
             Eraser_smoothness_Scroll(sender, e);
             Eraser_hardness_Scroll(sender, e);
             ReloadBrushes();
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void LayersControl_LayerChanged(object? sender, LayerChangedEventArgs e)
+        {
+            Console.WriteLine($"Layer {e.Layer.Name}'s properties changed");
+
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            RedrawImage();
+            UpdateControls();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
@@ -2434,6 +2453,7 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     layersControl.UpdateLayer(layersControl.GetSelectedLayerIndex(), frm.Layer);
+                    UpdateControls();
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -2629,6 +2649,37 @@ namespace PixelEditor
                 redToolStripMenuItem1.Checked = selectedLayer.RedFilter;
                 greenToolStripMenuItem1.Checked = selectedLayer.GreenFilter;
                 blueToolStripMenuItem1.Checked = selectedLayer.BlueFilter;
+
+                if (selectedLayer.LayerType == LayerType.Image)
+                {
+                    btnPointer.Checked = true;
+
+                    btnFiller.Enabled = true;
+                    btnBrusher.Enabled = true;
+                    btnEraser.Enabled = true;
+                    btnWarp.Enabled = true;
+                    btnCrop.Enabled = true;
+
+                    btnShapeRect.Enabled = false;
+                    btnShapeEllipse.Enabled = false;
+                    btnShapePolygon.Enabled = false;
+                    btnShapeText.Enabled = false;
+                }
+                else
+                {
+                    btnPointer.Checked = true;
+
+                    btnFiller.Enabled = false;
+                    btnBrusher.Enabled = false;
+                    btnEraser.Enabled = false;
+                    btnWarp.Enabled = false;
+                    btnCrop.Enabled = false;
+
+                    btnShapeRect.Enabled = true;
+                    btnShapeEllipse.Enabled = true;
+                    btnShapePolygon.Enabled = true;
+                    btnShapeText.Enabled = true;
+                }
 
                 if (btnPointer.Checked)
                 {
@@ -3655,7 +3706,9 @@ namespace PixelEditor
                         Color lineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
                         Color fillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
                         DashStyle dashStyle = GetDashStyle(cboPolygonLinePattern.SelectedItem?.ToString() ?? "Solid");
-                        ShapePolygon? polygon = (selectedLayer.CurrentShape is not null && selectedLayer.CurrentShape is ShapePolygon) ? selectedLayer.CurrentShape as ShapePolygon : new ShapePolygon()
+                        ShapePolygon? polygon = (selectedLayer.CurrentShape is not null && selectedLayer.CurrentShape is ShapePolygon && isUpdatingPolygonShape)
+                            ? selectedLayer.CurrentShape as ShapePolygon
+                            : new ShapePolygon()
                         {
                             LineColor = lineColor,
                             FillColor = fillColor,
@@ -3664,6 +3717,7 @@ namespace PixelEditor
                         };
                         polygon?.Points.Add(startPoint);
                         selectedLayer.CurrentShape = polygon;
+                        isUpdatingPolygonShape = true;
                     }
                     else if (btnShapeText.Checked)
                     {
@@ -3750,10 +3804,14 @@ namespace PixelEditor
                                     selectedLayer.CurrentShape = shape;
                                     isDraggingShape = true;
 
-                                    if (shape is ShapeRect r) dragOffset = new PointF(localPos.X - r.X, localPos.Y - r.Y);
-                                    else if (shape is ShapeEllipse el) dragOffset = new PointF(localPos.X - el.X, localPos.Y - el.Y);
-                                    else if (shape is ShapeText t) dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
-                                    else if (shape is ShapePolygon pg && pg.Points.Count > 0) dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
+                                    if (shape is ShapeRect r)
+                                        dragOffset = new PointF(localPos.X - r.X, localPos.Y - r.Y);
+                                    else if (shape is ShapeEllipse el)
+                                        dragOffset = new PointF(localPos.X - el.X, localPos.Y - el.Y);
+                                    else if (shape is ShapeText t)
+                                        dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
+                                    else if (shape is ShapePolygon pg && pg.Points.Count > 0)
+                                        dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
 
                                     break;
                                 }
@@ -4013,12 +4071,7 @@ namespace PixelEditor
                         text.Height = Math.Abs(startPoint.Y - localCurrentRaw.Y);
                     }
 
-                    const int minPaintIntervalMs = 32;
-                    if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
-                    {
-                        RedrawImage(layersControl.GetSelectedLayerIndex());
-                        lastPaintTime = DateTime.Now;
-                    }
+                    isDrawingShape = true; // This flag is used to trigger redraw of shapes in the rendering loop
                 }
             }
             else if (isDragging)
@@ -4080,23 +4133,32 @@ namespace PixelEditor
                     float newX = localPos.X - dragOffset.X;
                     float newY = localPos.Y - dragOffset.Y;
 
-                    if (selectedLayer.CurrentShape is ShapeRect r) { r.X = newX; r.Y = newY; }
-                    else if (selectedLayer.CurrentShape is ShapeEllipse el) { el.X = newX; el.Y = newY; }
-                    else if (selectedLayer.CurrentShape is ShapeText t) { t.X = newX; t.Y = newY; }
-                    else if (selectedLayer.CurrentShape is ShapePolygon pg)
+                    if (selectedLayer.CurrentShape is ShapeRect rect)
                     {
-                        float dx = newX - pg.Points[0].X;
-                        float dy = newY - pg.Points[0].Y;
-                        for (int i = 0; i < pg.Points.Count; i++)
-                            pg.Points[i] = new PointF(pg.Points[i].X + dx, pg.Points[i].Y + dy);
+                        rect.X = newX;
+                        rect.Y = newY;
+                    }
+                    else if (selectedLayer.CurrentShape is ShapeEllipse ellipse)
+                    {
+                        ellipse.X = newX;
+                        ellipse.Y = newY;
+                    }
+                    else if (selectedLayer.CurrentShape is ShapeText text)
+                    {
+                        text.X = newX;
+                        text.Y = newY;
+                    }
+                    else if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                    {
+                        float dx = (newX - polygon.Points[0].X);
+                        float dy = (newY - polygon.Points[0].Y);
+                        for (int i = 0; i < polygon.Points.Count; i++)
+                        {
+                            polygon.Points[i] = new PointF(polygon.Points[i].X + dx, polygon.Points[i].Y + dy);
+                        }
                     }
 
-                    const int minPaintIntervalMs = 32;
-                    if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
-                    {
-                        RedrawImage(layersControl.GetSelectedLayerIndex());
-                        lastPaintTime = DateTime.Now;
-                    }
+                    isDrawingShape = true; // This flag is used to trigger redraw of shapes in the rendering loop
                 }
             }
             else if (isRotating)
@@ -4291,7 +4353,6 @@ namespace PixelEditor
 
                         if (lastSelection.Count == 1)
                         {
-                            // Initialize the 4 corners of the rectangle (plus closing point)
                             ImageSelections.AddSelectionPoint(new Point(worldCurrent.X, worldAnchor.Y));
                             ImageSelections.AddSelectionPoint(worldCurrent);
                             ImageSelections.AddSelectionPoint(new Point(worldAnchor.X, worldCurrent.Y));
@@ -4299,13 +4360,11 @@ namespace PixelEditor
                         }
                         else if (lastSelection.Count == 5)
                         {
-                            // Update the corners dynamically as we drag
                             ImageSelections.UpdateSelectionPoint(1, new Point(worldCurrent.X, worldAnchor.Y));
                             ImageSelections.UpdateSelectionPoint(2, worldCurrent);
                             ImageSelections.UpdateSelectionPoint(3, new Point(worldAnchor.X, worldCurrent.Y));
                         }
 
-                        // Refresh the UI to show the crop box
                         RedrawImage();
                     }
                 }
@@ -4347,12 +4406,13 @@ namespace PixelEditor
                 if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                    if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                    {
+                        selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                    }
                     RedrawImage();
-                    isDraggingShape = false;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
-                //selectedLayer.CurrentShape = null;
             }
             WarpEngine.WarpSnapshot?.Dispose();
             WarpEngine.WarpSnapshot = null;
@@ -4366,6 +4426,7 @@ namespace PixelEditor
             isRotating = false;
             isScaling = false;
             isDrawing = false;
+            isDraggingShape = false;
         }
 
         private void Canvas_MouseDoubleClick(object? sender, MouseEventArgs e)
@@ -4387,10 +4448,13 @@ namespace PixelEditor
                 if (selectedLayer != null && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
-                    selectedLayer.CurrentShape = null;
+                    if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                    {
+                        selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                    }
                     RedrawImage();
                     isDraggingShape = false;
+                    isUpdatingPolygonShape = false;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
 

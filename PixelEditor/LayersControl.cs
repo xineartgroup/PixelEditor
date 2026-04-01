@@ -6,6 +6,7 @@
 
         private readonly List<Layer> imageLayers = [];
         private int selectedLayerIndex = -1;
+        public event EventHandler<LayerChangedEventArgs>? LayerChanged;
         public event EventHandler<LayerVisibilityChangedEventArgs>? LayerVisibilityChanged;
         public event EventHandler<SelectedLayerChangedEventArgs>? SelectedLayerChanged;
         public event EventHandler<LayersCountChangedEventArgs>? LayerCountChanged;
@@ -169,6 +170,7 @@
                     HistoryManager.RecordState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
                     layer = frm.Layer;
                     UpdateLayer(selectedLayerIndex, layer);
+                    OnLayerChanged(new LayerChangedEventArgs(selectedLayerIndex, imageLayers[selectedLayerIndex]));
                     HistoryManager.CurrentState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
                 }
             }
@@ -185,6 +187,11 @@
                     panel.BackColor = (layerIndex == selectedIndex) ? Color.LightBlue : Color.Transparent;
                 }
             }
+        }
+
+        protected virtual void OnLayerChanged(LayerChangedEventArgs e)
+        {
+            LayerChanged?.Invoke(this, e);
         }
 
         protected virtual void OnLayerVisibilityChanged(LayerVisibilityChangedEventArgs e)
@@ -468,6 +475,12 @@
                 lblName.Location = new Point(labelX, 15);
             }
         }
+    }
+
+    public class LayerChangedEventArgs(int layerIndex, Layer layer) : EventArgs
+    {
+        public int LayerIndex { get; } = layerIndex;
+        public Layer Layer { get; } = layer;
     }
 
     public class LayerVisibilityChangedEventArgs(int layerIndex, Layer layer, bool oldValue, bool newValue) : EventArgs

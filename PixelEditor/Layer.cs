@@ -15,6 +15,7 @@ namespace PixelEditor
         private bool _redFilter = false;
         private bool _greenFilter = false;
         private bool _blueFilter = false;
+        private LayerType _layerType = LayerType.Image;
         private LayerChannel _channel = LayerChannel.RGB;
         private ImageBlending _blendMode = ImageBlending.Normal;
         private FillType _fillType = FillType.Color;
@@ -55,6 +56,8 @@ namespace PixelEditor
 
         public bool BlueFilter { get => _blueFilter; set => SetProperty(ref _blueFilter, value); }
 
+        public LayerType LayerType { get => _layerType; set => SetProperty(ref _layerType, value); }
+
         public LayerChannel Channel { get => _channel; set => SetProperty(ref _channel, value); }
 
         public ImageBlending BlendMode { get => _blendMode; set => SetProperty(ref _blendMode, value); }
@@ -86,24 +89,38 @@ namespace PixelEditor
             }
         }
 
+        public bool IsNewShape(BaseShape shape)
+        {
+            return !shapes.Contains(shape);
+        }
+
         private Image? DrawVectorImage(Image temp)
         {
             Image? image = new Bitmap(temp);
             using (Graphics g = Graphics.FromImage(image))
             {
+                bool foundSelected = false;
                 foreach (BaseShape shape in shapes)
                 {
-                    DrawShape(shape, g);
+                    if (shape == currentShape)
+                    {
+                        DrawShape(shape, g, true);
+                        foundSelected = true;
+                    }
+                    else
+                    {
+                        DrawShape(shape, g);
+                    }
                 }
-                if (currentShape != null)
+                if (currentShape != null && !foundSelected)
                 {
-                    DrawShape(currentShape, g);
+                    DrawShape(currentShape, g, true);
                 }
             }
             return image;
         }
 
-        private static void DrawShape(BaseShape shape, Graphics g)
+        private static void DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using Pen pen = new(shape.LineColor, shape.LineWidth);
@@ -115,11 +132,19 @@ namespace PixelEditor
             {
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
+                if (isSelected)
+                {
+                    g.DrawRectangle(new Pen(Color.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }, rect.X - 5, rect.Y - 5, rect.Width + 10, rect.Height + 10);
+                }
             }
             else if (shape is ShapeEllipse ellipse)
             {
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
+                if (isSelected)
+                {
+                    g.DrawRectangle(new Pen(Color.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }, ellipse.X - 5, ellipse.Y - 5, ellipse.Width + 10, ellipse.Height + 10);
+                }
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
