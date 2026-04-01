@@ -817,7 +817,7 @@ namespace PixelEditor
             groupRectShapeDetail.Size = new Size(230, 260);
             groupRectShapeDetail.TabIndex = 30;
             groupRectShapeDetail.TabStop = false;
-            groupRectShapeDetail.Text = "Shape Detail";
+            groupRectShapeDetail.Text = "Rectangle Detail";
             groupRectShapeDetail.Visible = false;
 
             // --- LINE SECTION ---
@@ -933,7 +933,7 @@ namespace PixelEditor
             groupEllipseShapeDetail.Size = new Size(230, 260);
             groupEllipseShapeDetail.TabIndex = 30;
             groupEllipseShapeDetail.TabStop = false;
-            groupEllipseShapeDetail.Text = "Shape Detail";
+            groupEllipseShapeDetail.Text = "Ellipse Detail";
             groupEllipseShapeDetail.Visible = false;
 
             // --- LINE SECTION ---
@@ -1049,7 +1049,7 @@ namespace PixelEditor
             groupPolygonShapeDetail.Size = new Size(230, 260);
             groupPolygonShapeDetail.TabIndex = 30;
             groupPolygonShapeDetail.TabStop = false;
-            groupPolygonShapeDetail.Text = "Shape Detail";
+            groupPolygonShapeDetail.Text = "Polygon Detail";
             groupPolygonShapeDetail.Visible = false;
 
             // --- LINE SECTION ---
@@ -1235,11 +1235,10 @@ namespace PixelEditor
 
         private void NumTextFillOpacity_ValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
-                selectedLayer.CurrentShape.FillColor = fillColor;
+                shape.FillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
+
                 RedrawImage();
             }
         }
@@ -1257,107 +1256,90 @@ namespace PixelEditor
 
         private void CboRectLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
-                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
+                shape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
                 RedrawImage();
             }
         }
 
         private void CboEllipseLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
-                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
+                shape.DashStyle = GetDashStyle(cboEllipseLinePattern.Text);
                 RedrawImage();
             }
         }
 
         private void CboPolygonLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
-                selectedLayer.CurrentShape.DashStyle = GetDashStyle(cboPolygonLinePattern.Text);
+                shape.DashStyle = GetDashStyle(cboPolygonLinePattern.Text);
                 RedrawImage();
             }
         }
 
         private void FillRectOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
-                selectedLayer.CurrentShape.FillColor = fillColor;
+                shape.FillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
                 RedrawImage();
             }
         }
 
         private void FillEllipseOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
-                selectedLayer.CurrentShape.FillColor = fillColor;
+                shape.FillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
                 RedrawImage();
             }
         }
 
         private void FillPolygonOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
-                selectedLayer.CurrentShape.FillColor = fillColor;
+                shape.FillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
                 RedrawImage();
             }
         }
 
         private void FillTextOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
             {
-                Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
-                selectedLayer.CurrentShape.FillColor = fillColor;
+                shape.FillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
                 RedrawImage();
             }
         }
 
         private void OnRectLineOpacityValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
-                Color lineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
-                selectedLayer.CurrentShape.LineColor = lineColor;
+                shape.LineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
                 RedrawImage();
             }
         }
 
         private void OnEllipseLineOpacityValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
-                Color lineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
-                selectedLayer.CurrentShape.LineColor = lineColor;
+                shape.LineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
                 RedrawImage();
             }
         }
 
         private void OnPolygonLineOpacityValueChanged(object? sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
-                Color lineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
-                selectedLayer.CurrentShape.LineColor = lineColor;
+                shape.LineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
                 RedrawImage();
             }
         }
@@ -1432,10 +1414,9 @@ namespace PixelEditor
         {
             lblRectLineSizeValue.Text = rectLineSizeTrack.Value.ToString();
 
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
-                selectedLayer.CurrentShape.LineWidth = rectLineSizeTrack.Value;
+                shape.LineWidth = rectLineSizeTrack.Value;
                 RedrawImage();
             }
         }
@@ -1444,10 +1425,9 @@ namespace PixelEditor
         {
             lblEllipseLineSizeValue.Text = ellipseLineSizeTrack.Value.ToString();
 
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
-                selectedLayer.CurrentShape.LineWidth = ellipseLineSizeTrack.Value;
+                shape.LineWidth = ellipseLineSizeTrack.Value;
                 RedrawImage();
             }
         }
@@ -1456,10 +1436,9 @@ namespace PixelEditor
         {
             lblPolygonLineSizeValue.Text = polygonLineSizeTrack.Value.ToString();
 
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
-                selectedLayer.CurrentShape.LineWidth = polygonLineSizeTrack.Value;
+                shape.LineWidth = polygonLineSizeTrack.Value;
                 RedrawImage();
             }
         }
@@ -2638,18 +2617,89 @@ namespace PixelEditor
 
         private void UpdateControls()
         {
-            var layer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-            if (layer != null)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                opacity.Value = layer.Opacity;
-                cboBlendMode.SelectedItem = layer.BlendMode.ToString();
-                redToolStripMenuItem.Checked = layer.Channel == LayerChannel.Red;
-                greenToolStripMenuItem.Checked = layer.Channel == LayerChannel.Green;
-                blueToolStripMenuItem.Checked = layer.Channel == LayerChannel.Blue;
-                allToolStripMenuItem.Checked = layer.Channel == LayerChannel.RGB;
-                redToolStripMenuItem1.Checked = layer.RedFilter;
-                greenToolStripMenuItem1.Checked = layer.GreenFilter;
-                blueToolStripMenuItem1.Checked = layer.BlueFilter;
+                opacity.Value = selectedLayer.Opacity;
+                cboBlendMode.SelectedItem = selectedLayer.BlendMode.ToString();
+                redToolStripMenuItem.Checked = selectedLayer.Channel == LayerChannel.Red;
+                greenToolStripMenuItem.Checked = selectedLayer.Channel == LayerChannel.Green;
+                blueToolStripMenuItem.Checked = selectedLayer.Channel == LayerChannel.Blue;
+                allToolStripMenuItem.Checked = selectedLayer.Channel == LayerChannel.RGB;
+                redToolStripMenuItem1.Checked = selectedLayer.RedFilter;
+                greenToolStripMenuItem1.Checked = selectedLayer.GreenFilter;
+                blueToolStripMenuItem1.Checked = selectedLayer.BlueFilter;
+
+                if (btnPointer.Checked)
+                {
+                    if (selectedLayer.CurrentShape != null)
+                    {
+                        if (selectedLayer.CurrentShape is ShapeRect r)
+                        {
+                            groupRectShapeDetail.Visible = true;
+                            groupEllipseShapeDetail.Visible = false;
+                            groupPolygonShapeDetail.Visible = false;
+                            groupTextShapeDetail.Visible = false;
+
+                            btnRectLineColor.BackColor = Color.FromArgb(255, r.LineColor.R, r.LineColor.G, r.LineColor.B);
+                            rectLineOpacityNum.Value = (decimal)((r.LineColor.A / 255.0) * (double)rectLineOpacityNum.Maximum);
+
+                            btnRectFillColorShape.BackColor = Color.FromArgb(255, r.FillColor.R, r.FillColor.G, r.FillColor.B);
+                            fillRectOpacityNum.Value = (decimal)((r.FillColor.A / 255.0) * (double)fillRectOpacityNum.Maximum);
+
+                            rectLineSizeTrack.Value = (int)r.LineWidth;
+                            cboRectLinePattern.SelectedItem = r.DashStyle.ToString();
+                        }
+                        else if (selectedLayer.CurrentShape is ShapeEllipse el)
+                        {
+                            groupRectShapeDetail.Visible = false;
+                            groupEllipseShapeDetail.Visible = true;
+                            groupPolygonShapeDetail.Visible = false;
+                            groupTextShapeDetail.Visible = false;
+
+                            btnEllipseLineColor.BackColor = Color.FromArgb(255, el.LineColor.R, el.LineColor.G, el.LineColor.B);
+                            ellipseLineOpacityNum.Value = (decimal)((el.LineColor.A / 255.0) * (double)ellipseLineOpacityNum.Maximum);
+
+                            btnEllipseFillColorShape.BackColor = Color.FromArgb(255, el.FillColor.R, el.FillColor.G, el.FillColor.B);
+                            fillEllipseOpacityNum.Value = (decimal)((el.FillColor.A / 255.0) * (double)fillEllipseOpacityNum.Maximum);
+
+                            ellipseLineSizeTrack.Value = (int)el.LineWidth;
+                            cboEllipseLinePattern.SelectedItem = el.DashStyle.ToString();
+                        }
+                        else if (selectedLayer.CurrentShape is ShapePolygon pg)
+                        {
+                            groupRectShapeDetail.Visible = false;
+                            groupEllipseShapeDetail.Visible = false;
+                            groupPolygonShapeDetail.Visible = true;
+                            groupTextShapeDetail.Visible = false;
+
+                            btnPolygonLineColor.BackColor = Color.FromArgb(255, pg.LineColor.R, pg.LineColor.G, pg.LineColor.B);
+                            polygonLineOpacityNum.Value = (decimal)((pg.LineColor.A / 255.0) * (double)polygonLineOpacityNum.Maximum);
+
+                            btnPolygonFillColorShape.BackColor = Color.FromArgb(255, pg.FillColor.R, pg.FillColor.G, pg.FillColor.B);
+                            fillPolygonOpacityNum.Value = (decimal)((pg.FillColor.A / 255.0) * (double)fillPolygonOpacityNum.Maximum);
+
+                            polygonLineSizeTrack.Value = (int)pg.LineWidth;
+                            cboPolygonLinePattern.SelectedItem = pg.DashStyle.ToString();
+                        }
+                        else if (selectedLayer.CurrentShape is ShapeText t)
+                        {
+                            groupRectShapeDetail.Visible = false;
+                            groupEllipseShapeDetail.Visible = false;
+                            groupPolygonShapeDetail.Visible = false;
+                            groupTextShapeDetail.Visible = true;
+
+                            txtTextLineText.Text = t.Content;
+                            btnTextFillColor.BackColor = Color.FromArgb(255, t.FillColor.R, t.FillColor.G, t.FillColor.B);
+                            numTextFillOpacity.Value = (decimal)((t.FillColor.A / 255.0) * (double)numTextFillOpacity.Maximum);
+
+                            FontStyle style = FontStyle.Regular;
+                            if (t.IsBold) style |= FontStyle.Bold;
+                            if (t.IsItalic) style |= FontStyle.Italic;
+                            btnTextFont.Font = new Font(t.FontFamily, (float)t.FontSize, style);
+                        }
+                    }
+                }
             }
         }
 
@@ -3503,14 +3553,32 @@ namespace PixelEditor
 
             if (shape is ShapeEllipse el)
             {
+                if (el.Rx == 0 || el.Ry == 0) return false;
+
                 float dx = p.X - el.Cx;
                 float dy = p.Y - el.Cy;
-                return (dx * dx) / (el.Rx * el.Rx) + (dy * dy) / (el.Ry * el.Ry) <= 1;
+
+                float rxSq = el.Rx * el.Rx;
+                float rySq = el.Ry * el.Ry;
+
+                return (dx * dx * rySq) + (dy * dy * rxSq) <= rxSq * rySq;
             }
 
             if (shape is ShapePolygon pg)
             {
-                return IsPointInPolygon(p, pg.Points);
+                List<PointF> polygon = pg.Points;
+                if (polygon.Count < 3) return false;
+
+                bool isInside = false;
+                for (int i = 0, j = polygon.Count - 1; i < polygon.Count; j = i++)
+                {
+                    if (((polygon[i].Y > p.Y) != (polygon[j].Y > p.Y)) &&
+                        (p.X < (polygon[j].X - polygon[i].X) * (p.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
+                    {
+                        isInside = !isInside;
+                    }
+                }
+                return isInside;
             }
 
             if (shape is ShapeText t)
@@ -3520,22 +3588,6 @@ namespace PixelEditor
             }
 
             return false;
-        }
-
-        private static bool IsPointInPolygon(Point p, List<PointF> polygon)
-        {
-            if (polygon.Count < 3) return false;
-
-            bool isInside = false;
-            for (int i = 0, j = polygon.Count - 1; i < polygon.Count; j = i++)
-            {
-                if (((polygon[i].Y > p.Y) != (polygon[j].Y > p.Y)) &&
-                    (p.X < (polygon[j].X - polygon[i].X) * (p.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
-                {
-                    isInside = !isInside;
-                }
-            }
-            return isInside;
         }
 
         private static DashStyle GetDashStyle(string strStyle)
@@ -3588,8 +3640,8 @@ namespace PixelEditor
                         DashStyle dashStyle = GetDashStyle(cboEllipseLinePattern.SelectedItem?.ToString() ?? "Solid");
                         selectedLayer.CurrentShape = new ShapeEllipse
                         {
-                            Cx = startPoint.X,
-                            Cy = startPoint.Y,
+                            X = startPoint.X,
+                            Y = startPoint.Y,
                             LineColor = lineColor,
                             FillColor = fillColor,
                             LineWidth = ellipseLineSizeTrack.Value,
@@ -3699,13 +3751,14 @@ namespace PixelEditor
                                     isDraggingShape = true;
 
                                     if (shape is ShapeRect r) dragOffset = new PointF(localPos.X - r.X, localPos.Y - r.Y);
-                                    else if (shape is ShapeEllipse el) dragOffset = new PointF(localPos.X - el.Cx, localPos.Y - el.Cy);
+                                    else if (shape is ShapeEllipse el) dragOffset = new PointF(localPos.X - el.X, localPos.Y - el.Y);
                                     else if (shape is ShapeText t) dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
                                     else if (shape is ShapePolygon pg && pg.Points.Count > 0) dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
 
                                     break;
                                 }
                             }
+                            UpdateControls();
                             //isDragging = true;
                         }
                     }
@@ -3947,10 +4000,10 @@ namespace PixelEditor
                     }
                     else if (selectedLayer.CurrentShape is ShapeEllipse ellipse)
                     {
-                        ellipse.Cx = Math.Min(startPoint.X, localCurrentRaw.X);
-                        ellipse.Cy = Math.Min(startPoint.Y, localCurrentRaw.Y);
-                        ellipse.Rx = Math.Abs(startPoint.X - localCurrentRaw.X);
-                        ellipse.Ry = Math.Abs(startPoint.Y - localCurrentRaw.Y);
+                        ellipse.X = Math.Min(startPoint.X, localCurrentRaw.X);
+                        ellipse.Y = Math.Min(startPoint.Y, localCurrentRaw.Y);
+                        ellipse.Width = Math.Abs(startPoint.X - localCurrentRaw.X);
+                        ellipse.Height = Math.Abs(startPoint.Y - localCurrentRaw.Y);
                     }
                     else if (selectedLayer.CurrentShape is ShapeText text)
                     {
@@ -4028,7 +4081,7 @@ namespace PixelEditor
                     float newY = localPos.Y - dragOffset.Y;
 
                     if (selectedLayer.CurrentShape is ShapeRect r) { r.X = newX; r.Y = newY; }
-                    else if (selectedLayer.CurrentShape is ShapeEllipse el) { el.Cx = newX; el.Cy = newY; }
+                    else if (selectedLayer.CurrentShape is ShapeEllipse el) { el.X = newX; el.Y = newY; }
                     else if (selectedLayer.CurrentShape is ShapeText t) { t.X = newX; t.Y = newY; }
                     else if (selectedLayer.CurrentShape is ShapePolygon pg)
                     {

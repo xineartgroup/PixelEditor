@@ -2,9 +2,14 @@
 {
     public class ShapeEllipse : BaseShape
     {
-        public float Cx { get; set; }
-        public float Cy { get; set; }
-        public float Rx { get; set; }
-        public float Ry { get; set; }
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Width { get; set; }
+        public float Height { get; set; }
+
+        public float Cx => X + (Width / 2f);
+        public float Cy => Y + (Height / 2f);
+        public float Rx => Width / 2f;
+        public float Ry => Height / 2f;
     }
 }

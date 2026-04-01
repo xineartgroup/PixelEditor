@@ -140,7 +140,7 @@
             groupBox2.Controls.Add(layerWidth);
             groupBox2.Location = new Point(12, 78);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(360, 164);
+            groupBox2.Size = new Size(360, 140);
             groupBox2.TabIndex = 9;
             groupBox2.TabStop = false;
             groupBox2.Text = "Layer Size:";
@@ -159,7 +159,7 @@
             // chkCenterLayer
             // 
             chkCenterLayer.AutoSize = true;
-            chkCenterLayer.Location = new Point(6, 137);
+            chkCenterLayer.Location = new Point(6, 105);
             chkCenterLayer.Name = "chkCenterLayer";
             chkCenterLayer.Size = new Size(92, 19);
             chkCenterLayer.TabIndex = 8;
@@ -169,7 +169,7 @@
             // chkResizeImage
             // 
             chkResizeImage.AutoSize = true;
-            chkResizeImage.Location = new Point(6, 112);
+            chkResizeImage.Location = new Point(6, 80);
             chkResizeImage.Name = "chkResizeImage";
             chkResizeImage.Size = new Size(125, 19);
             chkResizeImage.TabIndex = 8;
@@ -191,24 +191,24 @@
             // btnResizeHeight
             // 
             btnResizeHeight.FlatStyle = FlatStyle.Popup;
-            btnResizeHeight.Location = new Point(169, 80);
+            btnResizeHeight.Location = new Point(100, 51);
             btnResizeHeight.Name = "btnResizeHeight";
-            btnResizeHeight.Size = new Size(117, 23);
+            btnResizeHeight.Size = new Size(60, 23);
             btnResizeHeight.TabIndex = 7;
             btnResizeHeight.TabStop = false;
-            btnResizeHeight.Text = "Resize Height";
+            btnResizeHeight.Text = "Resize";
             btnResizeHeight.UseVisualStyleBackColor = true;
             btnResizeHeight.Click += BtnResizeHeight_Click;
             // 
             // btnResizeWidth
             // 
             btnResizeWidth.FlatStyle = FlatStyle.Popup;
-            btnResizeWidth.Location = new Point(169, 51);
+            btnResizeWidth.Location = new Point(6, 51);
             btnResizeWidth.Name = "btnResizeWidth";
-            btnResizeWidth.Size = new Size(117, 23);
+            btnResizeWidth.Size = new Size(60, 23);
             btnResizeWidth.TabIndex = 7;
             btnResizeWidth.TabStop = false;
-            btnResizeWidth.Text = "Resize Width";
+            btnResizeWidth.Text = "Resize";
             btnResizeWidth.UseVisualStyleBackColor = true;
             btnResizeWidth.Click += BtnResizeWidth_Click;
             // 

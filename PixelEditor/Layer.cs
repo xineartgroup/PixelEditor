@@ -118,8 +118,8 @@ namespace PixelEditor
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                g.FillEllipse(brush, ellipse.Cx, ellipse.Cy, ellipse.Rx, ellipse.Ry);
-                g.DrawEllipse(pen, ellipse.Cx, ellipse.Cy, ellipse.Rx, ellipse.Ry);
+                g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
+                g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
