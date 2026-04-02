@@ -1,4 +1,6 @@
-﻿using System.Drawing.Imaging;
+﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
 namespace PixelEditor
@@ -1263,6 +1265,160 @@ namespace PixelEditor
                 return (2 * src * bg) / 255;
             else
                 return 255 - (2 * (255 - src) * (255 - bg) / 255);
+        }
+
+        public static bool IsOverRotationHandle(Point screenPoint, int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
+        {
+            PointF worldHandle = new(
+                ImageSelections.GetSelectionCenter().X,
+                ImageSelections.GetSelectionBounds().Y - ImageSelections.ROTATION_HANDLE_SIZE / ImageSelections.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
+            );
+            Point screenHandle = WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
+            float distance = ImageSelections.Distance(screenPoint, screenHandle);
+            return distance < ImageSelections.ROTATION_HANDLE_SIZE;
+        }
+
+        public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
+        {
+            Point topLeft = WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvasWidth, canvasHeight);
+            Point bottomRight = WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().Right, (int)ImageSelections.GetSelectionBounds().Bottom), canvasWidth, canvasHeight);
+            return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+        }
+
+        public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
+        {
+            Point p = WorldToScreen(Point.Round(ImageSelections.GetSelectionCenter()), canvasWidth, canvasHeight);
+            return p;
+        }
+
+        public static float CalculateRotationAngle(Point screenMousePosition, int canvasWidth, int canvasHeight)
+        {
+            PointF screenCenter = GetSelectionCenterScreen(canvasWidth, canvasHeight);
+            float dx = screenMousePosition.X - screenCenter.X;
+            float dy = screenMousePosition.Y - screenCenter.Y;
+            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+        }
+
+        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
+        {
+            handle = "";
+
+            RectangleF b = ImageSelections.GetSelectionBounds();
+
+            float midX = (b.Left + b.Right) / 2f;
+            float midY = (b.Top + b.Bottom) / 2f;
+
+            var handles = new[]
+            {
+                new { Name = "topLeft",     World = new PointF(b.Left,  b.Top) },
+                new { Name = "topRight",    World = new PointF(b.Right, b.Top) },
+                new { Name = "bottomLeft",  World = new PointF(b.Left,  b.Bottom) },
+                new { Name = "bottomRight", World = new PointF(b.Right, b.Bottom) },
+                new { Name = "topMid",      World = new PointF(midX,    b.Top) },
+                new { Name = "bottomMid",   World = new PointF(midX,    b.Bottom) },
+                new { Name = "leftMid",     World = new PointF(b.Left,  midY) },
+                new { Name = "rightMid",    World = new PointF(b.Right, midY) },
+            };
+
+            foreach (var h in handles)
+            {
+                Point screenCorner = WorldToScreen(Point.Round(h.World), canvasWidth, canvasHeight);
+                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
+                {
+                    handle = h.Name;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static PointF GetOppositeAnchor(string handle)
+        {
+            RectangleF b = ImageSelections.GetSelectionBounds();
+            float midX = (b.Left + b.Right) / 2f;
+            float midY = (b.Top + b.Bottom) / 2f;
+
+            return handle switch
+            {
+                "topLeft" => new PointF(b.Right, b.Bottom),
+                "topRight" => new PointF(b.Left, b.Bottom),
+                "bottomLeft" => new PointF(b.Right, b.Top),
+                "bottomRight" => new PointF(b.Left, b.Top),
+                "topMid" => new PointF(midX, b.Bottom),
+                "bottomMid" => new PointF(midX, b.Top),
+                "leftMid" => new PointF(b.Right, midY),
+                "rightMid" => new PointF(b.Left, midY),
+                _ => new PointF(midX, midY),
+            };
+        }
+
+        public static (bool affectsX, bool affectsY) GetHandleAxes(string handle) => handle switch
+        {
+            "topMid" or "bottomMid" => (false, true),
+            "leftMid" or "rightMid" => (true, false),
+            _ => (true, true),   // corners affect both
+        };
+
+        public static bool IsPointInShape(Point p, BaseShape shape)
+        {
+            if (shape is ShapeRect r)
+            {
+                return p.X >= r.X && p.X <= r.X + r.Width &&
+                       p.Y >= r.Y && p.Y <= r.Y + r.Height;
+            }
+
+            if (shape is ShapeEllipse el)
+            {
+                if (el.Rx == 0 || el.Ry == 0) return false;
+
+                float dx = p.X - el.Cx;
+                float dy = p.Y - el.Cy;
+
+                float rxSq = el.Rx * el.Rx;
+                float rySq = el.Ry * el.Ry;
+
+                return (dx * dx * rySq) + (dy * dy * rxSq) <= rxSq * rySq;
+            }
+
+            if (shape is ShapePolygon pg)
+            {
+                List<PointF> polygon = pg.Points;
+                if (polygon.Count < 3) return false;
+
+                bool isInside = false;
+                for (int i = 0, j = polygon.Count - 1; i < polygon.Count; j = i++)
+                {
+                    if (((polygon[i].Y > p.Y) != (polygon[j].Y > p.Y)) &&
+                        (p.X < (polygon[j].X - polygon[i].X) * (p.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
+                    {
+                        isInside = !isInside;
+                    }
+                }
+                return isInside;
+            }
+
+            if (shape is ShapeText t)
+            {
+                return p.X >= t.X && p.X <= t.X + t.Width &&
+                       p.Y >= t.Y && p.Y <= t.Y + t.Height;
+            }
+
+            return false;
+        }
+
+        public static DashStyle GetDashStyle(string strStyle)
+        {
+            return strStyle switch
+            {
+                "Solid" => DashStyle.Solid,
+                "Dash" => DashStyle.Dash,
+                "Dot" => DashStyle.Dot,
+                "DashDot" => DashStyle.DashDot,
+                "DashDotDot" => DashStyle.DashDotDot,
+                "Custom" => DashStyle.Custom,
+                _ => DashStyle.Solid,
+            };
         }
     }
 }

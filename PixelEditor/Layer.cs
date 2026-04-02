@@ -128,33 +128,123 @@ namespace PixelEditor
 
             pen.DashStyle = shape.DashStyle;
 
+            const int size = 10;
+            const int offset = size / 2;
+
             if (shape is ShapeRect rect)
             {
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
+
                 if (isSelected)
                 {
-                    g.DrawRectangle(new Pen(Color.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }, rect.X - 5, rect.Y - 5, rect.Width + 10, rect.Height + 10);
+                    using SolidBrush handleBrush = new(Color.LightBlue);
+                    using Pen handlePen = new(Color.Red, 2);
+
+                    RectangleF[] handles =
+                    [
+                        new(rect.X - offset, rect.Y - offset, size, size),
+                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
+                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
+                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
+                    ];
+
+                    foreach (var h in handles)
+                    {
+                        g.FillRectangle(handleBrush, h);
+                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                    }
                 }
             }
             else if (shape is ShapeEllipse ellipse)
             {
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
+
                 if (isSelected)
                 {
-                    g.DrawRectangle(new Pen(Color.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }, ellipse.X - 5, ellipse.Y - 5, ellipse.Width + 10, ellipse.Height + 10);
+                    using SolidBrush handleBrush = new(Color.LightBlue);
+                    using Pen handlePen = new(Color.Red, 2);
+
+                    RectangleF[] handles =
+                    [
+                        new(ellipse.X - offset, ellipse.Y - offset, size, size),
+                        new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
+                        new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
+                        new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
+                    ];
+
+                    foreach (var h in handles)
+                    {
+                        g.FillRectangle(handleBrush, h);
+                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                    }
                 }
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
                 g.FillPolygon(brush, polygon.Points.ToArray());
                 g.DrawPolygon(pen, polygon.Points.ToArray());
+
+                if (isSelected)
+                {
+                    float minX = polygon.Points[0].X;
+                    float maxX = polygon.Points[0].X;
+                    float minY = polygon.Points[0].Y;
+                    float maxY = polygon.Points[0].Y;
+
+                    foreach (var p in polygon.Points)
+                    {
+                        if (p.X < minX) minX = p.X;
+                        if (p.X > maxX) maxX = p.X;
+                        if (p.Y < minY) minY = p.Y;
+                        if (p.Y > maxY) maxY = p.Y;
+                    }
+
+                    using SolidBrush handleBrush = new(Color.LightBlue);
+                    using Pen handlePen = new(Color.Red, 2);
+
+                    RectangleF[] handles =
+                    [
+                        new(minX - offset, minY - offset, size, size),
+                        new(maxX - offset, minY - offset, size, size),
+                        new(minX - offset, maxY - offset, size, size),
+                        new(maxX - offset, maxY - offset, size, size)
+                    ];
+
+                    foreach (var h in handles)
+                    {
+                        g.FillRectangle(handleBrush, h);
+                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                    }
+                }
             }
             else if (shape is ShapeText text)
             {
                 using Font font = CreateScaledFont(text);
                 g.DrawString(text.Content, font, brush, text.X, text.Y);
+
+                if (isSelected)
+                {
+                    SizeF textSize = g.MeasureString(text.Content, font);
+
+                    using SolidBrush handleBrush = new(Color.LightBlue);
+                    using Pen handlePen = new(Color.Red, 2);
+
+                    RectangleF[] handles =
+                    [
+                        new(text.X - offset, text.Y - offset, size, size),
+                        new(text.X + textSize.Width - offset, text.Y - offset, size, size),
+                        new(text.X - offset, text.Y + textSize.Height - offset, size, size),
+                        new(text.X + textSize.Width - offset, text.Y + textSize.Height - offset, size, size)
+                    ];
+
+                    foreach (var h in handles)
+                    {
+                        g.FillRectangle(handleBrush, h);
+                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                    }
+                }
             }
         }
 

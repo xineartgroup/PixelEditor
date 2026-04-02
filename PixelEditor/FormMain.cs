@@ -1267,7 +1267,7 @@ namespace PixelEditor
         {
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
-                shape.DashStyle = GetDashStyle(cboRectLinePattern.Text);
+                shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboRectLinePattern.Text);
                 RedrawImage();
             }
         }
@@ -1276,7 +1276,7 @@ namespace PixelEditor
         {
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
-                shape.DashStyle = GetDashStyle(cboEllipseLinePattern.Text);
+                shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboEllipseLinePattern.Text);
                 RedrawImage();
             }
         }
@@ -1285,7 +1285,7 @@ namespace PixelEditor
         {
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
-                shape.DashStyle = GetDashStyle(cboPolygonLinePattern.Text);
+                shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboPolygonLinePattern.Text);
                 RedrawImage();
             }
         }
@@ -2650,35 +2650,35 @@ namespace PixelEditor
                 greenToolStripMenuItem1.Checked = selectedLayer.GreenFilter;
                 blueToolStripMenuItem1.Checked = selectedLayer.BlueFilter;
 
-                if (selectedLayer.LayerType == LayerType.Image)
+                if (selectedLayer.LayerType == LayerType.Vector)
                 {
                     btnPointer.Checked = true;
 
-                    btnFiller.Enabled = true;
-                    btnBrusher.Enabled = true;
-                    btnEraser.Enabled = true;
-                    btnWarp.Enabled = true;
-                    btnCrop.Enabled = true;
+                    btnFiller.Visible = false;
+                    btnBrusher.Visible = false;
+                    btnEraser.Visible = false;
+                    btnWarp.Visible = false;
+                    btnCrop.Visible = false;
 
-                    btnShapeRect.Enabled = false;
-                    btnShapeEllipse.Enabled = false;
-                    btnShapePolygon.Enabled = false;
-                    btnShapeText.Enabled = false;
+                    btnShapeRect.Visible = true;
+                    btnShapeEllipse.Visible = true;
+                    btnShapePolygon.Visible = true;
+                    btnShapeText.Visible = true;
                 }
                 else
                 {
                     btnPointer.Checked = true;
 
-                    btnFiller.Enabled = false;
-                    btnBrusher.Enabled = false;
-                    btnEraser.Enabled = false;
-                    btnWarp.Enabled = false;
-                    btnCrop.Enabled = false;
+                    btnFiller.Visible = true;
+                    btnBrusher.Visible = true;
+                    btnEraser.Visible = true;
+                    btnWarp.Visible = true;
+                    btnCrop.Visible = true;
 
-                    btnShapeRect.Enabled = true;
-                    btnShapeEllipse.Enabled = true;
-                    btnShapePolygon.Enabled = true;
-                    btnShapeText.Enabled = true;
+                    btnShapeRect.Visible = false;
+                    btnShapeEllipse.Visible = false;
+                    btnShapePolygon.Visible = false;
+                    btnShapeText.Visible = false;
                 }
 
                 if (btnPointer.Checked)
@@ -3396,105 +3396,11 @@ namespace PixelEditor
             return result;
         }
 
-        public static bool IsOverRotationHandle(Point screenPoint, int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
-        {
-            PointF worldHandle = new(
-                ImageSelections.GetSelectionCenter().X,
-                ImageSelections.GetSelectionBounds().Y - ImageSelections.ROTATION_HANDLE_SIZE / ImageSelections.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
-            );
-            Point screenHandle = ManipulatorGeneral.WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
-            float distance = ImageSelections.Distance(screenPoint, screenHandle);
-            return distance < ImageSelections.ROTATION_HANDLE_SIZE;
-        }
-
-        public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
-        {
-            Point topLeft = ManipulatorGeneral.WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvasWidth, canvasHeight);
-            Point bottomRight = ManipulatorGeneral.WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().Right, (int)ImageSelections.GetSelectionBounds().Bottom), canvasWidth, canvasHeight);
-            return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-        }
-
-        public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
-        {
-            Point p = ManipulatorGeneral.WorldToScreen(Point.Round(ImageSelections.GetSelectionCenter()), canvasWidth, canvasHeight);
-            return p;
-        }
-
-        public static float CalculateRotationAngle(Point screenMousePosition, int canvasWidth, int canvasHeight)
-        {
-            PointF screenCenter = GetSelectionCenterScreen(canvasWidth, canvasHeight);
-            float dx = screenMousePosition.X - screenCenter.X;
-            float dy = screenMousePosition.Y - screenCenter.Y;
-            return (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
-        }
-
-        public static bool IsOverScaleHandle(Point screenPoint, int canvasWidth, int canvasHeight, out string handle)
-        {
-            handle = "";
-
-            RectangleF b = ImageSelections.GetSelectionBounds();
-
-            float midX = (b.Left + b.Right) / 2f;
-            float midY = (b.Top + b.Bottom) / 2f;
-
-            var handles = new[]
-            {
-                new { Name = "topLeft",     World = new PointF(b.Left,  b.Top) },
-                new { Name = "topRight",    World = new PointF(b.Right, b.Top) },
-                new { Name = "bottomLeft",  World = new PointF(b.Left,  b.Bottom) },
-                new { Name = "bottomRight", World = new PointF(b.Right, b.Bottom) },
-                new { Name = "topMid",      World = new PointF(midX,    b.Top) },
-                new { Name = "bottomMid",   World = new PointF(midX,    b.Bottom) },
-                new { Name = "leftMid",     World = new PointF(b.Left,  midY) },
-                new { Name = "rightMid",    World = new PointF(b.Right, midY) },
-            };
-
-            foreach (var h in handles)
-            {
-                Point screenCorner = ManipulatorGeneral.WorldToScreen(Point.Round(h.World), canvasWidth, canvasHeight);
-                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
-                {
-                    handle = h.Name;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static PointF GetOppositeAnchor(string handle)
-        {
-            RectangleF b = ImageSelections.GetSelectionBounds();
-            float midX = (b.Left + b.Right) / 2f;
-            float midY = (b.Top + b.Bottom) / 2f;
-
-            return handle switch
-            {
-                "topLeft" => new PointF(b.Right, b.Bottom),
-                "topRight" => new PointF(b.Left, b.Bottom),
-                "bottomLeft" => new PointF(b.Right, b.Top),
-                "bottomRight" => new PointF(b.Left, b.Top),
-                "topMid" => new PointF(midX, b.Bottom),
-                "bottomMid" => new PointF(midX, b.Top),
-                "leftMid" => new PointF(b.Right, midY),
-                "rightMid" => new PointF(b.Left, midY),
-                _ => new PointF(midX, midY),
-            };
-        }
-
-        private static (bool affectsX, bool affectsY) GetHandleAxes(string handle) => handle switch
-        {
-            "topMid" or "bottomMid" => (false, true),
-            "leftMid" or "rightMid" => (true, false),
-            _ => (true, true),   // corners affect both
-        };
-
         private (float newX, float newY) CalculateScaleFactors(Point mouseScreenPos, string handle)
         {
-            (bool affectsX, bool affectsY) = GetHandleAxes(handle);
+            (bool affectsX, bool affectsY) = ManipulatorGeneral.GetHandleAxes(handle);
 
-            Point anchorScreen = ManipulatorGeneral.WorldToScreen(
-                Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
+            Point anchorScreen = ManipulatorGeneral.WorldToScreen(Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
 
             float newX = scaleFactorX;
             float newY = scaleFactorY;
@@ -3594,67 +3500,6 @@ namespace PixelEditor
                 (newTop + newBottom) / 2f);
         }
 
-        private static bool IsPointInShape(Point p, BaseShape shape)
-        {
-            if (shape is ShapeRect r)
-            {
-                return p.X >= r.X && p.X <= r.X + r.Width &&
-                       p.Y >= r.Y && p.Y <= r.Y + r.Height;
-            }
-
-            if (shape is ShapeEllipse el)
-            {
-                if (el.Rx == 0 || el.Ry == 0) return false;
-
-                float dx = p.X - el.Cx;
-                float dy = p.Y - el.Cy;
-
-                float rxSq = el.Rx * el.Rx;
-                float rySq = el.Ry * el.Ry;
-
-                return (dx * dx * rySq) + (dy * dy * rxSq) <= rxSq * rySq;
-            }
-
-            if (shape is ShapePolygon pg)
-            {
-                List<PointF> polygon = pg.Points;
-                if (polygon.Count < 3) return false;
-
-                bool isInside = false;
-                for (int i = 0, j = polygon.Count - 1; i < polygon.Count; j = i++)
-                {
-                    if (((polygon[i].Y > p.Y) != (polygon[j].Y > p.Y)) &&
-                        (p.X < (polygon[j].X - polygon[i].X) * (p.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
-                    {
-                        isInside = !isInside;
-                    }
-                }
-                return isInside;
-            }
-
-            if (shape is ShapeText t)
-            {
-                return p.X >= t.X && p.X <= t.X + t.Width &&
-                       p.Y >= t.Y && p.Y <= t.Y + t.Height;
-            }
-
-            return false;
-        }
-
-        private static DashStyle GetDashStyle(string strStyle)
-        {
-            return strStyle switch
-            {
-                "Solid" => DashStyle.Solid,
-                "Dash" => DashStyle.Dash,
-                "Dot" => DashStyle.Dot,
-                "DashDot" => DashStyle.DashDot,
-                "DashDotDot" => DashStyle.DashDotDot,
-                "Custom" => DashStyle.Custom,
-                _ => DashStyle.Solid,
-            };
-        }
-
         private void PixelImage_MouseDown(object? sender, MouseEventArgs e)
         {
             lastMousePosition = e.Location;
@@ -3671,7 +3516,7 @@ namespace PixelEditor
                         isDrawing = true;
                         Color lineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
                         Color fillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        DashStyle dashStyle = ManipulatorGeneral.GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
                         selectedLayer.CurrentShape = new ShapeRect
                         {
                             X = startPoint.X,
@@ -3688,7 +3533,7 @@ namespace PixelEditor
                         isDrawing = true;
                         Color lineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
                         Color fillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboEllipseLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        DashStyle dashStyle = ManipulatorGeneral.GetDashStyle(cboEllipseLinePattern.SelectedItem?.ToString() ?? "Solid");
                         selectedLayer.CurrentShape = new ShapeEllipse
                         {
                             X = startPoint.X,
@@ -3705,7 +3550,7 @@ namespace PixelEditor
                         isDrawing = true;
                         Color lineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
                         Color fillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboPolygonLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        DashStyle dashStyle = ManipulatorGeneral.GetDashStyle(cboPolygonLinePattern.SelectedItem?.ToString() ?? "Solid");
                         ShapePolygon? polygon = (selectedLayer.CurrentShape is not null && selectedLayer.CurrentShape is ShapePolygon && isUpdatingPolygonShape)
                             ? selectedLayer.CurrentShape as ShapePolygon
                             : new ShapePolygon()
@@ -3724,7 +3569,7 @@ namespace PixelEditor
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
                         Color fillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
-                        DashStyle dashStyle = GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
+                        DashStyle dashStyle = ManipulatorGeneral.GetDashStyle(cboRectLinePattern.SelectedItem?.ToString() ?? "Solid");
                         ShapeText shapeText = new()
                         {
                             X = startPoint.X,
@@ -3745,15 +3590,15 @@ namespace PixelEditor
                         {
                             if (selectedLayer.Image == null) return;
 
-                            if (IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
+                            if (ManipulatorGeneral.IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
                             {
                                 if (selectedAreaBitmap != null)
                                     BakeTransformIntoSelectedArea(selectedLayer);
 
                                 isRotating = true;
-                                startMouseAngle = CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
+                                startMouseAngle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
                             }
-                            else if (IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
+                            else if (ManipulatorGeneral.IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
                             {
                                 if (selectedAreaBitmap != null)
                                     BakeTransformIntoSelectedArea(selectedLayer);
@@ -3762,13 +3607,13 @@ namespace PixelEditor
                                 activeScaleHandle = handle;
                                 scaleFactorX = 1.0f;
                                 scaleFactorY = 1.0f;
-                                scaleAnchorWorld = GetOppositeAnchor(handle);
+                                scaleAnchorWorld = ManipulatorGeneral.GetOppositeAnchor(handle);
                                 scaleStartMouseScreen = e.Location;
 
                                 Point anchorScreen = ManipulatorGeneral.WorldToScreen(
                                     Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
 
-                                (bool affectsX, bool affectsY) = GetHandleAxes(handle);
+                                (bool affectsX, bool affectsY) = ManipulatorGeneral.GetHandleAxes(handle);
 
                                 initialScaleDistanceX = affectsX
                                     ? Math.Max(1f, Math.Abs(e.Location.X - anchorScreen.X))
@@ -3799,7 +3644,7 @@ namespace PixelEditor
                                 Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
 
                                 var shape = selectedLayer.Shapes[i];
-                                if (IsPointInShape(localPos, shape))
+                                if (ManipulatorGeneral.IsPointInShape(localPos, shape))
                                 {
                                     selectedLayer.CurrentShape = shape;
                                     isDraggingShape = true;
@@ -4165,7 +4010,7 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    rotationAngle = CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
+                    rotationAngle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
                     UpdateTransformMatrix();
                 }
             }
@@ -4525,7 +4370,7 @@ namespace PixelEditor
 
                 if (selectedAreaBitmap != null)
                 {
-                    RectangleF screenBounds = GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+                    RectangleF screenBounds = ManipulatorGeneral.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
                     g.MultiplyTransform(transformMatrix);
                     g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
                     g.ResetTransform();
@@ -4582,7 +4427,7 @@ namespace PixelEditor
                     using Brush scaleBrush = new SolidBrush(Color.FromArgb(0, 120, 215));
                     using Brush rotateBrush = new SolidBrush(Color.Gold);
 
-                    RectangleF screenBounds = GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+                    RectangleF screenBounds = ManipulatorGeneral.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
 
                     PointF[] corners =
                     [

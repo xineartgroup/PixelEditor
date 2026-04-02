@@ -1049,6 +1049,7 @@
             // btnPointer
             // 
             btnPointer.Appearance = Appearance.Button;
+            btnPointer.BackColor = Color.White;
             btnPointer.Checked = true;
             btnPointer.FlatStyle = FlatStyle.Popup;
             btnPointer.Image = Properties.Resources.Pointer;
@@ -1057,72 +1058,77 @@
             btnPointer.Size = new Size(32, 32);
             btnPointer.TabIndex = 26;
             btnPointer.TabStop = true;
-            btnPointer.UseVisualStyleBackColor = true;
+            btnPointer.UseVisualStyleBackColor = false;
             btnPointer.CheckedChanged += BtnTools_CheckedChanged;
             btnPointer.Click += BtnTools_Click;
             // 
             // btnFiller
             // 
             btnFiller.Appearance = Appearance.Button;
+            btnFiller.BackColor = Color.White;
             btnFiller.FlatStyle = FlatStyle.Popup;
             btnFiller.Image = Properties.Resources.Fill;
             btnFiller.Location = new Point(87, 27);
             btnFiller.Name = "btnFiller";
             btnFiller.Size = new Size(32, 32);
             btnFiller.TabIndex = 26;
-            btnFiller.UseVisualStyleBackColor = true;
+            btnFiller.UseVisualStyleBackColor = false;
             btnFiller.CheckedChanged += BtnTools_CheckedChanged;
             btnFiller.Click += BtnTools_Click;
             // 
             // btnBrusher
             // 
             btnBrusher.Appearance = Appearance.Button;
+            btnBrusher.BackColor = Color.White;
             btnBrusher.FlatStyle = FlatStyle.Popup;
             btnBrusher.Image = Properties.Resources.Brush;
             btnBrusher.Location = new Point(125, 27);
             btnBrusher.Name = "btnBrusher";
             btnBrusher.Size = new Size(32, 32);
             btnBrusher.TabIndex = 26;
-            btnBrusher.UseVisualStyleBackColor = true;
+            btnBrusher.UseVisualStyleBackColor = false;
             btnBrusher.CheckedChanged += BtnTools_CheckedChanged;
             btnBrusher.Click += BtnTools_Click;
             // 
             // btnLassoSelect
             // 
             btnLassoSelect.Appearance = Appearance.Button;
+            btnLassoSelect.BackColor = Color.White;
             btnLassoSelect.FlatStyle = FlatStyle.Popup;
             btnLassoSelect.Image = Properties.Resources.Lasso;
             btnLassoSelect.Location = new Point(327, 27);
             btnLassoSelect.Name = "btnLassoSelect";
             btnLassoSelect.Size = new Size(32, 32);
             btnLassoSelect.TabIndex = 26;
-            btnLassoSelect.UseVisualStyleBackColor = true;
+            btnLassoSelect.UseVisualStyleBackColor = false;
             btnLassoSelect.CheckedChanged += BtnTools_CheckedChanged;
             btnLassoSelect.Click += BtnTools_Click;
             // 
             // btnRectangleSelect
             // 
             btnRectangleSelect.Appearance = Appearance.Button;
+            btnRectangleSelect.BackColor = Color.White;
             btnRectangleSelect.FlatStyle = FlatStyle.Popup;
             btnRectangleSelect.Image = Properties.Resources.Rect;
             btnRectangleSelect.Location = new Point(363, 27);
             btnRectangleSelect.Name = "btnRectangleSelect";
             btnRectangleSelect.Size = new Size(32, 32);
             btnRectangleSelect.TabIndex = 26;
-            btnRectangleSelect.UseVisualStyleBackColor = true;
+            btnRectangleSelect.UseVisualStyleBackColor = false;
             btnRectangleSelect.CheckedChanged += BtnTools_CheckedChanged;
             btnRectangleSelect.Click += BtnTools_Click;
             // 
             // btnMagicWand
             // 
             btnMagicWand.Appearance = Appearance.Button;
+            btnMagicWand.BackColor = Color.White;
             btnMagicWand.FlatStyle = FlatStyle.Popup;
             btnMagicWand.Image = Properties.Resources.MagicWand;
             btnMagicWand.Location = new Point(400, 27);
             btnMagicWand.Name = "btnMagicWand";
             btnMagicWand.Size = new Size(32, 32);
             btnMagicWand.TabIndex = 26;
-            btnMagicWand.UseVisualStyleBackColor = true;
+            btnMagicWand.UseVisualStyleBackColor = false;
             btnMagicWand.CheckedChanged += BtnTools_CheckedChanged;
             btnMagicWand.Click += BtnTools_Click;
             // 
@@ -1425,91 +1431,98 @@
             // btnEraser
             // 
             btnEraser.Appearance = Appearance.Button;
+            btnEraser.BackColor = Color.White;
             btnEraser.FlatStyle = FlatStyle.Popup;
             btnEraser.Image = (Image)resources.GetObject("btnEraser.Image");
             btnEraser.Location = new Point(163, 27);
             btnEraser.Name = "btnEraser";
             btnEraser.Size = new Size(32, 32);
             btnEraser.TabIndex = 26;
-            btnEraser.UseVisualStyleBackColor = true;
+            btnEraser.UseVisualStyleBackColor = false;
             btnEraser.CheckedChanged += BtnTools_CheckedChanged;
             btnEraser.Click += BtnTools_Click;
             // 
             // btnWarp
             // 
             btnWarp.Appearance = Appearance.Button;
+            btnWarp.BackColor = Color.White;
             btnWarp.FlatStyle = FlatStyle.Popup;
             btnWarp.Image = (Image)resources.GetObject("btnWarp.Image");
             btnWarp.Location = new Point(202, 27);
             btnWarp.Name = "btnWarp";
             btnWarp.Size = new Size(32, 32);
             btnWarp.TabIndex = 26;
-            btnWarp.UseVisualStyleBackColor = true;
+            btnWarp.UseVisualStyleBackColor = false;
             btnWarp.CheckedChanged += BtnTools_CheckedChanged;
             btnWarp.Click += BtnTools_Click;
             // 
             // btnCrop
             // 
             btnCrop.Appearance = Appearance.Button;
+            btnCrop.BackColor = Color.White;
             btnCrop.FlatStyle = FlatStyle.Popup;
             btnCrop.Image = (Image)resources.GetObject("btnCrop.Image");
             btnCrop.Location = new Point(240, 27);
             btnCrop.Name = "btnCrop";
             btnCrop.Size = new Size(32, 32);
             btnCrop.TabIndex = 26;
-            btnCrop.UseVisualStyleBackColor = true;
+            btnCrop.UseVisualStyleBackColor = false;
             btnCrop.CheckedChanged += BtnTools_CheckedChanged;
             btnCrop.Click += BtnTools_Click;
             // 
             // btnShapeRect
             // 
             btnShapeRect.Appearance = Appearance.Button;
+            btnShapeRect.BackColor = Color.White;
             btnShapeRect.FlatStyle = FlatStyle.Popup;
             btnShapeRect.Image = Properties.Resources.Rectangle;
             btnShapeRect.Location = new Point(492, 27);
             btnShapeRect.Name = "btnShapeRect";
             btnShapeRect.Size = new Size(32, 32);
             btnShapeRect.TabIndex = 26;
-            btnShapeRect.UseVisualStyleBackColor = true;
+            btnShapeRect.UseVisualStyleBackColor = false;
             btnShapeRect.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeRect.Click += BtnTools_Click;
             // 
             // btnShapeEllipse
             // 
             btnShapeEllipse.Appearance = Appearance.Button;
+            btnShapeEllipse.BackColor = Color.White;
             btnShapeEllipse.FlatStyle = FlatStyle.Popup;
             btnShapeEllipse.Image = Properties.Resources.Oval;
             btnShapeEllipse.Location = new Point(530, 27);
             btnShapeEllipse.Name = "btnShapeEllipse";
             btnShapeEllipse.Size = new Size(32, 32);
             btnShapeEllipse.TabIndex = 26;
-            btnShapeEllipse.UseVisualStyleBackColor = true;
+            btnShapeEllipse.UseVisualStyleBackColor = false;
             btnShapeEllipse.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeEllipse.Click += BtnTools_Click;
             // 
             // btnShapePolygon
             // 
             btnShapePolygon.Appearance = Appearance.Button;
+            btnShapePolygon.BackColor = Color.White;
             btnShapePolygon.FlatStyle = FlatStyle.Popup;
             btnShapePolygon.Image = Properties.Resources.Polygon;
             btnShapePolygon.Location = new Point(568, 27);
             btnShapePolygon.Name = "btnShapePolygon";
             btnShapePolygon.Size = new Size(32, 32);
             btnShapePolygon.TabIndex = 26;
-            btnShapePolygon.UseVisualStyleBackColor = true;
+            btnShapePolygon.UseVisualStyleBackColor = false;
             btnShapePolygon.CheckedChanged += BtnTools_CheckedChanged;
             btnShapePolygon.Click += BtnTools_Click;
             // 
             // btnShapeText
             // 
             btnShapeText.Appearance = Appearance.Button;
+            btnShapeText.BackColor = Color.White;
             btnShapeText.FlatStyle = FlatStyle.Popup;
             btnShapeText.Image = (Image)resources.GetObject("btnShapeText.Image");
             btnShapeText.Location = new Point(606, 27);
             btnShapeText.Name = "btnShapeText";
             btnShapeText.Size = new Size(32, 32);
             btnShapeText.TabIndex = 26;
-            btnShapeText.UseVisualStyleBackColor = true;
+            btnShapeText.UseVisualStyleBackColor = false;
             btnShapeText.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeText.Click += BtnTools_Click;
             // 

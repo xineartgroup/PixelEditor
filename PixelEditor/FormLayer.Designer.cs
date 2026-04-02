@@ -58,17 +58,19 @@
             label11 = new Label();
             label9 = new Label();
             label7 = new Label();
+            groupRasterProperties = new GroupBox();
             ((System.ComponentModel.ISupportInitialize)width).BeginInit();
             ((System.ComponentModel.ISupportInitialize)height).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetX).BeginInit();
             ((System.ComponentModel.ISupportInitialize)offsetY).BeginInit();
             ((System.ComponentModel.ISupportInitialize)opacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureMask).BeginInit();
+            groupRasterProperties.SuspendLayout();
             SuspendLayout();
             // 
             // textBoxName
             // 
-            textBoxName.Location = new Point(98, 46);
+            textBoxName.Location = new Point(98, 21);
             textBoxName.Name = "textBoxName";
             textBoxName.Size = new Size(128, 23);
             textBoxName.TabIndex = 0;
@@ -76,7 +78,7 @@
             // btnOK
             // 
             btnOK.DialogResult = DialogResult.OK;
-            btnOK.Location = new Point(127, 376);
+            btnOK.Location = new Point(133, 401);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(75, 23);
             btnOK.TabIndex = 13;
@@ -87,7 +89,7 @@
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(208, 376);
+            btnCancel.Location = new Point(214, 401);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 23);
             btnCancel.TabIndex = 14;
@@ -100,7 +102,7 @@
             cboBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboBlendMode.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboBlendMode.FormattingEnabled = true;
-            cboBlendMode.Location = new Point(98, 75);
+            cboBlendMode.Location = new Point(98, 50);
             cboBlendMode.Name = "cboBlendMode";
             cboBlendMode.Size = new Size(128, 21);
             cboBlendMode.TabIndex = 1;
@@ -108,7 +110,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(13, 78);
+            label1.Location = new Point(13, 53);
             label1.Name = "label1";
             label1.Size = new Size(40, 15);
             label1.TabIndex = 41;
@@ -117,7 +119,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(13, 49);
+            label2.Location = new Point(13, 24);
             label2.Name = "label2";
             label2.Size = new Size(42, 15);
             label2.TabIndex = 41;
@@ -129,7 +131,7 @@
             cboFillWith.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboFillWith.FormattingEnabled = true;
             cboFillWith.Items.AddRange(new object[] { "Transparency", "Color" });
-            cboFillWith.Location = new Point(98, 102);
+            cboFillWith.Location = new Point(98, 77);
             cboFillWith.Name = "cboFillWith";
             cboFillWith.Size = new Size(128, 21);
             cboFillWith.TabIndex = 2;
@@ -137,7 +139,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(13, 104);
+            label4.Location = new Point(13, 79);
             label4.Name = "label4";
             label4.Size = new Size(53, 15);
             label4.TabIndex = 41;
@@ -146,7 +148,7 @@
             // btnBackgroundColor
             // 
             btnBackgroundColor.BackColor = Color.White;
-            btnBackgroundColor.Location = new Point(202, 129);
+            btnBackgroundColor.Location = new Point(202, 104);
             btnBackgroundColor.Name = "btnBackgroundColor";
             btnBackgroundColor.Size = new Size(24, 24);
             btnBackgroundColor.TabIndex = 3;
@@ -156,7 +158,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(11, 134);
+            label5.Location = new Point(11, 109);
             label5.Name = "label5";
             label5.Size = new Size(106, 15);
             label5.TabIndex = 41;
@@ -164,7 +166,7 @@
             // 
             // width
             // 
-            width.Location = new Point(68, 233);
+            width.Location = new Point(68, 208);
             width.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             width.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             width.Name = "width";
@@ -175,7 +177,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(13, 235);
+            label6.Location = new Point(13, 210);
             label6.Name = "label6";
             label6.Size = new Size(42, 15);
             label6.TabIndex = 41;
@@ -183,7 +185,7 @@
             // 
             // height
             // 
-            height.Location = new Point(161, 233);
+            height.Location = new Point(161, 208);
             height.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             height.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             height.Name = "height";
@@ -194,7 +196,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(13, 298);
+            label8.Location = new Point(13, 270);
             label8.Name = "label8";
             label8.Size = new Size(42, 15);
             label8.TabIndex = 41;
@@ -202,7 +204,7 @@
             // 
             // offsetX
             // 
-            offsetX.Location = new Point(68, 296);
+            offsetX.Location = new Point(68, 268);
             offsetX.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             offsetX.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetX.Name = "offsetX";
@@ -211,7 +213,7 @@
             // 
             // offsetY
             // 
-            offsetY.Location = new Point(161, 296);
+            offsetY.Location = new Point(161, 268);
             offsetY.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             offsetY.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetY.Name = "offsetY";
@@ -221,7 +223,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(13, 168);
+            label3.Location = new Point(13, 143);
             label3.Name = "label3";
             label3.Size = new Size(51, 15);
             label3.TabIndex = 41;
@@ -230,7 +232,7 @@
             // lblOpacity
             // 
             lblOpacity.AutoSize = true;
-            lblOpacity.Location = new Point(232, 168);
+            lblOpacity.Location = new Point(232, 143);
             lblOpacity.Name = "lblOpacity";
             lblOpacity.Size = new Size(15, 15);
             lblOpacity.TabIndex = 41;
@@ -238,7 +240,7 @@
             // 
             // opacity
             // 
-            opacity.Location = new Point(98, 168);
+            opacity.Location = new Point(98, 143);
             opacity.Maximum = 100;
             opacity.Name = "opacity";
             opacity.Size = new Size(128, 45);
@@ -248,7 +250,7 @@
             // 
             // btnCenterX
             // 
-            btnCenterX.Location = new Point(68, 325);
+            btnCenterX.Location = new Point(68, 297);
             btnCenterX.Name = "btnCenterX";
             btnCenterX.Size = new Size(65, 23);
             btnCenterX.TabIndex = 10;
@@ -258,7 +260,7 @@
             // 
             // btnCenterY
             // 
-            btnCenterY.Location = new Point(161, 325);
+            btnCenterY.Location = new Point(161, 297);
             btnCenterY.Name = "btnCenterY";
             btnCenterY.Size = new Size(65, 23);
             btnCenterY.TabIndex = 12;
@@ -268,7 +270,7 @@
             // 
             // btnAutoWidth
             // 
-            btnAutoWidth.Location = new Point(68, 264);
+            btnAutoWidth.Location = new Point(68, 239);
             btnAutoWidth.Name = "btnAutoWidth";
             btnAutoWidth.Size = new Size(65, 23);
             btnAutoWidth.TabIndex = 6;
@@ -278,7 +280,7 @@
             // 
             // btnAutoHeight
             // 
-            btnAutoHeight.Location = new Point(161, 262);
+            btnAutoHeight.Location = new Point(161, 237);
             btnAutoHeight.Name = "btnAutoHeight";
             btnAutoHeight.Size = new Size(65, 23);
             btnAutoHeight.TabIndex = 8;
@@ -290,7 +292,7 @@
             // 
             pictureMask.BackColor = Color.White;
             pictureMask.BorderStyle = BorderStyle.Fixed3D;
-            pictureMask.Location = new Point(272, 75);
+            pictureMask.Location = new Point(272, 50);
             pictureMask.Name = "pictureMask";
             pictureMask.Size = new Size(150, 150);
             pictureMask.SizeMode = PictureBoxSizeMode.Zoom;
@@ -300,7 +302,7 @@
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(272, 49);
+            label10.Location = new Point(272, 24);
             label10.Name = "label10";
             label10.Size = new Size(35, 15);
             label10.TabIndex = 41;
@@ -311,7 +313,7 @@
             cboLayers.DropDownStyle = ComboBoxStyle.DropDownList;
             cboLayers.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboLayers.FormattingEnabled = true;
-            cboLayers.Location = new Point(313, 47);
+            cboLayers.Location = new Point(313, 22);
             cboLayers.Name = "cboLayers";
             cboLayers.Size = new Size(110, 21);
             cboLayers.TabIndex = 2;
@@ -326,6 +328,7 @@
             cboType.Name = "cboType";
             cboType.Size = new Size(128, 23);
             cboType.TabIndex = 43;
+            cboType.SelectedIndexChanged += CboType_SelectedIndexChanged;
             // 
             // label11
             // 
@@ -339,7 +342,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(143, 300);
+            label9.Location = new Point(143, 272);
             label9.Name = "label9";
             label9.Size = new Size(12, 15);
             label9.TabIndex = 41;
@@ -348,11 +351,45 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(143, 235);
+            label7.Location = new Point(143, 210);
             label7.Name = "label7";
             label7.Size = new Size(12, 15);
             label7.TabIndex = 41;
             label7.Text = "x";
+            // 
+            // groupRasterProperties
+            // 
+            groupRasterProperties.Controls.Add(cboLayers);
+            groupRasterProperties.Controls.Add(textBoxName);
+            groupRasterProperties.Controls.Add(pictureMask);
+            groupRasterProperties.Controls.Add(label1);
+            groupRasterProperties.Controls.Add(btnAutoHeight);
+            groupRasterProperties.Controls.Add(label4);
+            groupRasterProperties.Controls.Add(btnCenterY);
+            groupRasterProperties.Controls.Add(label5);
+            groupRasterProperties.Controls.Add(btnAutoWidth);
+            groupRasterProperties.Controls.Add(label3);
+            groupRasterProperties.Controls.Add(btnCenterX);
+            groupRasterProperties.Controls.Add(label6);
+            groupRasterProperties.Controls.Add(offsetY);
+            groupRasterProperties.Controls.Add(label7);
+            groupRasterProperties.Controls.Add(height);
+            groupRasterProperties.Controls.Add(label8);
+            groupRasterProperties.Controls.Add(offsetX);
+            groupRasterProperties.Controls.Add(lblOpacity);
+            groupRasterProperties.Controls.Add(width);
+            groupRasterProperties.Controls.Add(label9);
+            groupRasterProperties.Controls.Add(btnBackgroundColor);
+            groupRasterProperties.Controls.Add(label10);
+            groupRasterProperties.Controls.Add(opacity);
+            groupRasterProperties.Controls.Add(label2);
+            groupRasterProperties.Controls.Add(cboBlendMode);
+            groupRasterProperties.Controls.Add(cboFillWith);
+            groupRasterProperties.Location = new Point(12, 41);
+            groupRasterProperties.Name = "groupRasterProperties";
+            groupRasterProperties.Size = new Size(436, 354);
+            groupRasterProperties.TabIndex = 44;
+            groupRasterProperties.TabStop = false;
             // 
             // FormLayer
             // 
@@ -360,37 +397,12 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(434, 411);
+            ClientSize = new Size(459, 436);
+            Controls.Add(groupRasterProperties);
             Controls.Add(cboType);
-            Controls.Add(pictureMask);
-            Controls.Add(btnAutoHeight);
-            Controls.Add(btnCenterY);
-            Controls.Add(btnAutoWidth);
-            Controls.Add(btnCenterX);
-            Controls.Add(offsetY);
-            Controls.Add(height);
-            Controls.Add(offsetX);
-            Controls.Add(width);
-            Controls.Add(btnBackgroundColor);
-            Controls.Add(opacity);
-            Controls.Add(cboLayers);
-            Controls.Add(cboFillWith);
-            Controls.Add(cboBlendMode);
             Controls.Add(label11);
-            Controls.Add(label2);
-            Controls.Add(label10);
-            Controls.Add(label9);
-            Controls.Add(lblOpacity);
-            Controls.Add(label8);
-            Controls.Add(label7);
-            Controls.Add(label6);
-            Controls.Add(label3);
-            Controls.Add(label5);
-            Controls.Add(label4);
-            Controls.Add(label1);
             Controls.Add(btnCancel);
             Controls.Add(btnOK);
-            Controls.Add(textBoxName);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FormLayer";
@@ -402,6 +414,8 @@
             ((System.ComponentModel.ISupportInitialize)offsetY).EndInit();
             ((System.ComponentModel.ISupportInitialize)opacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureMask).EndInit();
+            groupRasterProperties.ResumeLayout(false);
+            groupRasterProperties.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -438,5 +452,6 @@
         private Label label11;
         private Label label9;
         private Label label7;
+        private GroupBox groupRasterProperties;
     }
 }

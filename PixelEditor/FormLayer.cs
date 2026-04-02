@@ -33,6 +33,18 @@
             }
         }
 
+        private void CboType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cboType.SelectedIndex == 0)
+            {
+                groupRasterProperties.Visible = true;
+            }
+            else
+            {
+                groupRasterProperties.Visible = false;
+            }
+        }
+
         private void BtnOK_Click(object sender, EventArgs e)
         {
             Layer.LayerType = cboType.SelectedIndex == 1 ? LayerType.Vector : LayerType.Image;
