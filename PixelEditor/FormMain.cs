@@ -37,6 +37,8 @@ namespace PixelEditor
         private bool isDrawingShape = false;
         private bool isDraggingShape = false;
         private bool isUpdatingPolygonShape = false;
+        private bool isResizingShape = false;
+        private int activeHandleIndex = -1; // 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
         private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
@@ -3554,12 +3556,12 @@ namespace PixelEditor
                         ShapePolygon? polygon = (selectedLayer.CurrentShape is not null && selectedLayer.CurrentShape is ShapePolygon && isUpdatingPolygonShape)
                             ? selectedLayer.CurrentShape as ShapePolygon
                             : new ShapePolygon()
-                        {
-                            LineColor = lineColor,
-                            FillColor = fillColor,
-                            LineWidth = polygonLineSizeTrack.Value,
-                            DashStyle = dashStyle
-                        };
+                            {
+                                LineColor = lineColor,
+                                FillColor = fillColor,
+                                LineWidth = polygonLineSizeTrack.Value,
+                                DashStyle = dashStyle
+                            };
                         polygon?.Points.Add(startPoint);
                         selectedLayer.CurrentShape = polygon;
                         isUpdatingPolygonShape = true;
@@ -3638,31 +3640,88 @@ namespace PixelEditor
                         }
                         else
                         {
-                            for (int i = selectedLayer.Shapes.Count - 1; i >= 0; i--)
+                            Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                            Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
+
+                            if (selectedLayer.CurrentShape != null)
                             {
-                                Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
-                                Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
+                                var shape = selectedLayer.CurrentShape;
+                                float sx = 0, sy = 0, sw = 0, sh = 0;
+                                bool canResize = false;
 
-                                var shape = selectedLayer.Shapes[i];
-                                if (ManipulatorGeneral.IsPointInShape(localPos, shape))
+                                if (shape is ShapeRect r) { sx = r.X; sy = r.Y; sw = r.Width; sh = r.Height; canResize = true; }
+                                else if (shape is ShapeEllipse el) { sx = el.X; sy = el.Y; sw = el.Width; sh = el.Height; canResize = true; }
+                                else if (shape is ShapeText t) { sx = t.X; sy = t.Y; sw = t.Width; sh = t.Height; canResize = true; }
+                                else if (shape is ShapePolygon polygon)
                                 {
-                                    selectedLayer.CurrentShape = shape;
-                                    isDraggingShape = true;
+                                    int size = 6;
+                                    int offset = size / 2;
 
-                                    if (shape is ShapeRect r)
-                                        dragOffset = new PointF(localPos.X - r.X, localPos.Y - r.Y);
-                                    else if (shape is ShapeEllipse el)
-                                        dragOffset = new PointF(localPos.X - el.X, localPos.Y - el.Y);
-                                    else if (shape is ShapeText t)
-                                        dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
-                                    else if (shape is ShapePolygon pg && pg.Points.Count > 0)
-                                        dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
+                                    for (int i = 0; i < polygon.Points.Count; i++)
+                                    {
+                                        var p = polygon.Points[i];
+                                        RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
 
-                                    break;
+                                        if (handle.Contains(localPos.X, localPos.Y))
+                                        {
+                                            isResizingShape = true;
+                                            activeHandleIndex = i;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (canResize)
+                                {
+                                    int size = 10;
+                                    int offset = size / 2;
+
+                                    RectangleF[] handles =
+                                    [
+                                        new (sx - offset, sy - offset, size, size),
+                                        new (sx + sw - offset, sy - offset, size, size),
+                                        new (sx - offset, sy + sh - offset, size, size),
+                                        new (sx + sw - offset, sy + sh - offset, size, size)
+                                    ];
+
+                                    for (int hIndex = 0; hIndex < handles.Length; hIndex++)
+                                    {
+                                        if (handles[hIndex].Contains(localPos.X, localPos.Y))
+                                        {
+                                            isResizingShape = true;
+                                            activeHandleIndex = hIndex;
+                                            startPoint = localPos; // store original click spot
+                                            break;
+                                        }
+                                    }
                                 }
                             }
+
+                            if (!isResizingShape)
+                            {
+                                for (int i = selectedLayer.Shapes.Count - 1; i >= 0; i--)
+                                {
+                                    var shape = selectedLayer.Shapes[i];
+                                    if (ManipulatorGeneral.IsPointInShape(localPos, shape))
+                                    {
+                                        selectedLayer.CurrentShape = shape;
+                                        isDraggingShape = true;
+
+                                        if (shape is ShapeRect r)
+                                            dragOffset = new PointF(localPos.X - r.X, localPos.Y - r.Y);
+                                        else if (shape is ShapeEllipse el)
+                                            dragOffset = new PointF(localPos.X - el.X, localPos.Y - el.Y);
+                                        else if (shape is ShapeText t)
+                                            dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
+                                        else if (shape is ShapePolygon pg && pg.Points.Count > 0)
+                                            dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
+
+                                        break;
+                                    }
+                                }
+                            }
+
                             UpdateControls();
-                            //isDragging = true;
                         }
                     }
                     else if (btnBrusher.Checked)
@@ -3966,6 +4025,61 @@ namespace PixelEditor
                             }
                         }
                     }
+                }
+            }
+            else if (isResizingShape)
+            {
+                if (selectedLayer != null && selectedLayer.CurrentShape != null)
+                {
+                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+
+                    float nX = 0, nY = 0, nW = 0, nH = 0;
+                    if (selectedLayer.CurrentShape is ShapeRect r) { nX = r.X; nY = r.Y; nW = r.Width; nH = r.Height; }
+                    else if (selectedLayer.CurrentShape is ShapeEllipse el) { nX = el.X; nY = el.Y; nW = el.Width; nH = el.Height; }
+                    else if (selectedLayer.CurrentShape is ShapeText t) { nX = t.X; nY = t.Y; nW = t.Width; nH = t.Height; }
+                    else if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                    {
+                        if (activeHandleIndex >= 0 && activeHandleIndex < polygon.Points.Count)
+                        {
+                            polygon.Points[activeHandleIndex] = new PointF(localPos.X, localPos.Y);
+                        }
+                    }
+
+                    float right = nX + nW;
+                    float bottom = nY + nH;
+
+                    // 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
+                    if (activeHandleIndex == 0)
+                    {
+                        nX = Math.Min(localPos.X, right - 5);
+                        nY = Math.Min(localPos.Y, bottom - 5);
+                        nW = right - nX;
+                        nH = bottom - nY;
+                    }
+                    else if (activeHandleIndex == 1)
+                    {
+                        nY = Math.Min(localPos.Y, bottom - 5);
+                        nW = Math.Max(5, localPos.X - nX);
+                        nH = bottom - nY;
+                    }
+                    else if (activeHandleIndex == 2)
+                    {
+                        nX = Math.Min(localPos.X, right - 5);
+                        nW = right - nX;
+                        nH = Math.Max(5, localPos.Y - nY);
+                    }
+                    else if (activeHandleIndex == 3)
+                    {
+                        nW = Math.Max(5, localPos.X - nX);
+                        nH = Math.Max(5, localPos.Y - nY);
+                    }
+
+                    if (selectedLayer.CurrentShape is ShapeRect rect) { rect.X = nX; rect.Y = nY; rect.Width = nW; rect.Height = nH; }
+                    else if (selectedLayer.CurrentShape is ShapeEllipse ellipse) { ellipse.X = nX; ellipse.Y = nY; ellipse.Width = nW; ellipse.Height = nH; }
+                    else if (selectedLayer.CurrentShape is ShapeText text) { text.X = nX; text.Y = nY; text.Width = nW; text.Height = nH; }
+
+                    isDrawingShape = true;
                 }
             }
             else if (isDraggingShape)
@@ -4272,6 +4386,8 @@ namespace PixelEditor
             isScaling = false;
             isDrawing = false;
             isDraggingShape = false;
+            isResizingShape = false;
+            activeHandleIndex = -1;
         }
 
         private void Canvas_MouseDoubleClick(object? sender, MouseEventArgs e)

@@ -188,34 +188,14 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    float minX = polygon.Points[0].X;
-                    float maxX = polygon.Points[0].X;
-                    float minY = polygon.Points[0].Y;
-                    float maxY = polygon.Points[0].Y;
-
-                    foreach (var p in polygon.Points)
-                    {
-                        if (p.X < minX) minX = p.X;
-                        if (p.X > maxX) maxX = p.X;
-                        if (p.Y < minY) minY = p.Y;
-                        if (p.Y > maxY) maxY = p.Y;
-                    }
-
                     using SolidBrush handleBrush = new(Color.LightBlue);
                     using Pen handlePen = new(Color.Red, 2);
 
-                    RectangleF[] handles =
-                    [
-                        new(minX - offset, minY - offset, size, size),
-                        new(maxX - offset, minY - offset, size, size),
-                        new(minX - offset, maxY - offset, size, size),
-                        new(maxX - offset, maxY - offset, size, size)
-                    ];
-
-                    foreach (var h in handles)
+                    foreach (var p in polygon.Points)
                     {
-                        g.FillRectangle(handleBrush, h);
-                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                        RectangleF handle = new RectangleF(p.X - offset, p.Y - offset, size, size);
+                        g.FillRectangle(handleBrush, handle);
+                        g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
                     }
                 }
             }
@@ -226,7 +206,7 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    SizeF textSize = g.MeasureString(text.Content, font);
+                    //SizeF textSize = g.MeasureString(text.Content, font);
 
                     using SolidBrush handleBrush = new(Color.LightBlue);
                     using Pen handlePen = new(Color.Red, 2);
@@ -234,9 +214,9 @@ namespace PixelEditor
                     RectangleF[] handles =
                     [
                         new(text.X - offset, text.Y - offset, size, size),
-                        new(text.X + textSize.Width - offset, text.Y - offset, size, size),
-                        new(text.X - offset, text.Y + textSize.Height - offset, size, size),
-                        new(text.X + textSize.Width - offset, text.Y + textSize.Height - offset, size, size)
+                        new(text.X + text.Width - offset, text.Y - offset, size, size),
+                        new(text.X - offset, text.Y + text.Height - offset, size, size),
+                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
                     ];
 
                     foreach (var h in handles)
@@ -266,7 +246,7 @@ namespace PixelEditor
             float widthScale = text.Width > 0 ? text.Width / textSize.Width : 1f;
             float heightScale = text.Height > 0 ? text.Height / textSize.Height : 1f;
 
-            float scale = Math.Max(widthScale, heightScale);
+            float scale = Math.Min(widthScale, heightScale);
 
             float scaledFontSize = Math.Max(4, Math.Min(text.FontSize * scale, 4000));
 
