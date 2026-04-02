@@ -163,6 +163,7 @@ namespace PixelEditor
         private readonly NumericUpDown fillPolygonOpacityNum = new();
         private readonly Label labelPolygonFillColor = new();
         private readonly Button btnPolygonFillColorShape = new();
+        private readonly CheckBox chkClosed = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
@@ -1053,6 +1054,7 @@ namespace PixelEditor
             groupPolygonShapeDetail.Controls.Add(labelPolygonLinePattern);
             groupPolygonShapeDetail.Controls.Add(labelPolygonFillOpacity);
             groupPolygonShapeDetail.Controls.Add(labelPolygonFillColor);
+            groupPolygonShapeDetail.Controls.Add(chkClosed);
 
             // GroupBox Settings
             groupPolygonShapeDetail.Location = new Point(12, 74);
@@ -1136,6 +1138,15 @@ namespace PixelEditor
             btnPolygonFillColorShape.Location = new Point(125, 200);
             btnPolygonFillColorShape.Size = new Size(20, 20);
             btnPolygonFillColorShape.Click += BtnFillPolygonColorShape_Click;
+
+            // Closed Checkbox
+            chkClosed.AutoSize = true;
+            chkClosed.Location = new Point(10, 233);
+            chkClosed.Size = new Size(62, 19);
+            chkClosed.TabIndex = 31;
+            chkClosed.Text = "Closed";
+            chkClosed.UseVisualStyleBackColor = true;
+            chkClosed.CheckedChanged += ChkClosed_CheckedChanged;
 
             // Finalize
             Controls.Add(groupPolygonShapeDetail);
@@ -1450,6 +1461,15 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.LineWidth = polygonLineSizeTrack.Value;
+                RedrawImage();
+            }
+        }
+
+        private void ChkClosed_CheckedChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
+            {
+                shape.IsClosed = chkClosed.Checked;
                 RedrawImage();
             }
         }
@@ -2460,6 +2480,54 @@ namespace PixelEditor
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
+        }
+
+        private void ConvertToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Image)
+                {
+                    List<ShapePolygon> vectorShapes = RasterToVector(selectedLayer.Image);
+                    selectedLayer.Image?.Dispose();
+                    selectedLayer.Image = new Bitmap(Document.Width, Document.Height);
+                    selectedLayer.Shapes.AddRange(vectorShapes);
+                    selectedLayer.LayerType = LayerType.Vector;
+                    UpdateControls();
+                    RedrawImage();
+                }
+                else if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    Bitmap rasterImage = VectorToRaster(selectedLayer.Shapes);
+                    selectedLayer.Shapes.Clear();
+                    selectedLayer.Image = rasterImage;
+                    selectedLayer.LayerType = LayerType.Image;
+                    UpdateControls();
+                    RedrawImage();
+                }
+            }
+        }
+
+        private static List<ShapePolygon> RasterToVector(Image? image)
+        {
+            var screen = ManipulatorGeneral.RasterizeImage(image);
+
+            return StrokeRegionTracer.TraceStrokes(screen);
+        }
+
+        private static Bitmap VectorToRaster(List<BaseShape> shapes)
+        {
+            Bitmap? image = new (Document.Width, Document.Height);
+            using (Graphics g = Graphics.FromImage(image))
+            {
+                foreach (BaseShape shape in shapes)
+                {
+                    Layer.DrawShape(shape, g);
+                }
+            }
+            return image;
         }
 
         private void BtnAddLayer_Click(object? sender, EventArgs e)

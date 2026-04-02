@@ -876,6 +876,63 @@ namespace PixelEditor
             return layerBuffer;
         }
 
+        public static ColorGrid RasterizeImage(System.Drawing.Image? image)
+        {
+            if (image == null)
+            {
+                _ = new ColorGrid(0, 0);
+            }
+
+            int width = image.Width;
+            int height = image.Height;
+
+            ColorGrid grid = new(width, height);
+            int[] pixels = grid.GetRawPixels();
+
+            using Bitmap bmp = image is Bitmap bitmap ? bitmap : new Bitmap(image);
+
+            unsafe
+            {
+                BitmapData data = bmp.LockBits(
+                    new Rectangle(0, 0, width, height),
+                    ImageLockMode.ReadOnly,
+                    PixelFormat.Format32bppArgb);
+
+                try
+                {
+                    if (data.Stride == width * 4)
+                    {
+                        fixed (int* pDest = pixels)
+                        {
+                            Buffer.MemoryCopy((void*)data.Scan0, pDest, pixels.Length * 4, pixels.Length * 4);
+                        }
+                    }
+                    else
+                    {
+                        byte* pSrc = (byte*)data.Scan0;
+                        fixed (int* pDest = pixels)
+                        {
+                            byte* pDestByte = (byte*)pDest;
+                            for (int y = 0; y < height; y++)
+                            {
+                                Buffer.MemoryCopy(
+                                    pSrc + (y * data.Stride),
+                                    pDestByte + (y * width * 4),
+                                    width * 4,
+                                    width * 4);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    bmp.UnlockBits(data);
+                }
+            }
+
+            return grid;
+        }
+
         public static unsafe void DrawLayerToBuffer(Layer layer, BitmapData destData, Rectangle canvasBounds)
         {
             if (layer.Image == null || !layer.IsVisible) return;

@@ -76,7 +76,7 @@ namespace PixelEditor
             {
                 if (shapes.Count > 0 || currentShape != null)
                 {
-                    return DrawVectorImage(_image ?? new Bitmap(Document.Width, Document.Height));
+                    return DrawVectorImage(new Bitmap(Document.Width, Document.Height));
                 }
                 return _image;
             }
@@ -120,7 +120,7 @@ namespace PixelEditor
             return image;
         }
 
-        private static void DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static void DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using Pen pen = new(shape.LineColor, shape.LineWidth);
@@ -183,8 +183,15 @@ namespace PixelEditor
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
-                g.FillPolygon(brush, polygon.Points.ToArray());
-                g.DrawPolygon(pen, polygon.Points.ToArray());
+                if (polygon.IsClosed)
+                {
+                    g.FillPolygon(brush, polygon.Points.ToArray());
+                    g.DrawPolygon(pen, polygon.Points.ToArray());
+                }
+                else
+                {
+                    g.DrawLines(pen, polygon.Points.ToArray());
+                }
 
                 if (isSelected)
                 {
