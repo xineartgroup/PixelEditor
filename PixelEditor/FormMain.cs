@@ -1503,6 +1503,11 @@ namespace PixelEditor
         {
             Console.WriteLine($"Layer {e.Layer.Name}'s properties changed");
 
+            if (e.LayerTypeChanged)
+            {
+                Console.WriteLine($"Layer {e.Layer.Name}'s type changed to {e.Layer.LayerType}.");
+            }
+
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             RedrawImage();
             UpdateControls();
@@ -2490,44 +2495,53 @@ namespace PixelEditor
             {
                 if (selectedLayer.LayerType == LayerType.Image)
                 {
-                    List<ShapePolygon> vectorShapes = RasterToVector(selectedLayer.Image);
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    List<ShapePolygon> polygons = StrokeRegionTracer.TraceStrokes(ManipulatorGeneral.RasterizeImage(selectedLayer.Image));
                     selectedLayer.Image?.Dispose();
                     selectedLayer.Image = new Bitmap(Document.Width, Document.Height);
-                    selectedLayer.Shapes.AddRange(vectorShapes);
+
+                    foreach (var polygon in polygons)
+                    {
+                        for (int i = 0; i < polygon.Points.Count; i++)
+                        {
+                            polygon.Points[i] = new PointF(polygon.Points[i].X + selectedLayer.X, polygon.Points[i].Y + selectedLayer.Y);
+                        }
+                        selectedLayer.Shapes.Add(polygon);
+                    }
+
                     selectedLayer.LayerType = LayerType.Vector;
+                    selectedLayer.X = 0;
+                    selectedLayer.Y = 0;
                     UpdateControls();
                     RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
                 else if (selectedLayer.LayerType == LayerType.Vector)
                 {
-                    Bitmap rasterImage = VectorToRaster(selectedLayer.Shapes);
-                    selectedLayer.Shapes.Clear();
-                    selectedLayer.Image = rasterImage;
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    Bitmap? image = new(Document.Width, Document.Height);
+                    using (Graphics g = Graphics.FromImage(image))
+                    {
+                        foreach (BaseShape shape in selectedLayer.Shapes)
+                        {
+                            Layer.DrawShape(shape, g);
+                        }
+                    }
+
+                    selectedLayer.Image = image;
                     selectedLayer.LayerType = LayerType.Image;
+                    selectedLayer.Shapes.Clear();
+                    selectedLayer.CurrentShape = null;
                     UpdateControls();
+                    ManipulatorGeneral.InvalidateCompositeBuffers();
                     RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
-        }
-
-        private static List<ShapePolygon> RasterToVector(Image? image)
-        {
-            var screen = ManipulatorGeneral.RasterizeImage(image);
-
-            return StrokeRegionTracer.TraceStrokes(screen);
-        }
-
-        private static Bitmap VectorToRaster(List<BaseShape> shapes)
-        {
-            Bitmap? image = new (Document.Width, Document.Height);
-            using (Graphics g = Graphics.FromImage(image))
-            {
-                foreach (BaseShape shape in shapes)
-                {
-                    Layer.DrawShape(shape, g);
-                }
-            }
-            return image;
         }
 
         private void BtnAddLayer_Click(object? sender, EventArgs e)
@@ -2543,21 +2557,15 @@ namespace PixelEditor
 
             if (frm.ShowDialog(this) == DialogResult.OK)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 layersControl.InsertLayer(0, frm.Layer);
                 RedrawImage();
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
         private void BtnSubtractLayer_Click(object? sender, EventArgs e)
         {
-            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
             layersControl.RemoveLayerAt(layersControl.GetSelectedLayerIndex());
             RedrawImage();
-
-            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void BtnMoveUp_Click(object? sender, EventArgs e)
@@ -2568,12 +2576,8 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 layersControl.MoveLayerUp();
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -2585,12 +2589,8 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 layersControl.MoveLayerDown();
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -2602,12 +2602,8 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 layersControl.MoveLayerToTop();
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -2619,12 +2615,8 @@ namespace PixelEditor
 
             if (layerToMove != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 layersControl.MoveLayerToBottom();
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -2663,8 +2655,6 @@ namespace PixelEditor
             var layer = layersControl.GetLayer(selectedIndex);
             if (layer != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 Layer clone = layer.Clone();
                 clone.Name += "_Clone";
                 layersControl.InsertLayer(selectedIndex + 1, clone);
@@ -2672,8 +2662,6 @@ namespace PixelEditor
                 UpdateControls();
 
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -2691,8 +2679,6 @@ namespace PixelEditor
             var bottom = layersControl.GetLayer(selectedIndex + 1);
             if (top != null && bottom != null)
             {
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
                 top = ManipulatorGeneral.MergeLayers(top, bottom);
                 layersControl.UpdateLayer(selectedIndex, top);
                 layersControl.RemoveLayerAt(selectedIndex + 1);
@@ -2700,8 +2686,6 @@ namespace PixelEditor
                 UpdateControls();
 
                 RedrawImage();
-
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -3030,14 +3014,22 @@ namespace PixelEditor
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
-                else
+                else if (selectedLayer.Image != null && selectedLayer.Shapes.Count == 0)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    int width = selectedLayer.Image != null ? selectedLayer.Image.Width : Document.Width;
-                    int height = selectedLayer.Image != null ? selectedLayer.Image.Height : Document.Height;
-                    selectedLayer.Image?.Dispose();
+                    int width = selectedLayer.Image.Width;
+                    int height = selectedLayer.Image.Height;
+                    selectedLayer.Image.Dispose();
                     selectedLayer.Image = ManipulatorGeneral.GetImage(Color.Transparent, width, height);
                     rotationAngle = 0;
+                    RedrawImage();
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+                else if (selectedLayer.CurrentShape != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
+                    selectedLayer.CurrentShape = null;
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3767,6 +3759,7 @@ namespace PixelEditor
 
                             if (!isResizingShape)
                             {
+                                bool found = false;
                                 for (int i = selectedLayer.Shapes.Count - 1; i >= 0; i--)
                                 {
                                     var shape = selectedLayer.Shapes[i];
@@ -3784,9 +3777,14 @@ namespace PixelEditor
                                         else if (shape is ShapePolygon pg && pg.Points.Count > 0)
                                             dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
 
+                                        found = true;
+
                                         break;
                                     }
                                 }
+
+                                if (!found)
+                                    selectedLayer.CurrentShape = null;
                             }
 
                             UpdateControls();

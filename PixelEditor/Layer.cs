@@ -72,20 +72,23 @@ namespace PixelEditor
 
         private Image? GetImageComposite()
         {
-            if (_imageMask == null)
+            if (LayerType == LayerType.Vector)
             {
-                if (shapes.Count > 0 || currentShape != null)
-                {
-                    return DrawVectorImage(new Bitmap(Document.Width, Document.Height));
-                }
-                return _image;
+                return DrawVectorImage(new Bitmap(Document.Width, Document.Height));
             }
             else
             {
-                if (_image != null)
-                    return ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
+                if (_imageMask == null)
+                {
+                    return _image;
+                }
                 else
-                    return null;
+                {
+                    if (_image != null)
+                        return ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
+                    else
+                        return null;
+                }
             }
         }
 
@@ -235,7 +238,7 @@ namespace PixelEditor
             }
         }
 
-        private static Font CreateScaledFont(ShapeText text)
+        public static Font CreateScaledFont(ShapeText text)
         {
             using Font tempFont = new(text.FontFamily, text.FontSize, GetFontStyle(text));
 

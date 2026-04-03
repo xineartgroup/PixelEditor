@@ -1,4 +1,10 @@
-﻿namespace PixelEditor
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace PixelEditor
 {
     public partial class LayersControl : UserControl
     {
@@ -29,6 +35,23 @@
                 BorderStyle = BorderStyle.None
             };
 
+            ContextMenuStrip contextMenu = new();
+            ToolStripMenuItem menuEdit = new("Edit Layer", null, (s, e) => BtnEditCaption_Click(panelLayer, e));
+            ToolStripMenuItem menuDelete = new("Delete Layer", null, (s, e) => ContextMenu_Delete_Click(panelLayer));
+            ToolStripMenuItem menuRaise = new("Raise Layer", null, (s, e) => ContextMenu_Raise_Click(panelLayer));
+            ToolStripMenuItem menuLower = new("Lower Layer", null, (s, e) => ContextMenu_Lower_Click(panelLayer));
+            ToolStripMenuItem menuDuplicate = new("Duplicate Layer", null, (s, e) => ContextMenu_Duplicate_Click(panelLayer));
+            ToolStripMenuItem menuMerge = new("Merge Down", null, (s, e) => ContextMenu_MergeDown_Click(panelLayer));
+
+            contextMenu.Items.AddRange([
+                menuEdit, menuDuplicate, new ToolStripSeparator(),
+                menuRaise, menuLower, new ToolStripSeparator(),
+                menuMerge, new ToolStripSeparator(),
+                menuDelete
+            ]);
+
+            panelLayer.ContextMenuStrip = contextMenu;
+
             CheckBox chkVisible = new()
             {
                 Checked = layer.IsVisible,
@@ -45,7 +68,8 @@
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
-                Tag = "preview"
+                Tag = "preview",
+                ContextMenuStrip = contextMenu
             };
 
             PictureBox maskBox = new()
@@ -57,7 +81,8 @@
                 BackColor = Color.Black,
                 BorderStyle = BorderStyle.FixedSingle,
                 Tag = "mask",
-                Visible = layer.ImageMask != null
+                Visible = layer.ImageMask != null,
+                ContextMenuStrip = contextMenu
             };
 
             Label lblName = new()
@@ -65,14 +90,16 @@
                 Text = layer.Name,
                 AutoSize = true,
                 Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 15),
-                Tag = "name"
+                Tag = "name",
+                ContextMenuStrip = contextMenu
             };
 
             chkVisible.Click += ChkVisible_Click;
-            panelLayer.Click += GroupLayer_Click;
-            pictureBox.Click += GroupLayer_Click;
-            maskBox.Click += GroupLayer_Click;
-            lblName.Click += GroupLayer_Click;
+
+            panelLayer.MouseDown += Layer_MouseDown;
+            pictureBox.MouseDown += Layer_MouseDown;
+            maskBox.MouseDown += Layer_MouseDown;
+            lblName.MouseDown += Layer_MouseDown;
 
             panelLayer.DoubleClick += BtnEditCaption_Click;
             pictureBox.DoubleClick += BtnEditCaption_Click;
@@ -85,6 +112,29 @@
             panelLayer.Controls.Add(lblName);
 
             return panelLayer;
+        }
+
+        private void Layer_MouseDown(object? sender, MouseEventArgs e)
+        {
+            Control? clickedControl = sender as Control;
+            Panel? targetPanel = clickedControl as Panel;
+
+            if (targetPanel == null && clickedControl?.Parent is Panel p)
+            {
+                targetPanel = p;
+            }
+
+            if (targetPanel != null)
+            {
+                int index = flowLayers.Controls.IndexOf(targetPanel);
+                if (index >= 0 && index != selectedLayerIndex)
+                {
+                    int oldSelectedIndex = selectedLayerIndex;
+                    selectedLayerIndex = index;
+                    UpdateLayerSelection(index);
+                    OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, imageLayers[selectedLayerIndex]));
+                }
+            }
         }
 
         private void ChkVisible_Click(object? sender, EventArgs e)
@@ -127,31 +177,6 @@
             }
         }
 
-        private void GroupLayer_Click(object? sender, EventArgs e)
-        {
-            int layerIndex = -1;
-            foreach (Control control in flowLayers.Controls)
-            {
-                if (control is Panel panel)
-                {
-                    layerIndex++;
-                    if (panel == sender ||
-                        (sender is PictureBox pic && panel.Controls.Contains(pic)) ||
-                        (sender is Label lbl && panel.Controls.Contains(lbl)))
-                    {
-                        int oldSelectedIndex = selectedLayerIndex;
-                        selectedLayerIndex = layerIndex;
-                        UpdateLayerSelection(layerIndex);
-                        if (oldSelectedIndex != selectedLayerIndex)
-                        {
-                            OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, imageLayers[selectedLayerIndex]));
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
         private void BtnEditCaption_Click(object? sender, EventArgs e)
         {
             FormLayer frm = new()
@@ -165,14 +190,77 @@
             {
                 frm.Layer = layer;
                 frm.Layers = imageLayers;
+                LayerType layerType = frm.Layer.LayerType;
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    HistoryManager.RecordState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
-                    layer = frm.Layer;
-                    UpdateLayer(selectedLayerIndex, layer);
-                    OnLayerChanged(new LayerChangedEventArgs(selectedLayerIndex, imageLayers[selectedLayerIndex]));
-                    HistoryManager.CurrentState(new HistoryItem(GetLayers(), GetSelectedLayerIndex()));
+                    UpdateLayer(selectedLayerIndex, frm.Layer);
+                    OnLayerChanged(new LayerChangedEventArgs(imageLayers[selectedLayerIndex], frm.Layer.LayerType != layerType));
                 }
+            }
+        }
+
+        private void ContextMenu_Delete_Click(Panel panel)
+        {
+            int index = flowLayers.Controls.IndexOf(panel);
+            if (index >= 0)
+            {
+                RemoveLayerAt(index);
+            }
+        }
+
+        private void ContextMenu_Raise_Click(Panel panel)
+        {
+            int index = flowLayers.Controls.IndexOf(panel);
+            if (index == selectedLayerIndex)
+            {
+                MoveLayerUp();
+            }
+        }
+
+        private void ContextMenu_Lower_Click(Panel panel)
+        {
+            int index = flowLayers.Controls.IndexOf(panel);
+            if (index == selectedLayerIndex)
+            {
+                MoveLayerDown();
+            }
+        }
+
+        private void ContextMenu_Duplicate_Click(Panel panel)
+        {
+            int index = flowLayers.Controls.IndexOf(panel);
+            if (index >= 0 && index < imageLayers.Count)
+            {
+                Layer sourceLayer = imageLayers[index];
+
+                Layer duplicatedLayer = sourceLayer.Clone();
+                duplicatedLayer.Name = sourceLayer.Name + " Copy";
+
+                InsertLayer(index + 1, duplicatedLayer);
+            }
+        }
+
+        private void ContextMenu_MergeDown_Click(Panel panel)
+        {
+            int index = flowLayers.Controls.IndexOf(panel);
+
+            if (index >= 0 && index < imageLayers.Count - 1)
+            {
+                Layer upperLayer = imageLayers[index];
+                Layer lowerLayer = imageLayers[index + 1];
+
+                if (lowerLayer.Image != null && upperLayer.Image != null)
+                {
+                    using Graphics g = Graphics.FromImage(lowerLayer.Image);
+                    g.DrawImage(upperLayer.Image, 0, 0);
+                }
+
+                RemoveLayerAt(index);
+                SetSelectedLayerIndex(index);
+            }
+            else
+            {
+                MessageBox.Show("There is no layer below this one to merge with.", "Cannot Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -263,6 +351,9 @@
         public void InsertLayer(int index, Layer layer)
         {
             if (index < 0 || index > imageLayers.Count) return;
+
+            HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
             imageLayers.Insert(index, layer);
             RefreshLayersDisplay();
             int oldSelectedIndex = selectedLayerIndex;
@@ -272,22 +363,32 @@
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, layer));
             }
             OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count - 1, imageLayers.Count));
+
+            HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
         }
 
         public void UpdateLayer(int index, Layer layer)
         {
             if (index < 0 || index >= imageLayers.Count) return;
+
+            HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
             imageLayers[index] = layer;
             RefreshLayersDisplay();
             if (index == selectedLayerIndex)
             {
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(selectedLayerIndex, selectedLayerIndex, layer));
             }
+
+            HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
         }
 
         public void RemoveLayerAt(int index)
         {
             if (index < 0 || index >= imageLayers.Count) return;
+
+            HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
             imageLayers.RemoveAt(index);
             RefreshLayersDisplay();
             int oldSelectedIndex = selectedLayerIndex;
@@ -298,6 +399,8 @@
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(oldSelectedIndex, selectedLayerIndex, newSelectedLayer));
             }
             OnLayersCountChanged(new LayersCountChangedEventArgs(imageLayers.Count + 1, imageLayers.Count));
+
+            HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
         }
 
         public void MoveLayerUp()
@@ -311,11 +414,15 @@
 
             if (layerToMove != null)
             {
+                HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
                 imageLayers.RemoveAt(currentIndex);
                 imageLayers.Insert(newIndex, layerToMove);
                 selectedLayerIndex = newIndex;
                 RefreshLayersDisplay();
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+
+                HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
             }
         }
 
@@ -330,11 +437,15 @@
 
             if (layerToMove != null)
             {
+                HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
                 imageLayers.RemoveAt(currentIndex);
                 imageLayers.Insert(newIndex, layerToMove);
                 selectedLayerIndex = newIndex;
                 RefreshLayersDisplay();
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+
+                HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
             }
         }
 
@@ -349,11 +460,15 @@
 
             if (layerToMove != null)
             {
+                HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
                 imageLayers.RemoveAt(currentIndex);
                 imageLayers.Insert(newIndex, layerToMove);
                 selectedLayerIndex = newIndex;
                 RefreshLayersDisplay();
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+
+                HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
             }
         }
 
@@ -368,11 +483,15 @@
 
             if (layerToMove != null)
             {
+                HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
                 imageLayers.RemoveAt(currentIndex);
                 imageLayers.Insert(newIndex, layerToMove);
                 selectedLayerIndex = newIndex;
                 RefreshLayersDisplay();
                 OnSelectedLayerChanged(new SelectedLayerChangedEventArgs(currentIndex, selectedLayerIndex, layerToMove));
+
+                HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
             }
         }
 
@@ -380,12 +499,17 @@
         {
             if (selectedLayerIndex >= 0 && selectedLayerIndex < imageLayers.Count)
             {
+                HistoryManager.RecordState(new HistoryItem(imageLayers, selectedLayerIndex));
+
                 RemoveLayerAt(selectedLayerIndex);
+
+                HistoryManager.CurrentState(new HistoryItem(imageLayers, selectedLayerIndex));
             }
         }
 
         public void ClearLayers()
         {
+            // DO NOT RECORD HISTORY FOR THIS ACTION, AS IT IS USED WHEN LOADING A NEW IMAGE OR CREATING A NEW DOCUMENT OR WHEN UNDOING/REDOING AN ACTION.
             int oldCount = imageLayers.Count;
             imageLayers.Clear();
             flowLayers.Controls.Clear();
@@ -468,7 +592,6 @@
                 }
             }
 
-            // Recalculate label position based on whether mask is visible
             if (lblName != null && mainPic != null && maskPic != null)
             {
                 int labelX = (maskPic.Visible ? maskPic.Right : mainPic.Right) + 5;
@@ -477,10 +600,10 @@
         }
     }
 
-    public class LayerChangedEventArgs(int layerIndex, Layer layer) : EventArgs
+    public class LayerChangedEventArgs(Layer layer, bool layerTypeChanged) : EventArgs
     {
-        public int LayerIndex { get; } = layerIndex;
         public Layer Layer { get; } = layer;
+        public bool LayerTypeChanged { get; } = layerTypeChanged;
     }
 
     public class LayerVisibilityChangedEventArgs(int layerIndex, Layer layer, bool oldValue, bool newValue) : EventArgs

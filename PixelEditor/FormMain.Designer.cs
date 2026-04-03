@@ -132,6 +132,7 @@
             rotateToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem27 = new ToolStripSeparator();
             toolStripMenuItem28 = new ToolStripMenuItem();
+            convertLayerToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             labelStatus = new Label();
@@ -191,7 +192,6 @@
             btnShapeEllipse = new RadioButton();
             btnShapePolygon = new RadioButton();
             btnShapeText = new RadioButton();
-            convertToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem3 = new ToolStripSeparator();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
@@ -746,7 +746,7 @@
             // 
             // layerToolStripMenuItem
             // 
-            layerToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem1, duplicateToolStripMenuItem, mergeDownToolStripMenuItem1, deleteToolStripMenuItem, toolStripMenuItem17, maskToolStripMenuItem, stackToolStripMenuItem, transdormToolStripMenuItem, toolStripMenuItem27, toolStripMenuItem28, toolStripMenuItem3, convertToolStripMenuItem });
+            layerToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem1, duplicateToolStripMenuItem, mergeDownToolStripMenuItem1, deleteToolStripMenuItem, toolStripMenuItem17, maskToolStripMenuItem, stackToolStripMenuItem, transdormToolStripMenuItem, toolStripMenuItem27, toolStripMenuItem28, toolStripMenuItem3, convertLayerToolStripMenuItem });
             layerToolStripMenuItem.Name = "layerToolStripMenuItem";
             layerToolStripMenuItem.Size = new Size(47, 20);
             layerToolStripMenuItem.Text = "Layer";
@@ -903,6 +903,13 @@
             toolStripMenuItem28.Size = new Size(180, 22);
             toolStripMenuItem28.Text = "Layer Settings";
             toolStripMenuItem28.Click += BthUpdateLayer_Click;
+            // 
+            // convertLayerToolStripMenuItem
+            // 
+            convertLayerToolStripMenuItem.Name = "convertLayerToolStripMenuItem";
+            convertLayerToolStripMenuItem.Size = new Size(180, 22);
+            convertLayerToolStripMenuItem.Text = "Convert Layer";
+            convertLayerToolStripMenuItem.Click += ConvertToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -1528,13 +1535,6 @@
             btnShapeText.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeText.Click += BtnTools_Click;
             // 
-            // convertToolStripMenuItem
-            // 
-            convertToolStripMenuItem.Name = "convertToolStripMenuItem";
-            convertToolStripMenuItem.Size = new Size(180, 22);
-            convertToolStripMenuItem.Text = "Convert";
-            convertToolStripMenuItem.Click += ConvertToolStripMenuItem_Click;
-            // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
@@ -1754,7 +1754,7 @@
         private RadioButton btnShapeEllipse;
         private RadioButton btnShapePolygon;
         private RadioButton btnShapeText;
+        private ToolStripMenuItem convertLayerToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
-        private ToolStripMenuItem convertToolStripMenuItem;
     }
 }
