@@ -1,4 +1,5 @@
 ﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 using System.Reflection.Emit;
 
 namespace PixelEditor
@@ -203,7 +204,7 @@ namespace PixelEditor
 
                     foreach (var p in polygon.Points)
                     {
-                        RectangleF handle = new (p.X - offset, p.Y - offset, size, size);
+                        RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
                         g.FillRectangle(handleBrush, handle);
                         g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
                     }
@@ -216,8 +217,6 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    //SizeF textSize = g.MeasureString(text.Content, font);
-
                     using SolidBrush handleBrush = new(Color.LightBlue);
                     using Pen handlePen = new(Color.Red, 2);
 
@@ -236,6 +235,108 @@ namespace PixelEditor
                     }
                 }
             }
+            else if (shape is ShapePath path)
+            {
+                using GraphicsPath gPath = BuildGraphicsPath(path);
+
+                g.FillPath(brush, gPath);
+                g.DrawPath(pen, gPath);
+
+                if (isSelected)
+                {
+                    using SolidBrush handleBrush = new(Color.LightBlue);
+                    using Pen handlePen = new(Color.Red, 2);
+
+                    foreach (var segment in path.PathSegments)
+                    {
+                        foreach (var p in segment.InputPoints)
+                        {
+                            RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
+                            g.FillRectangle(handleBrush, handle);
+                            g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static GraphicsPath BuildGraphicsPath(ShapePath path)
+        {
+            GraphicsPath gPath = new();
+            PointF currentPoint = PointF.Empty;
+
+            foreach (var segment in path.PathSegments)
+            {
+                string type = segment.PathType.ToUpper();
+                var pts = segment.InputPoints;
+
+                switch (type)
+                {
+                    case "M":
+                        if (pts.Count > 0)
+                        {
+                            gPath.StartFigure();
+                            currentPoint = pts[^1];
+                        }
+                        break;
+
+                    case "L":
+                        if (pts.Count > 0)
+                        {
+                            gPath.AddLine(currentPoint, pts[0]);
+                            currentPoint = pts[^1];
+                        }
+                        break;
+
+                    case "H":
+                        if (pts.Count > 0)
+                        {
+                            gPath.AddLine(currentPoint, new PointF(pts[0].X, currentPoint.Y));
+                            currentPoint = new PointF(pts[0].X, currentPoint.Y);
+                        }
+                        break;
+
+                    case "V":
+                        if (pts.Count > 0)
+                        {
+                            gPath.AddLine(currentPoint, new PointF(currentPoint.X, pts[0].Y));
+                            currentPoint = new PointF(currentPoint.X, pts[0].Y);
+                        }
+                        break;
+
+                    case "C":
+                        if (pts.Count >= 4)
+                        {
+                            gPath.AddBezier(pts[0], pts[1], pts[2], pts[3]);
+                            currentPoint = pts[3];
+                        }
+                        break;
+
+                    case "Q":
+                        if (pts.Count >= 3)
+                        {
+                            PointF cp1 = new((currentPoint.X + 2 * pts[1].X) / 3, (currentPoint.Y + 2 * pts[1].Y) / 3);
+                            PointF cp2 = new((pts[2].X + 2 * pts[1].X) / 3, (pts[2].Y + 2 * pts[1].Y) / 3);
+                            gPath.AddBezier(currentPoint, cp1, cp2, pts[2]);
+                            currentPoint = pts[2];
+                        }
+                        break;
+
+                    case "A":
+                        List<PointF> arcPoints = segment.GetPoints();
+                        if (arcPoints.Count > 1)
+                        {
+                            gPath.AddCurve(arcPoints.ToArray());
+                            currentPoint = arcPoints[^1];
+                        }
+                        break;
+
+                    case "Z":
+                        gPath.CloseFigure();
+                        break;
+                }
+            }
+            return gPath;
         }
 
         public static Font CreateScaledFont(ShapeText text)

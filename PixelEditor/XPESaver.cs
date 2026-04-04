@@ -110,6 +110,11 @@ namespace PixelEditor
             writer.Write(shape.Opacity);
             writer.Write(shape.Rotation);
 
+            writer.Write(shape.HasGradientFill);
+            writer.Write(shape.HasGradientStroke);
+            WriteGradient(writer, shape.GradientFill);
+            WriteGradient(writer, shape.GradientStroke);
+
             switch (shape)
             {
                 case ShapeLine line:
@@ -156,6 +161,72 @@ namespace PixelEditor
                     writer.Write(text.IsBold);
                     writer.Write(text.IsItalic);
                     break;
+
+                case ShapePath path:
+                    writer.Write(path.PathSegments.Count);
+                    foreach (var segment in path.PathSegments)
+                    {
+                        WritePathSegment(writer, segment);
+                    }
+                    break;
+            }
+        }
+
+        private static void WritePathSegment(BinaryWriter writer, PathSegment segment)
+        {
+            writer.Write(segment.PathType ?? string.Empty);
+            writer.Write(segment.InputPoints.Count);
+            foreach (var p in segment.InputPoints)
+            {
+                writer.Write(p.X);
+                writer.Write(p.Y);
+            }
+        }
+
+        private static void WriteGradient(BinaryWriter writer, GradientInfo? gradient)
+        {
+            if (gradient == null)
+            {
+                writer.Write(false);
+                return;
+            }
+
+            writer.Write(true);
+            writer.Write(gradient.IsRadial);
+            writer.Write(gradient.UserSpaceOnUse);
+            writer.Write(gradient.HasTransform);
+
+            if (gradient.HasTransform)
+            {
+                writer.Write(gradient.TransformA);
+                writer.Write(gradient.TransformB);
+                writer.Write(gradient.TransformC);
+                writer.Write(gradient.TransformD);
+                writer.Write(gradient.TransformE);
+                writer.Write(gradient.TransformF);
+            }
+
+            if (gradient.IsRadial)
+            {
+                writer.Write(gradient.Cx);
+                writer.Write(gradient.Cy);
+                writer.Write(gradient.R);
+                writer.Write(gradient.Fx);
+                writer.Write(gradient.Fy);
+            }
+            else
+            {
+                writer.Write(gradient.X1);
+                writer.Write(gradient.Y1);
+                writer.Write(gradient.X2);
+                writer.Write(gradient.Y2);
+            }
+
+            writer.Write(gradient.Stops.Count);
+            foreach (var stop in gradient.Stops)
+            {
+                writer.Write(stop.Offset);
+                writer.Write(stop.Color.ToArgb());
             }
         }
     }

@@ -2487,7 +2487,7 @@ namespace PixelEditor
             }
         }
 
-        private void ConvertToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ConvertToVectorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -2518,7 +2518,16 @@ namespace PixelEditor
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
-                else if (selectedLayer.LayerType == LayerType.Vector)
+            }
+        }
+
+        private void ConvertToRasterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
@@ -2535,6 +2544,32 @@ namespace PixelEditor
                     selectedLayer.LayerType = LayerType.Image;
                     selectedLayer.Shapes.Clear();
                     selectedLayer.CurrentShape = null;
+                    UpdateControls();
+                    ManipulatorGeneral.InvalidateCompositeBuffers();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ConvertToPathToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = ShapeToPathConverter.Convert(selectedLayer.CurrentShape);
+                    }
+
                     UpdateControls();
                     ManipulatorGeneral.InvalidateCompositeBuffers();
                     RedrawImage();

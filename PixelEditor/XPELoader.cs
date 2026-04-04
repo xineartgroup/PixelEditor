@@ -128,6 +128,11 @@ namespace PixelEditor
             shape.Opacity = reader.ReadSingle();
             shape.Rotation = reader.ReadSingle();
 
+            shape.HasGradientFill = reader.ReadBoolean();
+            shape.HasGradientStroke = reader.ReadBoolean();
+            shape.GradientFill = ReadGradient(reader);
+            shape.GradientStroke = ReadGradient(reader);
+
             switch (shape)
             {
                 case ShapeLine line:
@@ -172,9 +177,92 @@ namespace PixelEditor
                     text.IsBold = reader.ReadBoolean();
                     text.IsItalic = reader.ReadBoolean();
                     break;
+
+                case ShapePath path:
+                    int segmentCount = reader.ReadInt32();
+                    path.PathSegments = [];
+                    for (int i = 0; i < segmentCount; i++)
+                    {
+                        path.PathSegments.Add(ReadPathSegment(reader));
+                    }
+                    break;
             }
 
             return shape;
+        }
+
+        private static PathSegment ReadPathSegment(BinaryReader reader)
+        {
+            PathSegment segment = new()
+            {
+                PathType = reader.ReadString()
+            };
+
+            int pointCount = reader.ReadInt32();
+            segment.InputPoints = [];
+            for (int i = 0; i < pointCount; i++)
+            {
+                segment.InputPoints.Add(new PointF(reader.ReadSingle(), reader.ReadSingle()));
+            }
+
+            return segment;
+        }
+
+        private static GradientInfo? ReadGradient(BinaryReader reader)
+        {
+            bool exists = reader.ReadBoolean();
+            if (!exists) return null;
+
+            GradientInfo gradient = new()
+            {
+                IsRadial = reader.ReadBoolean(),
+                UserSpaceOnUse = reader.ReadBoolean(),
+                HasTransform = reader.ReadBoolean()
+            };
+
+            if (gradient.HasTransform)
+            {
+                gradient.TransformA = reader.ReadSingle();
+                gradient.TransformB = reader.ReadSingle();
+                gradient.TransformC = reader.ReadSingle();
+                gradient.TransformD = reader.ReadSingle();
+                gradient.TransformE = reader.ReadSingle();
+                gradient.TransformF = reader.ReadSingle();
+
+                gradient.TransformMatrix = new System.Drawing.Drawing2D.Matrix(
+                    gradient.TransformA, gradient.TransformB,
+                    gradient.TransformC, gradient.TransformD,
+                    gradient.TransformE, gradient.TransformF
+                );
+            }
+
+            if (gradient.IsRadial)
+            {
+                gradient.Cx = reader.ReadSingle();
+                gradient.Cy = reader.ReadSingle();
+                gradient.R = reader.ReadSingle();
+                gradient.Fx = reader.ReadSingle();
+                gradient.Fy = reader.ReadSingle();
+            }
+            else
+            {
+                gradient.X1 = reader.ReadSingle();
+                gradient.Y1 = reader.ReadSingle();
+                gradient.X2 = reader.ReadSingle();
+                gradient.Y2 = reader.ReadSingle();
+            }
+
+            int stopCount = reader.ReadInt32();
+            for (int i = 0; i < stopCount; i++)
+            {
+                gradient.Stops.Add(new GradientStop
+                {
+                    Offset = reader.ReadSingle(),
+                    Color = Color.FromArgb(reader.ReadInt32())
+                });
+            }
+
+            return gradient;
         }
     }
 }
