@@ -1,4 +1,6 @@
 ﻿using System.Security.Cryptography;
+using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 
 namespace PixelEditor
 {
@@ -25,8 +27,8 @@ namespace PixelEditor
                 using var reader = new BinaryReader(new MemoryStream(payload), System.Text.Encoding.UTF8);
 
                 if (reader.ReadString() != MagicString) throw new InvalidDataException("Invalid format.");
-                int versionMajor = reader.ReadInt32();
-                int versionMinor = reader.ReadInt32();
+                reader.ReadInt32();
+                reader.ReadInt32();
 
                 Document.Zoom = reader.ReadSingle();
                 Document.ImageOffset = new PointF(reader.ReadSingle(), reader.ReadSingle());
@@ -40,57 +42,139 @@ namespace PixelEditor
                 for (int i = 0; i < layerCount; i++)
                 {
                     string name = reader.ReadString();
-                    int x = reader.ReadInt32();
-                    int y = reader.ReadInt32();
-                    int scaleWidth = reader.ReadInt32();
-                    int scaleHeight = reader.ReadInt32();
-                    int opacity = reader.ReadInt32();
-                    bool isVisible = reader.ReadBoolean();
-                    bool redFilter = reader.ReadBoolean();
-                    bool greenFilter = reader.ReadBoolean();
-                    bool blueFilter = reader.ReadBoolean();
-                    LayerChannel channel = (LayerChannel)reader.ReadInt32();
-                    ImageBlending blendMode = (ImageBlending)reader.ReadInt32();
+                    LayerType type = (LayerType)reader.ReadInt32();
 
-                    Layer layer = new(name, isVisible)
+                    if (type == LayerType.Vector)
                     {
-                        X = x,
-                        Y = y,
-                        ScaleWidth = scaleWidth,
-                        ScaleHeight = scaleHeight,
-                        Opacity = opacity,
-                        RedFilter = redFilter,
-                        GreenFilter = greenFilter,
-                        BlueFilter = blueFilter,
-                        Channel = channel,
-                        BlendMode = blendMode
-                    };
-
-                    bool hasImage = reader.ReadBoolean();
-                    if (hasImage)
-                    {
-                        int imageLength = reader.ReadInt32();
-                        byte[] imageBytes = reader.ReadBytes(imageLength);
-                        using var msImage = new MemoryStream(imageBytes);
-                        layer.Image = Image.FromStream(msImage);
+                        Layer layer = new(name, true) { LayerType = LayerType.Vector };
+                        int shapeCount = reader.ReadInt32();
+                        for (int j = 0; j < shapeCount; j++)
+                        {
+                            layer.Shapes.Add(ReadShape(reader));
+                        }
+                        layers.Add(layer);
                     }
-
-                    hasImage = reader.ReadBoolean();
-                    if (hasImage)
+                    else
                     {
-                        int imageLength = reader.ReadInt32();
-                        byte[] imageBytes = reader.ReadBytes(imageLength);
-                        using var msImage = new MemoryStream(imageBytes);
-                        layer.ImageMask = Image.FromStream(msImage);
-                    }
+                        int x = reader.ReadInt32();
+                        int y = reader.ReadInt32();
+                        int scaleWidth = reader.ReadInt32();
+                        int scaleHeight = reader.ReadInt32();
+                        int opacity = reader.ReadInt32();
+                        bool isVisible = reader.ReadBoolean();
+                        bool redFilter = reader.ReadBoolean();
+                        bool greenFilter = reader.ReadBoolean();
+                        bool blueFilter = reader.ReadBoolean();
+                        LayerChannel channel = (LayerChannel)reader.ReadInt32();
+                        ImageBlending blendMode = (ImageBlending)reader.ReadInt32();
 
-                    layers.Add(layer);
+                        Layer layer = new(name, isVisible)
+                        {
+                            LayerType = LayerType.Image,
+                            X = x,
+                            Y = y,
+                            ScaleWidth = scaleWidth,
+                            ScaleHeight = scaleHeight,
+                            Opacity = opacity,
+                            RedFilter = redFilter,
+                            GreenFilter = greenFilter,
+                            BlueFilter = blueFilter,
+                            Channel = channel,
+                            BlendMode = blendMode,
+                            Image = ReadLayerImageData(reader),
+                            ImageMask = ReadLayerImageData(reader)
+                        };
+
+                        layers.Add(layer);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 throw new InvalidDataException("Failed to load PTV file.", ex);
             }
+        }
+
+        private static Image? ReadLayerImageData(BinaryReader reader)
+        {
+            if (reader.ReadBoolean())
+            {
+                int imageLength = reader.ReadInt32();
+                byte[] imageBytes = reader.ReadBytes(imageLength);
+                using var msImage = new MemoryStream(imageBytes);
+                return Image.FromStream(msImage);
+            }
+            return null;
+        }
+
+        private static BaseShape ReadShape(BinaryReader reader)
+        {
+            int typeId = reader.ReadInt32();
+
+            BaseShape shape = typeId switch
+            {
+                1 => new ShapeLine(),
+                2 => new ShapeRect(),
+                3 => new ShapeEllipse(),
+                4 => new ShapePolygon(),
+                5 => new ShapeText(),
+                _ => throw new InvalidDataException("Unknown shape type.")
+            };
+
+            shape.LineWidth = reader.ReadSingle();
+            shape.LineColor = Color.FromArgb(reader.ReadInt32());
+            shape.FillColor = Color.FromArgb(reader.ReadInt32());
+            shape.DashStyle = (DashStyle)reader.ReadInt32();
+            shape.Opacity = reader.ReadSingle();
+            shape.Rotation = reader.ReadSingle();
+
+            switch (shape)
+            {
+                case ShapeLine line:
+                    line.StartPoint = new PointF(reader.ReadSingle(), reader.ReadSingle());
+                    line.EndPoint = new PointF(reader.ReadSingle(), reader.ReadSingle());
+                    break;
+
+                case ShapeRect rect:
+                    rect.X = reader.ReadSingle();
+                    rect.Y = reader.ReadSingle();
+                    rect.Width = reader.ReadSingle();
+                    rect.Height = reader.ReadSingle();
+                    rect.Rx = reader.ReadSingle();
+                    rect.Ry = reader.ReadSingle();
+                    break;
+
+                case ShapeEllipse ellipse:
+                    ellipse.X = reader.ReadSingle();
+                    ellipse.Y = reader.ReadSingle();
+                    ellipse.Width = reader.ReadSingle();
+                    ellipse.Height = reader.ReadSingle();
+                    break;
+
+                case ShapePolygon poly:
+                    poly.IsClosed = reader.ReadBoolean();
+                    int pointsCount = reader.ReadInt32();
+                    poly.Points = [];
+                    for (int i = 0; i < pointsCount; i++)
+                    {
+                        poly.Points.Add(new PointF(reader.ReadSingle(), reader.ReadSingle()));
+                    }
+                    break;
+
+                case ShapeText text:
+                    text.Content = reader.ReadString();
+                    text.X = reader.ReadSingle();
+                    text.Y = reader.ReadSingle();
+                    text.Width = reader.ReadSingle();
+                    text.Height = reader.ReadSingle();
+                    text.FontSize = reader.ReadSingle();
+                    text.FontFamily = reader.ReadString();
+                    text.IsBold = reader.ReadBoolean();
+                    text.IsItalic = reader.ReadBoolean();
+                    break;
+            }
+
+            return shape;
         }
     }
 }

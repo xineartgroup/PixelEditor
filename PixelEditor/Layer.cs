@@ -203,7 +203,7 @@ namespace PixelEditor
 
                     foreach (var p in polygon.Points)
                     {
-                        RectangleF handle = new RectangleF(p.X - offset, p.Y - offset, size, size);
+                        RectangleF handle = new (p.X - offset, p.Y - offset, size, size);
                         g.FillRectangle(handleBrush, handle);
                         g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
                     }

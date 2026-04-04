@@ -1,11 +1,13 @@
 ﻿using System.Security.Cryptography;
+using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 
 namespace PixelEditor
 {
     public static class XPESaver
     {
         private const int FormatMajorVersion = 1;
-        private const int FormatMinorVersion = 1;
+        private const int FormatMinorVersion = 0;
         private const string MagicString = "BNDATA";
 
         public static void Save(Stream destination, List<Layer> layers, int selectedLayerIndex)
@@ -24,51 +26,38 @@ namespace PixelEditor
                     writer.Write(Document.ImageOffset.Y);
                     writer.Write(Document.Width);
                     writer.Write(Document.Height);
-
                     writer.Write(selectedLayerIndex);
 
                     writer.Write(layers.Count);
                     foreach (var layer in layers)
                     {
                         writer.Write(layer.Name);
-                        writer.Write(layer.X);
-                        writer.Write(layer.Y);
-                        writer.Write(layer.ScaleWidth);
-                        writer.Write(layer.ScaleHeight);
-                        writer.Write(layer.Opacity);
-                        writer.Write(layer.IsVisible);
-                        writer.Write(layer.RedFilter);
-                        writer.Write(layer.GreenFilter);
-                        writer.Write(layer.BlueFilter);
-                        writer.Write((int)layer.Channel);
-                        writer.Write((int)layer.BlendMode);
+                        writer.Write((int)layer.LayerType);
 
-                        if (layer.Image != null)
+                        if (layer.LayerType == LayerType.Vector)
                         {
-                            writer.Write(true);
-                            using var msImage = new MemoryStream();
-                            layer.Image.Save(msImage, System.Drawing.Imaging.ImageFormat.Png);
-                            byte[] imageBytes = msImage.ToArray();
-                            writer.Write(imageBytes.Length);
-                            writer.Write(imageBytes);
+                            writer.Write(layer.Shapes.Count);
+                            foreach (var shape in layer.Shapes)
+                            {
+                                WriteShape(writer, shape);
+                            }
                         }
                         else
                         {
-                            writer.Write(false);
-                        }
+                            writer.Write(layer.X);
+                            writer.Write(layer.Y);
+                            writer.Write(layer.ScaleWidth);
+                            writer.Write(layer.ScaleHeight);
+                            writer.Write(layer.Opacity);
+                            writer.Write(layer.IsVisible);
+                            writer.Write(layer.RedFilter);
+                            writer.Write(layer.GreenFilter);
+                            writer.Write(layer.BlueFilter);
+                            writer.Write((int)layer.Channel);
+                            writer.Write((int)layer.BlendMode);
 
-                        if (layer.ImageMask != null)
-                        {
-                            writer.Write(true);
-                            using var msImage = new MemoryStream();
-                            layer.ImageMask.Save(msImage, System.Drawing.Imaging.ImageFormat.Png);
-                            byte[] imageBytes = msImage.ToArray();
-                            writer.Write(imageBytes.Length);
-                            writer.Write(imageBytes);
-                        }
-                        else
-                        {
-                            writer.Write(false);
+                            WriteImageData(writer, layer.GetBasicImage());
+                            WriteImageData(writer, layer.ImageMask);
                         }
                     }
                 }
@@ -81,6 +70,92 @@ namespace PixelEditor
             catch (Exception ex)
             {
                 throw new Exception("Error saving PTV file: " + ex.Message, ex);
+            }
+        }
+
+        private static void WriteImageData(BinaryWriter writer, Image? img)
+        {
+            if (img != null)
+            {
+                writer.Write(true);
+                using var msImage = new MemoryStream();
+                img.Save(msImage, System.Drawing.Imaging.ImageFormat.Png);
+                byte[] imageBytes = msImage.ToArray();
+                writer.Write(imageBytes.Length);
+                writer.Write(imageBytes);
+            }
+            else
+            {
+                writer.Write(false);
+            }
+        }
+
+        private static void WriteShape(BinaryWriter writer, BaseShape shape)
+        {
+            int typeId = shape switch
+            {
+                ShapeLine => 1,
+                ShapeRect => 2,
+                ShapeEllipse => 3,
+                ShapePolygon => 4,
+                ShapeText => 5,
+                _ => 0
+            };
+            writer.Write(typeId);
+
+            writer.Write(shape.LineWidth);
+            writer.Write(shape.LineColor.ToArgb());
+            writer.Write(shape.FillColor.ToArgb());
+            writer.Write((int)shape.DashStyle);
+            writer.Write(shape.Opacity);
+            writer.Write(shape.Rotation);
+
+            switch (shape)
+            {
+                case ShapeLine line:
+                    writer.Write(line.StartPoint.X);
+                    writer.Write(line.StartPoint.Y);
+                    writer.Write(line.EndPoint.X);
+                    writer.Write(line.EndPoint.Y);
+                    break;
+
+                case ShapeRect rect:
+                    writer.Write(rect.X);
+                    writer.Write(rect.Y);
+                    writer.Write(rect.Width);
+                    writer.Write(rect.Height);
+                    writer.Write(rect.Rx);
+                    writer.Write(rect.Ry);
+                    break;
+
+                case ShapeEllipse ellipse:
+                    writer.Write(ellipse.X);
+                    writer.Write(ellipse.Y);
+                    writer.Write(ellipse.Width);
+                    writer.Write(ellipse.Height);
+                    break;
+
+                case ShapePolygon poly:
+                    writer.Write(poly.IsClosed);
+                    writer.Write(poly.Points.Count);
+                    foreach (var p in poly.Points)
+                    {
+                        writer.Write(p.X);
+                        writer.Write(p.Y);
+                    }
+                    break;
+
+                case ShapeText text:
+                    writer.Write(text.Content ?? string.Empty);
+                    writer.Write(text.X);
+                    writer.Write(text.Y);
+                    writer.Write(text.Width);
+                    writer.Write(text.Height);
+                    writer.Write(text.FontSize);
+                    writer.Write(text.FontFamily ?? "Arial");
+                    writer.Write(text.IsBold);
+                    writer.Write(text.IsItalic);
+                    break;
             }
         }
     }
