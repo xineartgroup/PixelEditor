@@ -1461,6 +1461,22 @@ namespace PixelEditor
                        p.Y >= t.Y && p.Y <= t.Y + t.Height;
             }
 
+            if (shape is ShapePath path)
+            {
+                using GraphicsPath gPath = Layer.BuildGraphicsPath(path);
+
+                if (gPath.IsVisible(p))
+                {
+                    return true;
+                }
+
+                using Pen testPen = new(Color.Black, Math.Max(5, path.LineWidth));
+                if (gPath.IsOutlineVisible(p, testPen))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 

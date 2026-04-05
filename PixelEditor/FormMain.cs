@@ -3749,7 +3749,7 @@ namespace PixelEditor
                                 else if (shape is ShapeText t) { sx = t.X; sy = t.Y; sw = t.Width; sh = t.Height; canResize = true; }
                                 else if (shape is ShapePolygon polygon)
                                 {
-                                    int size = 6;
+                                    int size = 10;
                                     int offset = size / 2;
 
                                     for (int i = 0; i < polygon.Points.Count; i++)
@@ -3763,6 +3763,30 @@ namespace PixelEditor
                                             activeHandleIndex = i;
                                             break;
                                         }
+                                    }
+                                }
+                                else if (shape is ShapePath path)
+                                {
+                                    int size = 10; // Keeping the size 10 consistent with your DrawShape method
+                                    int offset = size / 2;
+                                    int pointIndex = 0;
+
+                                    foreach (var segment in path.PathSegments)
+                                    {
+                                        for (int i = 0; i < segment.InputPoints.Count; i++)
+                                        {
+                                            var p = segment.InputPoints[i];
+                                            RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
+
+                                            if (handle.Contains(localPos.X, localPos.Y))
+                                            {
+                                                isResizingShape = true;
+                                                activeHandleIndex = pointIndex; // Store the flattened absolute index
+                                                break;
+                                            }
+                                            pointIndex++;
+                                        }
+                                        if (isResizingShape) break;
                                     }
                                 }
 
@@ -3811,6 +3835,19 @@ namespace PixelEditor
                                             dragOffset = new PointF(localPos.X - t.X, localPos.Y - t.Y);
                                         else if (shape is ShapePolygon pg && pg.Points.Count > 0)
                                             dragOffset = new PointF(localPos.X - pg.Points[0].X, localPos.Y - pg.Points[0].Y);
+                                        else if (shape is ShapePath path)
+                                        {
+                                            PointF anchor = PointF.Empty;
+                                            foreach (var seg in path.PathSegments)
+                                            {
+                                                if (seg.InputPoints.Count > 0)
+                                                {
+                                                    anchor = seg.InputPoints[0];
+                                                    break;
+                                                }
+                                            }
+                                            dragOffset = new PointF(localPos.X - anchor.X, localPos.Y - anchor.Y);
+                                        }
 
                                         found = true;
 
@@ -4146,6 +4183,23 @@ namespace PixelEditor
                             polygon.Points[activeHandleIndex] = new PointF(localPos.X, localPos.Y);
                         }
                     }
+                    else if (selectedLayer.CurrentShape is ShapePath path)
+                    {
+                        int pointIndex = 0;
+                        foreach (var segment in path.PathSegments)
+                        {
+                            for (int i = 0; i < segment.InputPoints.Count; i++)
+                            {
+                                if (pointIndex == activeHandleIndex)
+                                {
+                                    segment.InputPoints[i] = new PointF(localPos.X, localPos.Y);
+                                    pointIndex++;
+                                    break;
+                                }
+                                pointIndex++;
+                            }
+                        }
+                    }
 
                     float right = nX + nW;
                     float bottom = nY + nH;
@@ -4215,6 +4269,29 @@ namespace PixelEditor
                         for (int i = 0; i < polygon.Points.Count; i++)
                         {
                             polygon.Points[i] = new PointF(polygon.Points[i].X + dx, polygon.Points[i].Y + dy);
+                        }
+                    }
+                    else if (selectedLayer.CurrentShape is ShapePath path)
+                    {
+                        PointF anchor = PointF.Empty;
+                        foreach (var seg in path.PathSegments)
+                        {
+                            if (seg.InputPoints.Count > 0)
+                            {
+                                anchor = seg.InputPoints[0];
+                                break;
+                            }
+                        }
+
+                        float dx = newX - anchor.X;
+                        float dy = newY - anchor.Y;
+
+                        foreach (var segment in path.PathSegments)
+                        {
+                            for (int i = 0; i < segment.InputPoints.Count; i++)
+                            {
+                                segment.InputPoints[i] = new PointF(segment.InputPoints[i].X + dx, segment.InputPoints[i].Y + dy);
+                            }
                         }
                     }
 

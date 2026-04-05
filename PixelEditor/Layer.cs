@@ -260,7 +260,7 @@ namespace PixelEditor
             }
         }
 
-        private static GraphicsPath BuildGraphicsPath(ShapePath path)
+        public static GraphicsPath BuildGraphicsPath(ShapePath path)
         {
             GraphicsPath gPath = new();
             PointF currentPoint = PointF.Empty;
