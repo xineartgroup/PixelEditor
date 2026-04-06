@@ -655,12 +655,14 @@
             toolStripMenuItem21.Name = "toolStripMenuItem21";
             toolStripMenuItem21.Size = new Size(275, 22);
             toolStripMenuItem21.Text = "Flip Horizomtally";
+            toolStripMenuItem21.Click += ToolStripMenuFlipHorizontal_Click;
             // 
             // toolStripMenuItem22
             // 
             toolStripMenuItem22.Name = "toolStripMenuItem22";
             toolStripMenuItem22.Size = new Size(275, 22);
             toolStripMenuItem22.Text = "Flip Vertically";
+            toolStripMenuItem22.Click += ToolStripMenuFlipVertical_Click;
             // 
             // toolStripSeparator1
             // 
@@ -672,24 +674,28 @@
             toolStripMenuItem23.Name = "toolStripMenuItem23";
             toolStripMenuItem23.Size = new Size(275, 22);
             toolStripMenuItem23.Text = "Rotate 90 degrees Clockwise";
+            toolStripMenuItem23.Click += ToolStripMenuRotate90CW_Click;
             // 
             // toolStripMenuItem24
             // 
             toolStripMenuItem24.Name = "toolStripMenuItem24";
             toolStripMenuItem24.Size = new Size(275, 22);
             toolStripMenuItem24.Text = "Rotate 90 degrees Countere-clockwise";
+            toolStripMenuItem24.Click += ToolStripMenuRotate90CWW_Click;
             // 
             // toolStripMenuItem25
             // 
             toolStripMenuItem25.Name = "toolStripMenuItem25";
             toolStripMenuItem25.Size = new Size(275, 22);
             toolStripMenuItem25.Text = "Rotate 180 degrees";
+            toolStripMenuItem25.Click += ToolStripMenuRotate180_Click;
             // 
             // toolStripMenuItem26
             // 
             toolStripMenuItem26.Name = "toolStripMenuItem26";
             toolStripMenuItem26.Size = new Size(275, 22);
             toolStripMenuItem26.Text = "Rotate...";
+            toolStripMenuItem26.Click += ToolStripMenuRotate_Click;
             // 
             // toolStripMenuItem7
             // 
@@ -713,14 +719,14 @@
             // convertToRasterToolStripMenuItem
             // 
             convertToRasterToolStripMenuItem.Name = "convertToRasterToolStripMenuItem";
-            convertToRasterToolStripMenuItem.Size = new Size(180, 22);
+            convertToRasterToolStripMenuItem.Size = new Size(165, 22);
             convertToRasterToolStripMenuItem.Text = "Convert to Raster";
             convertToRasterToolStripMenuItem.Click += ConvertToRasterToolStripMenuItem_Click;
             // 
             // convertToPathToolStripMenuItem
             // 
             convertToPathToolStripMenuItem.Name = "convertToPathToolStripMenuItem";
-            convertToPathToolStripMenuItem.Size = new Size(180, 22);
+            convertToPathToolStripMenuItem.Size = new Size(165, 22);
             convertToPathToolStripMenuItem.Text = "Convert to Path";
             convertToPathToolStripMenuItem.Click += ConvertToPathToolStripMenuItem_Click;
             // 
@@ -944,8 +950,9 @@
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(107, 22);
+            aboutToolStripMenuItem.Size = new Size(180, 22);
             aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
             // labelStatus
             // 

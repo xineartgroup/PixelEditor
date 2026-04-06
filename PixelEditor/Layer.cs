@@ -1,6 +1,5 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
-using System.Reflection.Emit;
 
 namespace PixelEditor
 {

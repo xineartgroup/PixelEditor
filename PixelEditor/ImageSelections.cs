@@ -14,6 +14,10 @@
             return selectionBounds;
         }
 
+        /// <summary>
+        /// Call CalculateSelectionBounds() first to ensure the center is updated based on current selection polygons.
+        /// </summary>
+        /// <returns>The center of the selection</returns>
         public static PointF GetSelectionCenter()
         {
             return selectionCenter;
@@ -567,62 +571,25 @@
             return regions;
         }
 
-        public static bool IsContainedWithinFast(SelectionPolygon inner, SelectionPolygon outer)
+        public static void RotateSelections(float angle)
         {
-            var thisBounds = GetBounds(inner);
-            var otherBounds = GetBounds(outer);
-
-            if (!IsContainedWithin(thisBounds, otherBounds))
-                return false;
-
-            if (inner.Points.Count < 20)
+            foreach (var poly in selectionPolygons)
             {
-                foreach (var point in inner.Points)
+                List<PointF> floatPoints = [.. poly.Points.Select(p => new PointF(p.X, p.Y))];
+
+                PointF pivot = SelectionTransformer.GetPolygonCenter(floatPoints);
+
+                List<PointF> rotatedFloatPoints = SelectionTransformer.RotatePolygon(floatPoints, angle, pivot);
+
+                poly.Points = [.. rotatedFloatPoints.Select(p => new Point((int)Math.Round(p.X), (int)Math.Round(p.Y)))];
+
+                if (poly.Mask != null)
                 {
-                    if (!ContainsPoint(outer, point))
-                        return false;
-                }
-                return true;
-            }
+                    Array.Clear(poly.Mask, 0, poly.Mask.Length);
 
-            return IsContainedByEdgeTest(inner, outer);
-        }
-
-        private static bool IsContainedByEdgeTest(SelectionPolygon inner, SelectionPolygon outer)
-        {
-            Point interiorPoint = GetInteriorPoint(inner);
-
-            if (!ContainsPoint(outer, interiorPoint))
-                return false;
-
-            for (int i = 0; i < inner.Points.Count; i++)
-            {
-                var p1 = inner.Points[i];
-                var p2 = inner.Points[(i + 1) % inner.Points.Count];
-
-                Point outsidePoint = GetPointOutsideEdge(p1, p2);
-
-                if (ContainsPoint(outer, outsidePoint))
-                {
-                    if (!IsEdgeInside(outer, p1, p2))
-                        return false;
+                    FillPolygonInMask(poly.Mask, poly.Points, true);
                 }
             }
-
-            return true;
-        }
-
-        private static Rectangle GetBounds(SelectionPolygon polygon)
-        {
-            if (polygon.Points.Count == 0)
-                return Rectangle.Empty;
-
-            int minX = polygon.Points.Min(p => p.X);
-            int minY = polygon.Points.Min(p => p.Y);
-            int maxX = polygon.Points.Max(p => p.X);
-            int maxY = polygon.Points.Max(p => p.Y);
-
-            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
         }
 
         public static bool ContainsPoint(SelectionPolygon polygon, Point point)
@@ -640,65 +607,6 @@
                 }
             }
             return inside;
-        }
-
-        private static Point GetInteriorPoint(SelectionPolygon polygon)
-        {
-            if (polygon.Points.Count == 0)
-                return Point.Empty;
-
-            int sumX = 0, sumY = 0;
-            foreach (var point in polygon.Points)
-            {
-                sumX += point.X;
-                sumY += point.Y;
-            }
-
-            return new Point(sumX / polygon.Points.Count, sumY / polygon.Points.Count);
-        }
-
-        private static Point GetPointOutsideEdge(Point p1, Point p2)
-        {
-            int dx = p2.X - p1.X;
-            int dy = p2.Y - p1.Y;
-
-            int perpX = -dy;
-            int perpY = dx;
-
-            double length = Math.Sqrt(perpX * perpX + perpY * perpY);
-            if (length > 0)
-            {
-                perpX = (int)(perpX / length * 2);
-                perpY = (int)(perpY / length * 2);
-            }
-
-            int midX = (p1.X + p2.X) / 2;
-            int midY = (p1.Y + p2.Y) / 2;
-
-            return new Point(midX + perpX, midY + perpY);
-        }
-
-        private static bool IsEdgeInside(SelectionPolygon outer, Point p1, Point p2)
-        {
-            int steps = 5;
-            for (int i = 1; i < steps; i++)
-            {
-                double t = (double)i / steps;
-                int x = (int)(p1.X + t * (p2.X - p1.X));
-                int y = (int)(p1.Y + t * (p2.Y - p1.Y));
-
-                if (!ContainsPoint(outer, new Point(x, y)))
-                    return false;
-            }
-            return true;
-        }
-
-        private static bool IsContainedWithin(Rectangle inner, Rectangle outer)
-        {
-            return inner.Left >= outer.Left &&
-                   inner.Right <= outer.Right &&
-                   inner.Top >= outer.Top &&
-                   inner.Bottom <= outer.Bottom;
         }
     }
 }

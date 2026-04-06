@@ -1,7 +1,5 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace PixelEditor
@@ -2487,6 +2485,163 @@ namespace PixelEditor
             }
         }
 
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FormAbout frm = new()
+            {
+            };
+
+            frm.ShowDialog(this);
+        }
+
+        private void ToolStripMenuFlipHorizontal_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    Bitmap flippedBitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    using (Graphics g = Graphics.FromImage(flippedBitmap))
+                    {
+                        g.DrawImage(selectedLayer.Image,
+                            new Rectangle(0, 0, selectedLayer.Image.Width, selectedLayer.Image.Height),
+                            new Rectangle(selectedLayer.Image.Width, 0, -selectedLayer.Image.Width, selectedLayer.Image.Height),
+                            GraphicsUnit.Pixel);
+                    }
+                    selectedLayer.Image.Dispose();
+                    selectedLayer.Image = flippedBitmap;
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ToolStripMenuFlipVertical_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    Bitmap flippedBitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    using (Graphics g = Graphics.FromImage(flippedBitmap))
+                    {
+                        g.DrawImage(selectedLayer.Image,
+                            new Rectangle(0, 0, selectedLayer.Image.Width, selectedLayer.Image.Height),
+                            new Rectangle(0, selectedLayer.Image.Height, selectedLayer.Image.Width, -selectedLayer.Image.Height),
+                            GraphicsUnit.Pixel);
+                    }
+                    selectedLayer.Image.Dispose();
+                    selectedLayer.Image = flippedBitmap;
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ToolStripMenuRotate90CW_Click(object sender, EventArgs e)
+        {
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            RotateSelectedLayerImage(rotationAngle + 90);
+
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void ToolStripMenuRotate90CWW_Click(object sender, EventArgs e)
+        {
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            RotateSelectedLayerImage(rotationAngle - 90);
+
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void ToolStripMenuRotate180_Click(object sender, EventArgs e)
+        {
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            RotateSelectedLayerImage(rotationAngle + 180);
+
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void ToolStripMenuRotate_Click(object sender, EventArgs e)
+        {
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            using (FormRotate frm = new())
+            {
+                frm.StartPosition = FormStartPosition.CenterParent;
+                frm.RotationAngle = rotationAngle;
+                if (frm.ShowDialog() == DialogResult.OK)
+                {
+                    RotateSelectedLayerImage(rotationAngle + frm.RotationAngle);
+                }
+            }
+
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void RotateSelectedLayerImage(float angle)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
+                {
+                    if (ImageSelections.ContainsSelection() && selectedAreaBitmap == null)
+                    {
+                        ImageSelections.CalculateSelectionBounds();
+                        selectedAreaBitmap = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
+                        selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer) ?? new Bitmap(selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    }
+
+                    if (selectedAreaBitmap != null)
+                    {
+                        ImageSelections.RotateSelections(-rotationAngle);
+
+                        scaleAnchorWorld = ImageSelections.GetSelectionCenter();
+                        rotationAngle = angle;
+                        UpdateTransformMatrix();
+
+                        ImageSelections.RotateSelections(angle);
+
+                        RedrawImage();
+                    }
+                    else
+                    {
+                        Bitmap rotatedBitmap = new(selectedLayer.Image.Height, selectedLayer.Image.Width);
+
+                        using (Graphics g = Graphics.FromImage(rotatedBitmap))
+                        {
+                            g.TranslateTransform(rotatedBitmap.Width / 2f, rotatedBitmap.Height / 2f);
+                            g.RotateTransform(angle);
+                            g.TranslateTransform(-selectedLayer.Image.Width / 2f, -selectedLayer.Image.Height / 2f);
+                            g.DrawImage(selectedLayer.Image, Point.Empty);
+                        }
+
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = rotatedBitmap;
+
+                        RedrawImage();
+                    }
+                }
+            }
+        }
+
         private void ConvertToVectorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -4302,8 +4457,8 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    rotationAngle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
-                    UpdateTransformMatrix();
+                    float angle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
+                    RotateSelectedLayerImage(angle);
                 }
             }
             else if (isScaling)
@@ -4312,7 +4467,6 @@ namespace PixelEditor
                 {
                     (scaleFactorX, scaleFactorY) = CalculateScaleFactors(e.Location, activeScaleHandle);
                     UpdateTransformMatrix();
-                    RedrawImage();
                 }
             }
             else if (isWarping)

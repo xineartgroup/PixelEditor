@@ -352,25 +352,37 @@ namespace PixelEditor
 
             foreach (var poly in selectionPolygons)
             {
-                int r = mask.GetLength(0);
-                int c = mask.GetLength(1);
                 if (poly.Mask != null)
                 {
-                    if (r != poly.Mask.GetLength(0) || c != poly.Mask.GetLength(1))
+                    // Factor in the layer's X and Y position when reading from a global mask
+                    int maskWidth = poly.Mask.GetLength(0);
+                    int maskHeight = poly.Mask.GetLength(1);
+
+                    for (int y = 0; y < height; y++)
                     {
-                        mask = ImageSelections.ExtendMask(mask, Math.Max(r, poly.Mask.GetLength(0)), Math.Max(c, poly.Mask.GetLength(1)));
+                        for (int x = 0; x < width; x++)
+                        {
+                            // Map local layer coordinates (x, y) to global canvas coordinates
+                            int globalX = x + selectedLayer.X;
+                            int globalY = y + selectedLayer.Y;
+
+                            // Ensure the mapped coordinates fall inside the stored mask boundary
+                            if (globalX >= 0 && globalX < maskWidth && globalY >= 0 && globalY < maskHeight)
+                            {
+                                if (poly.Mask[globalX, globalY])
+                                {
+                                    mask[x, y] = poly.Adding; // Apply the state (add or subtract)
+                                }
+                            }
+                        }
                     }
-                    ImageSelections.AddMask(mask, poly.Mask, poly.Adding);
                 }
                 else
                 {
-                    if (r < width || c < height)
-                    {
-                        mask = ImageSelections.ExtendMask(mask, width, height);
-                    }
                     var localPoints = poly.Points
-                        .Select(p => new Point(p.X - selectedLayer.X, p.Y - selectedLayer.Y))
+                        .Select(p => new Point((int)(p.X - selectedLayer.X), (int)(p.Y - selectedLayer.Y)))
                         .ToList();
+
                     ImageSelections.FillPolygonInMask(mask, localPoints, true);
                 }
             }
@@ -474,23 +486,35 @@ namespace PixelEditor
 
             foreach (var poly in selectionPolygons)
             {
-                int rows1 = mask.GetLength(0);
-                int cols1 = mask.GetLength(1);
                 if (poly.Mask != null)
                 {
-                    if (rows1 != poly.Mask.GetLength(0) || cols1 != poly.Mask.GetLength(1))
+                    int maskWidth = poly.Mask.GetLength(0);
+                    int maskHeight = poly.Mask.GetLength(1);
+
+                    for (int y = 0; y < height; y++)
                     {
-                        mask = ImageSelections.ExtendMask(mask, Math.Max(rows1, poly.Mask.GetLength(0)), Math.Max(cols1, poly.Mask.GetLength(1)));
+                        for (int x = 0; x < width; x++)
+                        {
+                            int globalX = x + selectedLayer.X;
+                            int globalY = y + selectedLayer.Y;
+
+                            if (globalX >= 0 && globalX < maskWidth && globalY >= 0 && globalY < maskHeight)
+                            {
+                                if (poly.Mask[globalX, globalY])
+                                {
+                                    mask[x, y] = poly.Adding;
+                                }
+                            }
+                        }
                     }
-                    ImageSelections.AddMask(mask, poly.Mask, poly.Adding);
                 }
                 else
                 {
-                    if (rows1 < width || cols1 < height)
-                    {
-                        mask = ImageSelections.ExtendMask(mask, width, height);
-                    }
-                    ImageSelections.FillPolygonInMask(mask, [.. poly.Points.Select(p => new Point(p.X - selectedLayer.X, p.Y - selectedLayer.Y))], true);
+                    var localPoints = poly.Points
+                        .Select(p => new Point((int)(p.X - selectedLayer.X), (int)(p.Y - selectedLayer.Y)))
+                        .ToList();
+
+                    ImageSelections.FillPolygonInMask(mask, localPoints, true);
                 }
             }
 
@@ -502,19 +526,13 @@ namespace PixelEditor
             {
                 Parallel.For(0, height, y =>
                 {
-                    int maskY = y; // + selectedLayer.Y
-
                     unsafe
                     {
                         byte* row = (byte*)ptr + (y * stride);
 
                         for (int x = 0; x < width; x++)
                         {
-                            int maskX = x; // + selectedLayer.X
-
-                            if (maskX >= 0 && maskX < width && maskX < mask.GetLength(0) &&
-                                maskY >= 0 && maskY < height && maskY < mask.GetLength(1) &&
-                                mask[maskX, maskY])
+                            if (mask[x, y])
                             {
                                 int offset = x * 4;
                                 row[offset] = fillB;
