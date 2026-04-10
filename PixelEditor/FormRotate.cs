@@ -12,7 +12,7 @@ namespace PixelEditor
             InitializeComponent();
         }
 
-        private void btnOK_Click(object sender, EventArgs e)
+        private void BtnOK_Click(object sender, EventArgs e)
         {
             RotationAngle = (float)numAngle.Value;
 

@@ -2762,7 +2762,7 @@ namespace PixelEditor
                         int newWidth = (int)Math.Max(1, Math.Abs(originalWidth * scaleX));
                         int newHeight = (int)Math.Max(1, Math.Abs(originalHeight * scaleY));
 
-                        Bitmap flippedBitmap = new (newWidth, newHeight);
+                        Bitmap flippedBitmap = new(newWidth, newHeight);
 
                         using (Graphics g = Graphics.FromImage(flippedBitmap))
                         {
@@ -2873,6 +2873,298 @@ namespace PixelEditor
                     RedrawImage();
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void UnionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DifferenceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void IntersectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ExclusionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RaiseToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.RaiseShape(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void LowerToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.LowerShape(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ToTopToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.ShapeToTop(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void ToBottomToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.ShapeToBottom(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void DuplicateToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.DuplicateShape(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void FlipHorizomtallyToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.FlipShapeHorizomtally(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void FlipVerticallyToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.FlipShapeVertically(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void Rotate90DegreesClockwiseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.RotateShape90DegreesCW(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void Rotate90DegreesCountereclockwiseToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.RotateShape90DegreesCCW(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void Rotate180DegreesToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        selectedLayer.RotateShape180Degrees(selectedLayer.CurrentShape);
+                    }
+
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private void RotateToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    using (FormRotate frm = new())
+                    {
+                        frm.StartPosition = FormStartPosition.CenterParent;
+                        frm.RotationAngle = rotationAngle;
+                        if (frm.ShowDialog() == DialogResult.OK)
+                        {
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                            int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                            if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                            {
+                                selectedLayer.RotateShape(selectedLayer.CurrentShape, frm.RotationAngle);
+                            }
+
+                            RedrawImage();
+
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        }
+                    }
                 }
             }
         }
@@ -3334,7 +3626,7 @@ namespace PixelEditor
 
         public static void SetClipboardImage(Image image)
         {
-            Bitmap bitmap = new (image);
+            Bitmap bitmap = new(image);
             using MemoryStream ms = new();
             bitmap.Save(ms, ImageFormat.Png);
             DataObject data = new();
@@ -4882,6 +5174,7 @@ namespace PixelEditor
                         {
                             selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
                         }
+                        btnPointer.Checked = true;
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }

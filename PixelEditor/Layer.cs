@@ -386,21 +386,377 @@ namespace PixelEditor
             return new Rectangle(_x, _y, Image.Width * _scaleWidth, Image.Height * _scaleHeight);
         }
 
-        public void ResizeContainer(int containerWidth, int containerHeight)
+        public void RaiseShape(BaseShape shape)
         {
-            if (Image == null) return;
-            if (containerWidth <= 0 || containerHeight <= 0) return;
-
-            Bitmap newImage = new(containerWidth, containerHeight);
-            using (Graphics g = Graphics.FromImage(newImage))
+            int index = shapes.IndexOf(shape);
+            if (index >= 0 && index < shapes.Count - 1)
             {
-                g.Clear(Color.Transparent);
-                g.DrawImage(Image, 0, 0, containerWidth, containerHeight);
+                shapes.RemoveAt(index);
+                shapes.Insert(index + 1, shape);
+                OnLayerChanged?.Invoke(GetBounds());
+            }
+        }
+
+        public void LowerShape(BaseShape shape)
+        {
+            int index = shapes.IndexOf(shape);
+            if (index > 0)
+            {
+                shapes.RemoveAt(index);
+                shapes.Insert(index - 1, shape);
+                OnLayerChanged?.Invoke(GetBounds());
+            }
+        }
+
+        public void ShapeToTop(BaseShape shape)
+        {
+            int index = shapes.IndexOf(shape);
+            if (index >= 0 && index < shapes.Count - 1)
+            {
+                shapes.RemoveAt(index);
+                shapes.Add(shape);
+                OnLayerChanged?.Invoke(GetBounds());
+            }
+        }
+
+        public void ShapeToBottom(BaseShape shape)
+        {
+            int index = shapes.IndexOf(shape);
+            if (index > 0)
+            {
+                shapes.RemoveAt(index);
+                shapes.Insert(0, shape);
+                OnLayerChanged?.Invoke(GetBounds());
+            }
+        }
+
+        public void DuplicateShape(BaseShape shape)
+        {
+            BaseShape? duplicate = null;
+
+            //if (shape is ShapeRect rect)
+            //{
+            //    duplicate = new ShapeRect(rect.X + 10, rect.Y + 10, rect.Width, rect.Height)
+            //    {
+            //        LineColor = rect.LineColor,
+            //        LineWidth = rect.LineWidth,
+            //        FillColor = rect.FillColor,
+            //        DashStyle = rect.DashStyle
+            //    };
+            //}
+            //else if (shape is ShapeEllipse ellipse)
+            //{
+            //    duplicate = new ShapeEllipse(ellipse.X + 10, ellipse.Y + 10, ellipse.Width, ellipse.Height)
+            //    {
+            //        LineColor = ellipse.LineColor,
+            //        LineWidth = ellipse.LineWidth,
+            //        FillColor = ellipse.FillColor,
+            //        DashStyle = ellipse.DashStyle
+            //    };
+            //}
+            //else if (shape is ShapePolygon polygon)
+            //{
+            //    List<PointF> points = new List<PointF>();
+            //    foreach (var p in polygon.Points)
+            //    {
+            //        points.Add(new PointF(p.X + 10, p.Y + 10));
+            //    }
+            //    duplicate = new ShapePolygon(points, polygon.IsClosed)
+            //    {
+            //        LineColor = polygon.LineColor,
+            //        LineWidth = polygon.LineWidth,
+            //        FillColor = polygon.FillColor,
+            //        DashStyle = polygon.DashStyle
+            //    };
+            //}
+            //else if (shape is ShapeText text)
+            //{
+            //    duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize)
+            //    {
+            //        IsBold = text.IsBold,
+            //        IsItalic = text.IsItalic,
+            //        LineColor = text.LineColor,
+            //        LineWidth = text.LineWidth,
+            //        FillColor = text.FillColor,
+            //        DashStyle = text.DashStyle
+            //    };
+            //}
+            //else if (shape is ShapePath path)
+            //{
+            //    List<PathSegment> segments = new List<PathSegment>();
+            //    foreach (var segment in path.PathSegments)
+            //    {
+            //        List<PointF> offsetPoints = new List<PointF>();
+            //        foreach (var p in segment.InputPoints)
+            //        {
+            //            offsetPoints.Add(new PointF(p.X + 10, p.Y + 10));
+            //        }
+            //        segments.Add(new PathSegment(segment.PathType, offsetPoints));
+            //    }
+            //    duplicate = new ShapePath(segments)
+            //    {
+            //        LineColor = path.LineColor,
+            //        LineWidth = path.LineWidth,
+            //        FillColor = path.FillColor,
+            //        DashStyle = path.DashStyle
+            //    };
+            //}
+
+            if (duplicate != null)
+            {
+                int index = shapes.IndexOf(shape);
+                shapes.Insert(index + 1, duplicate);
+                OnLayerChanged?.Invoke(GetBounds());
+            }
+        }
+
+        public void FlipShapeHorizomtally(BaseShape shape)
+        {
+            if (shape is ShapeRect rect)
+            {
+                rect.X = rect.X + rect.Width;
+                rect.Width = -rect.Width;
+            }
+            else if (shape is ShapeEllipse ellipse)
+            {
+                ellipse.X = ellipse.X + ellipse.Width;
+                ellipse.Width = -ellipse.Width;
+            }
+            else if (shape is ShapePolygon polygon)
+            {
+                float minX = polygon.Points.Min(p => p.X);
+                float maxX = polygon.Points.Max(p => p.X);
+                float centerX = (minX + maxX) / 2;
+
+                for (int i = 0; i < polygon.Points.Count; i++)
+                {
+                    polygon.Points[i] = new PointF(2 * centerX - polygon.Points[i].X, polygon.Points[i].Y);
+                }
+            }
+            else if (shape is ShapeText text)
+            {
+                text.X = text.X + text.Width;
+                text.Width = -text.Width;
+            }
+            else if (shape is ShapePath path)
+            {
+                float minX = float.MaxValue;
+                float maxX = float.MinValue;
+
+                foreach (var segment in path.PathSegments)
+                {
+                    foreach (var p in segment.InputPoints)
+                    {
+                        minX = Math.Min(minX, p.X);
+                        maxX = Math.Max(maxX, p.X);
+                    }
+                }
+
+                float centerX = (minX + maxX) / 2;
+
+                foreach (var segment in path.PathSegments)
+                {
+                    for (int i = 0; i < segment.InputPoints.Count; i++)
+                    {
+                        segment.InputPoints[i] = new PointF(2 * centerX - segment.InputPoints[i].X, segment.InputPoints[i].Y);
+                    }
+                }
             }
 
-            Image.Dispose();
-            Image = newImage;
             OnLayerChanged?.Invoke(GetBounds());
+        }
+
+        public void FlipShapeVertically(BaseShape shape)
+        {
+            if (shape is ShapeRect rect)
+            {
+                rect.Y = rect.Y + rect.Height;
+                rect.Height = -rect.Height;
+            }
+            else if (shape is ShapeEllipse ellipse)
+            {
+                ellipse.Y = ellipse.Y + ellipse.Height;
+                ellipse.Height = -ellipse.Height;
+            }
+            else if (shape is ShapePolygon polygon)
+            {
+                float minY = polygon.Points.Min(p => p.Y);
+                float maxY = polygon.Points.Max(p => p.Y);
+                float centerY = (minY + maxY) / 2;
+
+                for (int i = 0; i < polygon.Points.Count; i++)
+                {
+                    polygon.Points[i] = new PointF(polygon.Points[i].X, 2 * centerY - polygon.Points[i].Y);
+                }
+            }
+            else if (shape is ShapeText text)
+            {
+                text.Y = text.Y + text.Height;
+                text.Height = -text.Height;
+            }
+            else if (shape is ShapePath path)
+            {
+                float minY = float.MaxValue;
+                float maxY = float.MinValue;
+
+                foreach (var segment in path.PathSegments)
+                {
+                    foreach (var p in segment.InputPoints)
+                    {
+                        minY = Math.Min(minY, p.Y);
+                        maxY = Math.Max(maxY, p.Y);
+                    }
+                }
+
+                float centerY = (minY + maxY) / 2;
+
+                foreach (var segment in path.PathSegments)
+                {
+                    for (int i = 0; i < segment.InputPoints.Count; i++)
+                    {
+                        segment.InputPoints[i] = new PointF(segment.InputPoints[i].X, 2 * centerY - segment.InputPoints[i].Y);
+                    }
+                }
+            }
+
+            OnLayerChanged?.Invoke(GetBounds());
+        }
+
+        public void RotateShape90DegreesCW(BaseShape shape)
+        {
+            RotateShape(shape, 90);
+        }
+
+        public void RotateShape90DegreesCCW(BaseShape shape)
+        {
+            RotateShape(shape, -90);
+        }
+
+        public void RotateShape180Degrees(BaseShape shape)
+        {
+            RotateShape(shape, 180);
+        }
+
+        public void RotateShape(BaseShape shape, float angle)
+        {
+            float radians = (float)(angle * Math.PI / 180);
+            float cos = (float)Math.Cos(radians);
+            float sin = (float)Math.Sin(radians);
+
+            if (shape is ShapeRect rect)
+            {
+                // For rectangles and ellipses, rotation is handled by transforming the bounding box
+                float centerX = rect.X + rect.Width / 2;
+                float centerY = rect.Y + rect.Height / 2;
+
+                // Calculate new corners
+                PointF[] corners = new PointF[4];
+                corners[0] = RotatePoint(new PointF(rect.X, rect.Y), new PointF(centerX, centerY), cos, sin);
+                corners[1] = RotatePoint(new PointF(rect.X + rect.Width, rect.Y), new PointF(centerX, centerY), cos, sin);
+                corners[2] = RotatePoint(new PointF(rect.X + rect.Width, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin);
+                corners[3] = RotatePoint(new PointF(rect.X, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin);
+
+                float newMinX = corners.Min(p => p.X);
+                float newMinY = corners.Min(p => p.Y);
+                float newMaxX = corners.Max(p => p.X);
+                float newMaxY = corners.Max(p => p.Y);
+
+                rect.X = newMinX;
+                rect.Y = newMinY;
+                rect.Width = newMaxX - newMinX;
+                rect.Height = newMaxY - newMinY;
+            }
+            else if (shape is ShapeEllipse ellipse)
+            {
+                float centerX = ellipse.X + ellipse.Width / 2;
+                float centerY = ellipse.Y + ellipse.Height / 2;
+
+                PointF[] corners = new PointF[4];
+                corners[0] = RotatePoint(new PointF(ellipse.X, ellipse.Y), new PointF(centerX, centerY), cos, sin);
+                corners[1] = RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y), new PointF(centerX, centerY), cos, sin);
+                corners[2] = RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin);
+                corners[3] = RotatePoint(new PointF(ellipse.X, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin);
+
+                float newMinX = corners.Min(p => p.X);
+                float newMinY = corners.Min(p => p.Y);
+                float newMaxX = corners.Max(p => p.X);
+                float newMaxY = corners.Max(p => p.Y);
+
+                ellipse.X = newMinX;
+                ellipse.Y = newMinY;
+                ellipse.Width = newMaxX - newMinX;
+                ellipse.Height = newMaxY - newMinY;
+            }
+            else if (shape is ShapePolygon polygon)
+            {
+                float centerX = polygon.Points.Average(p => p.X);
+                float centerY = polygon.Points.Average(p => p.Y);
+
+                for (int i = 0; i < polygon.Points.Count; i++)
+                {
+                    polygon.Points[i] = RotatePoint(polygon.Points[i], new PointF(centerX, centerY), cos, sin);
+                }
+            }
+            else if (shape is ShapeText text)
+            {
+                float centerX = text.X + text.Width / 2;
+                float centerY = text.Y + text.Height / 2;
+
+                PointF[] corners = new PointF[4];
+                corners[0] = RotatePoint(new PointF(text.X, text.Y), new PointF(centerX, centerY), cos, sin);
+                corners[1] = RotatePoint(new PointF(text.X + text.Width, text.Y), new PointF(centerX, centerY), cos, sin);
+                corners[2] = RotatePoint(new PointF(text.X + text.Width, text.Y + text.Height), new PointF(centerX, centerY), cos, sin);
+                corners[3] = RotatePoint(new PointF(text.X, text.Y + text.Height), new PointF(centerX, centerY), cos, sin);
+
+                float newMinX = corners.Min(p => p.X);
+                float newMinY = corners.Min(p => p.Y);
+                float newMaxX = corners.Max(p => p.X);
+                float newMaxY = corners.Max(p => p.Y);
+
+                text.X = newMinX;
+                text.Y = newMinY;
+                text.Width = newMaxX - newMinX;
+                text.Height = newMaxY - newMinY;
+            }
+            else if (shape is ShapePath path)
+            {
+                float centerX = 0;
+                float centerY = 0;
+                int pointCount = 0;
+
+                foreach (var segment in path.PathSegments)
+                {
+                    foreach (var p in segment.InputPoints)
+                    {
+                        centerX += p.X;
+                        centerY += p.Y;
+                        pointCount++;
+                    }
+                }
+
+                if (pointCount > 0)
+                {
+                    centerX /= pointCount;
+                    centerY /= pointCount;
+
+                    foreach (var segment in path.PathSegments)
+                    {
+                        for (int i = 0; i < segment.InputPoints.Count; i++)
+                        {
+                            segment.InputPoints[i] = RotatePoint(segment.InputPoints[i], new PointF(centerX, centerY), cos, sin);
+                        }
+                    }
+                }
+            }
+
+            OnLayerChanged?.Invoke(GetBounds());
+        }
+
+        private static PointF RotatePoint(PointF point, PointF center, float cos, float sin)
+        {
+            float dx = point.X - center.X;
+            float dy = point.Y - center.Y;
+            return new PointF(center.X + dx * cos - dy * sin, center.Y + dx * sin + dy * cos);
         }
 
         public Layer Clone()
