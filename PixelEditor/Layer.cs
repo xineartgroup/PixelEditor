@@ -434,73 +434,73 @@ namespace PixelEditor
         {
             BaseShape? duplicate = null;
 
-            //if (shape is ShapeRect rect)
-            //{
-            //    duplicate = new ShapeRect(rect.X + 10, rect.Y + 10, rect.Width, rect.Height)
-            //    {
-            //        LineColor = rect.LineColor,
-            //        LineWidth = rect.LineWidth,
-            //        FillColor = rect.FillColor,
-            //        DashStyle = rect.DashStyle
-            //    };
-            //}
-            //else if (shape is ShapeEllipse ellipse)
-            //{
-            //    duplicate = new ShapeEllipse(ellipse.X + 10, ellipse.Y + 10, ellipse.Width, ellipse.Height)
-            //    {
-            //        LineColor = ellipse.LineColor,
-            //        LineWidth = ellipse.LineWidth,
-            //        FillColor = ellipse.FillColor,
-            //        DashStyle = ellipse.DashStyle
-            //    };
-            //}
-            //else if (shape is ShapePolygon polygon)
-            //{
-            //    List<PointF> points = new List<PointF>();
-            //    foreach (var p in polygon.Points)
-            //    {
-            //        points.Add(new PointF(p.X + 10, p.Y + 10));
-            //    }
-            //    duplicate = new ShapePolygon(points, polygon.IsClosed)
-            //    {
-            //        LineColor = polygon.LineColor,
-            //        LineWidth = polygon.LineWidth,
-            //        FillColor = polygon.FillColor,
-            //        DashStyle = polygon.DashStyle
-            //    };
-            //}
-            //else if (shape is ShapeText text)
-            //{
-            //    duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize)
-            //    {
-            //        IsBold = text.IsBold,
-            //        IsItalic = text.IsItalic,
-            //        LineColor = text.LineColor,
-            //        LineWidth = text.LineWidth,
-            //        FillColor = text.FillColor,
-            //        DashStyle = text.DashStyle
-            //    };
-            //}
-            //else if (shape is ShapePath path)
-            //{
-            //    List<PathSegment> segments = new List<PathSegment>();
-            //    foreach (var segment in path.PathSegments)
-            //    {
-            //        List<PointF> offsetPoints = new List<PointF>();
-            //        foreach (var p in segment.InputPoints)
-            //        {
-            //            offsetPoints.Add(new PointF(p.X + 10, p.Y + 10));
-            //        }
-            //        segments.Add(new PathSegment(segment.PathType, offsetPoints));
-            //    }
-            //    duplicate = new ShapePath(segments)
-            //    {
-            //        LineColor = path.LineColor,
-            //        LineWidth = path.LineWidth,
-            //        FillColor = path.FillColor,
-            //        DashStyle = path.DashStyle
-            //    };
-            //}
+            if (shape is ShapeRect rect)
+            {
+                duplicate = new ShapeRect(rect.X + 10, rect.Y + 10, rect.Width, rect.Height)
+                {
+                    LineColor = rect.LineColor,
+                    LineWidth = rect.LineWidth,
+                    FillColor = rect.FillColor,
+                    DashStyle = rect.DashStyle
+                };
+            }
+            else if (shape is ShapeEllipse ellipse)
+            {
+                duplicate = new ShapeEllipse(ellipse.X + 10, ellipse.Y + 10, ellipse.Width, ellipse.Height)
+                {
+                    LineColor = ellipse.LineColor,
+                    LineWidth = ellipse.LineWidth,
+                    FillColor = ellipse.FillColor,
+                    DashStyle = ellipse.DashStyle
+                };
+            }
+            else if (shape is ShapePolygon polygon)
+            {
+                List<PointF> points = [];
+                foreach (var p in polygon.Points)
+                {
+                    points.Add(new PointF(p.X + 10, p.Y + 10));
+                }
+                duplicate = new ShapePolygon(points, polygon.IsClosed)
+                {
+                    LineColor = polygon.LineColor,
+                    LineWidth = polygon.LineWidth,
+                    FillColor = polygon.FillColor,
+                    DashStyle = polygon.DashStyle
+                };
+            }
+            else if (shape is ShapeText text)
+            {
+                duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize)
+                {
+                    IsBold = text.IsBold,
+                    IsItalic = text.IsItalic,
+                    LineColor = text.LineColor,
+                    LineWidth = text.LineWidth,
+                    FillColor = text.FillColor,
+                    DashStyle = text.DashStyle
+                };
+            }
+            else if (shape is ShapePath path)
+            {
+                List<PathSegment> segments = [];
+                foreach (var segment in path.PathSegments)
+                {
+                    List<PointF> offsetPoints = [];
+                    foreach (var p in segment.InputPoints)
+                    {
+                        offsetPoints.Add(new PointF(p.X + 10, p.Y + 10));
+                    }
+                    segments.Add(new PathSegment(segment.PathType, offsetPoints));
+                }
+                duplicate = new ShapePath(segments)
+                {
+                    LineColor = path.LineColor,
+                    LineWidth = path.LineWidth,
+                    FillColor = path.FillColor,
+                    DashStyle = path.DashStyle
+                };
+            }
 
             if (duplicate != null)
             {
@@ -514,12 +514,12 @@ namespace PixelEditor
         {
             if (shape is ShapeRect rect)
             {
-                rect.X = rect.X + rect.Width;
+                rect.X += rect.Width;
                 rect.Width = -rect.Width;
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                ellipse.X = ellipse.X + ellipse.Width;
+                ellipse.X += ellipse.Width;
                 ellipse.Width = -ellipse.Width;
             }
             else if (shape is ShapePolygon polygon)
@@ -535,7 +535,7 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                text.X = text.X + text.Width;
+                text.X += text.Width;
                 text.Width = -text.Width;
             }
             else if (shape is ShapePath path)
@@ -570,12 +570,12 @@ namespace PixelEditor
         {
             if (shape is ShapeRect rect)
             {
-                rect.Y = rect.Y + rect.Height;
+                rect.Y += rect.Height;
                 rect.Height = -rect.Height;
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                ellipse.Y = ellipse.Y + ellipse.Height;
+                ellipse.Y += ellipse.Height;
                 ellipse.Height = -ellipse.Height;
             }
             else if (shape is ShapePolygon polygon)
@@ -591,7 +591,7 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                text.Y = text.Y + text.Height;
+                text.Y += text.Height;
                 text.Height = -text.Height;
             }
             else if (shape is ShapePath path)
@@ -650,12 +650,13 @@ namespace PixelEditor
                 float centerY = rect.Y + rect.Height / 2;
 
                 // Calculate new corners
-                PointF[] corners = new PointF[4];
-                corners[0] = RotatePoint(new PointF(rect.X, rect.Y), new PointF(centerX, centerY), cos, sin);
-                corners[1] = RotatePoint(new PointF(rect.X + rect.Width, rect.Y), new PointF(centerX, centerY), cos, sin);
-                corners[2] = RotatePoint(new PointF(rect.X + rect.Width, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin);
-                corners[3] = RotatePoint(new PointF(rect.X, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin);
-
+                PointF[] corners =
+                [
+                    RotatePoint(new PointF(rect.X, rect.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(rect.X + rect.Width, rect.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(rect.X + rect.Width, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(rect.X, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin),
+                ];
                 float newMinX = corners.Min(p => p.X);
                 float newMinY = corners.Min(p => p.Y);
                 float newMaxX = corners.Max(p => p.X);
@@ -671,12 +672,13 @@ namespace PixelEditor
                 float centerX = ellipse.X + ellipse.Width / 2;
                 float centerY = ellipse.Y + ellipse.Height / 2;
 
-                PointF[] corners = new PointF[4];
-                corners[0] = RotatePoint(new PointF(ellipse.X, ellipse.Y), new PointF(centerX, centerY), cos, sin);
-                corners[1] = RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y), new PointF(centerX, centerY), cos, sin);
-                corners[2] = RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin);
-                corners[3] = RotatePoint(new PointF(ellipse.X, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin);
-
+                PointF[] corners =
+                [
+                    RotatePoint(new PointF(ellipse.X, ellipse.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(ellipse.X, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin),
+                ];
                 float newMinX = corners.Min(p => p.X);
                 float newMinY = corners.Min(p => p.Y);
                 float newMaxX = corners.Max(p => p.X);
@@ -702,12 +704,13 @@ namespace PixelEditor
                 float centerX = text.X + text.Width / 2;
                 float centerY = text.Y + text.Height / 2;
 
-                PointF[] corners = new PointF[4];
-                corners[0] = RotatePoint(new PointF(text.X, text.Y), new PointF(centerX, centerY), cos, sin);
-                corners[1] = RotatePoint(new PointF(text.X + text.Width, text.Y), new PointF(centerX, centerY), cos, sin);
-                corners[2] = RotatePoint(new PointF(text.X + text.Width, text.Y + text.Height), new PointF(centerX, centerY), cos, sin);
-                corners[3] = RotatePoint(new PointF(text.X, text.Y + text.Height), new PointF(centerX, centerY), cos, sin);
-
+                PointF[] corners =
+                [
+                    RotatePoint(new PointF(text.X, text.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(text.X + text.Width, text.Y), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(text.X + text.Width, text.Y + text.Height), new PointF(centerX, centerY), cos, sin),
+                    RotatePoint(new PointF(text.X, text.Y + text.Height), new PointF(centerX, centerY), cos, sin),
+                ];
                 float newMinX = corners.Min(p => p.X);
                 float newMinY = corners.Min(p => p.Y);
                 float newMaxX = corners.Max(p => p.X);

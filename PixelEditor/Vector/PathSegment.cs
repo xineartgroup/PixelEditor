@@ -2,6 +2,18 @@
 {
     public class PathSegment
     {
+        public PathSegment()
+        {
+            PathType = "";
+            InputPoints = [];
+        }
+
+        public PathSegment(string pathType, List<PointF> points)
+        {
+            PathType = pathType;
+            InputPoints = points;
+        }
+
         public string PathType { get; set; } = string.Empty; // M, L, H, V, C, Q, A, Z
 
         public List<PointF> InputPoints { get; set; } = [];
