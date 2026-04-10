@@ -1,6 +1,6 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
-using System.Runtime.InteropServices;
+using System.Drawing.Imaging;
 
 namespace PixelEditor
 {
@@ -36,6 +36,7 @@ namespace PixelEditor
         private bool isDraggingShape = false;
         private bool isUpdatingPolygonShape = false;
         private bool isResizingShape = false;
+        private bool isColorPicked = false;
         private int activeHandleIndex = -1; // 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
         private float dashOffset = 0;
         private float startMouseAngle = 0;
@@ -58,6 +59,8 @@ namespace PixelEditor
         private PointF scaleAnchorWorld = PointF.Empty;
         private Point scaleStartMouseScreen = Point.Empty;
         private string activeScaleHandle = "";
+
+        private readonly ColorDialogX _colorPicker = new();
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -172,13 +175,6 @@ namespace PixelEditor
         private readonly NumericUpDown numTextFillOpacity = new();
         private readonly Label lblTextFillColor = new();
         private readonly Button btnTextFillColor = new();
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetIconInfo(IntPtr hIcon, ref IconInfo pIconInfo);
 
         public FormMain()
         {
@@ -1265,13 +1261,26 @@ namespace PixelEditor
 
         private void BtnTextFillColor_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnTextFillColor.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnTextFillColor.BackColor = cd.Color;
+                btnTextFillColor.BackColor = selectedColor;
                 FillTextOpacityNum_ValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnTextFillColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnTextFillColor.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnTextFillColor.BackColor = cd.Color;
+            //    FillTextOpacityNum_ValueChanged(sender, e);
+            //}
         }
 
         private void CboRectLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
@@ -1366,68 +1375,146 @@ namespace PixelEditor
 
         private void BtnFillRectColorShape_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnRectFillColorShape.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnRectFillColorShape.BackColor = cd.Color;
+                btnRectFillColorShape.BackColor = selectedColor;
                 FillRectOpacityNum_ValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnRectFillColorShape.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnRectFillColorShape.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnRectFillColorShape.BackColor = cd.Color;
+            //    FillRectOpacityNum_ValueChanged(sender, e);
+            //}
         }
 
         private void BtnFillEllipseColorShape_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnEllipseFillColorShape.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnEllipseFillColorShape.BackColor = cd.Color;
+                btnEllipseFillColorShape.BackColor = selectedColor;
                 FillEllipseOpacityNum_ValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnEllipseFillColorShape.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;;
+            //cd.Color = btnEllipseFillColorShape.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnEllipseFillColorShape.BackColor = cd.Color;
+            //    FillEllipseOpacityNum_ValueChanged(sender, e);
+            //}
         }
 
         private void BtnFillPolygonColorShape_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnPolygonFillColorShape.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnPolygonFillColorShape.BackColor = cd.Color;
+                btnPolygonFillColorShape.BackColor = selectedColor;
                 FillPolygonOpacityNum_ValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnPolygonFillColorShape.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnPolygonFillColorShape.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnPolygonFillColorShape.BackColor = cd.Color;
+            //    FillPolygonOpacityNum_ValueChanged(sender, e);
+            //}
         }
 
         private void BtnRectLineColor_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnRectLineColor.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnRectLineColor.BackColor = cd.Color;
+                btnRectLineColor.BackColor = selectedColor;
                 OnRectLineOpacityValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnRectLineColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnRectLineColor.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnRectLineColor.BackColor = cd.Color;
+            //    OnRectLineOpacityValueChanged(sender, e);
+            //}
         }
 
         private void BtnEllipseLineColor_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnEllipseLineColor.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnEllipseLineColor.BackColor = cd.Color;
+                btnEllipseLineColor.BackColor = selectedColor;
                 OnEllipseLineOpacityValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnEllipseLineColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnEllipseLineColor.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnEllipseLineColor.BackColor = cd.Color;
+            //    OnEllipseLineOpacityValueChanged(sender, e);
+            //}
         }
 
         private void BtnPolygonLineColor_Click(object? sender, EventArgs e)
         {
-            using ColorDialog cd = new();
-            cd.Color = btnPolygonLineColor.BackColor;
-            if (cd.ShowDialog() == DialogResult.OK)
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                btnPolygonLineColor.BackColor = cd.Color;
+                btnPolygonLineColor.BackColor = selectedColor;
                 OnPolygonLineOpacityValueChanged(sender, e);
-            }
+            };
+
+            _colorPicker.Color = btnPolygonLineColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //using ColorDialog cd = new();
+            //cd.FullOpen = true;
+            //cd.Color = btnPolygonLineColor.BackColor;
+            //if (cd.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnPolygonLineColor.BackColor = cd.Color;
+            //    OnPolygonLineOpacityValueChanged(sender, e);
+            //}
         }
 
         private void RectLineSize_Scroll(object? sender, EventArgs e)
@@ -1641,14 +1728,11 @@ namespace PixelEditor
 
         private void BtnPenColor_Click(object? sender, EventArgs e)
         {
-            ColorDialog c = new()
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                Color = btnPenColor.BackColor,
-                FullOpen = true
-            };
-            if (c.ShowDialog() == DialogResult.OK)
-            {
-                btnPenColor.BackColor = c.Color;
+                btnPenColor.BackColor = selectedColor;
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                 if (paint.Brush != null)
                 {
@@ -1657,44 +1741,94 @@ namespace PixelEditor
                     int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
                     UpdateCursor(cursorWidth, cursorHeight);
                 }
-            }
+            };
+
+            _colorPicker.Color = btnPenColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //ColorDialog c = new()
+            //{
+            //    Color = btnPenColor.BackColor,
+            //    FullOpen = true
+            //};
+            //if (c.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnPenColor.BackColor = c.Color;
+            //    paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+            //    if (paint.Brush != null)
+            //    {
+            //        PaintingEngine.SetBrush(paint);
+            //        int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+            //        int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+            //        UpdateCursor(cursorWidth, cursorHeight);
+            //    }
+            //}
         }
 
         private void BtnEraserColor_Click(object? sender, EventArgs e)
         {
-            ColorDialog c = new()
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                Color = btnEraserColor.BackColor,
-                FullOpen = true
+                btnEraserColor.BackColor = selectedColor;
+                paint.SetFillColor(btnEraserColor.BackColor);
+                PaintingEngine.SetBrush(paint);
+                UpdateCursor(btnEraserColor.Image);
             };
-            if (c.ShowDialog() == DialogResult.OK)
-            {
-                btnEraserColor.BackColor = c.Color;
-                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
-                if (paint.Brush != null)
-                {
-                    PaintingEngine.SetBrush(paint);
-                    int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
-                    int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
-                    UpdateCursor(cursorWidth, cursorHeight);
-                }
-            }
+
+            _colorPicker.Color = btnEraserColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //ColorDialog c = new()
+            //{
+            //    Color = btnEraserColor.BackColor,
+            //    FullOpen = true
+            //};
+            //if (c.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnEraserColor.BackColor = c.Color;
+            //    paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+            //    if (paint.Brush != null)
+            //    {
+            //        PaintingEngine.SetBrush(paint);
+            //        int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+            //        int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+            //        UpdateCursor(cursorWidth, cursorHeight);
+            //    }
+            //}
         }
 
         private void BtnFillColor_Click(object? sender, EventArgs e)
         {
-            ColorDialog c = new()
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
             {
-                Color = btnFillColor.BackColor,
-                FullOpen = true
-            };
-            if (c.ShowDialog() == DialogResult.OK)
-            {
-                btnFillColor.BackColor = c.Color;
+                btnFillColor.BackColor = selectedColor;
                 paint.SetFillColor(btnFillColor.BackColor);
                 PaintingEngine.SetBrush(paint);
                 UpdateCursor(btnFiller.Image);
-            }
+            };
+
+            _colorPicker.Color = btnFillColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+
+            //ColorDialog c = new()
+            //{
+            //    Color = btnFillColor.BackColor,
+            //    FullOpen = true
+            //};
+            //if (c.ShowDialog() == DialogResult.OK)
+            //{
+            //    btnFillColor.BackColor = c.Color;
+            //    paint.SetFillColor(btnFillColor.BackColor);
+            //    PaintingEngine.SetBrush(paint);
+            //    UpdateCursor(btnFiller.Image);
+            //}
         }
 
         private void BtnFillColor1_Click(object? sender, EventArgs e)
@@ -1913,7 +2047,7 @@ namespace PixelEditor
                         }
                     }
                 }
-                canvas.Cursor = GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
+                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
             }
         }
 
@@ -1931,24 +2065,12 @@ namespace PixelEditor
                 int hotSpotX = cursorWidth / 2;
                 int hotSpotY = cursorHeight / 2;
 
-                canvas.Cursor = GetCursor(new Bitmap(paint.Brush, cursorWidth, cursorHeight), hotSpotX, hotSpotY);
+                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(paint.Brush, cursorWidth, cursorHeight), hotSpotX, hotSpotY);
             }
             else
             {
                 canvas.Cursor = Cursors.Default;
             }
-        }
-
-        private static Cursor GetCursor(Bitmap bmp, int xHotSpot, int yHotSpot)
-        {
-            IntPtr ptr = bmp.GetHicon();
-            var tmp = new IconInfo();
-            GetIconInfo(ptr, ref tmp);
-            tmp.xHotspot = xHotSpot;
-            tmp.yHotspot = yHotSpot;
-            tmp.fIcon = false;
-            ptr = CreateIconIndirect(ref tmp);
-            return new Cursor(ptr);
         }
 
         private static Cursor GetCursor(string handle)
@@ -2487,67 +2609,27 @@ namespace PixelEditor
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FormAbout frm = new()
-            {
-            };
+            FormAbout frm = new();
 
             frm.ShowDialog(this);
         }
 
         private void ToolStripMenuFlipHorizontal_Click(object sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-            if (selectedLayer != null)
-            {
-                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
-                {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            ScaleSelectedLayerImage(-scaleFactorX, scaleFactorY);
 
-                    Bitmap flippedBitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
-                    using (Graphics g = Graphics.FromImage(flippedBitmap))
-                    {
-                        g.DrawImage(selectedLayer.Image,
-                            new Rectangle(0, 0, selectedLayer.Image.Width, selectedLayer.Image.Height),
-                            new Rectangle(selectedLayer.Image.Width, 0, -selectedLayer.Image.Width, selectedLayer.Image.Height),
-                            GraphicsUnit.Pixel);
-                    }
-                    selectedLayer.Image.Dispose();
-                    selectedLayer.Image = flippedBitmap;
-
-                    RedrawImage();
-
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-            }
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void ToolStripMenuFlipVertical_Click(object sender, EventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-            if (selectedLayer != null)
-            {
-                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
-                {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            ScaleSelectedLayerImage(scaleFactorX, -scaleFactorY);
 
-                    Bitmap flippedBitmap = new(selectedLayer.Image.Width, selectedLayer.Image.Height);
-                    using (Graphics g = Graphics.FromImage(flippedBitmap))
-                    {
-                        g.DrawImage(selectedLayer.Image,
-                            new Rectangle(0, 0, selectedLayer.Image.Width, selectedLayer.Image.Height),
-                            new Rectangle(0, selectedLayer.Image.Height, selectedLayer.Image.Width, -selectedLayer.Image.Height),
-                            GraphicsUnit.Pixel);
-                    }
-                    selectedLayer.Image.Dispose();
-                    selectedLayer.Image = flippedBitmap;
-
-                    RedrawImage();
-
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-            }
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void ToolStripMenuRotate90CW_Click(object sender, EventArgs e)
@@ -2635,6 +2717,67 @@ namespace PixelEditor
 
                         selectedLayer.Image.Dispose();
                         selectedLayer.Image = rotatedBitmap;
+
+                        RedrawImage();
+                    }
+                }
+            }
+        }
+
+        private void ScaleSelectedLayerImage(float scaleX, float scaleY)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
+                {
+                    if (ImageSelections.ContainsSelection() && selectedAreaBitmap == null)
+                    {
+                        ImageSelections.CalculateSelectionBounds();
+                        selectedAreaBitmap = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
+                        selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer) ?? new Bitmap(selectedLayer.Image.Width, selectedLayer.Image.Height);
+                    }
+
+                    if (selectedAreaBitmap != null)
+                    {
+                        ImageSelections.ScaleSelections(1 / scaleFactorX, 1 / scaleFactorY, scaleAnchorWorld);
+
+                        scaleAnchorWorld = ImageSelections.GetSelectionCenter();
+
+                        scaleFactorX = scaleX;
+                        scaleFactorY = scaleY;
+
+                        UpdateTransformMatrix();
+
+                        ImageSelections.ScaleSelections(scaleX, scaleY, scaleAnchorWorld);
+
+                        RedrawImage();
+                    }
+                    else
+                    {
+                        int originalWidth = selectedLayer.Image.Width;
+                        int originalHeight = selectedLayer.Image.Height;
+
+                        int newWidth = (int)Math.Max(1, Math.Abs(originalWidth * scaleX));
+                        int newHeight = (int)Math.Max(1, Math.Abs(originalHeight * scaleY));
+
+                        Bitmap flippedBitmap = new (newWidth, newHeight);
+
+                        using (Graphics g = Graphics.FromImage(flippedBitmap))
+                        {
+                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+                            if (scaleX < 0) g.TranslateTransform(newWidth, 0);
+                            if (scaleY < 0) g.TranslateTransform(0, newHeight);
+
+                            g.ScaleTransform(scaleX, scaleY);
+
+                            g.DrawImage(selectedLayer.Image, 0, 0, originalWidth, originalHeight);
+                        }
+
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = flippedBitmap;
 
                         RedrawImage();
                     }
@@ -3189,6 +3332,17 @@ namespace PixelEditor
             }
         }
 
+        public static void SetClipboardImage(Image image)
+        {
+            Bitmap bitmap = new (image);
+            using MemoryStream ms = new();
+            bitmap.Save(ms, ImageFormat.Png);
+            DataObject data = new();
+            data.SetData("PNG", false, ms); // Add PNG format for apps that support it
+            data.SetData(DataFormats.Bitmap, true, bitmap); // Fallback for others
+            Clipboard.SetDataObject(data, true);
+        }
+
         private void DeleteImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -3239,8 +3393,8 @@ namespace PixelEditor
                     selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
                     if (tempImage != null)
                     {
-                        Clipboard.SetImage(tempImage);
-                        ImageSelections.ClearSelections();
+                        SetClipboardImage(tempImage);
+                        //ImageSelections.ClearSelections();
                         RedrawImage();
                     }
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -3251,7 +3405,7 @@ namespace PixelEditor
                     if (tempImage != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        Clipboard.SetImage(tempImage);
+                        SetClipboardImage(tempImage);
                         DeleteImageToolStripMenuItem_Click(sender, e);
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -3272,8 +3426,8 @@ namespace PixelEditor
                     Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
                     if (tempImage != null)
                     {
-                        Clipboard.SetImage(tempImage);
-                        ImageSelections.ClearSelections();
+                        SetClipboardImage(tempImage);
+                        //ImageSelections.ClearSelections();
                         RedrawImage();
                     }
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -3284,7 +3438,7 @@ namespace PixelEditor
                     if (tempImage != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        Clipboard.SetImage(tempImage);
+                        SetClipboardImage(tempImage);
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
@@ -3294,18 +3448,34 @@ namespace PixelEditor
 
         private void PasteImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            Image? clipboardImage = Clipboard.GetImage();
-            if (clipboardImage != null)
+            IDataObject? data = Clipboard.GetDataObject();
+            Bitmap? clipboardImage = null;
+
+            if (data != null)
             {
-                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-                if (selectedLayer != null)
+                if (data.GetDataPresent("PNG"))
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    using MemoryStream ms = (MemoryStream)data.GetData("PNG");
+                    if (ms != null) clipboardImage = new Bitmap(ms);
+                }
 
-                    selectedLayer.Image = new Bitmap(clipboardImage);
-                    RedrawImage();
+                if (clipboardImage == null && data.GetDataPresent(DataFormats.Bitmap))
+                {
+                    clipboardImage = (Bitmap)Clipboard.GetImage();
+                }
 
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                if (clipboardImage != null)
+                {
+                    var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                    if (selectedLayer != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                        selectedAreaBitmap = new Bitmap(clipboardImage);
+                        RedrawImage();
+
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
                 }
             }
         }
@@ -3621,33 +3791,6 @@ namespace PixelEditor
             transformMatrix.Translate(anchorScreen.X, anchorScreen.Y, MatrixOrder.Append);
         }
 
-        private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
-        {
-            if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
-
-            if (scaleFactorX != 1.0f || scaleFactorY != 1.0f || rotationAngle != 0f)
-                BakeTransformIntoSelectedArea(selectedLayer);
-
-            Bitmap result = new(selectedLayer.Image);
-            using (Graphics g = Graphics.FromImage(result))
-            {
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-
-                RectangleF worldBounds = ImageSelections.GetSelectionBounds();
-                float localX = worldBounds.X - selectedLayer.X;
-                float localY = worldBounds.Y - selectedLayer.Y;
-
-                g.DrawImage(selectedAreaBitmap, localX, localY);
-            }
-
-            selectedAreaBitmap?.Dispose();
-            selectedAreaBitmap = null;
-            ImageSelections.ClearSelections();
-
-            return result;
-        }
-
         private (float newX, float newY) CalculateScaleFactors(Point mouseScreenPos, string handle)
         {
             (bool affectsX, bool affectsY) = ManipulatorGeneral.GetHandleAxes(handle);
@@ -3674,6 +3817,33 @@ namespace PixelEditor
             }
 
             return (newX, newY);
+        }
+
+        private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
+        {
+            if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
+
+            if (scaleFactorX != 1.0f || scaleFactorY != 1.0f || rotationAngle != 0f)
+                BakeTransformIntoSelectedArea(selectedLayer);
+
+            Bitmap result = new(selectedLayer.Image);
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                RectangleF worldBounds = ImageSelections.GetSelectionBounds();
+                float localX = worldBounds.X - selectedLayer.X;
+                float localY = worldBounds.Y - selectedLayer.Y;
+
+                g.DrawImage(selectedAreaBitmap, localX, localY);
+            }
+
+            selectedAreaBitmap?.Dispose();
+            selectedAreaBitmap = null;
+            ImageSelections.ClearSelections();
+
+            return result;
         }
 
         private void BakeTransformIntoSelectedArea(Layer selectedLayer)
@@ -3762,7 +3932,16 @@ namespace PixelEditor
 
                 if (selectedLayer != null)
                 {
-                    if (btnShapeRect.Checked)
+                    if (ColorDialogX.IsEyeDropping)
+                    {
+                        startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                        Color pickedColor = ManipulatorGeneral.PickColorAtPoint(selectedLayer, startPoint);
+                        ColorDialogX.IsEyeDropping = false;
+                        _colorPicker?.Color = pickedColor;
+                        _colorPicker?.OnColorAccepted?.Invoke(pickedColor);
+                        isColorPicked = true;
+                    }
+                    else if (btnShapeRect.Checked)
                     {
                         startPoint = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         isDrawing = true;
@@ -4465,8 +4644,8 @@ namespace PixelEditor
             {
                 if (ImageSelections.ContainsSelection())
                 {
-                    (scaleFactorX, scaleFactorY) = CalculateScaleFactors(e.Location, activeScaleHandle);
-                    UpdateTransformMatrix();
+                    (float scaleX, float scaleY) = CalculateScaleFactors(e.Location, activeScaleHandle);
+                    ScaleSelectedLayerImage(scaleX, scaleY);
                 }
             }
             else if (isWarping)
@@ -4683,26 +4862,29 @@ namespace PixelEditor
             }
             if (selectedLayer != null)
             {
-                if (selectedLayer.Image != null)
+                if (!isColorPicked)
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    ManipulatorGeneral.UpdateBuffers();
-                    PaintingEngine.EndStroke();
-                    ImageSelections.MasAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
-                    ImageSelections.CalculateSelectionBounds();
-                    layersControl.RefreshLayersDisplay();
-                    RedrawImage();
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-                if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
-                {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                    if (selectedLayer.Image != null)
                     {
-                        selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        ManipulatorGeneral.UpdateBuffers();
+                        PaintingEngine.EndStroke();
+                        ImageSelections.MasAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                        ImageSelections.CalculateSelectionBounds();
+                        layersControl.RefreshLayersDisplay();
+                        RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
-                    RedrawImage();
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                        {
+                            selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                        }
+                        RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
                 }
             }
             WarpEngine.WarpSnapshot?.Dispose();
@@ -4720,6 +4902,7 @@ namespace PixelEditor
             isDraggingShape = false;
             isResizingShape = false;
             activeHandleIndex = -1;
+            ColorDialogX.IsEyeDropping = false;
         }
 
         private void Canvas_MouseDoubleClick(object? sender, MouseEventArgs e)

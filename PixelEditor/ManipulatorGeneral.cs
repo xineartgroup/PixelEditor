@@ -111,7 +111,7 @@ namespace PixelEditor
 
             if (selectedLayerIndex >= 0 && selectedLayerIndex < layers.Count)
             {
-                PopulateColorGridOptimized(layers, selectedLayerIndex);
+                PopulateColorGrid(layers, selectedLayerIndex);
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace PixelEditor
             DirtyRegions.Clear();
         }
 
-        private static void PopulateColorGridOptimized(List<Layer> layers, int selectedLayerIndex)
+        private static void PopulateColorGrid(List<Layer> layers, int selectedLayerIndex)
         {
             if (Screen.Width != Document.Width || Screen.Height != Document.Height)
                 Screen = new ColorGrid(Document.Width, Document.Height);
@@ -354,7 +354,6 @@ namespace PixelEditor
             {
                 if (poly.Mask != null)
                 {
-                    // Factor in the layer's X and Y position when reading from a global mask
                     int maskWidth = poly.Mask.GetLength(0);
                     int maskHeight = poly.Mask.GetLength(1);
 
@@ -362,11 +361,9 @@ namespace PixelEditor
                     {
                         for (int x = 0; x < width; x++)
                         {
-                            // Map local layer coordinates (x, y) to global canvas coordinates
                             int globalX = x + selectedLayer.X;
                             int globalY = y + selectedLayer.Y;
 
-                            // Ensure the mapped coordinates fall inside the stored mask boundary
                             if (globalX >= 0 && globalX < maskWidth && globalY >= 0 && globalY < maskHeight)
                             {
                                 if (poly.Mask[globalX, globalY])
@@ -409,17 +406,17 @@ namespace PixelEditor
 
             int cropWidth = maxX - minX + 1;
             int cropHeight = maxY - minY + 1;
-            Bitmap result = new(cropWidth, cropHeight, PixelFormat.Format32bppPArgb);
+            Bitmap result = new(cropWidth, cropHeight, PixelFormat.Format32bppArgb);
 
             using (Bitmap sourceBitmap = new(selectedLayer.Image))
             {
                 BitmapData sourceData = sourceBitmap.LockBits(
                     new Rectangle(0, 0, width, height),
-                    ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+                    ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
                 BitmapData resultData = result.LockBits(
                     new Rectangle(0, 0, cropWidth, cropHeight),
-                    ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+                    ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
 
                 int sStride = sourceData.Stride;
                 int rStride = resultData.Stride;
@@ -894,7 +891,7 @@ namespace PixelEditor
             return layerBuffer;
         }
 
-        public static ColorGrid RasterizeImage(System.Drawing.Image? image)
+        public static ColorGrid RasterizeImage(Image? image)
         {
             if (image != null)
             {
@@ -1510,6 +1507,26 @@ namespace PixelEditor
                 "Custom" => DashStyle.Custom,
                 _ => DashStyle.Solid,
             };
+        }
+
+        public static Color PickColorAtPoint(Layer selectedLayer, PointF startPoint)
+        {
+            int localX = (int)(startPoint.X - selectedLayer.X);
+            int localY = (int)(startPoint.Y - selectedLayer.Y);
+
+            if (selectedLayer.Image == null)
+            {
+                return Color.Transparent;
+            }
+
+            using Bitmap? bmp = new (selectedLayer.Image);
+
+            if (localX >= 0 && localX < bmp.Width && localY >= 0 && localY < bmp.Height)
+            {
+                return bmp.GetPixel(localX, localY);
+            }
+
+            return Color.Transparent;
         }
     }
 }

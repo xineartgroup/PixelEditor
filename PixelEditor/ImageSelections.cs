@@ -592,6 +592,27 @@
             }
         }
 
+        public static void ScaleSelections(float scaleX, float scaleY, PointF scaleAnchorWorld)
+        {
+            foreach (var poly in selectionPolygons)
+            {
+                List<PointF> floatPoints = [.. poly.Points.Select(p => new PointF(p.X, p.Y))];
+
+                List<PointF> scaledFloatPoints = [.. floatPoints.Select(p => new PointF(
+                    scaleAnchorWorld.X + (p.X - scaleAnchorWorld.X) * scaleX,
+                    scaleAnchorWorld.Y + (p.Y - scaleAnchorWorld.Y) * scaleY
+                ))];
+
+                poly.Points = [.. scaledFloatPoints.Select(p => new Point((int)Math.Round(p.X), (int)Math.Round(p.Y)))];
+
+                if (poly.Mask != null)
+                {
+                    Array.Clear(poly.Mask, 0, poly.Mask.Length);
+                    FillPolygonInMask(poly.Mask, poly.Points, true);
+                }
+            }
+        }
+
         public static bool ContainsPoint(SelectionPolygon polygon, Point point)
         {
             if (polygon.Points.Count < 3)
