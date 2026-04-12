@@ -1,10 +1,9 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
 namespace PixelEditor.Vector
 {
-    public static class ShapeToPathConverter
+    public static class PathManipulator
     {
         public static ShapePath Convert(BaseShape shape)
         {
@@ -15,7 +14,7 @@ namespace PixelEditor.Vector
                 ShapeEllipse ellipse => Convert(ellipse),
                 ShapePolygon polygon => Convert(polygon),
                 ShapeText text => Convert(text),
-                _ => throw new NotSupportedException("Unsupported shape type")
+                _ => new ShapePath()
             };
         }
 
@@ -128,6 +127,249 @@ namespace PixelEditor.Vector
             return path;
         }
 
+        public static ShapePath UnionShapePaths(ShapePath shape1, ShapePath shape2)
+        {
+            if (shape1.PathSegments.Count == 0) return shape2;
+            if (shape2.PathSegments.Count == 0) return shape1;
+
+            var allPoints = shape1.PathSegments.Concat(shape2.PathSegments).SelectMany(s => s.GetPoints()).ToList();
+            float buffer = Math.Max(shape1.LineWidth, shape2.LineWidth) + 1;
+            float minX = allPoints.Min(p => p.X) - buffer;
+            float minY = allPoints.Min(p => p.Y) - buffer;
+            float maxX = allPoints.Max(p => p.X) + buffer;
+            float maxY = allPoints.Max(p => p.Y) + buffer;
+
+            int width = Math.Max(1, (int)Math.Ceiling(maxX - minX));
+            int height = Math.Max(1, (int)Math.Ceiling(maxY - minY));
+
+            bool[,] mask1 = CreatePathMask(shape1, minX, minY, width, height);
+            bool[,] mask2 = CreatePathMask(shape2, minX, minY, width, height);
+
+            bool[,] combinedMask = new bool[width, height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    combinedMask[x, y] = mask1[x, y] || mask2[x, y];
+                }
+            }
+
+            List<List<PointF>> outlines = ExtractOutlines(combinedMask);
+            List<PathSegment> resultSegments = [];
+
+            foreach (var outline in outlines)
+            {
+                for (int i = 0; i < outline.Count; i++)
+                {
+                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
+                }
+                resultSegments.Add(new PathSegment("Z", []));
+            }
+
+            return new ShapePath(resultSegments);
+        }
+
+        public static ShapePath DifferenceShapePaths(ShapePath shape1, ShapePath shape2)
+        {
+            if (shape1.PathSegments.Count == 0) return shape2;
+            if (shape2.PathSegments.Count == 0) return shape1;
+
+            var allPoints = shape1.PathSegments.Concat(shape2.PathSegments).SelectMany(s => s.GetPoints()).ToList();
+            float buffer = Math.Max(shape1.LineWidth, shape2.LineWidth) + 1;
+            float minX = allPoints.Min(p => p.X) - buffer;
+            float minY = allPoints.Min(p => p.Y) - buffer;
+            float maxX = allPoints.Max(p => p.X) + buffer;
+            float maxY = allPoints.Max(p => p.Y) + buffer;
+
+            int width = Math.Max(1, (int)Math.Ceiling(maxX - minX));
+            int height = Math.Max(1, (int)Math.Ceiling(maxY - minY));
+
+            bool[,] mask1 = CreatePathMask(shape1, minX, minY, width, height);
+            bool[,] mask2 = CreatePathMask(shape2, minX, minY, width, height);
+
+            bool[,] combinedMask = new bool[width, height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    combinedMask[x, y] = mask1[x, y] && !mask2[x, y];
+                }
+            }
+
+            List<List<PointF>> outlines = ExtractOutlines(combinedMask);
+            List<PathSegment> resultSegments = [];
+
+            foreach (var outline in outlines)
+            {
+                for (int i = 0; i < outline.Count; i++)
+                {
+                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
+                }
+                resultSegments.Add(new PathSegment("Z", []));
+            }
+
+            return new ShapePath(resultSegments);
+        }
+
+        public static ShapePath IntersectionShapePaths(ShapePath shape1, ShapePath shape2)
+        {
+            if (shape1.PathSegments.Count == 0) return shape2;
+            if (shape2.PathSegments.Count == 0) return shape1;
+
+            var allPoints = shape1.PathSegments.Concat(shape2.PathSegments).SelectMany(s => s.GetPoints()).ToList();
+            float buffer = Math.Max(shape1.LineWidth, shape2.LineWidth) + 1;
+            float minX = allPoints.Min(p => p.X) - buffer;
+            float minY = allPoints.Min(p => p.Y) - buffer;
+            float maxX = allPoints.Max(p => p.X) + buffer;
+            float maxY = allPoints.Max(p => p.Y) + buffer;
+
+            int width = Math.Max(1, (int)Math.Ceiling(maxX - minX));
+            int height = Math.Max(1, (int)Math.Ceiling(maxY - minY));
+
+            bool[,] mask1 = CreatePathMask(shape1, minX, minY, width, height);
+            bool[,] mask2 = CreatePathMask(shape2, minX, minY, width, height);
+
+            bool[,] combinedMask = new bool[width, height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    combinedMask[x, y] = mask1[x, y] && mask2[x, y];
+                }
+            }
+
+            List<List<PointF>> outlines = ExtractOutlines(combinedMask);
+            List<PathSegment> resultSegments = [];
+
+            foreach (var outline in outlines)
+            {
+                for (int i = 0; i < outline.Count; i++)
+                {
+                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
+                }
+                resultSegments.Add(new PathSegment("Z", []));
+            }
+
+            return new ShapePath(resultSegments);
+        }
+
+        public static ShapePath ExclusionShapePaths(ShapePath shape1, ShapePath shape2)
+        {
+            if (shape1.PathSegments.Count == 0) return shape2;
+            if (shape2.PathSegments.Count == 0) return shape1;
+
+            var allPoints = shape1.PathSegments.Concat(shape2.PathSegments).SelectMany(s => s.GetPoints()).ToList();
+            float buffer = Math.Max(shape1.LineWidth, shape2.LineWidth) + 1;
+            float minX = allPoints.Min(p => p.X) - buffer;
+            float minY = allPoints.Min(p => p.Y) - buffer;
+            float maxX = allPoints.Max(p => p.X) + buffer;
+            float maxY = allPoints.Max(p => p.Y) + buffer;
+
+            int width = Math.Max(1, (int)Math.Ceiling(maxX - minX));
+            int height = Math.Max(1, (int)Math.Ceiling(maxY - minY));
+
+            bool[,] mask1 = CreatePathMask(shape1, minX, minY, width, height);
+            bool[,] mask2 = CreatePathMask(shape2, minX, minY, width, height);
+
+            bool[,] combinedMask = new bool[width, height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    combinedMask[x, y] = mask1[x, y] ^ mask2[x, y];
+                }
+            }
+
+            List<List<PointF>> outlines = ExtractOutlines(combinedMask);
+            List<PathSegment> resultSegments = [];
+
+            foreach (var outline in outlines)
+            {
+                for (int i = 0; i < outline.Count; i++)
+                {
+                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
+                }
+                resultSegments.Add(new PathSegment("Z", []));
+            }
+
+            return new ShapePath(resultSegments);
+        }
+
+        private static bool[,] CreatePathMask(ShapePath shape, float offsetX, float offsetY, int width, int height)
+        {
+            bool[,] mask = new bool[width, height];
+            using Bitmap bmp = new(width, height, PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.Transparent);
+                g.SmoothingMode = SmoothingMode.None;
+                g.PixelOffsetMode = PixelOffsetMode.None;
+                g.TranslateTransform(-offsetX, -offsetY);
+
+                using GraphicsPath path = new();
+                path.FillMode = FillMode.Winding;
+
+                List<PointF> currentFigure = [];
+
+                foreach (var seg in shape.PathSegments)
+                {
+                    List<PointF> segPoints = seg.GetPoints();
+
+                    if (seg.PathType.Equals("M", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        if (currentFigure.Count > 1) path.AddLines(currentFigure.ToArray());
+                        currentFigure.Clear();
+                        currentFigure.AddRange(segPoints);
+                    }
+                    else if (seg.PathType.Equals("Z", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        if (currentFigure.Count > 1)
+                        {
+                            path.AddLines(currentFigure.ToArray());
+                            path.CloseFigure();
+                        }
+                        currentFigure.Clear();
+                    }
+                    else
+                    {
+                        currentFigure.AddRange(segPoints);
+                    }
+                }
+
+                if (currentFigure.Count > 1) path.AddLines(currentFigure.ToArray());
+
+                if (path.PointCount > 0)
+                {
+                    using SolidBrush brush = new(Color.Black);
+                    g.FillPath(brush, path);
+
+                    using Pen pen = new(Color.Black, 1.0f);
+                    g.DrawPath(pen, path);
+                }
+            }
+
+            BitmapData data = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            unsafe
+            {
+                byte* ptr = (byte*)data.Scan0;
+                for (int y = 0; y < height; y++)
+                {
+                    byte* row = ptr + (y * data.Stride);
+                    for (int x = 0; x < width; x++)
+                    {
+                        mask[x, y] = row[x * 4 + 3] > 0;
+                    }
+                }
+            }
+            bmp.UnlockBits(data);
+
+            return mask;
+        }
+
         private static bool[,] CreateTextMask(ShapeText text)
         {
             using Font font = Layer.CreateScaledFont(text);
@@ -162,7 +404,7 @@ namespace PixelEditor.Vector
                     {
                         byte* pixel = ptr + (y * data.Stride) + (x * 4);
                         byte alpha = pixel[3];
-                        mask[x, y] = alpha > 127;
+                        mask[x, y] = alpha > 0;
                     }
                 }
             }

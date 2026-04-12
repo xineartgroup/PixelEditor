@@ -2865,7 +2865,7 @@ namespace PixelEditor
 
                     if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
                     {
-                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = ShapeToPathConverter.Convert(selectedLayer.CurrentShape);
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = PathManipulator.Convert(selectedLayer.CurrentShape);
                     }
 
                     UpdateControls();
@@ -2879,22 +2879,118 @@ namespace PixelEditor
 
         private void UnionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count && selectedLayer.AddedShapeSelections.Count > 0)
+                    {
+                        ShapePath path1 = selectedLayer.CurrentShape is ShapePath path_1 ? path_1 : PathManipulator.Convert(selectedLayer.CurrentShape);
+                        ShapePath path2 = selectedLayer.AddedShapeSelections[0] is ShapePath path_2 ? path_2 : PathManipulator.Convert(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = PathManipulator.UnionShapePaths(path1, path2);
+                        selectedLayer.Shapes.Remove(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.AddedShapeSelections.Clear();
+                    }
+
+                    UpdateControls();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
         }
 
         private void DifferenceToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count && selectedLayer.AddedShapeSelections.Count > 0)
+                    {
+                        ShapePath path1 = selectedLayer.CurrentShape is ShapePath path_1 ? path_1 : PathManipulator.Convert(selectedLayer.CurrentShape);
+                        ShapePath path2 = selectedLayer.AddedShapeSelections[0] is ShapePath path_2 ? path_2 : PathManipulator.Convert(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = PathManipulator.DifferenceShapePaths(path1, path2);
+                        selectedLayer.Shapes.Remove(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.AddedShapeSelections.Clear();
+                    }
+
+                    UpdateControls();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
         }
 
         private void IntersectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count && selectedLayer.AddedShapeSelections.Count > 0)
+                    {
+                        ShapePath path1 = selectedLayer.CurrentShape is ShapePath path_1 ? path_1 : PathManipulator.Convert(selectedLayer.CurrentShape);
+                        ShapePath path2 = selectedLayer.AddedShapeSelections[0] is ShapePath path_2 ? path_2 : PathManipulator.Convert(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = PathManipulator.IntersectionShapePaths(path1, path2);
+                        selectedLayer.Shapes.Remove(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.AddedShapeSelections.Clear();
+                    }
+
+                    UpdateControls();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
         }
 
         private void ExclusionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count && selectedLayer.AddedShapeSelections.Count > 0)
+                    {
+                        ShapePath path1 = selectedLayer.CurrentShape is ShapePath path_1 ? path_1 : PathManipulator.Convert(selectedLayer.CurrentShape);
+                        ShapePath path2 = selectedLayer.AddedShapeSelections[0] is ShapePath path_2 ? path_2 : PathManipulator.Convert(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.Shapes[selectedShapeIndex] = selectedLayer.CurrentShape = PathManipulator.ExclusionShapePaths(path1, path2);
+                        selectedLayer.Shapes.Remove(selectedLayer.AddedShapeSelections[0]);
+                        selectedLayer.AddedShapeSelections.Clear();
+                    }
+
+                    UpdateControls();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
         }
 
         private void RaiseToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -3079,7 +3175,7 @@ namespace PixelEditor
 
                     if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
                     {
-                        selectedLayer.RotateShape90DegreesCW(selectedLayer.CurrentShape);
+                        selectedLayer.RotateShape(selectedLayer.CurrentShape, 90);
                     }
 
                     RedrawImage();
@@ -3103,7 +3199,7 @@ namespace PixelEditor
 
                     if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
                     {
-                        selectedLayer.RotateShape90DegreesCCW(selectedLayer.CurrentShape);
+                        selectedLayer.RotateShape(selectedLayer.CurrentShape, -90);
                     }
 
                     RedrawImage();
@@ -3127,7 +3223,7 @@ namespace PixelEditor
 
                     if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
                     {
-                        selectedLayer.RotateShape180Degrees(selectedLayer.CurrentShape);
+                        selectedLayer.RotateShape(selectedLayer.CurrentShape, 180);
                     }
 
                     RedrawImage();
@@ -3145,25 +3241,23 @@ namespace PixelEditor
             {
                 if (selectedLayer.LayerType == LayerType.Vector)
                 {
-                    using (FormRotate frm = new())
+                    using FormRotate frm = new();
+                    frm.StartPosition = FormStartPosition.CenterParent;
+                    frm.RotationAngle = rotationAngle;
+                    if (frm.ShowDialog() == DialogResult.OK)
                     {
-                        frm.StartPosition = FormStartPosition.CenterParent;
-                        frm.RotationAngle = rotationAngle;
-                        if (frm.ShowDialog() == DialogResult.OK)
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                        int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                        if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
                         {
-                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
-                            int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
-
-                            if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
-                            {
-                                selectedLayer.RotateShape(selectedLayer.CurrentShape, frm.RotationAngle);
-                            }
-
-                            RedrawImage();
-
-                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                            selectedLayer.RotateShape(selectedLayer.CurrentShape, frm.RotationAngle);
                         }
+
+                        RedrawImage();
+
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
             }
@@ -4444,6 +4538,18 @@ namespace PixelEditor
 
                             if (!isResizingShape)
                             {
+                                if (ModifierKeys.HasFlag(Keys.Shift))
+                                {
+                                    if (selectedLayer.CurrentShape != null && !selectedLayer.AddedShapeSelections.Contains(selectedLayer.CurrentShape))
+                                    {
+                                        selectedLayer.AddedShapeSelections.Add(selectedLayer.CurrentShape);
+                                    }
+                                    else
+                                    {
+                                        selectedLayer.AddedShapeSelections.Clear();
+                                    }
+                                }
+
                                 bool found = false;
                                 for (int i = selectedLayer.Shapes.Count - 1; i >= 0; i--)
                                 {

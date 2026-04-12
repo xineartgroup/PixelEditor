@@ -23,6 +23,7 @@ namespace PixelEditor
         private Image? _image = null;
         private Image? _imageMask = null;
         private List<BaseShape> shapes = [];
+        private List<BaseShape> addedShapeSelections = [];
         private BaseShape? currentShape = null;
 
         public event Action<Rectangle>? OnLayerChanged;
@@ -67,6 +68,8 @@ namespace PixelEditor
         public Color FillColor { get => _fillColor; set => SetProperty(ref _fillColor, value); }
 
         public List<BaseShape> Shapes { get => shapes; set => SetProperty(ref shapes, value); }
+
+        public List<BaseShape> AddedShapeSelections { get => addedShapeSelections; set => SetProperty(ref addedShapeSelections, value); }
 
         public BaseShape? CurrentShape { get => currentShape; set => SetProperty(ref currentShape, value); }
 
@@ -620,21 +623,6 @@ namespace PixelEditor
             }
 
             OnLayerChanged?.Invoke(GetBounds());
-        }
-
-        public void RotateShape90DegreesCW(BaseShape shape)
-        {
-            RotateShape(shape, 90);
-        }
-
-        public void RotateShape90DegreesCCW(BaseShape shape)
-        {
-            RotateShape(shape, -90);
-        }
-
-        public void RotateShape180Degrees(BaseShape shape)
-        {
-            RotateShape(shape, 180);
         }
 
         public void RotateShape(BaseShape shape, float angle)
