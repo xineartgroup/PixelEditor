@@ -159,9 +159,10 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                for (int i = 0; i < outline.Count; i++)
+                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                for (int i = 0; i < simplified.Count; i++)
                 {
-                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
                     resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
                 }
                 resultSegments.Add(new PathSegment("Z", []));
@@ -199,12 +200,13 @@ namespace PixelEditor.Vector
 
             List<List<PointF>> outlines = ExtractOutlines(combinedMask);
             List<PathSegment> resultSegments = [];
-
+            
             foreach (var outline in outlines)
             {
-                for (int i = 0; i < outline.Count; i++)
+                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                for (int i = 0; i < simplified.Count; i++)
                 {
-                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
                     resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
                 }
                 resultSegments.Add(new PathSegment("Z", []));
@@ -245,9 +247,10 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                for (int i = 0; i < outline.Count; i++)
+                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                for (int i = 0; i < simplified.Count; i++)
                 {
-                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
                     resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
                 }
                 resultSegments.Add(new PathSegment("Z", []));
@@ -288,9 +291,10 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                for (int i = 0; i < outline.Count; i++)
+                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                for (int i = 0; i < simplified.Count; i++)
                 {
-                    PointF worldPoint = new(outline[i].X + minX, outline[i].Y + minY);
+                    PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
                     resultSegments.Add(new PathSegment(i == 0 ? "M" : "L", [worldPoint]));
                 }
                 resultSegments.Add(new PathSegment("Z", []));
@@ -389,7 +393,19 @@ namespace PixelEditor.Vector
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 
                 using SolidBrush brush = new(Color.Black);
+
+                Matrix originalTransform = g.Transform;
+
+                float centerX = text.X + text.Width / 2;
+                float centerY = text.Y + text.Height / 2;
+
+                g.TranslateTransform(centerX, centerY);
+                g.RotateTransform(text.Rotation);
+                g.TranslateTransform(-centerX, -centerY);
+
                 g.DrawString(text.Content, font, brush, 0, 0);
+
+                g.Transform = originalTransform;
             }
 
             bool[,] mask = new bool[width, height];

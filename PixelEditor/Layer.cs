@@ -128,7 +128,7 @@ namespace PixelEditor
 
         public static void DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             using Pen pen = new(shape.LineColor, shape.LineWidth);
             using SolidBrush brush = new(shape.FillColor);
 
@@ -139,6 +139,15 @@ namespace PixelEditor
 
             if (shape is ShapeRect rect)
             {
+                Matrix originalTransform = g.Transform;
+
+                float centerX = rect.X + rect.Width / 2;
+                float centerY = rect.Y + rect.Height / 2;
+
+                g.TranslateTransform(centerX, centerY);
+                g.RotateTransform(rect.Rotation);
+                g.TranslateTransform(-centerX, -centerY);
+
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
 
@@ -161,9 +170,20 @@ namespace PixelEditor
                         g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
                     }
                 }
+
+                g.Transform = originalTransform;
             }
             else if (shape is ShapeEllipse ellipse)
             {
+                Matrix originalTransform = g.Transform;
+
+                float centerX = ellipse.X + ellipse.Width / 2;
+                float centerY = ellipse.Y + ellipse.Height / 2;
+
+                g.TranslateTransform(centerX, centerY);
+                g.RotateTransform(ellipse.Rotation);
+                g.TranslateTransform(-centerX, -centerY);
+
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
 
@@ -186,6 +206,8 @@ namespace PixelEditor
                         g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
                     }
                 }
+
+                g.Transform = originalTransform;
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
@@ -215,6 +237,16 @@ namespace PixelEditor
             else if (shape is ShapeText text)
             {
                 using Font font = CreateScaledFont(text);
+
+                Matrix originalTransform = g.Transform;
+
+                float centerX = text.X + text.Width / 2;
+                float centerY = text.Y + text.Height / 2;
+
+                g.TranslateTransform(centerX, centerY);
+                g.RotateTransform(text.Rotation);
+                g.TranslateTransform(-centerX, -centerY);
+
                 g.DrawString(text.Content, font, brush, text.X, text.Y);
 
                 if (isSelected)
@@ -236,6 +268,9 @@ namespace PixelEditor
                         g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
                     }
                 }
+
+                g.Transform = originalTransform;
+
             }
             else if (shape is ShapePath path)
             {
@@ -633,49 +668,13 @@ namespace PixelEditor
 
             if (shape is ShapeRect rect)
             {
-                // For rectangles and ellipses, rotation is handled by transforming the bounding box
-                float centerX = rect.X + rect.Width / 2;
-                float centerY = rect.Y + rect.Height / 2;
-
-                // Calculate new corners
-                PointF[] corners =
-                [
-                    RotatePoint(new PointF(rect.X, rect.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(rect.X + rect.Width, rect.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(rect.X + rect.Width, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(rect.X, rect.Y + rect.Height), new PointF(centerX, centerY), cos, sin),
-                ];
-                float newMinX = corners.Min(p => p.X);
-                float newMinY = corners.Min(p => p.Y);
-                float newMaxX = corners.Max(p => p.X);
-                float newMaxY = corners.Max(p => p.Y);
-
-                rect.X = newMinX;
-                rect.Y = newMinY;
-                rect.Width = newMaxX - newMinX;
-                rect.Height = newMaxY - newMinY;
+                rect.Rotation = (rect.Rotation + angle) % 360;
+                if (rect.Rotation < 0) rect.Rotation += 360;
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                float centerX = ellipse.X + ellipse.Width / 2;
-                float centerY = ellipse.Y + ellipse.Height / 2;
-
-                PointF[] corners =
-                [
-                    RotatePoint(new PointF(ellipse.X, ellipse.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(ellipse.X + ellipse.Width, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(ellipse.X, ellipse.Y + ellipse.Height), new PointF(centerX, centerY), cos, sin),
-                ];
-                float newMinX = corners.Min(p => p.X);
-                float newMinY = corners.Min(p => p.Y);
-                float newMaxX = corners.Max(p => p.X);
-                float newMaxY = corners.Max(p => p.Y);
-
-                ellipse.X = newMinX;
-                ellipse.Y = newMinY;
-                ellipse.Width = newMaxX - newMinX;
-                ellipse.Height = newMaxY - newMinY;
+                ellipse.Rotation = (ellipse.Rotation + angle) % 360;
+                if (ellipse.Rotation < 0) ellipse.Rotation += 360;
             }
             else if (shape is ShapePolygon polygon)
             {
@@ -689,25 +688,8 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                float centerX = text.X + text.Width / 2;
-                float centerY = text.Y + text.Height / 2;
-
-                PointF[] corners =
-                [
-                    RotatePoint(new PointF(text.X, text.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(text.X + text.Width, text.Y), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(text.X + text.Width, text.Y + text.Height), new PointF(centerX, centerY), cos, sin),
-                    RotatePoint(new PointF(text.X, text.Y + text.Height), new PointF(centerX, centerY), cos, sin),
-                ];
-                float newMinX = corners.Min(p => p.X);
-                float newMinY = corners.Min(p => p.Y);
-                float newMaxX = corners.Max(p => p.X);
-                float newMaxY = corners.Max(p => p.Y);
-
-                text.X = newMinX;
-                text.Y = newMinY;
-                text.Width = newMaxX - newMinX;
-                text.Height = newMaxY - newMinY;
+                text.Rotation = (text.Rotation + angle) % 360;
+                if (text.Rotation < 0) text.Rotation += 360;
             }
             else if (shape is ShapePath path)
             {

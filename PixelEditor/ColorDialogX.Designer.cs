@@ -23,10 +23,12 @@
             picMouseDownPreview = new PictureBox();
             picMouseMovePreview = new PictureBox();
             btnEyeDropper = new Button();
+            picColorRange = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)picColorBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseMovePreview).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picColorRange).BeginInit();
             SuspendLayout();
             // 
             // picColorBox
@@ -43,19 +45,19 @@
             // 
             // tkbHue
             // 
-            tkbHue.Location = new Point(278, 17);
+            tkbHue.Location = new Point(279, 51);
             tkbHue.Margin = new Padding(4, 3, 4, 3);
             tkbHue.Maximum = 360;
             tkbHue.Name = "tkbHue";
             tkbHue.Orientation = Orientation.Vertical;
-            tkbHue.Size = new Size(45, 295);
+            tkbHue.Size = new Size(45, 258);
             tkbHue.TabIndex = 1;
             tkbHue.TickStyle = TickStyle.None;
             tkbHue.Scroll += TkbHue_Scroll;
             // 
             // btnOK
             // 
-            btnOK.Location = new Point(183, 323);
+            btnOK.Location = new Point(70, 322);
             btnOK.Margin = new Padding(4, 3, 4, 3);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(88, 27);
@@ -66,7 +68,7 @@
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(278, 323);
+            btnCancel.Location = new Point(165, 322);
             btnCancel.Margin = new Padding(4, 3, 4, 3);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(88, 27);
@@ -99,18 +101,29 @@
             // 
             btnEyeDropper.FlatStyle = FlatStyle.Popup;
             btnEyeDropper.Image = (Image)resources.GetObject("btnEyeDropper.Image");
-            btnEyeDropper.Location = new Point(217, 17);
+            btnEyeDropper.Location = new Point(261, 17);
             btnEyeDropper.Name = "btnEyeDropper";
             btnEyeDropper.Size = new Size(36, 36);
             btnEyeDropper.TabIndex = 6;
             btnEyeDropper.UseVisualStyleBackColor = true;
             btnEyeDropper.Click += BtnEyeDropper_Click;
             // 
+            // picColorRange
+            // 
+            picColorRange.Location = new Point(261, 59);
+            picColorRange.Margin = new Padding(4, 3, 4, 3);
+            picColorRange.Name = "picColorRange";
+            picColorRange.Size = new Size(10, 240);
+            picColorRange.TabIndex = 7;
+            picColorRange.TabStop = false;
+            picColorRange.Paint += PicColorRange_Paint;
+            // 
             // ColorDialogX
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(384, 361);
+            ClientSize = new Size(334, 361);
+            Controls.Add(picColorRange);
             Controls.Add(btnEyeDropper);
             Controls.Add(picMouseMovePreview);
             Controls.Add(picMouseDownPreview);
@@ -126,6 +139,7 @@
             ((System.ComponentModel.ISupportInitialize)tkbHue).EndInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).EndInit();
             ((System.ComponentModel.ISupportInitialize)picMouseMovePreview).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picColorRange).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -137,5 +151,6 @@
         private System.Windows.Forms.PictureBox picMouseDownPreview;
         private System.Windows.Forms.PictureBox picMouseMovePreview;
         private Button btnEyeDropper;
+        private PictureBox picColorRange;
     }
 }

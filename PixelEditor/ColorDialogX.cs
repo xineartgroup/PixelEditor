@@ -77,6 +77,19 @@ namespace PixelEditor
             return ColorFromHSB(_hue, s, b);
         }
 
+        private void PicColorRange_Paint(object sender, PaintEventArgs e)
+        {
+            for (int y = 0; y < picColorRange.Height; y++)
+            {
+                float hue = 360f * (picColorRange.Height - y) / picColorRange.Height;
+                if (hue >= 360) hue = 359.99f;
+                Color color = ColorFromHSB(hue, 1, 1);
+
+                using var pen = new Pen(color);
+                e.Graphics.DrawLine(pen, 0, y, picColorRange.Width, y);
+            }
+        }
+
         private void PicColorBox_Paint(object sender, PaintEventArgs e)
         {
             using (var brushHue = new LinearGradientBrush(picColorBox.ClientRectangle, Color.White, ColorFromHSB(_hue, 1, 1), 0f))

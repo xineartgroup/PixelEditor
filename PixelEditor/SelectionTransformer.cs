@@ -23,7 +23,7 @@ namespace PixelEditor
             double cosTheta = Math.Cos(angleRadians);
             double sinTheta = Math.Sin(angleRadians);
 
-            List<PointF> rotatedPoints = new(points.Count);
+            List<PointF> rotatedPoints = [];
 
             foreach (var point in points)
             {
