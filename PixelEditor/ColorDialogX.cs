@@ -77,6 +77,12 @@ namespace PixelEditor
             return ColorFromHSB(_hue, s, b);
         }
 
+        private void PicColorRange_MouseDown(object sender, MouseEventArgs e)
+        {
+            tkbHue.Value = Math.Clamp((picColorRange.Height - e.Y) * 360 / picColorRange.Height, 0, 359);
+            TkbHue_Scroll(sender, e);
+        }
+
         private void PicColorRange_Paint(object sender, PaintEventArgs e)
         {
             for (int y = 0; y < picColorRange.Height; y++)
@@ -104,7 +110,7 @@ namespace PixelEditor
             int y = (int)((1 - _brightness) * (picColorBox.Height - 1));
 
             int size = 8; // Size of the square
-            Rectangle rect = new (x - size / 2, y - size / 2, size, size);
+            Rectangle rect = new(x - size / 2, y - size / 2, size, size);
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using Pen whitePen = new(Color.White, 1.5f);
@@ -118,6 +124,11 @@ namespace PixelEditor
         private void UpdateColor()
         {
             _color = ColorFromHSB(_hue, _saturation, _brightness);
+            string strColor = $"#{_color.R:X2}{_color.G:X2}{_color.B:X2}";
+            if (txtColor.Text != strColor)
+            {
+                txtColor.Text = strColor;
+            }
         }
 
         private void UpdateHSBFromColor()
@@ -143,6 +154,31 @@ namespace PixelEditor
             if (hi == 3) return Color.FromArgb(255, p, q, vi);
             if (hi == 4) return Color.FromArgb(255, t, p, vi);
             return Color.FromArgb(255, vi, p, q);
+        }
+
+        private void TxtColor_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                TxtColor_TextChanged(sender, e);
+            }
+        }
+
+        private void TxtColor_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                Color = Color.FromArgb(
+                    255,
+                    Convert.ToInt32(txtColor.Text.Substring(1, 2), 16),
+                    Convert.ToInt32(txtColor.Text.Substring(3, 2), 16),
+                    Convert.ToInt32(txtColor.Text.Substring(5, 2), 16)
+                );
+            }
+            catch
+            {
+                UpdateColor();
+            }
         }
 
         private void BtnOK_Click(object sender, EventArgs e)

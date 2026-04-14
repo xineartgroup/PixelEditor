@@ -142,7 +142,7 @@
   <data name="btnEyeDropper.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        wQAADsEBuJFr7QAAAsNJREFUOE+NVD9L+1AUPUksLW3BuSjFUmwhq1uHfoDi5h8sSmlVcBYc/RKKW4ti
+        vAAADrwBlbxySQAAAsNJREFUOE+NVD9L+1AUPUksLW3BuSjFUmwhq1uHfoDi5h8sSmlVcBYc/RKKW4ti
         aSYXI7gJFUUXF8HN0tAPUOqfwZDkvTypt7zGVH/+ztLX5N6Tc27uCcR/wHVdeX5+fl5aWopEIrqu39/f
         c86FEJxzfOv4DupnjNFfxli/35+ZmQGgaRq+cH19TVy/EgVZLMui6rOzM1VViUhRFE3TyuXy34o4577v
         27YdjUYXFxdd1y2XywAURSE5AFZWVqj4VyKS4Pu+EOLg4ABAoVBIJBIAIpGIpLu6uvrDGsH3fc/zHh8f
@@ -158,6 +158,9 @@
 </value>
   </data>
   <metadata name="picColorRange.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="txtColor.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

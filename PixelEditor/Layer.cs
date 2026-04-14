@@ -105,196 +105,162 @@ namespace PixelEditor
             Image? image = new Bitmap(temp);
             using (Graphics g = Graphics.FromImage(image))
             {
+                List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
                 bool foundSelected = false;
+                RectangleF groupBounds = RectangleF.Empty;
+
                 foreach (BaseShape shape in shapes)
                 {
-                    if (shape == currentShape)
+                    bool isCurrent = (shape == currentShape);
+                    if (isCurrent) foundSelected = true;
+
+                    var handles = DrawShape(shape, g, isCurrent);
+
+                    if (isCurrent && handles.Length > 0)
+                        handlesToDraw.Add((handles, g.Transform.Clone()));
+
+                    if (addedShapeSelections.Contains(shape) || shape == currentShape)
                     {
-                        DrawShape(shape, g, true);
-                        foundSelected = true;
-                    }
-                    else
-                    {
-                        DrawShape(shape, g);
+                        RectangleF bounds = GetShapeBounds(shape, g.Transform);
+                        groupBounds = groupBounds.IsEmpty ? bounds : RectangleF.Union(groupBounds, bounds);
                     }
                 }
+
                 if (currentShape != null && !foundSelected)
                 {
-                    DrawShape(currentShape, g, true);
+                    var handles = DrawShape(currentShape, g, true);
+                    if (handles.Length > 0)
+                        handlesToDraw.Add((handles, g.Transform.Clone()));
+                }
+
+                using SolidBrush handleBrush = new(Color.LightBlue);
+                using Pen handlePen = new(Color.Red, 2);
+
+                foreach (var (Handles, Transform) in handlesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+                    foreach (var h in Handles)
+                    {
+                        g.FillRectangle(handleBrush, h);
+                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
+
+                if (!groupBounds.IsEmpty)
+                {
+                    g.ResetTransform();
+                    g.DrawRectangle(handlePen, groupBounds.X, groupBounds.Y, groupBounds.Width, groupBounds.Height);
                 }
             }
             return image;
         }
 
-        public static void DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static RectangleF[] DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             using Pen pen = new(shape.LineColor, shape.LineWidth);
             using SolidBrush brush = new(shape.FillColor);
-
             pen.DashStyle = shape.DashStyle;
 
             const int size = 10;
-            const int offset = size / 2;
+            float offset = size / 2f;
+            List<RectangleF> handleRects = [];
 
             if (shape is ShapeRect rect)
             {
-                Matrix originalTransform = g.Transform;
-
-                float centerX = rect.X + rect.Width / 2;
-                float centerY = rect.Y + rect.Height / 2;
-
-                g.TranslateTransform(centerX, centerY);
-                g.RotateTransform(rect.Rotation);
-                g.TranslateTransform(-centerX, -centerY);
-
+                ApplyRotation(g, rect.X, rect.Y, rect.Width, rect.Height, rect.Rotation);
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
 
                 if (isSelected)
                 {
-                    using SolidBrush handleBrush = new(Color.LightBlue);
-                    using Pen handlePen = new(Color.Red, 2);
-
-                    RectangleF[] handles =
-                    [
+                    handleRects.AddRange([
                         new(rect.X - offset, rect.Y - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
-                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
-                    ];
-
-                    foreach (var h in handles)
-                    {
-                        g.FillRectangle(handleBrush, h);
-                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
-                    }
+                new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
+                new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
+                new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
+                    ]);
                 }
-
-                g.Transform = originalTransform;
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                Matrix originalTransform = g.Transform;
-
-                float centerX = ellipse.X + ellipse.Width / 2;
-                float centerY = ellipse.Y + ellipse.Height / 2;
-
-                g.TranslateTransform(centerX, centerY);
-                g.RotateTransform(ellipse.Rotation);
-                g.TranslateTransform(-centerX, -centerY);
-
+                ApplyRotation(g, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height, ellipse.Rotation);
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
 
                 if (isSelected)
                 {
-                    using SolidBrush handleBrush = new(Color.LightBlue);
-                    using Pen handlePen = new(Color.Red, 2);
-
-                    RectangleF[] handles =
-                    [
+                    handleRects.AddRange([
                         new(ellipse.X - offset, ellipse.Y - offset, size, size),
-                        new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
-                        new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
-                        new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
-                    ];
-
-                    foreach (var h in handles)
-                    {
-                        g.FillRectangle(handleBrush, h);
-                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
-                    }
+                new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
+                new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
+                new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
+                    ]);
                 }
-
-                g.Transform = originalTransform;
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
-                if (polygon.IsClosed)
-                {
-                    g.FillPolygon(brush, polygon.Points.ToArray());
-                    g.DrawPolygon(pen, polygon.Points.ToArray());
-                }
-                else
-                {
-                    g.DrawLines(pen, polygon.Points.ToArray());
-                }
+                if (polygon.IsClosed) { g.FillPolygon(brush, polygon.Points.ToArray()); g.DrawPolygon(pen, polygon.Points.ToArray()); }
+                else { g.DrawLines(pen, polygon.Points.ToArray()); }
 
                 if (isSelected)
-                {
-                    using SolidBrush handleBrush = new(Color.LightBlue);
-                    using Pen handlePen = new(Color.Red, 2);
-
-                    foreach (var p in polygon.Points)
-                    {
-                        RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
-                        g.FillRectangle(handleBrush, handle);
-                        g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
-                    }
-                }
+                    handleRects.AddRange(polygon.Points.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
             }
             else if (shape is ShapeText text)
             {
                 using Font font = CreateScaledFont(text);
-
-                Matrix originalTransform = g.Transform;
-
-                float centerX = text.X + text.Width / 2;
-                float centerY = text.Y + text.Height / 2;
-
-                g.TranslateTransform(centerX, centerY);
-                g.RotateTransform(text.Rotation);
-                g.TranslateTransform(-centerX, -centerY);
-
+                ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
                 g.DrawString(text.Content, font, brush, text.X, text.Y);
 
                 if (isSelected)
                 {
-                    using SolidBrush handleBrush = new(Color.LightBlue);
-                    using Pen handlePen = new(Color.Red, 2);
-
-                    RectangleF[] handles =
-                    [
+                    handleRects.AddRange([
                         new(text.X - offset, text.Y - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y - offset, size, size),
-                        new(text.X - offset, text.Y + text.Height - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
-                    ];
-
-                    foreach (var h in handles)
-                    {
-                        g.FillRectangle(handleBrush, h);
-                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
-                    }
+                new(text.X + text.Width - offset, text.Y - offset, size, size),
+                new(text.X - offset, text.Y + text.Height - offset, size, size),
+                new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
+                    ]);
                 }
-
-                g.Transform = originalTransform;
-
             }
             else if (shape is ShapePath path)
             {
                 using GraphicsPath gPath = BuildGraphicsPath(path);
-
                 g.FillPath(brush, gPath);
                 g.DrawPath(pen, gPath);
 
                 if (isSelected)
                 {
-                    using SolidBrush handleBrush = new(Color.LightBlue);
-                    using Pen handlePen = new(Color.Red, 2);
-
                     foreach (var segment in path.PathSegments)
-                    {
-                        foreach (var p in segment.InputPoints)
-                        {
-                            RectangleF handle = new(p.X - offset, p.Y - offset, size, size);
-                            g.FillRectangle(handleBrush, handle);
-                            g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
-                        }
-                    }
+                        handleRects.AddRange(segment.InputPoints.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
                 }
             }
+
+            return [.. handleRects];
+        }
+
+        private static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)
+        {
+            using GraphicsPath path = new();
+            if (shape is ShapeRect r) path.AddRectangle(new RectangleF(r.X, r.Y, r.Width, r.Height));
+            else if (shape is ShapeEllipse e) path.AddEllipse(new RectangleF(e.X, e.Y, e.Width, e.Height));
+            else if (shape is ShapePolygon p && p.Points.Count > 2) path.AddPolygon(p.Points.ToArray());
+            else if (shape is ShapeText t) path.AddRectangle(new RectangleF(t.X, t.Y, t.Width, t.Height));
+            else if (shape is ShapePath sp) { using var pth = BuildGraphicsPath(sp); path.AddPath(pth, false); }
+
+            path.Transform(transform);
+            return path.GetBounds();
+        }
+
+        private static void ApplyRotation(Graphics g, float x, float y, float w, float h, float rotation)
+        {
+            float centerX = x + w / 2;
+            float centerY = y + h / 2;
+            g.TranslateTransform(centerX, centerY);
+            g.RotateTransform(rotation);
+            g.TranslateTransform(-centerX, -centerY);
         }
 
         public static GraphicsPath BuildGraphicsPath(ShapePath path)

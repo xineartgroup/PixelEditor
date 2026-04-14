@@ -24,6 +24,7 @@
             picMouseMovePreview = new PictureBox();
             btnEyeDropper = new Button();
             picColorRange = new PictureBox();
+            txtColor = new TextBox();
             ((System.ComponentModel.ISupportInitialize)picColorBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).BeginInit();
@@ -45,6 +46,7 @@
             // 
             // tkbHue
             // 
+            tkbHue.LargeChange = 30;
             tkbHue.Location = new Point(279, 51);
             tkbHue.Margin = new Padding(4, 3, 4, 3);
             tkbHue.Maximum = 360;
@@ -83,17 +85,17 @@
             picMouseDownPreview.Location = new Point(13, 17);
             picMouseDownPreview.Margin = new Padding(4, 3, 4, 3);
             picMouseDownPreview.Name = "picMouseDownPreview";
-            picMouseDownPreview.Size = new Size(36, 36);
+            picMouseDownPreview.Size = new Size(28, 28);
             picMouseDownPreview.TabIndex = 4;
             picMouseDownPreview.TabStop = false;
             // 
             // picMouseMovePreview
             // 
             picMouseMovePreview.BorderStyle = BorderStyle.FixedSingle;
-            picMouseMovePreview.Location = new Point(57, 17);
+            picMouseMovePreview.Location = new Point(49, 17);
             picMouseMovePreview.Margin = new Padding(4, 3, 4, 3);
             picMouseMovePreview.Name = "picMouseMovePreview";
-            picMouseMovePreview.Size = new Size(36, 36);
+            picMouseMovePreview.Size = new Size(28, 28);
             picMouseMovePreview.TabIndex = 5;
             picMouseMovePreview.TabStop = false;
             // 
@@ -103,7 +105,7 @@
             btnEyeDropper.Image = (Image)resources.GetObject("btnEyeDropper.Image");
             btnEyeDropper.Location = new Point(261, 17);
             btnEyeDropper.Name = "btnEyeDropper";
-            btnEyeDropper.Size = new Size(36, 36);
+            btnEyeDropper.Size = new Size(28, 28);
             btnEyeDropper.TabIndex = 6;
             btnEyeDropper.UseVisualStyleBackColor = true;
             btnEyeDropper.Click += BtnEyeDropper_Click;
@@ -117,12 +119,24 @@
             picColorRange.TabIndex = 7;
             picColorRange.TabStop = false;
             picColorRange.Paint += PicColorRange_Paint;
+            picColorRange.MouseDown += PicColorRange_MouseDown;
+            // 
+            // txtColor
+            // 
+            txtColor.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtColor.Location = new Point(98, 18);
+            txtColor.Name = "txtColor";
+            txtColor.Size = new Size(72, 27);
+            txtColor.TabIndex = 8;
+            txtColor.KeyDown += TxtColor_KeyDown;
+            txtColor.Leave += TxtColor_TextChanged;
             // 
             // ColorDialogX
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(334, 361);
+            Controls.Add(txtColor);
             Controls.Add(picColorRange);
             Controls.Add(btnEyeDropper);
             Controls.Add(picMouseMovePreview);
@@ -152,5 +166,6 @@
         private System.Windows.Forms.PictureBox picMouseMovePreview;
         private Button btnEyeDropper;
         private PictureBox picColorRange;
+        private TextBox txtColor;
     }
 }

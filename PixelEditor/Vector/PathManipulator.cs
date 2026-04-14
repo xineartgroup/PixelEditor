@@ -168,7 +168,9 @@ namespace PixelEditor.Vector
                 resultSegments.Add(new PathSegment("Z", []));
             }
 
-            return new ShapePath(resultSegments);
+            shape1.PathSegments = resultSegments;
+
+            return shape1;
         }
 
         public static ShapePath DifferenceShapePaths(ShapePath shape1, ShapePath shape2)
@@ -212,7 +214,9 @@ namespace PixelEditor.Vector
                 resultSegments.Add(new PathSegment("Z", []));
             }
 
-            return new ShapePath(resultSegments);
+            shape1.PathSegments = resultSegments;
+
+            return shape1;
         }
 
         public static ShapePath IntersectionShapePaths(ShapePath shape1, ShapePath shape2)
@@ -256,7 +260,9 @@ namespace PixelEditor.Vector
                 resultSegments.Add(new PathSegment("Z", []));
             }
 
-            return new ShapePath(resultSegments);
+            shape1.PathSegments = resultSegments;
+
+            return shape1;
         }
 
         public static ShapePath ExclusionShapePaths(ShapePath shape1, ShapePath shape2)
@@ -300,7 +306,9 @@ namespace PixelEditor.Vector
                 resultSegments.Add(new PathSegment("Z", []));
             }
 
-            return new ShapePath(resultSegments);
+            shape1.PathSegments = resultSegments;
+
+            return shape1;
         }
 
         private static bool[,] CreatePathMask(ShapePath shape, float offsetX, float offsetY, int width, int height)
