@@ -2,6 +2,15 @@
 
 namespace PixelEditor
 {
+    public struct IconInfo
+    {
+        public bool fIcon;
+        public int xHotspot;
+        public int yHotspot;
+        public IntPtr hbmMask;
+        public IntPtr hbmColor;
+    }
+
     public static class GraphicsUtility
     {
         [DllImport("user32.dll")]

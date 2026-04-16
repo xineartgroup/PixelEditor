@@ -171,6 +171,8 @@ namespace PixelEditor
 
             if (shape is ShapeRect rect)
             {
+                Matrix originalTransform = g.Transform;
+
                 ApplyRotation(g, rect.X, rect.Y, rect.Width, rect.Height, rect.Rotation);
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
@@ -179,14 +181,18 @@ namespace PixelEditor
                 {
                     handleRects.AddRange([
                         new(rect.X - offset, rect.Y - offset, size, size),
-                new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
-                new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
-                new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
+                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
+                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
+                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
                     ]);
                 }
+
+                g.Transform = originalTransform;
             }
             else if (shape is ShapeEllipse ellipse)
             {
+                Matrix originalTransform = g.Transform;
+
                 ApplyRotation(g, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height, ellipse.Rotation);
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
@@ -195,11 +201,13 @@ namespace PixelEditor
                 {
                     handleRects.AddRange([
                         new(ellipse.X - offset, ellipse.Y - offset, size, size),
-                new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
-                new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
-                new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
+                        new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
+                        new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
+                        new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
                     ]);
                 }
+
+                g.Transform = originalTransform;
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
@@ -211,6 +219,8 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
+                Matrix originalTransform = g.Transform;
+
                 using Font font = CreateScaledFont(text);
                 ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
                 g.DrawString(text.Content, font, brush, text.X, text.Y);
@@ -219,11 +229,13 @@ namespace PixelEditor
                 {
                     handleRects.AddRange([
                         new(text.X - offset, text.Y - offset, size, size),
-                new(text.X + text.Width - offset, text.Y - offset, size, size),
-                new(text.X - offset, text.Y + text.Height - offset, size, size),
-                new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
+                        new(text.X + text.Width - offset, text.Y - offset, size, size),
+                        new(text.X - offset, text.Y + text.Height - offset, size, size),
+                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
                     ]);
                 }
+
+                g.Transform = originalTransform;
             }
             else if (shape is ShapePath path)
             {
@@ -246,9 +258,16 @@ namespace PixelEditor
             using GraphicsPath path = new();
             if (shape is ShapeRect r) path.AddRectangle(new RectangleF(r.X, r.Y, r.Width, r.Height));
             else if (shape is ShapeEllipse e) path.AddEllipse(new RectangleF(e.X, e.Y, e.Width, e.Height));
-            else if (shape is ShapePolygon p && p.Points.Count > 2) path.AddPolygon(p.Points.ToArray());
+            else if (shape is ShapePolygon p && p.Points.Count > 1) path.AddPolygon(p.Points.ToArray());
             else if (shape is ShapeText t) path.AddRectangle(new RectangleF(t.X, t.Y, t.Width, t.Height));
-            else if (shape is ShapePath sp) { using var pth = BuildGraphicsPath(sp); path.AddPath(pth, false); }
+            else if (shape is ShapePath sp && sp.PathSegments.Count > 0)
+            {
+                using var pth = BuildGraphicsPath(sp);
+                if (pth.PointCount > 0)
+                {
+                    path.AddPath(pth, false);
+                }
+            }
 
             path.Transform(transform);
             return path.GetBounds();

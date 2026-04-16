@@ -9,6 +9,10 @@
         public const float ROTATION_HANDLE_SIZE = 15;
         public const float SCALE_HANDLE_SIZE = 10;
 
+        public static float ScaleFactorX { get; set; } = 1.0f;
+
+        public static float ScaleFactorY { get; set; } = 1.0f;
+
         public static RectangleF GetSelectionBounds()
         {
             return selectionBounds;
@@ -251,14 +255,14 @@
                 for (int j = 0; j < selectionPolygons[i].Points.Count; j++)
                 {
                     selectionPolygons[i].Points[j] = new Point(
-                        (int)(selectionPolygons[i].Points[j].X + worldDx),
-                        (int)(selectionPolygons[i].Points[j].Y + worldDy));
+                        (int)(selectionPolygons[i].Points[j].X + worldDx), // * ScaleFactorX
+                        (int)(selectionPolygons[i].Points[j].Y + worldDy)); // * ScaleFactorY
                 }
             }
             CalculateSelectionBounds();
         }
 
-        public static void MasAndMergeSelections(int x, int y, int width, int height)
+        public static void MaskAndMergeSelections(int x, int y, int width, int height)
         {
             //if (selectionPolygons.Count < 2) return;
 

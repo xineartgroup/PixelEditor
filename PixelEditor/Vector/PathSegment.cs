@@ -101,5 +101,10 @@
             }
             return arcPoints;
         }
+
+        public override string ToString()
+        {
+            return $"{PathType} {string.Join(" ", InputPoints.Select(p => $"({p.X},{p.Y})"))}";
+        }
     }
 }
