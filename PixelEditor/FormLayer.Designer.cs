@@ -70,7 +70,7 @@
             // 
             // textBoxName
             // 
-            textBoxName.Location = new Point(98, 21);
+            textBoxName.Location = new Point(110, 53);
             textBoxName.Name = "textBoxName";
             textBoxName.Size = new Size(128, 23);
             textBoxName.TabIndex = 0;
@@ -102,7 +102,7 @@
             cboBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboBlendMode.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboBlendMode.FormattingEnabled = true;
-            cboBlendMode.Location = new Point(98, 50);
+            cboBlendMode.Location = new Point(98, 22);
             cboBlendMode.Name = "cboBlendMode";
             cboBlendMode.Size = new Size(128, 21);
             cboBlendMode.TabIndex = 1;
@@ -110,7 +110,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(13, 53);
+            label1.Location = new Point(13, 25);
             label1.Name = "label1";
             label1.Size = new Size(40, 15);
             label1.TabIndex = 41;
@@ -119,7 +119,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(13, 24);
+            label2.Location = new Point(25, 56);
             label2.Name = "label2";
             label2.Size = new Size(42, 15);
             label2.TabIndex = 41;
@@ -131,7 +131,7 @@
             cboFillWith.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboFillWith.FormattingEnabled = true;
             cboFillWith.Items.AddRange(new object[] { "Transparency", "Color" });
-            cboFillWith.Location = new Point(98, 77);
+            cboFillWith.Location = new Point(98, 50);
             cboFillWith.Name = "cboFillWith";
             cboFillWith.Size = new Size(128, 21);
             cboFillWith.TabIndex = 2;
@@ -139,7 +139,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(13, 79);
+            label4.Location = new Point(13, 52);
             label4.Name = "label4";
             label4.Size = new Size(53, 15);
             label4.TabIndex = 41;
@@ -148,7 +148,7 @@
             // btnBackgroundColor
             // 
             btnBackgroundColor.BackColor = Color.White;
-            btnBackgroundColor.Location = new Point(202, 104);
+            btnBackgroundColor.Location = new Point(204, 81);
             btnBackgroundColor.Name = "btnBackgroundColor";
             btnBackgroundColor.Size = new Size(24, 24);
             btnBackgroundColor.TabIndex = 3;
@@ -158,7 +158,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(11, 109);
+            label5.Location = new Point(13, 86);
             label5.Name = "label5";
             label5.Size = new Size(106, 15);
             label5.TabIndex = 41;
@@ -166,7 +166,7 @@
             // 
             // width
             // 
-            width.Location = new Point(68, 208);
+            width.Location = new Point(68, 159);
             width.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             width.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             width.Name = "width";
@@ -177,7 +177,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(13, 210);
+            label6.Location = new Point(13, 161);
             label6.Name = "label6";
             label6.Size = new Size(42, 15);
             label6.TabIndex = 41;
@@ -185,7 +185,7 @@
             // 
             // height
             // 
-            height.Location = new Point(161, 208);
+            height.Location = new Point(161, 159);
             height.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             height.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             height.Name = "height";
@@ -196,7 +196,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(13, 270);
+            label8.Location = new Point(13, 221);
             label8.Name = "label8";
             label8.Size = new Size(42, 15);
             label8.TabIndex = 41;
@@ -204,7 +204,7 @@
             // 
             // offsetX
             // 
-            offsetX.Location = new Point(68, 268);
+            offsetX.Location = new Point(68, 219);
             offsetX.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             offsetX.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetX.Name = "offsetX";
@@ -213,7 +213,7 @@
             // 
             // offsetY
             // 
-            offsetY.Location = new Point(161, 268);
+            offsetY.Location = new Point(161, 219);
             offsetY.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             offsetY.Minimum = new decimal(new int[] { 10000, 0, 0, int.MinValue });
             offsetY.Name = "offsetY";
@@ -223,7 +223,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(13, 143);
+            label3.Location = new Point(15, 120);
             label3.Name = "label3";
             label3.Size = new Size(51, 15);
             label3.TabIndex = 41;
@@ -232,7 +232,7 @@
             // lblOpacity
             // 
             lblOpacity.AutoSize = true;
-            lblOpacity.Location = new Point(232, 143);
+            lblOpacity.Location = new Point(234, 120);
             lblOpacity.Name = "lblOpacity";
             lblOpacity.Size = new Size(15, 15);
             lblOpacity.TabIndex = 41;
@@ -240,7 +240,7 @@
             // 
             // opacity
             // 
-            opacity.Location = new Point(98, 143);
+            opacity.Location = new Point(100, 120);
             opacity.Maximum = 100;
             opacity.Name = "opacity";
             opacity.Size = new Size(128, 45);
@@ -250,7 +250,7 @@
             // 
             // btnCenterX
             // 
-            btnCenterX.Location = new Point(68, 297);
+            btnCenterX.Location = new Point(68, 248);
             btnCenterX.Name = "btnCenterX";
             btnCenterX.Size = new Size(65, 23);
             btnCenterX.TabIndex = 10;
@@ -260,7 +260,7 @@
             // 
             // btnCenterY
             // 
-            btnCenterY.Location = new Point(161, 297);
+            btnCenterY.Location = new Point(161, 248);
             btnCenterY.Name = "btnCenterY";
             btnCenterY.Size = new Size(65, 23);
             btnCenterY.TabIndex = 12;
@@ -270,7 +270,7 @@
             // 
             // btnAutoWidth
             // 
-            btnAutoWidth.Location = new Point(68, 239);
+            btnAutoWidth.Location = new Point(68, 190);
             btnAutoWidth.Name = "btnAutoWidth";
             btnAutoWidth.Size = new Size(65, 23);
             btnAutoWidth.TabIndex = 6;
@@ -280,7 +280,7 @@
             // 
             // btnAutoHeight
             // 
-            btnAutoHeight.Location = new Point(161, 237);
+            btnAutoHeight.Location = new Point(161, 188);
             btnAutoHeight.Name = "btnAutoHeight";
             btnAutoHeight.Size = new Size(65, 23);
             btnAutoHeight.TabIndex = 8;
@@ -324,7 +324,7 @@
             cboType.DropDownStyle = ComboBoxStyle.DropDownList;
             cboType.FormattingEnabled = true;
             cboType.Items.AddRange(new object[] { "Image", "Vector" });
-            cboType.Location = new Point(98, 12);
+            cboType.Location = new Point(110, 12);
             cboType.Name = "cboType";
             cboType.Size = new Size(128, 23);
             cboType.TabIndex = 43;
@@ -333,7 +333,7 @@
             // label11
             // 
             label11.AutoSize = true;
-            label11.Location = new Point(11, 15);
+            label11.Location = new Point(25, 15);
             label11.Name = "label11";
             label11.Size = new Size(35, 15);
             label11.TabIndex = 41;
@@ -342,7 +342,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(143, 272);
+            label9.Location = new Point(143, 223);
             label9.Name = "label9";
             label9.Size = new Size(12, 15);
             label9.TabIndex = 41;
@@ -351,7 +351,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(143, 210);
+            label7.Location = new Point(143, 161);
             label7.Name = "label7";
             label7.Size = new Size(12, 15);
             label7.TabIndex = 41;
@@ -360,7 +360,6 @@
             // groupRasterProperties
             // 
             groupRasterProperties.Controls.Add(cboLayers);
-            groupRasterProperties.Controls.Add(textBoxName);
             groupRasterProperties.Controls.Add(pictureMask);
             groupRasterProperties.Controls.Add(label1);
             groupRasterProperties.Controls.Add(btnAutoHeight);
@@ -382,12 +381,11 @@
             groupRasterProperties.Controls.Add(btnBackgroundColor);
             groupRasterProperties.Controls.Add(label10);
             groupRasterProperties.Controls.Add(opacity);
-            groupRasterProperties.Controls.Add(label2);
             groupRasterProperties.Controls.Add(cboBlendMode);
             groupRasterProperties.Controls.Add(cboFillWith);
-            groupRasterProperties.Location = new Point(12, 41);
+            groupRasterProperties.Location = new Point(12, 82);
             groupRasterProperties.Name = "groupRasterProperties";
-            groupRasterProperties.Size = new Size(436, 354);
+            groupRasterProperties.Size = new Size(436, 292);
             groupRasterProperties.TabIndex = 44;
             groupRasterProperties.TabStop = false;
             // 
@@ -399,10 +397,13 @@
             CancelButton = btnCancel;
             ClientSize = new Size(459, 436);
             Controls.Add(groupRasterProperties);
+            Controls.Add(textBoxName);
             Controls.Add(cboType);
             Controls.Add(label11);
             Controls.Add(btnCancel);
             Controls.Add(btnOK);
+            Controls.Add(label2);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FormLayer";

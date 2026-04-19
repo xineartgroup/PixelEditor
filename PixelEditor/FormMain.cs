@@ -824,7 +824,7 @@ namespace PixelEditor
 
             rectLineSizeTrack.Location = new Point(75, 22);
             rectLineSizeTrack.Size = new Size(110, 45);
-            rectLineSizeTrack.Maximum = 200;
+            rectLineSizeTrack.Maximum = 100;
             rectLineSizeTrack.Minimum = 1;
             rectLineSizeTrack.TickStyle = TickStyle.None;
             rectLineSizeTrack.Value = 2;
@@ -940,7 +940,7 @@ namespace PixelEditor
 
             ellipseLineSizeTrack.Location = new Point(75, 22);
             ellipseLineSizeTrack.Size = new Size(110, 45);
-            ellipseLineSizeTrack.Maximum = 200;
+            ellipseLineSizeTrack.Maximum = 100;
             ellipseLineSizeTrack.Minimum = 1;
             ellipseLineSizeTrack.TickStyle = TickStyle.None;
             ellipseLineSizeTrack.Value = 2;
@@ -1057,7 +1057,7 @@ namespace PixelEditor
 
             polygonLineSizeTrack.Location = new Point(75, 22);
             polygonLineSizeTrack.Size = new Size(110, 45);
-            polygonLineSizeTrack.Maximum = 200;
+            polygonLineSizeTrack.Maximum = 100;
             polygonLineSizeTrack.Minimum = 1;
             polygonLineSizeTrack.TickStyle = TickStyle.None;
             polygonLineSizeTrack.Value = 2;
@@ -2244,6 +2244,25 @@ namespace PixelEditor
             }
         }
 
+        private void SVGToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new()
+            {
+                Filter = "SVG Files|*.svg"
+            };
+            if ((openFileDialog1).ShowDialog() == DialogResult.OK)
+            {
+                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out int width, out int height);
+                Layer layer = new($"Layer #{layersControl.GetLayers().Count + 1}", true)
+                {
+                    LayerType = LayerType.Vector,
+                    Shapes = shapes,
+                };
+                layersControl.InsertLayer(0, layer);
+                RedrawImage();
+            }
+        }
+
         private void PNGPictureToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog1 = new()
@@ -2342,6 +2361,11 @@ namespace PixelEditor
                     MessageBox.Show($"Error saving image: {ex.Message}");
                 }
             }
+        }
+
+        private void SVGToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
         }
 
         private void NewToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -2734,15 +2758,15 @@ namespace PixelEditor
 
                         scaleAnchorWorld = ImageSelections.GetSelectionCenter();
 
-                        if (scaleX == -1)
+                        if (scaleX < 0)
                         {
                             selectedAreaBitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                            scaleX = 1;
+                            scaleX = -scaleX;
                         }
-                        if (scaleY == -1)
+                        if (scaleY < 0)
                         {
                             selectedAreaBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                            scaleY = 1;
+                            scaleY = -scaleY;
                         }
 
                         ImageSelections.ScaleFactorX = scaleX;

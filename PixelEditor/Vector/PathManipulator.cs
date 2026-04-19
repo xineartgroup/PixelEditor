@@ -262,7 +262,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.5f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -308,7 +308,7 @@ namespace PixelEditor.Vector
             
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.5f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -354,7 +354,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.5f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -400,7 +400,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 0.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.5f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -571,7 +571,7 @@ namespace PixelEditor.Vector
                         if (isEdge)
                         {
                             List<PointF> contour = TraceContour(mask, visited, x, y, dx, dy);
-                            if (contour.Count > 2)
+                            if (contour.Count > 3)
                             {
                                 contours.Add(contour);
                             }

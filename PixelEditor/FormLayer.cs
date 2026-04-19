@@ -1,17 +1,42 @@
-﻿namespace PixelEditor
+﻿using PixelEditor.Vector;
+
+namespace PixelEditor
 {
     public partial class FormLayer : Form
     {
         public Layer Layer = new("Layer 1", true);
         public List<Layer> Layers = [];
 
+        private GroupBox groupVectorProperties = new();
+        private readonly ListBox listBoxVector = new();
+
         public FormLayer()
         {
             InitializeComponent();
+            InitializeVectorGroupComponent();
+        }
+
+        private void InitializeVectorGroupComponent()
+        {
+            groupVectorProperties.Location = groupRasterProperties.Location;
+            groupVectorProperties.Size = groupRasterProperties.Size;
+            groupVectorProperties.TabIndex = 45;
+            groupVectorProperties.TabStop = false;
+            groupVectorProperties.Text = "Vector Properties";
+
+            listBoxVector.Location = new Point(22, 32);
+            listBoxVector.Size = new Size(300, 200);
+            listBoxVector.TabIndex = 0;
+            listBoxVector.SelectedIndexChanged += ListBoxVector_SelectedIndexChanged_Handler;
+
+            groupVectorProperties.Controls.Add(listBoxVector);
+
+            Controls.Add(groupVectorProperties);
         }
 
         private void FormName_Load(object sender, EventArgs e)
         {
+            int maskIndex = 0;
             cboType.SelectedIndex = Layer.LayerType == LayerType.Vector ? 1 : 0;
             textBoxName.Text = Layer.Name;
             cboBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
@@ -24,12 +49,25 @@
             offsetX.Value = Layer.X;
             offsetY.Value = Layer.Y;
             cboLayers.Items.Add("None");
+            int index = 0;
             foreach (Layer layer in Layers)
             {
                 if (layer.Name != Layer.Name)
                 {
+                    index++;
                     cboLayers.Items.Add(layer.Name);
+                    if (ManipulatorGeneral.AreBitmapsEqual(layer.Image, Layer.ImageMask))
+                    {
+                        maskIndex = index;
+                    }
                 }
+            }
+            cboLayers.SelectedIndex = maskIndex;
+            pictureMask.Image = Layer.ImageMask;
+
+            foreach (BaseShape shape in Layer.Shapes)
+            {
+                listBoxVector.Items.Add(shape.GetType().Name);
             }
         }
 
@@ -38,10 +76,20 @@
             if (cboType.SelectedIndex == 0)
             {
                 groupRasterProperties.Visible = true;
+                groupVectorProperties.Visible = false;
             }
             else
             {
                 groupRasterProperties.Visible = false;
+                groupVectorProperties.Visible = true;
+            }
+        }
+
+        private void ListBoxVector_SelectedIndexChanged_Handler(object? sender, EventArgs e)
+        {
+            if (listBoxVector.SelectedIndex >= 0 && listBoxVector.SelectedIndex < Layer.Shapes.Count)
+            {
+                Layer.CurrentShape = Layer.Shapes[listBoxVector.SelectedIndex];
             }
         }
 
