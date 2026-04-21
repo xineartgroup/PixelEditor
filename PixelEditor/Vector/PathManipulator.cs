@@ -262,7 +262,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.0f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -308,7 +308,7 @@ namespace PixelEditor.Vector
             
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.0f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -354,7 +354,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.0f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -400,7 +400,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.5f);
+                var simplified = SimplifyContour(outline, epsilon: 1.0f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -571,7 +571,7 @@ namespace PixelEditor.Vector
                         if (isEdge)
                         {
                             List<PointF> contour = TraceContour(mask, visited, x, y, dx, dy);
-                            if (contour.Count > 3)
+                            if (IncludeContour(contour))
                             {
                                 contours.Add(contour);
                             }
@@ -580,6 +580,29 @@ namespace PixelEditor.Vector
                 }
             }
             return contours;
+        }
+
+        private static bool IncludeContour(List<PointF> contour)
+        {
+            if (contour.Count == 3)
+            {
+                float minX = contour.Min(p => p.X);
+                float minY = contour.Min(p => p.Y);
+                float maxX = contour.Max(p => p.X);
+                float maxY = contour.Max(p => p.Y);
+                float width = maxX - minX;
+                float height = maxY - minY;
+
+                return (width + height) / 2 > 4;
+            }
+            else if (contour.Count > 3)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private static List<PointF> TraceContour(bool[,] mask, bool[,] visited, int startX, int startY, int[] dx, int[] dy)

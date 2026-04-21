@@ -27,5 +27,16 @@
         public float Cy => Y + (Height / 2f);
         public float Rx => Width / 2f;
         public float Ry => Height / 2f;
+
+        public override List<Point> ControlPoints()
+        {
+            return
+            [
+                new Point((int)X, (int)Y),
+                new Point((int)(X + Width), (int)Y),
+                new Point((int)(X + Width), (int)(Y + Height)),
+                new Point((int)X, (int)(Y + Height))
+            ];
+        }
     }
 }

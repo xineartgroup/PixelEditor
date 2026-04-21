@@ -24,5 +24,17 @@
         public float Height { get; set; }
         public float Rx { get; set; } // Corner radius X
         public float Ry { get; set; } // Corner radius Y
+
+        public override List<Point> ControlPoints()
+        {
+            return
+            [
+                new Point((int)X, (int)Y),
+                new Point((int)(X + Width), (int)Y),
+                new Point((int)(X + Width), (int)(Y + Height)),
+                new Point((int)X, (int)(Y + Height))
+            ];
+        }
+
     }
 }

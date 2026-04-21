@@ -345,7 +345,7 @@ namespace PixelEditor
             int width = selectedLayer.Image.Width;
             int height = selectedLayer.Image.Height;
 
-            var selections = ImageSelections.GetSelections();
+            var selections = SelectionsManipulator.GetSelections();
             var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
 
             bool[,] mask = new bool[width, height];
@@ -380,7 +380,7 @@ namespace PixelEditor
                         .Select(p => new Point((int)(p.X - selectedLayer.X), (int)(p.Y - selectedLayer.Y)))
                         .ToList();
 
-                    ImageSelections.FillPolygonInMask(mask, localPoints, true);
+                    SelectionsManipulator.FillPolygonInMask(mask, localPoints, true);
                 }
             }
 
@@ -474,7 +474,7 @@ namespace PixelEditor
             byte fillA = emptyHole ? (byte)0 : (byte)255;
             byte fillR = 255; byte fillG = 255; byte fillB = 255;
 
-            var selections = ImageSelections.GetSelections();
+            var selections = SelectionsManipulator.GetSelections();
             var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
 
             if (selectionPolygons.Count == 0) return result;
@@ -511,7 +511,7 @@ namespace PixelEditor
                         .Select(p => new Point((int)(p.X - selectedLayer.X), (int)(p.Y - selectedLayer.Y)))
                         .ToList();
 
-                    ImageSelections.FillPolygonInMask(mask, localPoints, true);
+                    SelectionsManipulator.FillPolygonInMask(mask, localPoints, true);
                 }
             }
 
@@ -1342,24 +1342,24 @@ namespace PixelEditor
         public static bool IsOverRotationHandle(Point screenPoint, int worldWidth, int worldHeight, int canvasWidth, int canvasHeight, float zoom)
         {
             PointF worldHandle = new(
-                ImageSelections.GetSelectionCenter().X,
-                ImageSelections.GetSelectionBounds().Y - ImageSelections.ROTATION_HANDLE_SIZE / ImageSelections.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
+                SelectionsManipulator.GetSelectionCenter().X,
+                SelectionsManipulator.GetSelectionBounds().Y - SelectionsManipulator.ROTATION_HANDLE_SIZE / SelectionsManipulator.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
             );
             Point screenHandle = WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
-            float distance = ImageSelections.Distance(screenPoint, screenHandle);
-            return distance < ImageSelections.ROTATION_HANDLE_SIZE;
+            float distance = SelectionsManipulator.Distance(screenPoint, screenHandle);
+            return distance < SelectionsManipulator.ROTATION_HANDLE_SIZE;
         }
 
         public static RectangleF GetSelectionBoundsScreen(int canvasWidth, int canvasHeight)
         {
-            Point topLeft = WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().X, (int)ImageSelections.GetSelectionBounds().Y), canvasWidth, canvasHeight);
-            Point bottomRight = WorldToScreen(new Point((int)ImageSelections.GetSelectionBounds().Right, (int)ImageSelections.GetSelectionBounds().Bottom), canvasWidth, canvasHeight);
+            Point topLeft = WorldToScreen(new Point((int)SelectionsManipulator.GetSelectionBounds().X, (int)SelectionsManipulator.GetSelectionBounds().Y), canvasWidth, canvasHeight);
+            Point bottomRight = WorldToScreen(new Point((int)SelectionsManipulator.GetSelectionBounds().Right, (int)SelectionsManipulator.GetSelectionBounds().Bottom), canvasWidth, canvasHeight);
             return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
         }
 
         public static PointF GetSelectionCenterScreen(int canvasWidth, int canvasHeight)
         {
-            Point p = WorldToScreen(Point.Round(ImageSelections.GetSelectionCenter()), canvasWidth, canvasHeight);
+            Point p = WorldToScreen(Point.Round(SelectionsManipulator.GetSelectionCenter()), canvasWidth, canvasHeight);
             return p;
         }
 
@@ -1375,7 +1375,7 @@ namespace PixelEditor
         {
             handle = "";
 
-            RectangleF b = ImageSelections.GetSelectionBounds();
+            RectangleF b = SelectionsManipulator.GetSelectionBounds();
 
             float midX = (b.Left + b.Right) / 2f;
             float midY = (b.Top + b.Bottom) / 2f;
@@ -1395,7 +1395,7 @@ namespace PixelEditor
             foreach (var h in handles)
             {
                 Point screenCorner = WorldToScreen(Point.Round(h.World), canvasWidth, canvasHeight);
-                if (ImageSelections.Distance(screenPoint, screenCorner) < ImageSelections.SCALE_HANDLE_SIZE)
+                if (SelectionsManipulator.Distance(screenPoint, screenCorner) < SelectionsManipulator.SCALE_HANDLE_SIZE)
                 {
                     handle = h.Name;
                     return true;
@@ -1407,7 +1407,7 @@ namespace PixelEditor
 
         public static PointF GetOppositeAnchor(string handle)
         {
-            RectangleF b = ImageSelections.GetSelectionBounds();
+            RectangleF b = SelectionsManipulator.GetSelectionBounds();
             float midX = (b.Left + b.Right) / 2f;
             float midY = (b.Top + b.Bottom) / 2f;
 

@@ -140,10 +140,10 @@ namespace PixelEditor
                 {
                     Matrix original = g.Transform;
                     g.Transform = Transform;
-                    foreach (var h in Handles)
+                    foreach (var handle in Handles)
                     {
-                        g.FillRectangle(handleBrush, h);
-                        g.DrawRectangle(handlePen, h.X, h.Y, h.Width, h.Height);
+                        g.FillRectangle(handleBrush, handle);
+                        g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
                     }
                     g.Transform = original;
                     Transform.Dispose();
@@ -165,7 +165,8 @@ namespace PixelEditor
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
 
-            const int size = 10;
+            int size = Math.Max(Document.Width, Document.Height) / 150;
+            size = Math.Clamp(size, 2, 20);
             float offset = size / 2f;
             List<RectangleF> handleRects = [];
 

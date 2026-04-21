@@ -56,11 +56,6 @@ namespace PixelEditor
                             new XAttribute("x2", l.EndPoint.X.ToString("0.###", CultureInfo.InvariantCulture)),
                             new XAttribute("y2", l.EndPoint.Y.ToString("0.###", CultureInfo.InvariantCulture)));
                     }
-                    else if (stroke is ShapePolyline pl)
-                    {
-                        el = new XElement(SvgNs + "polyline",
-                            new XAttribute("points", GetPointsString(pl.Points)));
-                    }
                     else if (stroke is ShapePolygon pg)
                     {
                         el = new XElement(SvgNs + "polygon",

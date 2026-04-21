@@ -122,8 +122,9 @@ namespace PixelEditor
                 }
                 else if (localName == "polyline")
                 {
-                    shape = new ShapePolyline
+                    shape = new ShapePolygon
                     {
+                        IsClosed = false,
                         Points = ParsePts(el.Attribute("points")?.Value ?? "")
                     };
                 }
@@ -131,6 +132,7 @@ namespace PixelEditor
                 {
                     shape = new ShapePolygon
                     {
+                        IsClosed = true,
                         Points = ParsePts(el.Attribute("points")?.Value ?? "")
                     };
                 }
@@ -219,15 +221,6 @@ namespace PixelEditor
                     line.EndPoint = new PointF(
                         (float)((line.EndPoint.X * scaleX) + offsetX),
                         (float)((line.EndPoint.Y * scaleY) + offsetY));
-                }
-                else if (shape is ShapePolyline polyline)
-                {
-                    for (int i = 0; i < polyline.Points.Count; i++)
-                    {
-                        polyline.Points[i] = new PointF(
-                            (float)((polyline.Points[i].X * scaleX) + offsetX),
-                            (float)((polyline.Points[i].Y * scaleY) + offsetY));
-                    }
                 }
                 else if (shape is ShapePolygon polygon)
                 {

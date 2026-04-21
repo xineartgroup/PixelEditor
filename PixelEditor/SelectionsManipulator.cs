@@ -1,6 +1,6 @@
 ﻿namespace PixelEditor
 {
-    public static class ImageSelections
+    public static class SelectionsManipulator
     {
         private static readonly List<SelectionPolygon> selectionPolygons = [];
         private static RectangleF selectionBounds;

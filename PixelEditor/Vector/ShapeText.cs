@@ -33,5 +33,17 @@
         public bool IsBold { get; internal set; } = false;
         public bool IsItalic { get; internal set; } = false;
         public string FontFamily { get; set; } = "Arial";
+
+        public override List<Point> ControlPoints()
+        {
+            return
+            [
+                new Point((int)X, (int)Y),
+                new Point((int)(X + Width), (int)Y),
+                new Point((int)(X + Width), (int)(Y + Height)),
+                new Point((int)X, (int)(Y + Height))
+            ];
+        }
+
     }
 }
