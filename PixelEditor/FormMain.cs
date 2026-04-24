@@ -28,7 +28,7 @@ namespace PixelEditor
         private bool isUpdatingPolygonShape = false;
         private bool isResizingShape = false;
         private bool isColorPicked = false;
-        private int activeHandleIndex = -1; // 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
+        private bool isResizingShapeStarted = false;
         private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
@@ -1999,6 +1999,184 @@ namespace PixelEditor
             }
         }
 
+        private void BtnToCurve_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
+
+                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    {
+                        if (selectedLayer.CurrentShape is ShapePath path)
+                        {
+                            int pointIndex = 0;
+                            int targetIndex = path.ActiveHandleIndex;
+
+                            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
+                            {
+                                var segment = path.PathSegments[segIdx];
+
+                                for (int i = 0; i < segment.InputPoints.Count; i++)
+                                {
+                                    if (pointIndex == targetIndex)
+                                    {
+                                        if (segment.PathType.ToUpper() == "L" || segment.PathType.ToUpper() == "M")
+                                        {
+                                            PointF currentPoint = segment.InputPoints[i];
+                                            PointF prevPoint = GetPreviousPoint(path, pointIndex);
+                                            PointF nextPoint = GetNextPoint(path, pointIndex);
+
+                                            if (prevPoint != currentPoint && nextPoint != currentPoint)
+                                            {
+                                                float handleOffset = VectorDist(prevPoint, nextPoint) * 0.3f;
+                                                PointF cp1 = new PointF(
+                                                    currentPoint.X + (prevPoint.X - currentPoint.X) * 0.3f,
+                                                    currentPoint.Y + (prevPoint.Y - currentPoint.Y) * 0.3f
+                                                );
+                                                PointF cp2 = new PointF(
+                                                    currentPoint.X + (nextPoint.X - currentPoint.X) * 0.3f,
+                                                    currentPoint.Y + (nextPoint.Y - currentPoint.Y) * 0.3f
+                                                );
+
+                                                PathSegment newSegment = new PathSegment("C", new List<PointF>
+                                        {
+                                            prevPoint, cp1, cp2, nextPoint
+                                        });
+
+                                                int prevSegIdx = segIdx;
+                                                int prevPointIdx = i - 1;
+
+                                                if (prevPointIdx >= 0)
+                                                {
+                                                    path.PathSegments[prevSegIdx].InputPoints.RemoveAt(prevPointIdx);
+                                                }
+
+                                                segment.InputPoints.RemoveAt(i);
+
+                                                path.PathSegments.Insert(segIdx, newSegment);
+                                            }
+                                        }
+                                        break;
+                                    }
+                                    pointIndex++;
+                                }
+                                if (pointIndex > targetIndex) break;
+                            }
+                        }
+                        else if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                        {
+                            if (polygon.ActiveHandleIndex >= 0 && polygon.ActiveHandleIndex < polygon.Points.Count)
+                            {
+                                PointF currentPoint = polygon.Points[polygon.ActiveHandleIndex];
+                                PointF prevPoint = polygon.Points[(polygon.ActiveHandleIndex - 1 + polygon.Points.Count) % polygon.Points.Count];
+                                PointF nextPoint = polygon.Points[(polygon.ActiveHandleIndex + 1) % polygon.Points.Count];
+
+                                float handleOffset = VectorDist(prevPoint, nextPoint) * 0.3f;
+                                PointF cp1 = new PointF(
+                                    currentPoint.X + (prevPoint.X - currentPoint.X) * 0.3f,
+                                    currentPoint.Y + (prevPoint.Y - currentPoint.Y) * 0.3f
+                                );
+                                PointF cp2 = new PointF(
+                                    currentPoint.X + (nextPoint.X - currentPoint.X) * 0.3f,
+                                    currentPoint.Y + (nextPoint.Y - currentPoint.Y) * 0.3f
+                                );
+
+                                ShapePath newPath = new ShapePath();
+                                List<PointF> points = new List<PointF>(polygon.Points);
+
+                                PathSegment firstSegment = new PathSegment("M", new List<PointF> { points[0] });
+                                newPath.PathSegments.Add(firstSegment);
+
+                                for (int i = 1; i < points.Count - 1; i++)
+                                {
+                                    PathSegment lineSeg = new PathSegment("L", new List<PointF> { points[i] });
+                                    newPath.PathSegments.Add(lineSeg);
+                                }
+
+                                if (polygon.IsClosed)
+                                {
+                                    PathSegment closeSeg = new PathSegment("L", new List<PointF> { points[points.Count - 1] });
+                                    newPath.PathSegments.Add(closeSeg);
+                                    newPath.PathSegments.Add(new PathSegment("Z", new List<PointF>()));
+                                }
+                                else
+                                {
+                                    PathSegment lastSeg = new PathSegment("L", new List<PointF> { points[points.Count - 1] });
+                                    newPath.PathSegments.Add(lastSeg);
+                                }
+
+                                newPath.LineWidth = polygon.LineWidth;
+                                newPath.LineColor = polygon.LineColor;
+                                newPath.FillColor = polygon.FillColor;
+                                newPath.DashStyle = polygon.DashStyle;
+                                newPath.Opacity = polygon.Opacity;
+                                newPath.StrokeOpacity = polygon.StrokeOpacity;
+                                newPath.Rotation = polygon.Rotation;
+                                newPath.HasGradientFill = polygon.HasGradientFill;
+                                newPath.HasGradientStroke = polygon.HasGradientStroke;
+                                newPath.GradientStroke = polygon.GradientStroke;
+                                newPath.GradientFill = polygon.GradientFill;
+                                newPath.ActiveHandleIndicies = polygon.ActiveHandleIndicies;
+                                newPath.ActiveHandleIndex = polygon.ActiveHandleIndex;
+
+                                selectedLayer.Shapes[selectedShapeIndex] = newPath;
+                                selectedLayer.CurrentShape = newPath;
+                            }
+                        }
+                    }
+
+                    UpdateControls();
+                    ManipulatorGeneral.InvalidateCompositeBuffers();
+                    RedrawImage();
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+            }
+        }
+
+        private PointF GetPreviousPoint(ShapePath path, int targetIndex)
+        {
+            int pointIndex = 0;
+            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
+            {
+                var segment = path.PathSegments[segIdx];
+                for (int i = 0; i < segment.InputPoints.Count; i++)
+                {
+                    if (pointIndex == targetIndex - 1)
+                        return segment.InputPoints[i];
+                    pointIndex++;
+                }
+            }
+            return PointF.Empty;
+        }
+
+        private PointF GetNextPoint(ShapePath path, int targetIndex)
+        {
+            int pointIndex = 0;
+            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
+            {
+                var segment = path.PathSegments[segIdx];
+                for (int i = 0; i < segment.InputPoints.Count; i++)
+                {
+                    if (pointIndex == targetIndex + 1)
+                        return segment.InputPoints[i];
+                    pointIndex++;
+                }
+            }
+            return PointF.Empty;
+        }
+
+        private float VectorDist(PointF a, PointF b)
+        {
+            return (float)Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
+        }
+
         private void UpdateCursor(Image? image)
         {
             if (image != null)
@@ -2251,7 +2429,7 @@ namespace PixelEditor
             };
             if ((openFileDialog1).ShowDialog() == DialogResult.OK)
             {
-                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out int width, out int height);
+                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out _, out _);
                 Layer layer = new($"Layer #{layersControl.GetLayers().Count + 1}", true)
                 {
                     LayerType = LayerType.Vector,
@@ -2364,7 +2542,22 @@ namespace PixelEditor
 
         private void SVGToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-
+            SaveFileDialog saveFileDialog1 = new()
+            {
+                Filter = "SVG|*.svg"
+            };
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    SVGExporter.ExportSVG(saveFileDialog1.FileName, Document.Width, Document.Height, layersControl.GetLayers());
+                    labelStatus.Text = "Image saved successfully!";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving image: {ex.Message}");
+                }
+            }
         }
 
         private void NewToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -4494,6 +4687,7 @@ namespace PixelEditor
                                 {
                                     int size = 10;
                                     int offset = size / 2;
+                                    bool shiftPressed = (ModifierKeys & Keys.Shift) != 0;
 
                                     for (int i = 0; i < polygon.Points.Count; i++)
                                     {
@@ -4503,16 +4697,37 @@ namespace PixelEditor
                                         if (handle.Contains(localPos.X, localPos.Y))
                                         {
                                             isResizingShape = true;
-                                            activeHandleIndex = i;
+                                            isResizingShapeStarted = false;
+
+                                            if (shiftPressed)
+                                            {
+                                                if (polygon.ActiveHandleIndicies.Contains(i))
+                                                {
+                                                    polygon.ActiveHandleIndicies = [.. polygon.ActiveHandleIndicies.Where(idx => idx != i)];
+                                                }
+                                                else
+                                                {
+                                                    var newList = polygon.ActiveHandleIndicies.ToList();
+                                                    newList.Add(i);
+                                                    polygon.ActiveHandleIndicies = [.. newList];
+                                                }
+                                                polygon.ActiveHandleIndex = polygon.ActiveHandleIndicies.Length > 0 ? polygon.ActiveHandleIndicies[0] : -1;
+                                            }
+                                            else
+                                            {
+                                                polygon.ActiveHandleIndicies = [i];
+                                                polygon.ActiveHandleIndex = i;
+                                            }
                                             break;
                                         }
                                     }
                                 }
                                 else if (shape is ShapePath path)
                                 {
-                                    int size = 10; // Keeping the size 10 consistent with your DrawShape method
+                                    int size = 10;
                                     int offset = size / 2;
                                     int pointIndex = 0;
+                                    bool shiftPressed = (ModifierKeys & Keys.Shift) != 0;
 
                                     foreach (var segment in path.PathSegments)
                                     {
@@ -4524,7 +4739,27 @@ namespace PixelEditor
                                             if (handle.Contains(localPos.X, localPos.Y))
                                             {
                                                 isResizingShape = true;
-                                                activeHandleIndex = pointIndex; // Store the flattened absolute index
+                                                isResizingShapeStarted = false;
+
+                                                if (shiftPressed)
+                                                {
+                                                    if (path.ActiveHandleIndicies.Contains(pointIndex))
+                                                    {
+                                                        path.ActiveHandleIndicies = [.. path.ActiveHandleIndicies.Where(idx => idx != pointIndex)];
+                                                    }
+                                                    else
+                                                    {
+                                                        var newList = path.ActiveHandleIndicies.ToList();
+                                                        newList.Add(pointIndex);
+                                                        path.ActiveHandleIndicies = [.. newList];
+                                                    }
+                                                    path.ActiveHandleIndex = path.ActiveHandleIndicies.Length > 0 ? path.ActiveHandleIndicies[0] : -1;
+                                                }
+                                                else
+                                                {
+                                                    path.ActiveHandleIndicies = [pointIndex];
+                                                    path.ActiveHandleIndex = pointIndex;
+                                                }
                                                 break;
                                             }
                                             pointIndex++;
@@ -4537,6 +4772,7 @@ namespace PixelEditor
                                 {
                                     int size = 10;
                                     int offset = size / 2;
+                                    bool ctrlPressed = (ModifierKeys & Keys.Control) != 0;
 
                                     RectangleF[] handles =
                                     [
@@ -4551,8 +4787,51 @@ namespace PixelEditor
                                         if (handles[hIndex].Contains(localPos.X, localPos.Y))
                                         {
                                             isResizingShape = true;
-                                            activeHandleIndex = hIndex;
-                                            startPoint = localPos; // store original click spot
+                                            isResizingShapeStarted = false;
+
+                                            if (ctrlPressed && (shape is ShapePolygon polygon2))
+                                            {
+                                                if (polygon2.ActiveHandleIndicies.Contains(hIndex))
+                                                {
+                                                    polygon2.ActiveHandleIndicies = [.. polygon2.ActiveHandleIndicies.Where(idx => idx != hIndex)];
+                                                }
+                                                else
+                                                {
+                                                    var newList = polygon2.ActiveHandleIndicies.ToList();
+                                                    newList.Add(hIndex);
+                                                    polygon2.ActiveHandleIndicies = [.. newList];
+                                                }
+                                                polygon2.ActiveHandleIndex = polygon2.ActiveHandleIndicies.Length > 0 ? polygon2.ActiveHandleIndicies[0] : -1;
+                                            }
+                                            else if (ctrlPressed && (shape is ShapePath path2))
+                                            {
+                                                if (path2.ActiveHandleIndicies.Contains(hIndex))
+                                                {
+                                                    path2.ActiveHandleIndicies = [.. path2.ActiveHandleIndicies.Where(idx => idx != hIndex)];
+                                                }
+                                                else
+                                                {
+                                                    var newList = path2.ActiveHandleIndicies.ToList();
+                                                    newList.Add(hIndex);
+                                                    path2.ActiveHandleIndicies = [.. newList];
+                                                }
+                                                path2.ActiveHandleIndex = path2.ActiveHandleIndicies.Length > 0 ? path2.ActiveHandleIndicies[0] : -1;
+                                            }
+                                            else
+                                            {
+                                                if (shape is ShapePolygon polygon_2)
+                                                {
+                                                    polygon_2.ActiveHandleIndicies = [hIndex];
+                                                    polygon_2.ActiveHandleIndex = hIndex;
+                                                }
+                                                else if (shape is ShapePath path_2)
+                                                {
+                                                    path_2.ActiveHandleIndicies = [hIndex];
+                                                    path_2.ActiveHandleIndex = hIndex;
+                                                }
+                                                shape.ActiveHandleIndex = hIndex;
+                                            }
+                                            startPoint = localPos;
                                             break;
                                         }
                                     }
@@ -4604,7 +4883,7 @@ namespace PixelEditor
                                         isDraggingShape = true;
                                     }
                                 }
-                                
+
                                 if (!found)
                                 {
                                     selectedLayer.CurrentShape = null;
@@ -4930,59 +5209,82 @@ namespace PixelEditor
                     Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
+                    if (!isResizingShapeStarted)
+                    {
+                        startPoint = localPos;
+                        isResizingShapeStarted = true;
+                    }
+
+                    float deltaX = localPos.X - startPoint.X;
+                    float deltaY = localPos.Y - startPoint.Y;
+
                     float nX = 0, nY = 0, nW = 0, nH = 0;
                     if (selectedLayer.CurrentShape is ShapeRect r) { nX = r.X; nY = r.Y; nW = r.Width; nH = r.Height; }
                     else if (selectedLayer.CurrentShape is ShapeEllipse el) { nX = el.X; nY = el.Y; nW = el.Width; nH = el.Height; }
                     else if (selectedLayer.CurrentShape is ShapeText t) { nX = t.X; nY = t.Y; nW = t.Width; nH = t.Height; }
                     else if (selectedLayer.CurrentShape is ShapePolygon polygon)
                     {
-                        if (activeHandleIndex >= 0 && activeHandleIndex < polygon.Points.Count)
+                        if (polygon.ActiveHandleIndicies.Length > 0)
                         {
-                            polygon.Points[activeHandleIndex] = new PointF(localPos.X, localPos.Y);
+                            foreach (int index in polygon.ActiveHandleIndicies)
+                            {
+                                if (index >= 0 && index < polygon.Points.Count)
+                                {
+                                    polygon.Points[index] = new PointF(
+                                        polygon.Points[index].X + deltaX,
+                                        polygon.Points[index].Y + deltaY
+                                    );
+                                }
+                            }
+                            startPoint = localPos;
                         }
                     }
                     else if (selectedLayer.CurrentShape is ShapePath path)
                     {
-                        int pointIndex = 0;
-                        foreach (var segment in path.PathSegments)
+                        if (path.ActiveHandleIndicies.Length > 0)
                         {
-                            for (int i = 0; i < segment.InputPoints.Count; i++)
+                            int pointIndex = 0;
+                            foreach (var segment in path.PathSegments)
                             {
-                                if (pointIndex == activeHandleIndex)
+                                for (int i = 0; i < segment.InputPoints.Count; i++)
                                 {
-                                    segment.InputPoints[i] = new PointF(localPos.X, localPos.Y);
+                                    if (path.ActiveHandleIndicies.Contains(pointIndex))
+                                    {
+                                        segment.InputPoints[i] = new PointF(
+                                            segment.InputPoints[i].X + deltaX,
+                                            segment.InputPoints[i].Y + deltaY
+                                        );
+                                    }
                                     pointIndex++;
-                                    break;
                                 }
-                                pointIndex++;
                             }
+                            startPoint = localPos;
                         }
                     }
 
                     float right = nX + nW;
                     float bottom = nY + nH;
 
-                    // 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
-                    if (activeHandleIndex == 0)
+                    if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape.ActiveHandleIndex == 0)
                     {
                         nX = Math.Min(localPos.X, right - 5);
                         nY = Math.Min(localPos.Y, bottom - 5);
                         nW = right - nX;
                         nH = bottom - nY;
                     }
-                    else if (activeHandleIndex == 1)
+                    else if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape.ActiveHandleIndex == 1)
                     {
                         nY = Math.Min(localPos.Y, bottom - 5);
                         nW = Math.Max(5, localPos.X - nX);
                         nH = bottom - nY;
                     }
-                    else if (activeHandleIndex == 2)
+                    else if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape.ActiveHandleIndex == 2)
                     {
                         nX = Math.Min(localPos.X, right - 5);
                         nW = right - nX;
                         nH = Math.Max(5, localPos.Y - nY);
                     }
-                    else if (activeHandleIndex == 3)
+                    else if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape.ActiveHandleIndex == 3)
                     {
                         nW = Math.Max(5, localPos.X - nX);
                         nH = Math.Max(5, localPos.Y - nY);
@@ -5372,7 +5674,7 @@ namespace PixelEditor
             isDrawing = false;
             isDraggingShape = false;
             isResizingShape = false;
-            activeHandleIndex = -1;
+            //activeHandleIndex = -1;
             ColorDialogX.IsEyeDropping = false;
         }
 
@@ -5402,6 +5704,7 @@ namespace PixelEditor
                     RedrawImage();
                     isDraggingShape = false;
                     isUpdatingPolygonShape = false;
+                    btnPointer.Checked = true;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
 

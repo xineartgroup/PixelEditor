@@ -1,7 +1,6 @@
 ﻿using PixelEditor.Vector;
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace PixelEditor
@@ -101,7 +100,6 @@ namespace PixelEditor
 
                                 case "A":
                                     // Arc: Radii, Rot, LargeArc, Sweep, EndPoint
-                                    // Note: InputPoints[3] stores LargeArc in X and Sweep in Y
                                     sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} {3:0.###} {4},{5} {6:0.###},{7:0.###} ",
                                         type, pts[1].X, pts[1].Y, pts[2].X, (int)pts[3].X, (int)pts[3].Y, pts[4].X, pts[4].Y);
                                     break;
@@ -115,14 +113,26 @@ namespace PixelEditor
                     }
                     else if (stroke is ShapeText t)
                     {
-                        el = new XElement(SvgNs + "text",
+                        float scaledFontSize = CalculateScaledFontSize(t);
+
+                        XElement textElement = new XElement(SvgNs + "text",
                             new XAttribute("x", t.X.ToString("0.###", CultureInfo.InvariantCulture)),
                             new XAttribute("y", t.Y.ToString("0.###", CultureInfo.InvariantCulture)),
-                            new XAttribute("font-size", t.FontSize.ToString("0.###", CultureInfo.InvariantCulture)),
+                            new XAttribute("font-size", $"{scaledFontSize.ToString("0.###", CultureInfo.InvariantCulture)}px"),
                             new XAttribute("font-family", t.FontFamily ?? "Arial"),
                             t.IsBold ? new XAttribute("font-weight", "bold") : null,
                             t.IsItalic ? new XAttribute("font-style", "italic") : null,
+                            new XAttribute("dominant-baseline", "hanging"),
+                            new XAttribute("text-rendering", "geometricPrecision"),
                             t.Content);
+
+                        if (t.Rotation != 0)
+                        {
+                            textElement.Add(new XAttribute("transform",
+                                $"rotate({t.Rotation.ToString("0.###", CultureInfo.InvariantCulture)}, {t.X.ToString("0.###", CultureInfo.InvariantCulture)}, {t.Y.ToString("0.###", CultureInfo.InvariantCulture)})"));
+                        }
+
+                        el = textElement;
                     }
 
                     if (el != null)
@@ -148,13 +158,6 @@ namespace PixelEditor
             return $"#{c.R:X2}{c.G:X2}{c.B:X2}";
         }
 
-        private static string ExtractIdFromStyle(string style, string key)
-        {
-            var pattern = $@"{key}:url\(#([^)]+)\)";
-            var match = Regex.Match(style, pattern);
-            return match.Success ? match.Groups[1].Value : "";
-        }
-
         private static string GetPointsString(List<PointF> points)
         {
             StringBuilder sb = new();
@@ -168,25 +171,36 @@ namespace PixelEditor
             return sb.ToString();
         }
 
-        private static string PointsToPathData(List<PointF> points, bool isClosed)
+        private static float CalculateScaledFontSize(ShapeText text)
         {
-            if (points.Count == 0) return "";
+            using Font tempFont = new(text.FontFamily, text.FontSize, GetFontStyle(text));
 
-            StringBuilder sb = new();
-            for (int i = 0; i < points.Count; i++)
+            using StringFormat stringFormat = new()
             {
-                var p = points[i];
-                char cmd = (i == 0) ? 'M' : 'L';
-                sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} ", cmd, p.X, p.Y);
-            }
+                Alignment = StringAlignment.Near,
+                LineAlignment = StringAlignment.Near,
+                Trimming = StringTrimming.None
+            };
 
-            // Close the path if it's a polygon
-            if (isClosed && points.Count >= 3)
-            {
-                sb.Append(" Z");
-            }
+            using Graphics g = Graphics.FromImage(new Bitmap(1, 1));
 
-            return sb.ToString();
+            SizeF textSize = g.MeasureString(text.Content, tempFont, new SizeF(text.Width, text.Height), stringFormat);
+
+            float widthScale = text.Width > 0 ? text.Width / textSize.Width : 1f;
+            float heightScale = text.Height > 0 ? text.Height / textSize.Height : 1f;
+
+            float scale = Math.Min(widthScale, heightScale);
+            float scaledFontSize = Math.Max(4, Math.Min(text.FontSize * scale, 4000));
+
+            return scaledFontSize;
+        }
+
+        private static FontStyle GetFontStyle(ShapeText text)
+        {
+            FontStyle style = FontStyle.Regular;
+            if (text.IsBold) style |= FontStyle.Bold;
+            if (text.IsItalic) style |= FontStyle.Italic;
+            return style;
         }
     }
 }

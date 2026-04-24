@@ -16,6 +16,7 @@ namespace PixelEditor.Vector
         public GradientInfo? GradientStroke { get; set; } = null;
         public GradientInfo? GradientFill { get; set; } = null;
         public PointF DragOffset { get; set; } = PointF.Empty;
+        public int ActiveHandleIndex { get; set; } = -1;
         public virtual List<Point> ControlPoints() => [];
     }
 }

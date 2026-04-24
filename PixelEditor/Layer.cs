@@ -106,6 +106,7 @@ namespace PixelEditor
             using (Graphics g = Graphics.FromImage(image))
             {
                 List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
+                List<(RectangleF[] Handles, Matrix Transform)> activeHandlesToDraw = [];
                 bool foundSelected = false;
                 RectangleF groupBounds = RectangleF.Empty;
 
@@ -114,10 +115,13 @@ namespace PixelEditor
                     bool isCurrent = (shape == currentShape);
                     if (isCurrent) foundSelected = true;
 
-                    var handles = DrawShape(shape, g, isCurrent);
+                    var (handles, activeHandles) = DrawShape(shape, g, isCurrent);
 
                     if (isCurrent && handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
+
+                    if (isCurrent && activeHandles.Length > 0)
+                        activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
 
                     if (addedShapeSelections.Contains(shape) || shape == currentShape)
                     {
@@ -128,12 +132,15 @@ namespace PixelEditor
 
                 if (currentShape != null && !foundSelected)
                 {
-                    var handles = DrawShape(currentShape, g, true);
+                    var (handles, activeHandles) = DrawShape(currentShape, g, true);
                     if (handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
+                    if (activeHandles.Length > 0)
+                        activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
                 }
 
                 using SolidBrush handleBrush = new(Color.LightBlue);
+                using SolidBrush activeHandleBrush = new(Color.Red);
                 using Pen handlePen = new(Color.Red, 2);
 
                 foreach (var (Handles, Transform) in handlesToDraw)
@@ -149,6 +156,19 @@ namespace PixelEditor
                     Transform.Dispose();
                 }
 
+                foreach (var (Handles, Transform) in activeHandlesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+                    foreach (var handle in Handles)
+                    {
+                        g.FillRectangle(activeHandleBrush, handle);
+                        g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
+
                 if (!groupBounds.IsEmpty)
                 {
                     g.ResetTransform();
@@ -158,7 +178,7 @@ namespace PixelEditor
             return image;
         }
 
-        public static RectangleF[] DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static (RectangleF[], RectangleF[]) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             using Pen pen = new(shape.LineColor, shape.LineWidth);
@@ -168,7 +188,8 @@ namespace PixelEditor
             int size = Math.Max(Document.Width, Document.Height) / 150;
             size = Math.Clamp(size, 2, 20);
             float offset = size / 2f;
-            List<RectangleF> handleRects = [];
+            List<RectangleF> handles = [];
+            List<RectangleF> activeHandles = [];
 
             if (shape is ShapeRect rect)
             {
@@ -180,15 +201,17 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    handleRects.AddRange([
+                    handles.AddRange([
                         new(rect.X - offset, rect.Y - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
-                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
+                new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
+                new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
+                new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
                     ]);
                 }
 
                 g.Transform = originalTransform;
+
+                Console.WriteLine($"Rect: x={rect.X} y={rect.Y} w={rect.Width} h={rect.Height}");
             }
             else if (shape is ShapeEllipse ellipse)
             {
@@ -200,15 +223,17 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    handleRects.AddRange([
+                    handles.AddRange([
                         new(ellipse.X - offset, ellipse.Y - offset, size, size),
-                        new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
-                        new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
-                        new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
+                new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
+                new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
+                new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
                     ]);
                 }
 
                 g.Transform = originalTransform;
+
+                Console.WriteLine($"Ellipse: x={ellipse.X} y={ellipse.Y} w={ellipse.Width} h={ellipse.Height}");
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
@@ -216,7 +241,20 @@ namespace PixelEditor
                 else { g.DrawLines(pen, polygon.Points.ToArray()); }
 
                 if (isSelected)
-                    handleRects.AddRange(polygon.Points.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
+                {
+                    handles.AddRange(polygon.Points.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
+
+                    if (polygon.ActiveHandleIndicies != null)
+                    {
+                        foreach (int idx in polygon.ActiveHandleIndicies)
+                        {
+                            if (idx >= 0 && idx < polygon.Points.Count)
+                            {
+                                activeHandles.Add(new RectangleF(polygon.Points[idx].X - offset, polygon.Points[idx].Y - offset, size, size));
+                            }
+                        }
+                    }
+                }
             }
             else if (shape is ShapeText text)
             {
@@ -228,15 +266,17 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
-                    handleRects.AddRange([
+                    handles.AddRange([
                         new(text.X - offset, text.Y - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y - offset, size, size),
-                        new(text.X - offset, text.Y + text.Height - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
+                new(text.X + text.Width - offset, text.Y - offset, size, size),
+                new(text.X - offset, text.Y + text.Height - offset, size, size),
+                new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
                     ]);
                 }
 
                 g.Transform = originalTransform;
+
+                Console.WriteLine($"Text: {font.Size} x={text.X} y={text.Y}");
             }
             else if (shape is ShapePath path)
             {
@@ -246,12 +286,35 @@ namespace PixelEditor
 
                 if (isSelected)
                 {
+                    int pointIndex = 0;
                     foreach (var segment in path.PathSegments)
-                        handleRects.AddRange(segment.InputPoints.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
+                    {
+                        foreach (var p in segment.InputPoints)
+                        {
+                            handles.Add(new RectangleF(p.X - offset, p.Y - offset, size, size));
+                            pointIndex++;
+                        }
+                    }
+
+                    if (path.ActiveHandleIndicies != null)
+                    {
+                        pointIndex = 0;
+                        foreach (var segment in path.PathSegments)
+                        {
+                            foreach (var p in segment.InputPoints)
+                            {
+                                if (Array.IndexOf(path.ActiveHandleIndicies, pointIndex) >= 0)
+                                {
+                                    activeHandles.Add(new RectangleF(p.X - offset, p.Y - offset, size, size));
+                                }
+                                pointIndex++;
+                            }
+                        }
+                    }
                 }
             }
 
-            return [.. handleRects];
+            return ([.. handles], [.. activeHandles]);
         }
 
         private static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)

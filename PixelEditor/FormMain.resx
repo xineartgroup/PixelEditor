@@ -340,6 +340,27 @@
         sdhPdhzHsnli3Gkhv4ocaiJ1MNv+TOqvZBJo+398SbDVbKcckwAAAABJRU5ErkJggg==
 </value>
   </data>
+  <metadata name="btnToCurve.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <data name="btnToCurve.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
+        wQAADsEBuJFr7QAAAtVJREFUOE+NVL9PKkEQnrtD4CQ5Bb1EE62oxE5jQTDQavQf0IpIaWMwoaBQSaiJ
+        lfFHQqWWGtDCSmhMlMrKwsZeICJqAtyx+94xvGFz5/O9r7jszY9vZ2a/XWA9cAfISItut0te0zTJhXb4
+        1icabURiAKbgwiLCaIygL2Os0+lQDm3u3KlfkbNgESKXCMaYYRhigf3WkAJJ8YsWW78/dGpVdH9///Dw
+        QE1Rje12e3t7O5FIbGxsxOPx29tb24BN06xUKnd3d4wxODg4GB8f9/v9+XweqyWit7c3n88Hf7C3t4d2
+        mmA+n9c0bXR09OTkhMIseL3e4eFhXdcnJiZGRkbcbrfolWVZVVVd1ycnJzVNc7vdUg99dywWw0U0Gj09
+        Pb24uFheXgYAn8+3srLicrkodH5+fmFhAQBUVc3lcpeXl+FweEBSq9W2trZSqdTr6yvnfHd3V5blZDJZ
+        rVY558FgcGxsTNf1QCBwfHzMOS8UCqFQKBgMvry8mKaZTCY3NzdrtZp1at0eOOeJREKSpKurKxp5s9ms
+        1+uNRuP9/b3VauGMms3m0tLS0NDQ09MTTW2go8PDQ0mSisWiqCxRpSIYY4uLi9PT019fX3hEgEH1et3l
+        cqXTaQpFKWKQYRjERQurHYBMJjO4IpzznZ0dr9f78fEhHj/mkCZFLqTOZrOKorRaLas13HxqaiqVSmEc
+        qVwUNC5E6XPOG42GoihnZ2f91h4fHwHg+vq63W7TnmImwnkTDcOYmZlZX1///PyE8/NzVVUBwO/3VyqV
+        b0drA9241dVVj8cjy/Ls7Czs7+8DgKIoAHBzc/NPItE7NzeHcrXuwNHREf2Uy2VntA3iCUQiEbwlmqZB
+        qVQKh8OxHp6fn+15f0en00mn05FIJBqNrq2tDZ5amqtzqCJszxAB6A0Uzxt1+DPoiDG3XxFZ/4dCLMcw
+        DKyx//iLrYnacYI0iXT4/V3RL+xFYzJekOYPAAAAAElFTkSuQmCC
+</value>
+  </data>
   <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
