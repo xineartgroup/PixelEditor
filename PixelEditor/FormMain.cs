@@ -170,6 +170,7 @@ namespace PixelEditor
         private readonly Label labelPathFillColor = new();
         private readonly Button btnPathFillColorShape = new();
         private readonly Button btnToCurve = new();
+        private readonly Button btnToCorner = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
@@ -1183,6 +1184,7 @@ namespace PixelEditor
             groupPathShapeDetail.Controls.Add(labelPathFillOpacity);
             groupPathShapeDetail.Controls.Add(labelPathFillColor);
             groupPathShapeDetail.Controls.Add(btnToCurve);
+            groupPathShapeDetail.Controls.Add(btnToCorner);
 
             // GroupBox Settings
             groupPathShapeDetail.Location = new Point(12, 74);
@@ -1267,17 +1269,23 @@ namespace PixelEditor
             btnPathFillColorShape.Size = new Size(20, 20);
             btnPathFillColorShape.Click += BtnFillPathColorShape_Click;
 
-            // 
             // btnToCurve
-            // 
-            if (resources != null)
-                btnToCurve.Image = (Image)(resources.GetObject("btnToCurve.Image") ?? new Bitmap(32, 32));
+            btnToCurve.Image = Resources.ToCurve;
             btnToCurve.Location = new Point(20, 240);
             btnToCurve.Name = "btnToCurve";
             btnToCurve.Size = new Size(32, 32);
             btnToCurve.TabIndex = 32;
             btnToCurve.UseVisualStyleBackColor = true;
             btnToCurve.Click += BtnToCurve_Click;
+
+            // btnToCorner
+            btnToCorner.Image = Resources.ToCorner;
+            btnToCorner.Location = new Point(58, 240);
+            btnToCorner.Name = "btnToCorner";
+            btnToCorner.Size = new Size(32, 32);
+            btnToCorner.TabIndex = 33;
+            btnToCorner.UseVisualStyleBackColor = true;
+            btnToCorner.Click += BtnToCorner_Click;
 
             // Finalize
             Controls.Add(groupPathShapeDetail);
@@ -2191,17 +2199,66 @@ namespace PixelEditor
                                 var prevPoints = prevSegment.GetPoints();
                                 if (prevPoints.Count > 0)
                                 {
-                                    startPoint = prevPoints[prevPoints.Count - 1];
+                                    startPoint = prevPoints[^1];
                                 }
 
                                 float dx = endPoint.X - startPoint.X;
                                 float dy = endPoint.Y - startPoint.Y;
 
-                                PointF cp1 = new PointF(startPoint.X + dx * 0.33f, startPoint.Y + dy * 0.33f);
-                                PointF cp2 = new PointF(startPoint.X + dx * 0.66f, startPoint.Y + dy * 0.66f);
+                                var cp1 = new PointF(startPoint.X + dx * 0.33f, startPoint.Y + dy * 0.33f);
+                                var cp2 = new PointF(startPoint.X + dx * 0.66f, startPoint.Y + dy * 0.66f);
 
-                                segment.InputPoints = new List<PointF> { startPoint, cp1, cp2, endPoint };
+                                segment.InputPoints = [startPoint, cp1, cp2, endPoint];
                                 segment.PathType = "C";
+                            }
+                            break;
+                        }
+                        pointIndex++;
+                    }
+                    if (pointIndex > targetIndex) break;
+                }
+
+                UpdateControls();
+                ManipulatorGeneral.InvalidateCompositeBuffers();
+                RedrawImage();
+
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            }
+        }
+
+        private void BtnToCorner_Click(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            {
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                int pointIndex = 0;
+                int targetIndex = path.ActiveHandleIndex;
+
+                for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
+                {
+                    var segment = path.PathSegments[segIdx];
+
+                    for (int i = 0; i < segment.InputPoints.Count; i++)
+                    {
+                        if (pointIndex == targetIndex)
+                        {
+                            if (segment.PathType.Equals("C", StringComparison.OrdinalIgnoreCase))
+                            {
+                                PointF endPoint = segment.InputPoints[^1];
+
+                                if (segIdx == 0)
+                                {
+                                    segment.PathType = "M";
+                                    segment.InputPoints = [endPoint];
+                                }
+                                else
+                                {
+                                    segment.PathType = "L";
+                                    segment.InputPoints = [endPoint];
+                                }
                             }
                             break;
                         }
@@ -4035,8 +4092,69 @@ namespace PixelEditor
                 else if (selectedLayer.CurrentShape != null)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
-                    selectedLayer.CurrentShape = null;
+
+                    if (selectedLayer.CurrentShape is ShapePolygon polygon && polygon.ActiveHandleIndex >= 0)
+                    {
+                        polygon.Points.RemoveAt(polygon.ActiveHandleIndex);
+                    }
+                    else if (selectedLayer.CurrentShape is ShapePath path && path.ActiveHandleIndex >= 0)
+                    {
+                        int pointIndex = 0;
+                        int targetIndex = path.ActiveHandleIndex;
+                        int segmentToDelete = -1;
+
+                        for (int i = 0; i < path.PathSegments.Count; i++)
+                        {
+                            var segment = path.PathSegments[i];
+                            int pointsInSegment = segment.InputPoints.Count;
+
+                            if (targetIndex >= pointIndex && targetIndex < pointIndex + pointsInSegment)
+                            {
+                                segmentToDelete = i;
+                                break;
+                            }
+                            pointIndex += pointsInSegment;
+                        }
+
+                        if (segmentToDelete != -1)
+                        {
+                            if (segmentToDelete == 0 && path.PathSegments.Count > 1)
+                            {
+                                path.PathSegments.RemoveAt(0);
+                                var newFirst = path.PathSegments[0];
+
+                                PointF newStart = newFirst.InputPoints[^1];
+                                newFirst.PathType = "M";
+                                newFirst.InputPoints = [newStart];
+                            }
+                            else if (segmentToDelete > 0)
+                            {
+                                path.PathSegments.RemoveAt(segmentToDelete);
+
+                                if (segmentToDelete < path.PathSegments.Count)
+                                {
+                                    var currentSeg = path.PathSegments[segmentToDelete];
+                                    var prevSeg = path.PathSegments[segmentToDelete - 1];
+
+                                    if (currentSeg.InputPoints.Count > 0 && prevSeg.InputPoints.Count > 0)
+                                    {
+                                        PointF lastPointOfPrev = prevSeg.InputPoints[^1];
+                                        currentSeg.InputPoints[0] = lastPointOfPrev;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                selectedLayer.Shapes.Remove(path);
+                                selectedLayer.CurrentShape = null;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
+                        selectedLayer.CurrentShape = null;
+                    }
                     RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -4937,11 +5055,17 @@ namespace PixelEditor
                                             {
                                                 selectedLayer.AddedShapeSelections.Add(selectedLayer.CurrentShape);
                                             }
+                                            found = true;
+                                            selectedLayer.CurrentShape = shape;
+                                            isDraggingShape = true;
                                         }
-
-                                        found = true;
-                                        selectedLayer.CurrentShape = shape;
-                                        isDraggingShape = true;
+                                        else
+                                        {
+                                            found = true;
+                                            selectedLayer.CurrentShape = shape;
+                                            isDraggingShape = true;
+                                            break;
+                                        }
                                     }
                                 }
 

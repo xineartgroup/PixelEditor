@@ -756,27 +756,27 @@
             // convertToRasterToolStripMenuItem
             // 
             convertToRasterToolStripMenuItem.Name = "convertToRasterToolStripMenuItem";
-            convertToRasterToolStripMenuItem.Size = new Size(180, 22);
+            convertToRasterToolStripMenuItem.Size = new Size(165, 22);
             convertToRasterToolStripMenuItem.Text = "Convert to Raster";
             convertToRasterToolStripMenuItem.Click += ConvertToRasterToolStripMenuItem_Click;
             // 
             // convertToPathToolStripMenuItem
             // 
             convertToPathToolStripMenuItem.Name = "convertToPathToolStripMenuItem";
-            convertToPathToolStripMenuItem.Size = new Size(180, 22);
+            convertToPathToolStripMenuItem.Size = new Size(165, 22);
             convertToPathToolStripMenuItem.Text = "Convert to Path";
             convertToPathToolStripMenuItem.Click += ConvertToPathToolStripMenuItem_Click;
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(177, 6);
+            toolStripMenuItem3.Size = new Size(162, 6);
             // 
             // pathToolStripMenuItem
             // 
             pathToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { unionToolStripMenuItem, differenceToolStripMenuItem, intersectionToolStripMenuItem, exclusionToolStripMenuItem });
             pathToolStripMenuItem.Name = "pathToolStripMenuItem";
-            pathToolStripMenuItem.Size = new Size(180, 22);
+            pathToolStripMenuItem.Size = new Size(165, 22);
             pathToolStripMenuItem.Text = "Path";
             // 
             // unionToolStripMenuItem
@@ -811,7 +811,7 @@
             // 
             stackToolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { raiseToolStripMenuItem1, lowerToolStripMenuItem1, toTopToolStripMenuItem1, toBottomToolStripMenuItem1 });
             stackToolStripMenuItem1.Name = "stackToolStripMenuItem1";
-            stackToolStripMenuItem1.Size = new Size(180, 22);
+            stackToolStripMenuItem1.Size = new Size(165, 22);
             stackToolStripMenuItem1.Text = "Stack";
             // 
             // raiseToolStripMenuItem1
@@ -845,20 +845,20 @@
             // duplicateToolStripMenuItem1
             // 
             duplicateToolStripMenuItem1.Name = "duplicateToolStripMenuItem1";
-            duplicateToolStripMenuItem1.Size = new Size(180, 22);
+            duplicateToolStripMenuItem1.Size = new Size(165, 22);
             duplicateToolStripMenuItem1.Text = "Duplicate";
             duplicateToolStripMenuItem1.Click += DuplicateToolStripMenuItem1_Click;
             // 
             // toolStripMenuItem29
             // 
             toolStripMenuItem29.Name = "toolStripMenuItem29";
-            toolStripMenuItem29.Size = new Size(177, 6);
+            toolStripMenuItem29.Size = new Size(162, 6);
             // 
             // transformToolStripMenuItem
             // 
             transformToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { flipHorizomtallyToolStripMenuItem1, flipVerticallyToolStripMenuItem1, toolStripMenuItem30, rotate90DegreesClockwiseToolStripMenuItem, rotate90DegreesCountereclockwiseToolStripMenuItem1, rotate180DegreesToolStripMenuItem1, rotateToolStripMenuItem1 });
             transformToolStripMenuItem.Name = "transformToolStripMenuItem";
-            transformToolStripMenuItem.Size = new Size(180, 22);
+            transformToolStripMenuItem.Size = new Size(165, 22);
             transformToolStripMenuItem.Text = "Transform";
             // 
             // flipHorizomtallyToolStripMenuItem1
