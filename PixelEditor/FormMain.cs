@@ -1,4 +1,5 @@
-﻿using PixelEditor.Vector;
+﻿using PixelEditor.Properties;
+using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
@@ -154,6 +155,22 @@ namespace PixelEditor
         private readonly Button btnPolygonFillColorShape = new();
         private readonly CheckBox chkClosed = new();
 
+        private readonly GroupBox groupPathShapeDetail = new();
+        private readonly Label labelPathLineSize = new();
+        private readonly TrackBar pathLineSizeTrack = new();
+        private readonly Label lblPathLineSizeValue = new();
+        private readonly Label labelPathLineOpacity = new();
+        private readonly NumericUpDown pathLineOpacityNum = new();
+        private readonly Label labelPathLineColor = new();
+        private readonly Button btnPathLineColor = new();
+        private readonly Label labelPathLinePattern = new();
+        private readonly ComboBox cboPathLinePattern = new();
+        private readonly Label labelPathFillOpacity = new();
+        private readonly NumericUpDown fillPathOpacityNum = new();
+        private readonly Label labelPathFillColor = new();
+        private readonly Button btnPathFillColorShape = new();
+        private readonly Button btnToCurve = new();
+
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
         private readonly TextBox txtTextLineText = new();
@@ -176,6 +193,7 @@ namespace PixelEditor
             InitializeComponentGroupRectShape();
             InitializeComponentGroupEllipseShape();
             InitializeComponentGroupPolygonShape();
+            InitializeComponentGroupPathShape();
             InitializeComponentGroupTextShape();
             InitializeTimer();
             layersControl.LayerChanged += LayersControl_LayerChanged;
@@ -1044,7 +1062,7 @@ namespace PixelEditor
             groupPolygonShapeDetail.Size = new Size(230, 260);
             groupPolygonShapeDetail.TabIndex = 30;
             groupPolygonShapeDetail.TabStop = false;
-            groupPolygonShapeDetail.Text = "Polygon Detail";
+            groupPolygonShapeDetail.Text = "Path Detail";
             groupPolygonShapeDetail.Visible = false;
 
             // --- LINE SECTION ---
@@ -1137,6 +1155,137 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)polygonLineSizeTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)polygonLineOpacityNum).EndInit();
             ((System.ComponentModel.ISupportInitialize)fillPolygonOpacityNum).EndInit();
+            ResumeLayout(false);
+        }
+
+        private void InitializeComponentGroupPathShape()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new(typeof(FormMain));
+
+            groupPathShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pathLineSizeTrack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pathLineOpacityNum).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)fillPathOpacityNum).BeginInit();
+            SuspendLayout();
+
+            // Add Controls to Group
+            groupPathShapeDetail.Controls.Add(lblPathLineSizeValue);
+            groupPathShapeDetail.Controls.Add(pathLineSizeTrack);
+            groupPathShapeDetail.Controls.Add(pathLineOpacityNum);
+            groupPathShapeDetail.Controls.Add(btnPathLineColor);
+            groupPathShapeDetail.Controls.Add(cboPathLinePattern);
+            groupPathShapeDetail.Controls.Add(fillPathOpacityNum);
+            groupPathShapeDetail.Controls.Add(btnPathFillColorShape);
+            groupPathShapeDetail.Controls.Add(labelPathLineSize);
+            groupPathShapeDetail.Controls.Add(labelPathLineOpacity);
+            groupPathShapeDetail.Controls.Add(labelPathLineColor);
+            groupPathShapeDetail.Controls.Add(labelPathLinePattern);
+            groupPathShapeDetail.Controls.Add(labelPathFillOpacity);
+            groupPathShapeDetail.Controls.Add(labelPathFillColor);
+            groupPathShapeDetail.Controls.Add(btnToCurve);
+
+            // GroupBox Settings
+            groupPathShapeDetail.Location = new Point(12, 74);
+            groupPathShapeDetail.Name = "groupShapeDetail";
+            groupPathShapeDetail.Size = new Size(230, 400);
+            groupPathShapeDetail.TabIndex = 30;
+            groupPathShapeDetail.TabStop = false;
+            groupPathShapeDetail.Text = "Path Detail";
+            groupPathShapeDetail.Visible = false;
+
+            // --- LINE SECTION ---
+
+            // Line Size
+            labelPathLineSize.AutoSize = true;
+            labelPathLineSize.Location = new Point(10, 25);
+            labelPathLineSize.Text = "Line Size:";
+
+            pathLineSizeTrack.Location = new Point(75, 22);
+            pathLineSizeTrack.Size = new Size(110, 45);
+            pathLineSizeTrack.Maximum = 100;
+            pathLineSizeTrack.Minimum = 1;
+            pathLineSizeTrack.TickStyle = TickStyle.None;
+            pathLineSizeTrack.Value = 2;
+            pathLineSizeTrack.Scroll += PathLineSize_Scroll;
+
+            lblPathLineSizeValue.BackColor = Color.White;
+            lblPathLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblPathLineSizeValue.Location = new Point(188, 22);
+            lblPathLineSizeValue.Size = new Size(32, 22);
+            lblPathLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblPathLineSizeValue.Text = "2";
+
+            labelPathLineOpacity.AutoSize = true;
+            labelPathLineOpacity.Location = new Point(10, 73);
+            labelPathLineOpacity.Text = "Line Opacity:";
+
+            pathLineOpacityNum.Location = new Point(125, 71);
+            pathLineOpacityNum.Size = new Size(60, 23);
+            pathLineOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            pathLineOpacityNum.ValueChanged += OnPathLineOpacityValueChanged;
+
+            labelPathLineColor.AutoSize = true;
+            labelPathLineColor.Location = new Point(10, 103);
+            labelPathLineColor.Text = "Line Color:";
+
+            btnPathLineColor.BackColor = Color.Black;
+            btnPathLineColor.FlatStyle = FlatStyle.Popup;
+            btnPathLineColor.Location = new Point(125, 100);
+            btnPathLineColor.Size = new Size(20, 20);
+            btnPathLineColor.Click += BtnPathLineColor_Click;
+
+            labelPathLinePattern.AutoSize = true;
+            labelPathLinePattern.Location = new Point(10, 133);
+            labelPathLinePattern.Text = "Pattern:";
+
+            cboPathLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboPathLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
+            cboPathLinePattern.Location = new Point(125, 130);
+            cboPathLinePattern.Size = new Size(100, 21);
+            cboPathLinePattern.SelectedIndexChanged += CboPathLinePattern_SelectedIndexChanged;
+
+            // --- FILL SECTION (All shifted down 8px) ---
+
+            // Fill Opacity
+            labelPathFillOpacity.AutoSize = true;
+            labelPathFillOpacity.Location = new Point(10, 173);
+            labelPathFillOpacity.Text = "Fill Opacity:";
+
+            fillPathOpacityNum.Location = new Point(125, 171);
+            fillPathOpacityNum.Size = new Size(60, 23);
+            fillPathOpacityNum.Value = new decimal([100, 0, 0, 0]);
+            fillPathOpacityNum.ValueChanged += FillPathOpacityNum_ValueChanged;
+
+            // Fill Color
+            labelPathFillColor.AutoSize = true;
+            labelPathFillColor.Location = new Point(10, 203);
+            labelPathFillColor.Text = "Fill Color:";
+
+            btnPathFillColorShape.BackColor = Color.White;
+            btnPathFillColorShape.FlatStyle = FlatStyle.Popup;
+            btnPathFillColorShape.Location = new Point(125, 200);
+            btnPathFillColorShape.Size = new Size(20, 20);
+            btnPathFillColorShape.Click += BtnFillPathColorShape_Click;
+
+            // 
+            // btnToCurve
+            // 
+            if (resources != null)
+                btnToCurve.Image = (Image)(resources.GetObject("btnToCurve.Image") ?? new Bitmap(32, 32));
+            btnToCurve.Location = new Point(20, 240);
+            btnToCurve.Name = "btnToCurve";
+            btnToCurve.Size = new Size(32, 32);
+            btnToCurve.TabIndex = 32;
+            btnToCurve.UseVisualStyleBackColor = true;
+            btnToCurve.Click += BtnToCurve_Click;
+
+            // Finalize
+            Controls.Add(groupPathShapeDetail);
+            groupPathShapeDetail.ResumeLayout(false);
+            groupPathShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pathLineSizeTrack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pathLineOpacityNum).EndInit();
+            ((System.ComponentModel.ISupportInitialize)fillPathOpacityNum).EndInit();
             ResumeLayout(false);
         }
 
@@ -1298,6 +1447,15 @@ namespace PixelEditor
             }
         }
 
+        private void CboPathLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
+            {
+                shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboPathLinePattern.Text);
+                RedrawImage();
+            }
+        }
+
         private void FillRectOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
@@ -1321,6 +1479,15 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
+                RedrawImage();
+            }
+        }
+
+        private void FillPathOpacityNum_ValueChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
+            {
+                shape.FillColor = Color.FromArgb((int)(255 * (fillPathOpacityNum.Value / fillPathOpacityNum.Maximum)), btnPathFillColorShape.BackColor);
                 RedrawImage();
             }
         }
@@ -1361,6 +1528,15 @@ namespace PixelEditor
             }
         }
 
+        private void OnPathLineOpacityValueChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
+            {
+                shape.LineColor = Color.FromArgb((int)(255 * (pathLineOpacityNum.Value / pathLineOpacityNum.Maximum)), btnPathLineColor.BackColor);
+                RedrawImage();
+            }
+        }
+
         private void BtnFillRectColorShape_Click(object? sender, EventArgs e)
         {
             ColorDialogX.Canvas = canvas;
@@ -1374,15 +1550,6 @@ namespace PixelEditor
             _colorPicker.Color = btnRectFillColorShape.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnRectFillColorShape.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnRectFillColorShape.BackColor = cd.Color;
-            //    FillRectOpacityNum_ValueChanged(sender, e);
-            //}
         }
 
         private void BtnFillEllipseColorShape_Click(object? sender, EventArgs e)
@@ -1398,15 +1565,6 @@ namespace PixelEditor
             _colorPicker.Color = btnEllipseFillColorShape.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;;
-            //cd.Color = btnEllipseFillColorShape.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnEllipseFillColorShape.BackColor = cd.Color;
-            //    FillEllipseOpacityNum_ValueChanged(sender, e);
-            //}
         }
 
         private void BtnFillPolygonColorShape_Click(object? sender, EventArgs e)
@@ -1422,15 +1580,21 @@ namespace PixelEditor
             _colorPicker.Color = btnPolygonFillColorShape.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
+        }
 
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnPolygonFillColorShape.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnPolygonFillColorShape.BackColor = cd.Color;
-            //    FillPolygonOpacityNum_ValueChanged(sender, e);
-            //}
+        private void BtnFillPathColorShape_Click(object? sender, EventArgs e)
+        {
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
+            {
+                btnPathFillColorShape.BackColor = selectedColor;
+                FillPathOpacityNum_ValueChanged(sender, e);
+            };
+
+            _colorPicker.Color = btnPathFillColorShape.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
         }
 
         private void BtnRectLineColor_Click(object? sender, EventArgs e)
@@ -1446,15 +1610,6 @@ namespace PixelEditor
             _colorPicker.Color = btnRectLineColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnRectLineColor.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnRectLineColor.BackColor = cd.Color;
-            //    OnRectLineOpacityValueChanged(sender, e);
-            //}
         }
 
         private void BtnEllipseLineColor_Click(object? sender, EventArgs e)
@@ -1470,15 +1625,6 @@ namespace PixelEditor
             _colorPicker.Color = btnEllipseLineColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnEllipseLineColor.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnEllipseLineColor.BackColor = cd.Color;
-            //    OnEllipseLineOpacityValueChanged(sender, e);
-            //}
         }
 
         private void BtnPolygonLineColor_Click(object? sender, EventArgs e)
@@ -1494,15 +1640,21 @@ namespace PixelEditor
             _colorPicker.Color = btnPolygonLineColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
+        }
 
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnPolygonLineColor.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnPolygonLineColor.BackColor = cd.Color;
-            //    OnPolygonLineOpacityValueChanged(sender, e);
-            //}
+        private void BtnPathLineColor_Click(object? sender, EventArgs e)
+        {
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
+            {
+                btnPathLineColor.BackColor = selectedColor;
+                OnPathLineOpacityValueChanged(sender, e);
+            };
+
+            _colorPicker.Color = btnPathLineColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
         }
 
         private void RectLineSize_Scroll(object? sender, EventArgs e)
@@ -1534,6 +1686,17 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.LineWidth = polygonLineSizeTrack.Value;
+                RedrawImage();
+            }
+        }
+
+        private void PathLineSize_Scroll(object? sender, EventArgs e)
+        {
+            lblPathLineSizeValue.Text = pathLineSizeTrack.Value.ToString();
+
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
+            {
+                shape.LineWidth = pathLineSizeTrack.Value;
                 RedrawImage();
             }
         }
@@ -1999,182 +2162,60 @@ namespace PixelEditor
             }
         }
 
-        private void BtnToCurve_Click(object sender, EventArgs e)
+        private void BtnToCurve_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-            if (selectedLayer != null)
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
             {
-                if (selectedLayer.LayerType == LayerType.Vector)
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                int pointIndex = 0;
+                int targetIndex = path.ActiveHandleIndex;
+
+                for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    var segment = path.PathSegments[segIdx];
 
-                    int selectedShapeIndex = selectedLayer.CurrentShape != null ? selectedLayer.Shapes.IndexOf(selectedLayer.CurrentShape) : -1;
-
-                    if (selectedLayer.CurrentShape != null && selectedShapeIndex >= 0 && selectedShapeIndex < selectedLayer.Shapes.Count)
+                    for (int i = 0; i < segment.InputPoints.Count; i++)
                     {
-                        if (selectedLayer.CurrentShape is ShapePath path)
+                        if (pointIndex == targetIndex)
                         {
-                            int pointIndex = 0;
-                            int targetIndex = path.ActiveHandleIndex;
-
-                            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
+                            if (segIdx > 0 && (segment.PathType.Equals("L", StringComparison.OrdinalIgnoreCase) ||
+                                               segment.PathType.Equals("M", StringComparison.OrdinalIgnoreCase)))
                             {
-                                var segment = path.PathSegments[segIdx];
+                                PointF endPoint = segment.InputPoints[i];
+                                PointF startPoint = endPoint;
 
-                                for (int i = 0; i < segment.InputPoints.Count; i++)
+                                var prevSegment = path.PathSegments[segIdx - 1];
+                                var prevPoints = prevSegment.GetPoints();
+                                if (prevPoints.Count > 0)
                                 {
-                                    if (pointIndex == targetIndex)
-                                    {
-                                        if (segment.PathType.ToUpper() == "L" || segment.PathType.ToUpper() == "M")
-                                        {
-                                            PointF currentPoint = segment.InputPoints[i];
-                                            PointF prevPoint = GetPreviousPoint(path, pointIndex);
-                                            PointF nextPoint = GetNextPoint(path, pointIndex);
-
-                                            if (prevPoint != currentPoint && nextPoint != currentPoint)
-                                            {
-                                                float handleOffset = VectorDist(prevPoint, nextPoint) * 0.3f;
-                                                PointF cp1 = new PointF(
-                                                    currentPoint.X + (prevPoint.X - currentPoint.X) * 0.3f,
-                                                    currentPoint.Y + (prevPoint.Y - currentPoint.Y) * 0.3f
-                                                );
-                                                PointF cp2 = new PointF(
-                                                    currentPoint.X + (nextPoint.X - currentPoint.X) * 0.3f,
-                                                    currentPoint.Y + (nextPoint.Y - currentPoint.Y) * 0.3f
-                                                );
-
-                                                PathSegment newSegment = new PathSegment("C", new List<PointF>
-                                        {
-                                            prevPoint, cp1, cp2, nextPoint
-                                        });
-
-                                                int prevSegIdx = segIdx;
-                                                int prevPointIdx = i - 1;
-
-                                                if (prevPointIdx >= 0)
-                                                {
-                                                    path.PathSegments[prevSegIdx].InputPoints.RemoveAt(prevPointIdx);
-                                                }
-
-                                                segment.InputPoints.RemoveAt(i);
-
-                                                path.PathSegments.Insert(segIdx, newSegment);
-                                            }
-                                        }
-                                        break;
-                                    }
-                                    pointIndex++;
+                                    startPoint = prevPoints[prevPoints.Count - 1];
                                 }
-                                if (pointIndex > targetIndex) break;
+
+                                float dx = endPoint.X - startPoint.X;
+                                float dy = endPoint.Y - startPoint.Y;
+
+                                PointF cp1 = new PointF(startPoint.X + dx * 0.33f, startPoint.Y + dy * 0.33f);
+                                PointF cp2 = new PointF(startPoint.X + dx * 0.66f, startPoint.Y + dy * 0.66f);
+
+                                segment.InputPoints = new List<PointF> { startPoint, cp1, cp2, endPoint };
+                                segment.PathType = "C";
                             }
+                            break;
                         }
-                        else if (selectedLayer.CurrentShape is ShapePolygon polygon)
-                        {
-                            if (polygon.ActiveHandleIndex >= 0 && polygon.ActiveHandleIndex < polygon.Points.Count)
-                            {
-                                PointF currentPoint = polygon.Points[polygon.ActiveHandleIndex];
-                                PointF prevPoint = polygon.Points[(polygon.ActiveHandleIndex - 1 + polygon.Points.Count) % polygon.Points.Count];
-                                PointF nextPoint = polygon.Points[(polygon.ActiveHandleIndex + 1) % polygon.Points.Count];
-
-                                float handleOffset = VectorDist(prevPoint, nextPoint) * 0.3f;
-                                PointF cp1 = new PointF(
-                                    currentPoint.X + (prevPoint.X - currentPoint.X) * 0.3f,
-                                    currentPoint.Y + (prevPoint.Y - currentPoint.Y) * 0.3f
-                                );
-                                PointF cp2 = new PointF(
-                                    currentPoint.X + (nextPoint.X - currentPoint.X) * 0.3f,
-                                    currentPoint.Y + (nextPoint.Y - currentPoint.Y) * 0.3f
-                                );
-
-                                ShapePath newPath = new ShapePath();
-                                List<PointF> points = new List<PointF>(polygon.Points);
-
-                                PathSegment firstSegment = new PathSegment("M", new List<PointF> { points[0] });
-                                newPath.PathSegments.Add(firstSegment);
-
-                                for (int i = 1; i < points.Count - 1; i++)
-                                {
-                                    PathSegment lineSeg = new PathSegment("L", new List<PointF> { points[i] });
-                                    newPath.PathSegments.Add(lineSeg);
-                                }
-
-                                if (polygon.IsClosed)
-                                {
-                                    PathSegment closeSeg = new PathSegment("L", new List<PointF> { points[points.Count - 1] });
-                                    newPath.PathSegments.Add(closeSeg);
-                                    newPath.PathSegments.Add(new PathSegment("Z", new List<PointF>()));
-                                }
-                                else
-                                {
-                                    PathSegment lastSeg = new PathSegment("L", new List<PointF> { points[points.Count - 1] });
-                                    newPath.PathSegments.Add(lastSeg);
-                                }
-
-                                newPath.LineWidth = polygon.LineWidth;
-                                newPath.LineColor = polygon.LineColor;
-                                newPath.FillColor = polygon.FillColor;
-                                newPath.DashStyle = polygon.DashStyle;
-                                newPath.Opacity = polygon.Opacity;
-                                newPath.StrokeOpacity = polygon.StrokeOpacity;
-                                newPath.Rotation = polygon.Rotation;
-                                newPath.HasGradientFill = polygon.HasGradientFill;
-                                newPath.HasGradientStroke = polygon.HasGradientStroke;
-                                newPath.GradientStroke = polygon.GradientStroke;
-                                newPath.GradientFill = polygon.GradientFill;
-                                newPath.ActiveHandleIndicies = polygon.ActiveHandleIndicies;
-                                newPath.ActiveHandleIndex = polygon.ActiveHandleIndex;
-
-                                selectedLayer.Shapes[selectedShapeIndex] = newPath;
-                                selectedLayer.CurrentShape = newPath;
-                            }
-                        }
+                        pointIndex++;
                     }
-
-                    UpdateControls();
-                    ManipulatorGeneral.InvalidateCompositeBuffers();
-                    RedrawImage();
-
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    if (pointIndex > targetIndex) break;
                 }
-            }
-        }
 
-        private PointF GetPreviousPoint(ShapePath path, int targetIndex)
-        {
-            int pointIndex = 0;
-            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
-            {
-                var segment = path.PathSegments[segIdx];
-                for (int i = 0; i < segment.InputPoints.Count; i++)
-                {
-                    if (pointIndex == targetIndex - 1)
-                        return segment.InputPoints[i];
-                    pointIndex++;
-                }
-            }
-            return PointF.Empty;
-        }
+                UpdateControls();
+                ManipulatorGeneral.InvalidateCompositeBuffers();
+                RedrawImage();
 
-        private PointF GetNextPoint(ShapePath path, int targetIndex)
-        {
-            int pointIndex = 0;
-            for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
-            {
-                var segment = path.PathSegments[segIdx];
-                for (int i = 0; i < segment.InputPoints.Count; i++)
-                {
-                    if (pointIndex == targetIndex + 1)
-                        return segment.InputPoints[i];
-                    pointIndex++;
-                }
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
-            return PointF.Empty;
-        }
-
-        private float VectorDist(PointF a, PointF b)
-        {
-            return (float)Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
         }
 
         private void UpdateCursor(Image? image)
@@ -3680,6 +3721,7 @@ namespace PixelEditor
                             groupEllipseShapeDetail.Visible = false;
                             groupPolygonShapeDetail.Visible = false;
                             groupTextShapeDetail.Visible = false;
+                            groupPathShapeDetail.Visible = false;
 
                             btnRectLineColor.BackColor = Color.FromArgb(255, r.LineColor.R, r.LineColor.G, r.LineColor.B);
                             rectLineOpacityNum.Value = (decimal)((r.LineColor.A / 255.0) * (double)rectLineOpacityNum.Maximum);
@@ -3696,6 +3738,7 @@ namespace PixelEditor
                             groupEllipseShapeDetail.Visible = true;
                             groupPolygonShapeDetail.Visible = false;
                             groupTextShapeDetail.Visible = false;
+                            groupPathShapeDetail.Visible = false;
 
                             btnEllipseLineColor.BackColor = Color.FromArgb(255, el.LineColor.R, el.LineColor.G, el.LineColor.B);
                             ellipseLineOpacityNum.Value = (decimal)((el.LineColor.A / 255.0) * (double)ellipseLineOpacityNum.Maximum);
@@ -3712,6 +3755,7 @@ namespace PixelEditor
                             groupEllipseShapeDetail.Visible = false;
                             groupPolygonShapeDetail.Visible = true;
                             groupTextShapeDetail.Visible = false;
+                            groupPathShapeDetail.Visible = false;
 
                             btnPolygonLineColor.BackColor = Color.FromArgb(255, pg.LineColor.R, pg.LineColor.G, pg.LineColor.B);
                             polygonLineOpacityNum.Value = (decimal)((pg.LineColor.A / 255.0) * (double)polygonLineOpacityNum.Maximum);
@@ -3728,6 +3772,7 @@ namespace PixelEditor
                             groupEllipseShapeDetail.Visible = false;
                             groupPolygonShapeDetail.Visible = false;
                             groupTextShapeDetail.Visible = true;
+                            groupPathShapeDetail.Visible = false;
 
                             txtTextLineText.Text = t.Content;
                             btnTextFillColor.BackColor = Color.FromArgb(255, t.FillColor.R, t.FillColor.G, t.FillColor.B);
@@ -3737,6 +3782,22 @@ namespace PixelEditor
                             if (t.IsBold) style |= FontStyle.Bold;
                             if (t.IsItalic) style |= FontStyle.Italic;
                             btnTextFont.Font = new Font(t.FontFamily, (float)t.FontSize, style);
+                        }
+                        else if (selectedLayer.CurrentShape is ShapePath path)
+                        {
+                            groupRectShapeDetail.Visible = false;
+                            groupEllipseShapeDetail.Visible = false;
+                            groupPolygonShapeDetail.Visible = false;
+                            groupTextShapeDetail.Visible = false;
+                            groupPathShapeDetail.Visible = true;
+
+                            btnPathLineColor.BackColor = Color.FromArgb(255, path.LineColor.R, path.LineColor.G, path.LineColor.B);
+                            pathLineOpacityNum.Value = (decimal)((path.LineColor.A / 255.0) * (double)pathLineOpacityNum.Maximum);
+
+                            btnPathFillColorShape.BackColor = Color.FromArgb(255, path.FillColor.R, path.FillColor.G, path.FillColor.B);
+                            fillPathOpacityNum.Value = (decimal)((path.FillColor.A / 255.0) * (double)fillPathOpacityNum.Maximum);
+                            pathLineSizeTrack.Value = (int)path.LineWidth;
+                            cboPathLinePattern.SelectedItem = path.DashStyle.ToString();
                         }
                     }
                 }

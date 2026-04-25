@@ -218,7 +218,6 @@
             btnShapeEllipse = new RadioButton();
             btnShapePolygon = new RadioButton();
             btnShapeText = new RadioButton();
-            btnToCurve = new Button();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -1744,22 +1743,11 @@
             btnShapeText.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeText.Click += BtnTools_Click;
             // 
-            // btnToCurve
-            // 
-            btnToCurve.Image = (Image)resources.GetObject("btnToCurve.Image");
-            btnToCurve.Location = new Point(720, 27);
-            btnToCurve.Name = "btnToCurve";
-            btnToCurve.Size = new Size(32, 32);
-            btnToCurve.TabIndex = 32;
-            btnToCurve.UseVisualStyleBackColor = true;
-            btnToCurve.Click += BtnToCurve_Click;
-            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 561);
-            Controls.Add(btnToCurve);
             Controls.Add(tabLayers);
             Controls.Add(btnShapeText);
             Controls.Add(btnShapePolygon);
@@ -1996,6 +1984,5 @@
         private ToolStripMenuItem rotateToolStripMenuItem1;
         private ToolStripMenuItem sVGToolStripMenuItem;
         private ToolStripMenuItem sVGToolStripMenuItem1;
-        private Button btnToCurve;
     }
 }
