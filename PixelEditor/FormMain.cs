@@ -2010,6 +2010,10 @@ namespace PixelEditor
                 {
                     btnPointer.Checked = false;
                 }
+                else if (btn != btnPointSelect)
+                {
+                    btnPointSelect.Checked = false;
+                }
                 if (btn != btnFiller)
                 {
                     btnFiller.Checked = false;
@@ -2076,7 +2080,16 @@ namespace PixelEditor
             if (btnPointer.Checked)
             {
                 PaintingEngine.SetBrush(paint);
+                canvas.Cursor = Cursors.Default;
+                Layer.LayerSelectionType = LayerSelectionType.Shape;
+                RedrawImage();
+            }
+            else if (btnPointSelect.Checked)
+            {
+                PaintingEngine.SetBrush(paint);
                 canvas.Cursor = Cursors.SizeAll;
+                Layer.LayerSelectionType = LayerSelectionType.Point;
+                RedrawImage();
             }
             else if (btnFiller.Checked)
             {
@@ -3739,7 +3752,8 @@ namespace PixelEditor
 
                 if (selectedLayer.LayerType == LayerType.Vector)
                 {
-                    btnPointer.Checked = true;
+                    btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
+                    btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
                     btnFiller.Visible = false;
                     btnBrusher.Visible = false;
@@ -3754,7 +3768,8 @@ namespace PixelEditor
                 }
                 else
                 {
-                    btnPointer.Checked = true;
+                    btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
+                    btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
                     btnFiller.Visible = true;
                     btnBrusher.Visible = true;
@@ -3768,7 +3783,7 @@ namespace PixelEditor
                     btnShapeText.Visible = false;
                 }
 
-                if (btnPointer.Checked)
+                if (btnPointer.Checked || btnPointSelect.Checked)
                 {
                     if (selectedLayer.CurrentShape != null)
                     {
@@ -4796,7 +4811,7 @@ namespace PixelEditor
                         };
                         selectedLayer.CurrentShape = shapeText;
                     }
-                    else if (btnPointer.Checked)
+                    else if (btnPointer.Checked || btnPointSelect.Checked)
                     {
                         if (SelectionsManipulator.ContainsSelection())
                         {
@@ -5839,7 +5854,8 @@ namespace PixelEditor
                         {
                             selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
                         }
-                        btnPointer.Checked = true;
+                        btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
+                        btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
@@ -5888,7 +5904,8 @@ namespace PixelEditor
                     RedrawImage();
                     isDraggingShape = false;
                     isUpdatingPolygonShape = false;
-                    btnPointer.Checked = true;
+                    btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
+                    btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
 

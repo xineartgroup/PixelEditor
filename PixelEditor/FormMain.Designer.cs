@@ -218,6 +218,7 @@
             btnShapeEllipse = new RadioButton();
             btnShapePolygon = new RadioButton();
             btnShapeText = new RadioButton();
+            btnPointSelect = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -1285,7 +1286,7 @@
             btnFiller.BackColor = Color.White;
             btnFiller.FlatStyle = FlatStyle.Popup;
             btnFiller.Image = Properties.Resources.Fill;
-            btnFiller.Location = new Point(87, 27);
+            btnFiller.Location = new Point(123, 27);
             btnFiller.Name = "btnFiller";
             btnFiller.Size = new Size(32, 32);
             btnFiller.TabIndex = 26;
@@ -1299,7 +1300,7 @@
             btnBrusher.BackColor = Color.White;
             btnBrusher.FlatStyle = FlatStyle.Popup;
             btnBrusher.Image = Properties.Resources.Brush;
-            btnBrusher.Location = new Point(125, 27);
+            btnBrusher.Location = new Point(161, 27);
             btnBrusher.Name = "btnBrusher";
             btnBrusher.Size = new Size(32, 32);
             btnBrusher.TabIndex = 26;
@@ -1313,7 +1314,7 @@
             btnLassoSelect.BackColor = Color.White;
             btnLassoSelect.FlatStyle = FlatStyle.Popup;
             btnLassoSelect.Image = Properties.Resources.Lasso;
-            btnLassoSelect.Location = new Point(327, 27);
+            btnLassoSelect.Location = new Point(351, 27);
             btnLassoSelect.Name = "btnLassoSelect";
             btnLassoSelect.Size = new Size(32, 32);
             btnLassoSelect.TabIndex = 26;
@@ -1327,7 +1328,7 @@
             btnRectangleSelect.BackColor = Color.White;
             btnRectangleSelect.FlatStyle = FlatStyle.Popup;
             btnRectangleSelect.Image = Properties.Resources.Rect;
-            btnRectangleSelect.Location = new Point(363, 27);
+            btnRectangleSelect.Location = new Point(387, 27);
             btnRectangleSelect.Name = "btnRectangleSelect";
             btnRectangleSelect.Size = new Size(32, 32);
             btnRectangleSelect.TabIndex = 26;
@@ -1341,7 +1342,7 @@
             btnMagicWand.BackColor = Color.White;
             btnMagicWand.FlatStyle = FlatStyle.Popup;
             btnMagicWand.Image = Properties.Resources.MagicWand;
-            btnMagicWand.Location = new Point(400, 27);
+            btnMagicWand.Location = new Point(424, 27);
             btnMagicWand.Name = "btnMagicWand";
             btnMagicWand.Size = new Size(32, 32);
             btnMagicWand.TabIndex = 26;
@@ -1651,7 +1652,7 @@
             btnEraser.BackColor = Color.White;
             btnEraser.FlatStyle = FlatStyle.Popup;
             btnEraser.Image = (Image)resources.GetObject("btnEraser.Image");
-            btnEraser.Location = new Point(163, 27);
+            btnEraser.Location = new Point(199, 27);
             btnEraser.Name = "btnEraser";
             btnEraser.Size = new Size(32, 32);
             btnEraser.TabIndex = 26;
@@ -1665,7 +1666,7 @@
             btnWarp.BackColor = Color.White;
             btnWarp.FlatStyle = FlatStyle.Popup;
             btnWarp.Image = (Image)resources.GetObject("btnWarp.Image");
-            btnWarp.Location = new Point(202, 27);
+            btnWarp.Location = new Point(238, 27);
             btnWarp.Name = "btnWarp";
             btnWarp.Size = new Size(32, 32);
             btnWarp.TabIndex = 26;
@@ -1679,7 +1680,7 @@
             btnCrop.BackColor = Color.White;
             btnCrop.FlatStyle = FlatStyle.Popup;
             btnCrop.Image = (Image)resources.GetObject("btnCrop.Image");
-            btnCrop.Location = new Point(240, 27);
+            btnCrop.Location = new Point(276, 27);
             btnCrop.Name = "btnCrop";
             btnCrop.Size = new Size(32, 32);
             btnCrop.TabIndex = 26;
@@ -1743,6 +1744,20 @@
             btnShapeText.CheckedChanged += BtnTools_CheckedChanged;
             btnShapeText.Click += BtnTools_Click;
             // 
+            // btnPointSelect
+            // 
+            btnPointSelect.Appearance = Appearance.Button;
+            btnPointSelect.BackColor = Color.White;
+            btnPointSelect.FlatStyle = FlatStyle.Popup;
+            btnPointSelect.Image = (Image)resources.GetObject("btnPointSelect.Image");
+            btnPointSelect.Location = new Point(50, 27);
+            btnPointSelect.Name = "btnPointSelect";
+            btnPointSelect.Size = new Size(32, 32);
+            btnPointSelect.TabIndex = 26;
+            btnPointSelect.UseVisualStyleBackColor = false;
+            btnPointSelect.CheckedChanged += BtnTools_CheckedChanged;
+            btnPointSelect.Click += BtnTools_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1761,6 +1776,7 @@
             Controls.Add(btnEraser);
             Controls.Add(btnBrusher);
             Controls.Add(btnFiller);
+            Controls.Add(btnPointSelect);
             Controls.Add(btnPointer);
             Controls.Add(labelMousePosition);
             Controls.Add(label6);
@@ -1984,5 +2000,6 @@
         private ToolStripMenuItem rotateToolStripMenuItem1;
         private ToolStripMenuItem sVGToolStripMenuItem;
         private ToolStripMenuItem sVGToolStripMenuItem1;
+        private RadioButton btnPointSelect;
     }
 }

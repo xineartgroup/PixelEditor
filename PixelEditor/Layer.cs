@@ -28,6 +28,8 @@ namespace PixelEditor
 
         public event Action<Rectangle>? OnLayerChanged;
 
+        public static LayerSelectionType LayerSelectionType { get; set; } = LayerSelectionType.Shape;
+
         public Image? GetBasicImage()
         {
             return _image;
@@ -240,7 +242,7 @@ namespace PixelEditor
                 if (polygon.IsClosed) { g.FillPolygon(brush, polygon.Points.ToArray()); g.DrawPolygon(pen, polygon.Points.ToArray()); }
                 else { g.DrawLines(pen, polygon.Points.ToArray()); }
 
-                if (isSelected)
+                if (isSelected && LayerSelectionType == LayerSelectionType.Point)
                 {
                     handles.AddRange(polygon.Points.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
 
@@ -268,9 +270,9 @@ namespace PixelEditor
                 {
                     handles.AddRange([
                         new(text.X - offset, text.Y - offset, size, size),
-                new(text.X + text.Width - offset, text.Y - offset, size, size),
-                new(text.X - offset, text.Y + text.Height - offset, size, size),
-                new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
+                        new(text.X + text.Width - offset, text.Y - offset, size, size),
+                        new(text.X - offset, text.Y + text.Height - offset, size, size),
+                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
                     ]);
                 }
 
@@ -284,7 +286,7 @@ namespace PixelEditor
                 g.FillPath(brush, gPath);
                 g.DrawPath(pen, gPath);
 
-                if (isSelected)
+                if (isSelected && LayerSelectionType == LayerSelectionType.Point)
                 {
                     int pointIndex = 0;
                     foreach (var segment in path.PathSegments)
