@@ -5821,7 +5821,7 @@ namespace PixelEditor
             {
                 if (!isColorPicked)
                 {
-                    if (selectedLayer.Image != null)
+                    if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         ManipulatorGeneral.UpdateBuffers();
@@ -5832,7 +5832,7 @@ namespace PixelEditor
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
-                    if (selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
+                    else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
@@ -5859,7 +5859,6 @@ namespace PixelEditor
             isDrawing = false;
             isDraggingShape = false;
             isResizingShape = false;
-            //activeHandleIndex = -1;
             ColorDialogX.IsEyeDropping = false;
         }
 

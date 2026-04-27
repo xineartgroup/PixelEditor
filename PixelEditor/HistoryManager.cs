@@ -55,8 +55,9 @@
 
                 return new HistoryItem(layers, selectedLayerIndex);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return null;
             }
         }
@@ -75,8 +76,9 @@
 
                 return new HistoryItem(layers, selectedLayerIndex);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return null;
             }
         }

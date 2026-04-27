@@ -118,6 +118,7 @@ namespace PixelEditor
                 3 => new ShapeEllipse(),
                 4 => new ShapePolygon(),
                 5 => new ShapeText(),
+                6 => new ShapePath(),
                 _ => throw new InvalidDataException("Unknown shape type.")
             };
 

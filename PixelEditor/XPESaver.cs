@@ -99,6 +99,7 @@ namespace PixelEditor
                 ShapeEllipse => 3,
                 ShapePolygon => 4,
                 ShapeText => 5,
+                ShapePath => 6,
                 _ => 0
             };
             writer.Write(typeId);

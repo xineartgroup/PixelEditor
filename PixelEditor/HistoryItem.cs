@@ -20,8 +20,7 @@ namespace PixelEditor
 
         public HistoryItem GetCopy()
         {
-            HistoryItem item = new(CopyLayers(Layers), SelectedLayerIndex);
-            return item;
+            return new(CopyLayers(Layers), SelectedLayerIndex);
         }
     }
 }
