@@ -63,45 +63,49 @@ namespace PixelEditor
                     else if (stroke is ShapePath pa)
                     {
                         StringBuilder sb = new();
-                        foreach (var pathSegment in pa.PathSegments)
+                        for (int i = 0; i < pa.PathSegments.Count; i++)
                         {
-                            string type = pathSegment.PathType; // M, L, H, V, C, Q, A, Z
+                            var pathSegment = pa.PathSegments[i];
+                            string type = pathSegment.PathType.ToUpper();
                             var pts = pathSegment.InputPoints;
 
-                            if (pts.Count == 0 && !type.Equals("Z", StringComparison.CurrentCultureIgnoreCase)) continue;
+                            if (pts.Count == 0 && type != "Z") continue;
 
-                            switch (type.ToUpper())
+                            if (i == 0)
+                            {
+                                sb.AppendFormat(CultureInfo.InvariantCulture, "M {0:0.###},{1:0.###} ", pts[0].X, pts[0].Y);
+
+                                if (type == "M") continue;
+                            }
+
+                            switch (type)
                             {
                                 case "M":
                                 case "L":
-                                    // M and L both use the last point in InputPoints as the destination
                                     sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} ", type, pts[^1].X, pts[^1].Y);
                                     break;
 
                                 case "H":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###} ", type, pts[^1].X);
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "H {0:0.###} ", pts[^1].X);
                                     break;
 
                                 case "V":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###} ", type, pts[^1].Y);
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "V {0:0.###} ", pts[^1].Y);
                                     break;
 
                                 case "C":
-                                    // Cubic: Control1, Control2, EndPoint
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} {3:0.###},{4:0.###} {5:0.###},{6:0.###} ",
-                                        type, pts[1].X, pts[1].Y, pts[2].X, pts[2].Y, pts[3].X, pts[3].Y);
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
+                                        pts[1].X, pts[1].Y, pts[2].X, pts[2].Y, pts[3].X, pts[3].Y);
                                     break;
 
                                 case "Q":
-                                    // Quadratic: Control1, EndPoint
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} {3:0.###},{4:0.###} ",
-                                        type, pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
+                                        pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
                                     break;
 
                                 case "A":
-                                    // Arc: Radii, Rot, LargeArc, Sweep, EndPoint
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} {3:0.###} {4},{5} {6:0.###},{7:0.###} ",
-                                        type, pts[1].X, pts[1].Y, pts[2].X, (int)pts[3].X, (int)pts[3].Y, pts[4].X, pts[4].Y);
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "A {0:0.###},{1:0.###} {2:0.###} {3},{4} {5:0.###},{6:0.###} ",
+                                        pts[1].X, pts[1].Y, pts[2].X, (int)pts[3].X, (int)pts[3].Y, pts[4].X, pts[4].Y);
                                     break;
 
                                 case "Z":

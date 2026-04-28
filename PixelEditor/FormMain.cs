@@ -2187,7 +2187,7 @@ namespace PixelEditor
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path && path.PathSegments.Count > 0)
             {
                 HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
@@ -2197,44 +2197,47 @@ namespace PixelEditor
                 for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
                 {
                     var segment = path.PathSegments[segIdx];
+                    int pointCount = segment.InputPoints.Count;
 
-                    for (int i = 0; i < segment.InputPoints.Count; i++)
+                    if (targetIndex >= pointIndex && targetIndex < pointIndex + pointCount)
                     {
-                        if (pointIndex == targetIndex)
+                        if (!segment.PathType.Equals("C", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (segIdx > 0 && (segment.PathType.Equals("L", StringComparison.OrdinalIgnoreCase) ||
-                                               segment.PathType.Equals("M", StringComparison.OrdinalIgnoreCase)))
+                            PointF endPoint = segment.InputPoints[^1];
+                            PointF startPoint = endPoint;
+
+                            int prevIdx = (segIdx == 0) ? path.PathSegments.Count - 1 : segIdx - 1;
+                            var prevSeg = path.PathSegments[prevIdx];
+
+                            if (prevSeg.InputPoints.Count > 0)
                             {
-                                PointF endPoint = segment.InputPoints[i];
-                                PointF startPoint = endPoint;
-
-                                var prevSegment = path.PathSegments[segIdx - 1];
-                                var prevPoints = prevSegment.GetPoints();
-                                if (prevPoints.Count > 0)
-                                {
-                                    startPoint = prevPoints[^1];
-                                }
-
-                                float dx = endPoint.X - startPoint.X;
-                                float dy = endPoint.Y - startPoint.Y;
-
-                                var cp1 = new PointF(startPoint.X + dx * 0.33f, startPoint.Y + dy * 0.33f);
-                                var cp2 = new PointF(startPoint.X + dx * 0.66f, startPoint.Y + dy * 0.66f);
-
-                                segment.InputPoints = [startPoint, cp1, cp2, endPoint];
-                                segment.PathType = "C";
+                                startPoint = prevSeg.InputPoints[^1];
                             }
-                            break;
+                            else if (path.PathSegments.Count > 1)
+                            {
+                                int fallbackIdx = (prevIdx == 0) ? path.PathSegments.Count - 1 : prevIdx - 1;
+                                var fallbackSeg = path.PathSegments[fallbackIdx];
+                                if (fallbackSeg.InputPoints.Count > 0)
+                                    startPoint = fallbackSeg.InputPoints[^1];
+                            }
+
+                            float dx = endPoint.X - startPoint.X;
+                            float dy = endPoint.Y - startPoint.Y;
+
+                            PointF cp1 = new(startPoint.X + dx * 0.33f, startPoint.Y + dy * 0.33f);
+                            PointF cp2 = new(startPoint.X + dx * 0.66f, startPoint.Y + dy * 0.66f);
+
+                            segment.InputPoints = [startPoint, cp1, cp2, endPoint];
+                            segment.PathType = "C";
                         }
-                        pointIndex++;
+                        break;
                     }
-                    if (pointIndex > targetIndex) break;
+                    pointIndex += pointCount;
                 }
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();
                 RedrawImage();
-
                 HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
@@ -2253,37 +2256,33 @@ namespace PixelEditor
                 for (int segIdx = 0; segIdx < path.PathSegments.Count; segIdx++)
                 {
                     var segment = path.PathSegments[segIdx];
+                    int pointCount = segment.InputPoints.Count;
 
-                    for (int i = 0; i < segment.InputPoints.Count; i++)
+                    if (targetIndex >= pointIndex && targetIndex < pointIndex + pointCount)
                     {
-                        if (pointIndex == targetIndex)
+                        if (segment.PathType.Equals("C", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (segment.PathType.Equals("C", StringComparison.OrdinalIgnoreCase))
-                            {
-                                PointF endPoint = segment.InputPoints[^1];
+                            PointF endPoint = segment.InputPoints[^1];
 
-                                if (segIdx == 0)
-                                {
-                                    segment.PathType = "M";
-                                    segment.InputPoints = [endPoint];
-                                }
-                                else
-                                {
-                                    segment.PathType = "L";
-                                    segment.InputPoints = [endPoint];
-                                }
+                            if (segIdx == 0)
+                            {
+                                segment.PathType = "M";
+                                segment.InputPoints = [endPoint];
                             }
-                            break;
+                            else
+                            {
+                                segment.PathType = "L";
+                                segment.InputPoints = [endPoint];
+                            }
                         }
-                        pointIndex++;
+                        break;
                     }
-                    if (pointIndex > targetIndex) break;
+                    pointIndex += pointCount;
                 }
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();
                 RedrawImage();
-
                 HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
