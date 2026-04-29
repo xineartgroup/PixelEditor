@@ -1,4 +1,5 @@
 ﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 
 namespace PixelEditor
 {
@@ -120,7 +121,7 @@ namespace PixelEditor
                     int posX = (image.Width - newWidth) / 2;
                     int posY = (image.Height - newHeight) / 2;
 
-                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor; //InterpolationMode.HighQualityBicubic;
 
                     g.DrawImage(basicImage, posX, posY, newWidth, newHeight);
                 }

@@ -107,6 +107,10 @@ namespace PixelEditor
             Image? image = new Bitmap(temp);
             using (Graphics g = Graphics.FromImage(image))
             {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
                 List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
                 List<(RectangleF[] Handles, Matrix Transform)> activeHandlesToDraw = [];
                 bool foundSelected = false;
@@ -177,13 +181,15 @@ namespace PixelEditor
                     g.DrawRectangle(handlePen, groupBounds.X, groupBounds.Y, groupBounds.Width, groupBounds.Height);
                 }
             }
+
             return image;
         }
 
         public static (RectangleF[], RectangleF[]) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            using Pen pen = new(shape.LineColor, shape.LineWidth);
+            float scaledLineWidth = shape.LineWidth * Document.Zoom * Document.Width / 512;
+            using Pen pen = new(shape.LineColor, scaledLineWidth);
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
 
@@ -205,9 +211,9 @@ namespace PixelEditor
                 {
                     handles.AddRange([
                         new(rect.X - offset, rect.Y - offset, size, size),
-                new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
-                new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
-                new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
+                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
+                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
+                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
                     ]);
                 }
 

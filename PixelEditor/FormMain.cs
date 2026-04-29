@@ -5969,7 +5969,7 @@ namespace PixelEditor
 
                 RectangleF destRect = new(centerX + Document.ImageOffset.X, centerY + Document.ImageOffset.Y, scaledWidth, scaledHeight);
 
-                g.InterpolationMode = (Document.Zoom < 0.5f || Document.Zoom > 2.0f) ? InterpolationMode.HighQualityBicubic : InterpolationMode.NearestNeighbor;
+                g.InterpolationMode = InterpolationMode.NearestNeighbor; //(Document.Zoom < 0.5f || Document.Zoom > 2.0f) ? InterpolationMode.HighQualityBicubic : InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = PixelOffsetMode.Half;
                 g.DrawImage(image, destRect);
 

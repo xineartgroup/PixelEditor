@@ -251,7 +251,11 @@ namespace PixelEditor
             _canvasBitmap = new Bitmap(Document.Width, Document.Height);
 
             using Graphics g = Graphics.FromImage(_canvasBitmap);
-            int squareSize = 20;
+
+            int size = Math.Max(Document.Width, Document.Height);
+
+            int squareSize = size > 512 ? 20 : size > 256 ? 10 : 5;
+
             Color lightColor = Color.LightGray;
             Color darkColor = Color.White;
 
