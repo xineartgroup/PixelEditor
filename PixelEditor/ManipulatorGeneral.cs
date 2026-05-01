@@ -1,6 +1,7 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
 namespace PixelEditor
@@ -125,15 +126,16 @@ namespace PixelEditor
             for (int i = layers.Count - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                if (!layer.IsVisible || layer.Image == null) continue;
+                Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                if (!layer.IsVisible || image == null) continue;
 
-                int displayWidth = layer.Image.Width * layer.ScaleWidth;
-                int displayHeight = layer.Image.Height * layer.ScaleHeight;
+                int displayWidth = image.Width * layer.ScaleWidth;
+                int displayHeight = image.Height * layer.ScaleHeight;
                 Rectangle layerBounds = new(layer.X, layer.Y, displayWidth, displayHeight);
 
                 int stateHash = HashCode.Combine(
                     layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                    layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                    image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                 bool isDirty = DirtyRegions.Any(r => r.IntersectsWith(layerBounds));
 
@@ -143,7 +145,7 @@ namespace PixelEditor
                     continue;
                 }
 
-                ColorGrid layerBuffer = RasterizeLayer(layer, displayWidth, displayHeight);
+                ColorGrid layerBuffer = RasterizeLayer(layer, displayWidth, displayHeight, useCachedImage: i != selectedLayerIndex);
                 LayerCache[layer.Name] = (layerBuffer, stateHash);
                 ApplyCachedLayer(Screen, layerBuffer, layerBounds, Document.Width, Document.Height, layer.BlendMode);
             }
@@ -178,18 +180,19 @@ namespace PixelEditor
                 for (int i = layers.Count - 1; i > selectedLayerIndex; i--)
                 {
                     var layer = layers[i];
-                    if (!layer.IsVisible || layer.Image == null) continue;
+                    Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                    if (!layer.IsVisible || image == null) continue;
 
-                    int dw = layer.Image.Width * layer.ScaleWidth;
-                    int dh = layer.Image.Height * layer.ScaleHeight;
+                    int dw = image.Width * layer.ScaleWidth;
+                    int dh = image.Height * layer.ScaleHeight;
                     Rectangle lb = new(layer.X, layer.Y, dw, dh);
 
                     int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                        layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                        image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                     if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
                     {
-                        cached = (RasterizeLayer(layer, dw, dh), hash);
+                        cached = (RasterizeLayer(layer, dw, dh, useCachedImage: i != selectedLayerIndex), hash);
                         LayerCache[layer.Name] = cached;
                     }
 
@@ -211,10 +214,11 @@ namespace PixelEditor
             }
 
             var activeLayer = layers[selectedLayerIndex];
-            if (activeLayer.IsVisible && activeLayer.Image != null)
+            Image? image1 = activeLayer.Image;
+            if (activeLayer.IsVisible && image1 != null)
             {
-                int dw = activeLayer.Image.Width * activeLayer.ScaleWidth;
-                int dh = activeLayer.Image.Height * activeLayer.ScaleHeight;
+                int dw = image1.Width * activeLayer.ScaleWidth;
+                int dh = image1.Height * activeLayer.ScaleHeight;
                 Rectangle activeBounds = new(activeLayer.X, activeLayer.Y, dw, dh);
                 ColorGrid activeBuffer = RasterizeLayer(activeLayer, dw, dh);
 
@@ -225,18 +229,19 @@ namespace PixelEditor
             for (int i = selectedLayerIndex - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                if (!layer.IsVisible || layer.Image == null) continue;
+                Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                if (!layer.IsVisible || image == null) continue;
 
-                int dw = layer.Image.Width * layer.ScaleWidth;
-                int dh = layer.Image.Height * layer.ScaleHeight;
+                int dw = image.Width * layer.ScaleWidth;
+                int dh = image.Height * layer.ScaleHeight;
                 Rectangle lb = new(layer.X, layer.Y, dw, dh);
 
                 int hash = HashCode.Combine(layer.X, layer.Y, layer.ScaleWidth, layer.ScaleHeight,
-                    layer.Image.GetHashCode(), layer.Opacity, layer.BlendMode);
+                    image.GetHashCode(), layer.Opacity, layer.BlendMode);
 
                 if (!LayerCache.TryGetValue(layer.Name, out var cached) || cached.Hash != hash)
                 {
-                    cached = (RasterizeLayer(layer, dw, dh), hash);
+                    cached = (RasterizeLayer(layer, dw, dh, useCachedImage: i != selectedLayerIndex), hash);
                     LayerCache[layer.Name] = cached;
                 }
 
@@ -344,10 +349,11 @@ namespace PixelEditor
 
         public static Bitmap? ExtractSelectedArea(Layer selectedLayer)
         {
-            if (selectedLayer.Image == null) return null;
+            Image? image = selectedLayer.Image;
+            if (image == null) return null;
 
-            int width = selectedLayer.Image.Width;
-            int height = selectedLayer.Image.Height;
+            int width = image.Width;
+            int height = image.Height;
 
             var selections = SelectionsManipulator.GetSelections();
             var selectionPolygons = selections.Where(s => s.Points.Count >= 3).ToList();
@@ -412,7 +418,7 @@ namespace PixelEditor
             int cropHeight = maxY - minY + 1;
             Bitmap result = new(cropWidth, cropHeight, PixelFormat.Format32bppArgb);
 
-            using (Bitmap sourceBitmap = new(selectedLayer.Image))
+            using (Bitmap sourceBitmap = new(image))
             {
                 BitmapData sourceData = sourceBitmap.LockBits(
                     new Rectangle(0, 0, width, height),
@@ -467,13 +473,14 @@ namespace PixelEditor
 
         public static Bitmap? CutSelectionFromLayer(Layer selectedLayer)
         {
-            if (selectedLayer.Image == null) return null;
+            Image? image = selectedLayer.Image;
+            if (image == null) return null;
 
             bool emptyHole = selectedLayer.FillType == FillType.Transparency;
 
-            int width = selectedLayer.Image.Width;
-            int height = selectedLayer.Image.Height;
-            Bitmap result = new(selectedLayer.Image);
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap result = new(image);
 
             byte fillA = emptyHole ? (byte)0 : (byte)255;
             byte fillR = 255; byte fillG = 255; byte fillB = 255;
@@ -847,7 +854,7 @@ namespace PixelEditor
             return result;
         }
 
-        public static ColorGrid RasterizeLayer(Layer layer, int displayWidth, int displayHeight)
+        public static ColorGrid RasterizeLayer(Layer layer, int displayWidth, int displayHeight, bool useCachedImage = false)
         {
             ColorGrid layerBuffer = new(displayWidth, displayHeight);
             int[] pixels = layerBuffer.GetRawPixels();
@@ -856,7 +863,7 @@ namespace PixelEditor
 
             unsafe
             {
-                using Bitmap bmp = new(layer.Image!);
+                using Bitmap bmp = new(useCachedImage ? layer.GetCachedImage()! : layer.Image!);
                 BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                     ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 byte* ptr = (byte*)data.Scan0;
@@ -1188,8 +1195,13 @@ namespace PixelEditor
             for (int i = fromInclusive; i < toExclusive; i++)
             {
                 var l = layers[i];
-                hc.Add(l.X); hc.Add(l.Y); hc.Add(l.ScaleWidth); hc.Add(l.ScaleHeight);
-                hc.Add(l.Image?.GetHashCode() ?? 0); hc.Add(l.Opacity); hc.Add(l.BlendMode);
+                hc.Add(l.X);
+                hc.Add(l.Y);
+                hc.Add(l.ScaleWidth);
+                hc.Add(l.ScaleHeight);
+                hc.Add(l.GetCachedImage()?.GetHashCode() ?? 0); // You are not including the selected layer's image hash in the group hash
+                hc.Add(l.Opacity);
+                hc.Add(l.BlendMode);
                 hc.Add(l.IsVisible);
             }
             return hc.ToHashCode();

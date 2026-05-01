@@ -22,6 +22,7 @@ namespace PixelEditor
         private Color _fillColor = Color.White;
         private Image? _image = null;
         private Image? _imageMask = null;
+        private Image? _imageCache = null;
         private List<BaseShape> shapes = [];
         private List<BaseShape> addedShapeSelections = [];
         private BaseShape? currentShape = null;
@@ -75,11 +76,30 @@ namespace PixelEditor
 
         public BaseShape? CurrentShape { get => currentShape; set => SetProperty(ref currentShape, value); }
 
+        public bool IsNewShape(BaseShape shape)
+        {
+            return !shapes.Contains(shape);
+        }
+
+        public Image? GetCachedImage()
+        {
+            if (LayerType == LayerType.Vector)
+            {
+                return _imageCache;
+            }
+            else
+            {
+                return _image;
+            }
+        }
+
         private Image? GetImageComposite()
         {
             if (LayerType == LayerType.Vector)
             {
-                return DrawVectorImage(new Bitmap(Document.Width, Document.Height));
+                Console.WriteLine("Getting vector image composite");
+                _imageCache = DrawVectorImage(new Bitmap(Document.Width, Document.Height));
+                return _imageCache;
             }
             else
             {
@@ -95,11 +115,6 @@ namespace PixelEditor
                         return null;
                 }
             }
-        }
-
-        public bool IsNewShape(BaseShape shape)
-        {
-            return !shapes.Contains(shape);
         }
 
         private Image? DrawVectorImage(Image temp)
@@ -188,7 +203,7 @@ namespace PixelEditor
         public static (RectangleF[], RectangleF[]) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            float scaledLineWidth = shape.LineWidth * Document.Zoom * Document.Width / 512;
+            float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024; //
             using Pen pen = new(shape.LineColor, scaledLineWidth);
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
@@ -219,7 +234,7 @@ namespace PixelEditor
 
                 g.Transform = originalTransform;
 
-                Console.WriteLine($"Rect: x={rect.X} y={rect.Y} w={rect.Width} h={rect.Height}");
+                //Console.WriteLine($"Rect: x={rect.X} y={rect.Y} w={rect.Width} h={rect.Height}");
             }
             else if (shape is ShapeEllipse ellipse)
             {
@@ -241,7 +256,7 @@ namespace PixelEditor
 
                 g.Transform = originalTransform;
 
-                Console.WriteLine($"Ellipse: x={ellipse.X} y={ellipse.Y} w={ellipse.Width} h={ellipse.Height}");
+                //Console.WriteLine($"Ellipse: x={ellipse.X} y={ellipse.Y} w={ellipse.Width} h={ellipse.Height}");
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
@@ -284,7 +299,7 @@ namespace PixelEditor
 
                 g.Transform = originalTransform;
 
-                Console.WriteLine($"Text: {font.Size} x={text.X} y={text.Y}");
+                //Console.WriteLine($"Text: {font.Size} x={text.X} y={text.Y}");
             }
             else if (shape is ShapePath path)
             {

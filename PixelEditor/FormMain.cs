@@ -5996,11 +5996,12 @@ namespace PixelEditor
                 selectionPen.DashPattern = [2, 2];
                 selectionPen.DashOffset = dashOffset;
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-                if (selectedLayer != null && selectedLayer.Image != null)
+                Image? image = selectedLayer?.Image;
+                if (selectedLayer != null && image != null)
                 {
                     float ratio = ManipulatorGeneral.ScreenToWorldRatio(canvas.Width, canvas.Height);
                     Point p = ManipulatorGeneral.WorldToScreen(new Point(selectedLayer.X, selectedLayer.Y), canvas.Width, canvas.Height);
-                    g.DrawRectangle(selectionPen, p.X, p.Y, selectedLayer.Image.Width * ratio, selectedLayer.Image.Height * ratio);
+                    g.DrawRectangle(selectionPen, p.X, p.Y, image.Width * ratio, image.Height * ratio);
                 }
             }
             canvas.Invalidate();
