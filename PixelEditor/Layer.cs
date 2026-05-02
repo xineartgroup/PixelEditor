@@ -15,6 +15,7 @@ namespace PixelEditor
         private bool _redFilter = false;
         private bool _greenFilter = false;
         private bool _blueFilter = false;
+        private bool _useImageCache = false;
         private LayerType _layerType = LayerType.Image;
         private LayerChannel _channel = LayerChannel.RGB;
         private ImageBlending _blendMode = ImageBlending.Normal;
@@ -22,7 +23,6 @@ namespace PixelEditor
         private Color _fillColor = Color.White;
         private Image? _image = null;
         private Image? _imageMask = null;
-        private Image? _imageCache = null;
         private List<BaseShape> shapes = [];
         private List<BaseShape> addedShapeSelections = [];
         private BaseShape? currentShape = null;
@@ -60,6 +60,8 @@ namespace PixelEditor
 
         public bool BlueFilter { get => _blueFilter; set => SetProperty(ref _blueFilter, value); }
 
+        public bool UseImageCache { get => _useImageCache; set => SetProperty(ref _useImageCache, value); }
+
         public LayerType LayerType { get => _layerType; set => SetProperty(ref _layerType, value); }
 
         public LayerChannel Channel { get => _channel; set => SetProperty(ref _channel, value); }
@@ -81,25 +83,16 @@ namespace PixelEditor
             return !shapes.Contains(shape);
         }
 
-        public Image? GetCachedImage()
-        {
-            if (LayerType == LayerType.Vector)
-            {
-                return _imageCache;
-            }
-            else
-            {
-                return _image;
-            }
-        }
-
         private Image? GetImageComposite()
         {
             if (LayerType == LayerType.Vector)
             {
-                Console.WriteLine("Getting vector image composite");
-                _imageCache = DrawVectorImage(new Bitmap(Document.Width, Document.Height));
-                return _imageCache;
+                if (!_useImageCache)
+                {
+                    Console.WriteLine("Getting vector image composite");
+                    _image = DrawVectorImage(new Bitmap(Document.Width, Document.Height));
+                }
+                return _image;
             }
             else
             {
@@ -483,6 +476,8 @@ namespace PixelEditor
 
         private void SetProperty<T>(ref T field, T value)
         {
+            if (_useImageCache) _useImageCache = false;
+
             if (Equals(field, value)) return;
 
             OnLayerChanged?.Invoke(GetBounds());

@@ -1373,7 +1373,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText textShape)
             {
                 textShape.Content = txtTextLineText.Text;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1400,7 +1400,7 @@ namespace PixelEditor
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
 
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1433,7 +1433,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
                 shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboRectLinePattern.Text);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1442,7 +1442,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
                 shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboEllipseLinePattern.Text);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1451,7 +1451,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboPolygonLinePattern.Text);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1460,7 +1460,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboPathLinePattern.Text);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1469,7 +1469,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (fillRectOpacityNum.Value / fillRectOpacityNum.Maximum)), btnRectFillColorShape.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1478,7 +1478,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (fillEllipseOpacityNum.Value / fillEllipseOpacityNum.Maximum)), btnEllipseFillColorShape.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1487,7 +1487,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (fillPolygonOpacityNum.Value / fillPolygonOpacityNum.Maximum)), btnPolygonFillColorShape.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1496,7 +1496,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (fillPathOpacityNum.Value / fillPathOpacityNum.Maximum)), btnPathFillColorShape.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1505,7 +1505,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
             {
                 shape.FillColor = Color.FromArgb((int)(255 * (numTextFillOpacity.Value / numTextFillOpacity.Maximum)), btnTextFillColor.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1514,7 +1514,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
                 shape.LineColor = Color.FromArgb((int)(255 * (rectLineOpacityNum.Value / rectLineOpacityNum.Maximum)), btnRectLineColor.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1523,7 +1523,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
                 shape.LineColor = Color.FromArgb((int)(255 * (ellipseLineOpacityNum.Value / ellipseLineOpacityNum.Maximum)), btnEllipseLineColor.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1532,7 +1532,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.LineColor = Color.FromArgb((int)(255 * (polygonLineOpacityNum.Value / polygonLineOpacityNum.Maximum)), btnPolygonLineColor.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1541,7 +1541,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.LineColor = Color.FromArgb((int)(255 * (pathLineOpacityNum.Value / pathLineOpacityNum.Maximum)), btnPathLineColor.BackColor);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1672,7 +1672,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
             {
                 shape.LineWidth = rectLineSizeTrack.Value;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1683,7 +1683,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeEllipse shape)
             {
                 shape.LineWidth = ellipseLineSizeTrack.Value;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1694,7 +1694,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.LineWidth = polygonLineSizeTrack.Value;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1705,7 +1705,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.LineWidth = pathLineSizeTrack.Value;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -1714,7 +1714,7 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePolygon shape)
             {
                 shape.IsClosed = chkClosed.Checked;
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -2237,7 +2237,7 @@ namespace PixelEditor
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();
-                RedrawImage();
+                isDrawingShape = true;
                 HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
@@ -2282,7 +2282,7 @@ namespace PixelEditor
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();
-                RedrawImage();
+                isDrawingShape = true;
                 HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
@@ -3225,7 +3225,7 @@ namespace PixelEditor
                     }
 
                     UpdateControls();
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3254,7 +3254,7 @@ namespace PixelEditor
                     }
 
                     UpdateControls();
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3283,7 +3283,7 @@ namespace PixelEditor
                     }
 
                     UpdateControls();
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3312,7 +3312,7 @@ namespace PixelEditor
                     }
 
                     UpdateControls();
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3336,7 +3336,7 @@ namespace PixelEditor
                         selectedLayer.RaiseShape(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3360,7 +3360,7 @@ namespace PixelEditor
                         selectedLayer.LowerShape(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3384,7 +3384,7 @@ namespace PixelEditor
                         selectedLayer.ShapeToTop(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3408,7 +3408,7 @@ namespace PixelEditor
                         selectedLayer.ShapeToBottom(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3432,7 +3432,7 @@ namespace PixelEditor
                         selectedLayer.DuplicateShape(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3456,7 +3456,7 @@ namespace PixelEditor
                         selectedLayer.FlipShapeHorizomtally(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3480,7 +3480,7 @@ namespace PixelEditor
                         selectedLayer.FlipShapeVertically(selectedLayer.CurrentShape);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3504,7 +3504,7 @@ namespace PixelEditor
                         selectedLayer.RotateShape(selectedLayer.CurrentShape, 90);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3528,7 +3528,7 @@ namespace PixelEditor
                         selectedLayer.RotateShape(selectedLayer.CurrentShape, -90);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3552,7 +3552,7 @@ namespace PixelEditor
                         selectedLayer.RotateShape(selectedLayer.CurrentShape, 180);
                     }
 
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -3581,7 +3581,7 @@ namespace PixelEditor
                             selectedLayer.RotateShape(selectedLayer.CurrentShape, frm.RotationAngle);
                         }
 
-                        RedrawImage();
+                        isDrawingShape = true;
 
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
@@ -4169,7 +4169,7 @@ namespace PixelEditor
                         selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
                         selectedLayer.CurrentShape = null;
                     }
-                    RedrawImage();
+                    isDrawingShape = true;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
@@ -4789,6 +4789,7 @@ namespace PixelEditor
                         polygon?.Points.Add(startPoint);
                         selectedLayer.CurrentShape = polygon;
                         isUpdatingPolygonShape = true;
+                        isDrawingShape = true;
                     }
                     else if (btnShapeText.Checked)
                     {
@@ -5089,7 +5090,7 @@ namespace PixelEditor
                                     selectedLayer.AddedShapeSelections.Clear();
                                 }
 
-                                RedrawImage();
+                                isDrawingShape = true;
                             }
 
                             UpdateControls();
@@ -5996,6 +5997,7 @@ namespace PixelEditor
                 selectionPen.DashPattern = [2, 2];
                 selectionPen.DashOffset = dashOffset;
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                selectedLayer?.UseImageCache = true;
                 Image? image = selectedLayer?.Image;
                 if (selectedLayer != null && image != null)
                 {
@@ -6003,6 +6005,7 @@ namespace PixelEditor
                     Point p = ManipulatorGeneral.WorldToScreen(new Point(selectedLayer.X, selectedLayer.Y), canvas.Width, canvas.Height);
                     g.DrawRectangle(selectionPen, p.X, p.Y, image.Width * ratio, image.Height * ratio);
                 }
+                selectedLayer?.UseImageCache = false;
             }
             canvas.Invalidate();
         }

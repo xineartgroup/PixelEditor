@@ -1,7 +1,6 @@
 ﻿using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
 namespace PixelEditor
@@ -110,9 +109,12 @@ namespace PixelEditor
             if (_canvasBitmap == null || _canvasBitmap.Width != Document.Width || _canvasBitmap.Height != Document.Height)
                 PopulateBackgroundImage();
 
+            bool canUseCache = false;
+
             if (selectedLayerIndex >= 0 && selectedLayerIndex < layers.Count)
             {
                 PopulateColorGrid(layers, selectedLayerIndex);
+                canUseCache = true;
                 return;
             }
 
@@ -126,7 +128,9 @@ namespace PixelEditor
             for (int i = layers.Count - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                layer.UseImageCache = i != selectedLayerIndex || canUseCache;
+                Image? image = layer.Image;
+                layer.UseImageCache = false;
                 if (!layer.IsVisible || image == null) continue;
 
                 int displayWidth = image.Width * layer.ScaleWidth;
@@ -180,7 +184,9 @@ namespace PixelEditor
                 for (int i = layers.Count - 1; i > selectedLayerIndex; i--)
                 {
                     var layer = layers[i];
-                    Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                    layer.UseImageCache = true;
+                    Image? image = layer.Image;
+                    layer.UseImageCache = false;
                     if (!layer.IsVisible || image == null) continue;
 
                     int dw = image.Width * layer.ScaleWidth;
@@ -220,7 +226,7 @@ namespace PixelEditor
                 int dw = image1.Width * activeLayer.ScaleWidth;
                 int dh = image1.Height * activeLayer.ScaleHeight;
                 Rectangle activeBounds = new(activeLayer.X, activeLayer.Y, dw, dh);
-                ColorGrid activeBuffer = RasterizeLayer(activeLayer, dw, dh);
+                ColorGrid activeBuffer = RasterizeLayer(activeLayer, dw, dh, useCachedImage: true);
 
                 if (activeBounds.IntersectsWith(compositeRegion))
                     ApplyCachedLayerRegion(Screen, activeBuffer, activeBounds, compositeRegion, activeLayer.BlendMode);
@@ -229,7 +235,9 @@ namespace PixelEditor
             for (int i = selectedLayerIndex - 1; i >= 0; i--)
             {
                 var layer = layers[i];
-                Image? image = i == selectedLayerIndex ? layer.Image : layer.GetCachedImage();
+                layer.UseImageCache = true;
+                Image? image = layer.Image;
+                layer.UseImageCache = false;
                 if (!layer.IsVisible || image == null) continue;
 
                 int dw = image.Width * layer.ScaleWidth;
@@ -863,7 +871,9 @@ namespace PixelEditor
 
             unsafe
             {
-                using Bitmap bmp = new(useCachedImage ? layer.GetCachedImage()! : layer.Image!);
+                layer.UseImageCache = useCachedImage;
+                using Bitmap bmp = new(layer.Image!);
+                layer.UseImageCache = false;
                 BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                     ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                 byte* ptr = (byte*)data.Scan0;
@@ -1194,15 +1204,17 @@ namespace PixelEditor
             var hc = new HashCode();
             for (int i = fromInclusive; i < toExclusive; i++)
             {
-                var l = layers[i];
+                var l = layers[i]; // You are not including the selected layer's image hash in the group hash
+                l.UseImageCache = true;
                 hc.Add(l.X);
                 hc.Add(l.Y);
                 hc.Add(l.ScaleWidth);
                 hc.Add(l.ScaleHeight);
-                hc.Add(l.GetCachedImage()?.GetHashCode() ?? 0); // You are not including the selected layer's image hash in the group hash
+                hc.Add(l.Image?.GetHashCode() ?? 0);
                 hc.Add(l.Opacity);
                 hc.Add(l.BlendMode);
                 hc.Add(l.IsVisible);
+                l.UseImageCache = false;
             }
             return hc.ToHashCode();
         }
