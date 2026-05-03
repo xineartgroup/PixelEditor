@@ -5829,7 +5829,7 @@ namespace PixelEditor
                         }
                     }
                     SelectionsManipulator.ClearSelections();
-                    RedrawImage();
+                    isDrawingShape = true;
                 }
             }
             if (selectedLayer != null)
@@ -5856,8 +5856,14 @@ namespace PixelEditor
                         }
                         btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                         btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
-                        RedrawImage();
+                        layersControl.RefreshLayersDisplay();
+                        isDrawingShape = true;
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
+                    else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
+                    {
+                        layersControl.RefreshLayersDisplay();
+                        isDrawingShape = true;
                     }
                 }
             }
