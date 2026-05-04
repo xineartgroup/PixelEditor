@@ -171,6 +171,7 @@ namespace PixelEditor
         private readonly Button btnPathFillColorShape = new();
         private readonly Button btnToCurve = new();
         private readonly Button btnToCorner = new();
+        private readonly Button btnInsertPoint = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
@@ -1159,6 +1160,77 @@ namespace PixelEditor
             ResumeLayout(false);
         }
 
+        private void InitializeComponentGroupTextShape()
+        {
+            groupTextShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).BeginInit();
+            SuspendLayout();
+
+            groupTextShapeDetail.Controls.Add(txtTextLineText);
+            groupTextShapeDetail.Controls.Add(btnTextFont);
+            groupTextShapeDetail.Controls.Add(numTextFillOpacity);
+            groupTextShapeDetail.Controls.Add(btnTextFillColor);
+            groupTextShapeDetail.Controls.Add(lblTextLineText);
+            groupTextShapeDetail.Controls.Add(lblTextFont);
+            groupTextShapeDetail.Controls.Add(lblTextFillOpacity);
+            groupTextShapeDetail.Controls.Add(lblTextFillColor);
+
+            groupTextShapeDetail.Location = new Point(12, 74);
+            groupTextShapeDetail.Name = "groupTextShapeDetail";
+            groupTextShapeDetail.Size = new Size(230, 260);
+            groupTextShapeDetail.TabIndex = 30;
+            groupTextShapeDetail.TabStop = false;
+            groupTextShapeDetail.Text = "Text Detail";
+            groupTextShapeDetail.Visible = false;
+
+            lblTextLineText.AutoSize = true;
+            lblTextLineText.Location = new Point(10, 27);
+            lblTextLineText.Text = "Text";
+
+            txtTextLineText.Location = new Point(125, 24);
+            txtTextLineText.Size = new Size(60, 23);
+            txtTextLineText.Text = "Text";
+            txtTextLineText.TextAlign = HorizontalAlignment.Center;
+            txtTextLineText.TextChanged += TxtTextLineSize_TextChanged;
+
+            lblTextFont.AutoSize = true;
+            lblTextFont.Location = new Point(10, 73);
+            lblTextFont.Text = "Font:";
+
+            btnTextFont.BackColor = Color.LightGray;
+            btnTextFont.FlatStyle = FlatStyle.Popup;
+            btnTextFont.Location = new Point(125, 68);
+            btnTextFont.Size = new Size(60, 23);
+            btnTextFont.Text = "";
+            btnTextFont.UseVisualStyleBackColor = false;
+            btnTextFont.Click += BtnTextFont_Click;
+
+            lblTextFillOpacity.AutoSize = true;
+            lblTextFillOpacity.Location = new Point(10, 123);
+            lblTextFillOpacity.Text = "Fill Opacity:";
+
+            numTextFillOpacity.Location = new Point(125, 121);
+            numTextFillOpacity.Size = new Size(60, 23);
+            numTextFillOpacity.Value = new decimal([100, 0, 0, 0]);
+            numTextFillOpacity.ValueChanged += NumTextFillOpacity_ValueChanged;
+
+            lblTextFillColor.AutoSize = true;
+            lblTextFillColor.Location = new Point(10, 153);
+            lblTextFillColor.Text = "Fill Color:";
+
+            btnTextFillColor.BackColor = Color.Black;
+            btnTextFillColor.FlatStyle = FlatStyle.Popup;
+            btnTextFillColor.Location = new Point(125, 150);
+            btnTextFillColor.Size = new Size(20, 20);
+            btnTextFillColor.Click += BtnTextFillColor_Click;
+
+            Controls.Add(groupTextShapeDetail);
+            groupTextShapeDetail.ResumeLayout(false);
+            groupTextShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).EndInit();
+            ResumeLayout(false);
+        }
+
         private void InitializeComponentGroupPathShape()
         {
             System.ComponentModel.ComponentResourceManager resources = new(typeof(FormMain));
@@ -1185,6 +1257,7 @@ namespace PixelEditor
             groupPathShapeDetail.Controls.Add(labelPathFillColor);
             groupPathShapeDetail.Controls.Add(btnToCurve);
             groupPathShapeDetail.Controls.Add(btnToCorner);
+            groupPathShapeDetail.Controls.Add(btnInsertPoint);
 
             // GroupBox Settings
             groupPathShapeDetail.Location = new Point(12, 74);
@@ -1280,12 +1353,21 @@ namespace PixelEditor
 
             // btnToCorner
             btnToCorner.Image = Resources.ToCorner;
-            btnToCorner.Location = new Point(58, 240);
+            btnToCorner.Location = new Point(60, 240);
             btnToCorner.Name = "btnToCorner";
             btnToCorner.Size = new Size(32, 32);
             btnToCorner.TabIndex = 33;
             btnToCorner.UseVisualStyleBackColor = true;
             btnToCorner.Click += BtnToCorner_Click;
+
+            // btnInsertPoint
+            btnInsertPoint.Image = Resources.InsertPoint;
+            btnInsertPoint.Location = new Point(100, 240);
+            btnInsertPoint.Name = "btnToCorner";
+            btnInsertPoint.Size = new Size(32, 32);
+            btnInsertPoint.TabIndex = 34;
+            btnInsertPoint.UseVisualStyleBackColor = true;
+            btnInsertPoint.Click += BtnInsertPoint_Click;
 
             // Finalize
             Controls.Add(groupPathShapeDetail);
@@ -1294,77 +1376,6 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)pathLineSizeTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)pathLineOpacityNum).EndInit();
             ((System.ComponentModel.ISupportInitialize)fillPathOpacityNum).EndInit();
-            ResumeLayout(false);
-        }
-
-        private void InitializeComponentGroupTextShape()
-        {
-            groupTextShapeDetail.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).BeginInit();
-            SuspendLayout();
-
-            groupTextShapeDetail.Controls.Add(txtTextLineText);
-            groupTextShapeDetail.Controls.Add(btnTextFont);
-            groupTextShapeDetail.Controls.Add(numTextFillOpacity);
-            groupTextShapeDetail.Controls.Add(btnTextFillColor);
-            groupTextShapeDetail.Controls.Add(lblTextLineText);
-            groupTextShapeDetail.Controls.Add(lblTextFont);
-            groupTextShapeDetail.Controls.Add(lblTextFillOpacity);
-            groupTextShapeDetail.Controls.Add(lblTextFillColor);
-
-            groupTextShapeDetail.Location = new Point(12, 74);
-            groupTextShapeDetail.Name = "groupTextShapeDetail";
-            groupTextShapeDetail.Size = new Size(230, 260);
-            groupTextShapeDetail.TabIndex = 30;
-            groupTextShapeDetail.TabStop = false;
-            groupTextShapeDetail.Text = "Text Detail";
-            groupTextShapeDetail.Visible = false;
-
-            lblTextLineText.AutoSize = true;
-            lblTextLineText.Location = new Point(10, 27);
-            lblTextLineText.Text = "Text";
-
-            txtTextLineText.Location = new Point(125, 24);
-            txtTextLineText.Size = new Size(60, 23);
-            txtTextLineText.Text = "Text";
-            txtTextLineText.TextAlign = HorizontalAlignment.Center;
-            txtTextLineText.TextChanged += TxtTextLineSize_TextChanged;
-
-            lblTextFont.AutoSize = true;
-            lblTextFont.Location = new Point(10, 73);
-            lblTextFont.Text = "Font:";
-
-            btnTextFont.BackColor = Color.LightGray;
-            btnTextFont.FlatStyle = FlatStyle.Popup;
-            btnTextFont.Location = new Point(125, 68);
-            btnTextFont.Size = new Size(60, 23);
-            btnTextFont.Text = "";
-            btnTextFont.UseVisualStyleBackColor = false;
-            btnTextFont.Click += BtnTextFont_Click;
-
-            lblTextFillOpacity.AutoSize = true;
-            lblTextFillOpacity.Location = new Point(10, 123);
-            lblTextFillOpacity.Text = "Fill Opacity:";
-
-            numTextFillOpacity.Location = new Point(125, 121);
-            numTextFillOpacity.Size = new Size(60, 23);
-            numTextFillOpacity.Value = new decimal([100, 0, 0, 0]);
-            numTextFillOpacity.ValueChanged += NumTextFillOpacity_ValueChanged;
-
-            lblTextFillColor.AutoSize = true;
-            lblTextFillColor.Location = new Point(10, 153);
-            lblTextFillColor.Text = "Fill Color:";
-
-            btnTextFillColor.BackColor = Color.Black;
-            btnTextFillColor.FlatStyle = FlatStyle.Popup;
-            btnTextFillColor.Location = new Point(125, 150);
-            btnTextFillColor.Size = new Size(20, 20);
-            btnTextFillColor.Click += BtnTextFillColor_Click;
-
-            Controls.Add(groupTextShapeDetail);
-            groupTextShapeDetail.ResumeLayout(false);
-            groupTextShapeDetail.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).EndInit();
             ResumeLayout(false);
         }
 
@@ -2284,6 +2295,96 @@ namespace PixelEditor
                 ManipulatorGeneral.InvalidateCompositeBuffers();
                 isDrawingShape = true;
                 HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            }
+        }
+
+        private void BtnInsertPoint_Click(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            {
+                if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
+
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                int idx1 = path.ActiveHandleIndicies[0];
+                int idx2 = path.ActiveHandleIndicies[1];
+                int first = Math.Min(idx1, idx2);
+                int second = Math.Max(idx1, idx2);
+
+                var controlPoints = path.ControlPoints();
+                int totalPoints = controlPoints.Count;
+                bool inserted = false;
+
+                if (first == 0 && second == totalPoints - 1)
+                {
+                    PointF pStart = controlPoints[0];
+                    PointF pEnd = controlPoints[^1];
+                    PointF mid = new((pStart.X + pEnd.X) / 2f, (pStart.Y + pEnd.Y) / 2f);
+
+                    bool alreadyClosed = path.PathSegments[^1].PathType.Equals("Z", StringComparison.OrdinalIgnoreCase);
+
+                    if (alreadyClosed)
+                    {
+                        path.PathSegments.Insert(path.PathSegments.Count - 1, new PathSegment("L", [mid]));
+                    }
+                    else
+                    {
+                        path.PathSegments.Add(new PathSegment("L", [mid]));
+                        path.PathSegments.Add(new PathSegment("L", [pStart]));
+                    }
+                    inserted = true;
+                }
+                else
+                {
+                    int pointCounter = 0;
+                    for (int i = 0; i < path.PathSegments.Count; i++)
+                    {
+                        var currentSegment = path.PathSegments[i];
+                        int currentSegPointCount = currentSegment.InputPoints.Count;
+
+                        if (first == pointCounter - 1 && second == pointCounter + currentSegPointCount - 1)
+                        {
+                            PointF pPrev = controlPoints[first];
+                            PointF pCurr = currentSegment.InputPoints[^1];
+
+                            if (currentSegment.PathType.Equals("C", StringComparison.OrdinalIgnoreCase) && currentSegment.InputPoints.Count == 4)
+                            {
+                                PointF p0 = currentSegment.InputPoints[0];
+                                PointF c1 = currentSegment.InputPoints[1];
+                                PointF c2 = currentSegment.InputPoints[2];
+                                PointF p3 = currentSegment.InputPoints[3];
+
+                                PointF q0 = new((p0.X + c1.X) / 2f, (p0.Y + c1.Y) / 2f);
+                                PointF q1 = new((c1.X + c2.X) / 2f, (c1.Y + c2.Y) / 2f);
+                                PointF q2 = new((c2.X + p3.X) / 2f, (c2.Y + p3.Y) / 2f);
+                                PointF r0 = new((q0.X + q1.X) / 2f, (q0.Y + q1.Y) / 2f);
+                                PointF r1 = new((q1.X + q2.X) / 2f, (q1.Y + q2.Y) / 2f);
+                                PointF b = new((r0.X + r1.X) / 2f, (r0.Y + r1.Y) / 2f);
+
+                                path.PathSegments[i] = new PathSegment("C", [p0, q0, r0, b]);
+                                path.PathSegments.Insert(i + 1, new PathSegment("C", [b, r1, q2, p3]));
+                            }
+                            else
+                            {
+                                PointF mid = new((pPrev.X + pCurr.X) / 2f, (pPrev.Y + pCurr.Y) / 2f);
+                                path.PathSegments.Insert(i, new PathSegment("L", [mid]));
+                            }
+                            inserted = true;
+                            break;
+                        }
+                        pointCounter += currentSegPointCount;
+                    }
+                }
+
+                if (inserted)
+                {
+                    UpdateControls();
+                    ManipulatorGeneral.InvalidateCompositeBuffers();
+                    isDrawingShape = true;
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
             }
         }
 
@@ -4107,68 +4208,88 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                    if (selectedLayer.CurrentShape is ShapePolygon polygon && polygon.ActiveHandleIndex >= 0)
+                    if (selectedLayer.CurrentShape is ShapePolygon polygon)
                     {
-                        polygon.Points.RemoveAt(polygon.ActiveHandleIndex);
-                    }
-                    else if (selectedLayer.CurrentShape is ShapePath path && path.ActiveHandleIndex >= 0)
-                    {
-                        int pointIndex = 0;
-                        int targetIndex = path.ActiveHandleIndex;
-                        int segmentToDelete = -1;
-
-                        for (int i = 0; i < path.PathSegments.Count; i++)
+                        var indicesToProcess = polygon.ActiveHandleIndicies.ToList();
+                        if (polygon.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(polygon.ActiveHandleIndex))
                         {
-                            var segment = path.PathSegments[i];
-                            int pointsInSegment = segment.InputPoints.Count;
-
-                            if (targetIndex >= pointIndex && targetIndex < pointIndex + pointsInSegment)
-                            {
-                                segmentToDelete = i;
-                                break;
-                            }
-                            pointIndex += pointsInSegment;
+                            indicesToProcess.Add(polygon.ActiveHandleIndex);
                         }
 
-                        if (segmentToDelete != -1)
+                        var sortedIndices = indicesToProcess.OrderByDescending(i => i);
+                        foreach (int index in sortedIndices)
                         {
-                            if (segmentToDelete == 0 && path.PathSegments.Count > 1)
+                            if (index >= 0 && index < polygon.Points.Count)
                             {
-                                path.PathSegments.RemoveAt(0);
-                                var newFirst = path.PathSegments[0];
-
-                                PointF newStart = newFirst.InputPoints[^1];
-                                newFirst.PathType = "M";
-                                newFirst.InputPoints = [newStart];
+                                polygon.Points.RemoveAt(index);
                             }
-                            else if (segmentToDelete > 0)
-                            {
-                                path.PathSegments.RemoveAt(segmentToDelete);
+                        }
+                    }
+                    else if (selectedLayer.CurrentShape is ShapePath path)
+                    {
+                        var indicesToProcess = path.ActiveHandleIndicies.ToList();
+                        if (path.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(path.ActiveHandleIndex))
+                        {
+                            indicesToProcess.Add(path.ActiveHandleIndex);
+                        }
 
-                                if (segmentToDelete < path.PathSegments.Count)
+                        var sortedIndices = indicesToProcess.OrderByDescending(i => i).ToList();
+                        HashSet<int> segmentsToRemove = new();
+
+                        foreach (int targetIndex in sortedIndices)
+                        {
+                            int pointIndex = 0;
+                            for (int i = 0; i < path.PathSegments.Count; i++)
+                            {
+                                int pointsInSegment = path.PathSegments[i].InputPoints.Count;
+                                if (targetIndex >= pointIndex && targetIndex < pointIndex + pointsInSegment)
                                 {
-                                    var currentSeg = path.PathSegments[segmentToDelete];
-                                    var prevSeg = path.PathSegments[segmentToDelete - 1];
-
-                                    if (currentSeg.InputPoints.Count > 0 && prevSeg.InputPoints.Count > 0)
-                                    {
-                                        PointF lastPointOfPrev = prevSeg.InputPoints[^1];
-                                        currentSeg.InputPoints[0] = lastPointOfPrev;
-                                    }
+                                    segmentsToRemove.Add(i);
+                                    break;
                                 }
+                                pointIndex += pointsInSegment;
                             }
-                            else
+                        }
+
+                        var sortedSegmentIndices = segmentsToRemove.OrderByDescending(i => i);
+                        foreach (int segIdx in sortedSegmentIndices)
+                        {
+                            if (path.PathSegments.Count <= 1)
                             {
                                 selectedLayer.Shapes.Remove(path);
                                 selectedLayer.CurrentShape = null;
+                                break;
+                            }
+
+                            path.PathSegments.RemoveAt(segIdx);
+
+                            if (segIdx == 0 && path.PathSegments.Count > 0)
+                            {
+                                var newFirst = path.PathSegments[0];
+                                if (newFirst.InputPoints.Count > 0)
+                                {
+                                    PointF endPoint = newFirst.InputPoints[^1];
+                                    newFirst.PathType = "M";
+                                    newFirst.InputPoints = [endPoint];
+                                }
+                            }
+                            else if (segIdx < path.PathSegments.Count && segIdx > 0)
+                            {
+                                var nextSeg = path.PathSegments[segIdx];
+                                var prevSeg = path.PathSegments[segIdx - 1];
+                                if (nextSeg.PathType.Equals("C", StringComparison.OrdinalIgnoreCase) && prevSeg.InputPoints.Count > 0)
+                                {
+                                    nextSeg.InputPoints[0] = prevSeg.InputPoints[^1];
+                                }
                             }
                         }
                     }
-                    else
+                    else if (selectedLayer.CurrentShape != null)
                     {
                         selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
                         selectedLayer.CurrentShape = null;
                     }
+
                     isDrawingShape = true;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
