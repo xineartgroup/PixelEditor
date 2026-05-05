@@ -172,6 +172,7 @@ namespace PixelEditor
         private readonly Button btnToCurve = new();
         private readonly Button btnToCorner = new();
         private readonly Button btnInsertPoint = new();
+        private readonly Button btnSimplifyCurve = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
@@ -1258,6 +1259,7 @@ namespace PixelEditor
             groupPathShapeDetail.Controls.Add(btnToCurve);
             groupPathShapeDetail.Controls.Add(btnToCorner);
             groupPathShapeDetail.Controls.Add(btnInsertPoint);
+            groupPathShapeDetail.Controls.Add(btnSimplifyCurve);
 
             // GroupBox Settings
             groupPathShapeDetail.Location = new Point(12, 74);
@@ -1363,11 +1365,20 @@ namespace PixelEditor
             // btnInsertPoint
             btnInsertPoint.Image = Resources.InsertPoint;
             btnInsertPoint.Location = new Point(100, 240);
-            btnInsertPoint.Name = "btnToCorner";
+            btnInsertPoint.Name = "btnInsertPoint";
             btnInsertPoint.Size = new Size(32, 32);
             btnInsertPoint.TabIndex = 34;
             btnInsertPoint.UseVisualStyleBackColor = true;
             btnInsertPoint.Click += BtnInsertPoint_Click;
+
+            // btnSimplifyCurve
+            btnSimplifyCurve.Image = Resources.SimplifyCurve;
+            btnSimplifyCurve.Location = new Point(140, 240);
+            btnSimplifyCurve.Name = "btnSimplifyCurve";
+            btnSimplifyCurve.Size = new Size(32, 32);
+            btnSimplifyCurve.TabIndex = 35;
+            btnSimplifyCurve.UseVisualStyleBackColor = true;
+            btnSimplifyCurve.Click += BtnSimplifyCurve_Click;
 
             // Finalize
             Controls.Add(groupPathShapeDetail);
@@ -2385,6 +2396,129 @@ namespace PixelEditor
                     isDrawingShape = true;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
+            }
+        }
+
+        private void BtnSimplifyCurve_Click(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            {
+                if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
+
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                var indices = path.ActiveHandleIndicies.OrderBy(i => i).ToList();
+                var allPoints = path.ControlPoints();
+
+                List<PointF> pointsToFit = [];
+                foreach (int idx in indices)
+                {
+                    if (idx >= 0 && idx < allPoints.Count)
+                        pointsToFit.Add(allPoints[idx]);
+                }
+
+                if (pointsToFit.Count < 2) return;
+
+                PointF p0 = pointsToFit[0];
+                PointF p3 = pointsToFit[^1];
+
+                PointF p1, p2;
+
+                if (pointsToFit.Count > 2)
+                {
+                    float totalDist = 0;
+                    List<float> d = [0];
+                    for (int i = 1; i < pointsToFit.Count; i++)
+                    {
+                        totalDist += Utility.VectorDist(pointsToFit[i], pointsToFit[i - 1]);
+                        d.Add(totalDist);
+                    }
+
+                    float sumT2 = 0, sumT3 = 0, sumT4 = 0;
+                    PointF sumXP = new (0, 0), sumYP = new(0, 0);
+
+                    for (int i = 0; i < pointsToFit.Count; i++)
+                    {
+                        float t = d[i] / totalDist;
+                        float t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t, t6 = t5 * t;
+                        float mt = 1 - t, mt2 = mt * mt, mt3 = mt2 * mt;
+
+                        float b1 = 3 * t * mt2;
+                        float b2 = 3 * t2 * mt;
+
+                        PointF target = new (
+                            pointsToFit[i].X - (mt3 * p0.X) - (t3 * p3.X),
+                            pointsToFit[i].Y - (mt3 * p0.Y) - (t3 * p3.Y)
+                        );
+
+                        sumT2 += b1 * b1;
+                        sumT3 += b1 * b2;
+                        sumT4 += b2 * b2;
+
+                        sumXP.X += b1 * target.X;
+                        sumXP.Y += b1 * target.Y;
+                        sumYP.X += b2 * target.X;
+                        sumYP.Y += b2 * target.Y;
+                    }
+
+                    float det = sumT2 * sumT4 - sumT3 * sumT3;
+                    if (Math.Abs(det) > 1e-6)
+                    {
+                        p1 = new PointF((sumXP.X * sumT4 - sumYP.X * sumT3) / det, (sumXP.Y * sumT4 - sumYP.Y * sumT3) / det);
+                        p2 = new PointF((sumYP.X * sumT2 - sumXP.X * sumT3) / det, (sumYP.Y * sumT2 - sumXP.Y * sumT3) / det);
+                    }
+                    else
+                    {
+                        float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
+                        p1 = new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f);
+                        p2 = new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f);
+                    }
+                }
+                else
+                {
+                    float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
+                    p1 = new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f);
+                    p2 = new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f);
+                }
+
+                int firstIdx = indices[0];
+                int lastIdx = indices[^1];
+                int pointCounter = 0;
+                int firstSegIdx = -1, lastSegIdx = -1;
+
+                for (int i = 0; i < path.PathSegments.Count; i++)
+                {
+                    int segCount = path.PathSegments[i].InputPoints.Count;
+                    if (firstIdx >= pointCounter && firstIdx < pointCounter + segCount) firstSegIdx = i;
+                    if (lastIdx >= pointCounter && lastIdx < pointCounter + segCount) lastSegIdx = i;
+                    pointCounter += segCount;
+                }
+
+                if (firstSegIdx != -1 && lastSegIdx != -1)
+                {
+                    int removeCount = lastSegIdx - firstSegIdx;
+                    for (int r = 0; r < removeCount; r++)
+                        path.PathSegments.RemoveAt(firstSegIdx + 1);
+
+                    var targetSegment = path.PathSegments[firstSegIdx];
+                    if (firstSegIdx == 0)
+                    {
+                        targetSegment.PathType = "M";
+                        targetSegment.InputPoints = [p3];
+                    }
+                    else
+                    {
+                        targetSegment.PathType = "C";
+                        targetSegment.InputPoints = [p0, p1, p2, p3];
+                    }
+                }
+
+                UpdateControls();
+                ManipulatorGeneral.InvalidateCompositeBuffers();
+                isDrawingShape = true;
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
         }
 
@@ -4234,7 +4368,7 @@ namespace PixelEditor
                         }
 
                         var sortedIndices = indicesToProcess.OrderByDescending(i => i).ToList();
-                        HashSet<int> segmentsToRemove = new();
+                        HashSet<int> segmentsToRemove = [];
 
                         foreach (int targetIndex in sortedIndices)
                         {
@@ -4371,13 +4505,13 @@ namespace PixelEditor
             {
                 if (data.GetDataPresent("PNG"))
                 {
-                    using MemoryStream ms = (MemoryStream)data.GetData("PNG");
+                    using MemoryStream? ms = (MemoryStream?)data.GetData("PNG");
                     if (ms != null) clipboardImage = new Bitmap(ms);
                 }
 
                 if (clipboardImage == null && data.GetDataPresent(DataFormats.Bitmap))
                 {
-                    clipboardImage = (Bitmap)Clipboard.GetImage();
+                    clipboardImage = (Bitmap?)Clipboard.GetImage();
                 }
 
                 if (clipboardImage != null)
@@ -5933,24 +6067,56 @@ namespace PixelEditor
             {
                 if (selectedLayer != null && selectedLayer.LayerType == LayerType.Vector && selectedLayer.Shapes.Count > 0)
                 {
-                    foreach (var shape in selectedLayer.Shapes)
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    if (Layer.LayerSelectionType == LayerSelectionType.Shape)
                     {
-                        bool shapeInSelection = true;
-                        foreach (var point in shape.ControlPoints())
+                        foreach (var shape in selectedLayer.Shapes)
                         {
-                            if (SelectionsManipulator.IsPointInSelection(point) < 0)
+                            bool shapeInSelection = true;
+                            foreach (var point in shape.ControlPoints())
                             {
-                                shapeInSelection = false;
-                                break;
+                                if (SelectionsManipulator.IsPointInSelection(point) < 0)
+                                {
+                                    shapeInSelection = false;
+                                    break;
+                                }
+                            }
+                            if (shapeInSelection)
+                            {
+                                selectedLayer.AddedShapeSelections.Add(shape);
                             }
                         }
-                        if (shapeInSelection)
+                    }
+                    else if (Layer.LayerSelectionType == LayerSelectionType.Point)
+                    {
+                        if (selectedLayer.CurrentShape != null)
                         {
-                            selectedLayer.AddedShapeSelections.Add(shape);
+                            var controlPoints = selectedLayer.CurrentShape.ControlPoints();
+                            List<int> selectedIndices = [];
+
+                            for (int i = 0; i < controlPoints.Count; i++)
+                            {
+                                if (SelectionsManipulator.IsPointInSelection(controlPoints[i]) >= 0)
+                                {
+                                    selectedIndices.Add(i);
+                                }
+                            }
+
+                            if (selectedLayer.CurrentShape is ShapePath path)
+                            {
+                                path.ActiveHandleIndicies = [.. selectedIndices];
+                                path.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
+                            }
+                            else if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                            {
+                                polygon.ActiveHandleIndicies = [.. selectedIndices];
+                                polygon.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
+                            }
                         }
                     }
                     SelectionsManipulator.ClearSelections();
                     isDrawingShape = true;
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
             if (selectedLayer != null)
@@ -5964,7 +6130,6 @@ namespace PixelEditor
                         PaintingEngine.EndStroke();
                         SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
                         SelectionsManipulator.CalculateSelectionBounds();
-                        layersControl.RefreshLayersDisplay();
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
@@ -5977,13 +6142,11 @@ namespace PixelEditor
                         }
                         btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                         btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
-                        layersControl.RefreshLayersDisplay();
                         isDrawingShape = true;
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                     else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
                     {
-                        layersControl.RefreshLayersDisplay();
                         isDrawingShape = true;
                     }
                 }
@@ -6003,6 +6166,7 @@ namespace PixelEditor
             isDraggingShape = false;
             isResizingShape = false;
             ColorDialogX.IsEyeDropping = false;
+            layersControl.RefreshLayersDisplay();
         }
 
         private void Canvas_MouseDoubleClick(object? sender, MouseEventArgs e)

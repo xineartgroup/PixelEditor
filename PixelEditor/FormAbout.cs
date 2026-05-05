@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Reflection;
-using System.Windows.Forms;
+﻿using System.Reflection;
 
 namespace PixelEditor
 {
@@ -22,7 +17,7 @@ namespace PixelEditor
 
         #region Assembly Attribute Accessors
 
-        public string AssemblyTitle
+        public static string AssemblyTitle
         {
             get
             {
@@ -35,19 +30,13 @@ namespace PixelEditor
                         return titleAttribute.Title;
                     }
                 }
-                return System.IO.Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().CodeBase);
+                return Path.GetFileNameWithoutExtension(path: Assembly.GetExecutingAssembly().Location ?? "");
             }
         }
 
-        public string AssemblyVersion
-        {
-            get
-            {
-                return Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            }
-        }
+        public static string AssemblyVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
-        public string AssemblyDescription
+        public static string AssemblyDescription
         {
             get
             {
@@ -60,7 +49,7 @@ namespace PixelEditor
             }
         }
 
-        public string AssemblyProduct
+        public static string AssemblyProduct
         {
             get
             {
@@ -73,7 +62,7 @@ namespace PixelEditor
             }
         }
 
-        public string AssemblyCopyright
+        public static string AssemblyCopyright
         {
             get
             {
@@ -86,7 +75,7 @@ namespace PixelEditor
             }
         }
 
-        public string AssemblyCompany
+        public static string AssemblyCompany
         {
             get
             {
