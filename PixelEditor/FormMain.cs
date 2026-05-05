@@ -173,6 +173,7 @@ namespace PixelEditor
         private readonly Button btnToCorner = new();
         private readonly Button btnInsertPoint = new();
         private readonly Button btnSimplifyCurve = new();
+        private readonly Button btnSimplifyLine = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
         private readonly Label lblTextLineText = new();
@@ -1260,6 +1261,7 @@ namespace PixelEditor
             groupPathShapeDetail.Controls.Add(btnToCorner);
             groupPathShapeDetail.Controls.Add(btnInsertPoint);
             groupPathShapeDetail.Controls.Add(btnSimplifyCurve);
+            groupPathShapeDetail.Controls.Add(btnSimplifyLine);
 
             // GroupBox Settings
             groupPathShapeDetail.Location = new Point(12, 74);
@@ -1346,7 +1348,7 @@ namespace PixelEditor
 
             // btnToCurve
             btnToCurve.Image = Resources.ToCurve;
-            btnToCurve.Location = new Point(20, 240);
+            btnToCurve.Location = new Point(15, 240);
             btnToCurve.Name = "btnToCurve";
             btnToCurve.Size = new Size(32, 32);
             btnToCurve.TabIndex = 32;
@@ -1355,7 +1357,7 @@ namespace PixelEditor
 
             // btnToCorner
             btnToCorner.Image = Resources.ToCorner;
-            btnToCorner.Location = new Point(60, 240);
+            btnToCorner.Location = new Point(55, 240);
             btnToCorner.Name = "btnToCorner";
             btnToCorner.Size = new Size(32, 32);
             btnToCorner.TabIndex = 33;
@@ -1364,7 +1366,7 @@ namespace PixelEditor
 
             // btnInsertPoint
             btnInsertPoint.Image = Resources.InsertPoint;
-            btnInsertPoint.Location = new Point(100, 240);
+            btnInsertPoint.Location = new Point(95, 240);
             btnInsertPoint.Name = "btnInsertPoint";
             btnInsertPoint.Size = new Size(32, 32);
             btnInsertPoint.TabIndex = 34;
@@ -1373,12 +1375,21 @@ namespace PixelEditor
 
             // btnSimplifyCurve
             btnSimplifyCurve.Image = Resources.SimplifyCurve;
-            btnSimplifyCurve.Location = new Point(140, 240);
+            btnSimplifyCurve.Location = new Point(135, 240);
             btnSimplifyCurve.Name = "btnSimplifyCurve";
             btnSimplifyCurve.Size = new Size(32, 32);
             btnSimplifyCurve.TabIndex = 35;
             btnSimplifyCurve.UseVisualStyleBackColor = true;
             btnSimplifyCurve.Click += BtnSimplifyCurve_Click;
+
+            // btnSimplifyLine
+            btnSimplifyLine.Image = Resources.SimplifyLine;
+            btnSimplifyLine.Location = new Point(175, 240);
+            btnSimplifyLine.Name = "btnSimplifyLine";
+            btnSimplifyLine.Size = new Size(32, 32);
+            btnSimplifyLine.TabIndex = 36;
+            btnSimplifyLine.UseVisualStyleBackColor = true;
+            btnSimplifyLine.Click += BtnSimplifyLine_Click;
 
             // Finalize
             Controls.Add(groupPathShapeDetail);
@@ -2432,7 +2443,7 @@ namespace PixelEditor
                     List<float> d = [0];
                     for (int i = 1; i < pointsToFit.Count; i++)
                     {
-                        totalDist += Utility.VectorDist(pointsToFit[i], pointsToFit[i - 1]);
+                        totalDist += Utility.VectorDistance(pointsToFit[i], pointsToFit[i - 1]);
                         d.Add(totalDist);
                     }
 
@@ -2514,6 +2525,73 @@ namespace PixelEditor
                         targetSegment.InputPoints = [p0, p1, p2, p3];
                     }
                 }
+
+                UpdateControls();
+                ManipulatorGeneral.InvalidateCompositeBuffers();
+                isDrawingShape = true;
+                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+            }
+        }
+
+        private void BtnSimplifyLine_Click(object? sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            {
+                if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
+
+                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                var indices = path.ActiveHandleIndicies.OrderBy(i => i).ToList();
+                int firstIdx = indices[0];
+                int lastIdx = indices[^1];
+
+                var allPoints = path.ControlPoints();
+                if (lastIdx >= allPoints.Count) return;
+
+                PointF endPoint = allPoints[lastIdx];
+
+                int pointCounter = 0;
+                int firstSegIdx = -1;
+                int lastSegIdx = -1;
+
+                for (int i = 0; i < path.PathSegments.Count; i++)
+                {
+                    int segCount = path.PathSegments[i].InputPoints.Count;
+                    int segStart = pointCounter;
+                    int segEnd = pointCounter + segCount - 1;
+
+                    if (firstIdx >= segStart && firstIdx <= segEnd) firstSegIdx = i;
+                    if (lastIdx >= segStart && lastIdx <= segEnd) lastSegIdx = i;
+
+                    pointCounter += segCount;
+                }
+
+                if (firstSegIdx != -1 && lastSegIdx != -1)
+                {
+                    int removeCount = lastSegIdx - firstSegIdx;
+                    for (int r = 0; r < removeCount; r++)
+                    {
+                        path.PathSegments.RemoveAt(firstSegIdx + 1);
+                    }
+
+                    var targetSegment = path.PathSegments[firstSegIdx];
+
+                    if (firstSegIdx == 0)
+                    {
+                        targetSegment.PathType = "M";
+                        targetSegment.InputPoints = [endPoint];
+                    }
+                    else
+                    {
+                        targetSegment.PathType = "L";
+                        targetSegment.InputPoints = [endPoint];
+                    }
+                }
+
+                path.ActiveHandleIndicies = [firstIdx, firstIdx + 1];
+                path.ActiveHandleIndex = firstIdx + 1;
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();

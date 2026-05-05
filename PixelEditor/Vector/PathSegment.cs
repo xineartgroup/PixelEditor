@@ -38,7 +38,7 @@
                 case "C": // Cubic Bezier Curve
                     if (InputPoints.Count < 4) break;
                     PointF startC = InputPoints[0], cp1 = InputPoints[1], cp2 = InputPoints[2], endC = InputPoints[3];
-                    int cSteps = Math.Max(10, (int)Math.Min(50, Utility.VectorDist(startC, endC) * 1.5));
+                    int cSteps = Math.Max(10, (int)Math.Min(50, Utility.VectorDistance(startC, endC) * 1.5));
                     for (int s = 1; s <= cSteps; s++)
                     {
                         float t = s / (float)cSteps;
@@ -51,7 +51,7 @@
                 case "Q": // Quadratic Bezier Curve
                     if (InputPoints.Count < 3) break;
                     PointF startQ = InputPoints[0], qp1 = InputPoints[1], endQ = InputPoints[2];
-                    int qSteps = Math.Max(8, (int)Math.Min(40, Utility.VectorDist(startQ, endQ) * 1.2));
+                    int qSteps = Math.Max(8, (int)Math.Min(40, Utility.VectorDistance(startQ, endQ) * 1.2));
                     for (int s = 1; s <= qSteps; s++)
                     {
                         float t = s / (float)qSteps;

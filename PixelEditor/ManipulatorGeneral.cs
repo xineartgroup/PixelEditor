@@ -1374,7 +1374,7 @@ namespace PixelEditor
                 SelectionsManipulator.GetSelectionBounds().Y - SelectionsManipulator.ROTATION_HANDLE_SIZE / SelectionsManipulator.GetScreenToWorldScale(worldWidth, worldHeight, canvasWidth, canvasHeight, zoom)
             );
             Point screenHandle = WorldToScreen(Point.Round(worldHandle), canvasWidth, canvasHeight);
-            float distance = Utility.VectorDist(screenPoint, screenHandle);
+            float distance = Utility.VectorDistance(screenPoint, screenHandle);
             return distance < SelectionsManipulator.ROTATION_HANDLE_SIZE;
         }
 
@@ -1423,7 +1423,7 @@ namespace PixelEditor
             foreach (var h in handles)
             {
                 Point screenCorner = WorldToScreen(Point.Round(h.World), canvasWidth, canvasHeight);
-                if (Utility.VectorDist(screenPoint, screenCorner) < SelectionsManipulator.SCALE_HANDLE_SIZE)
+                if (Utility.VectorDistance(screenPoint, screenCorner) < SelectionsManipulator.SCALE_HANDLE_SIZE)
                 {
                     handle = h.Name;
                     return true;
