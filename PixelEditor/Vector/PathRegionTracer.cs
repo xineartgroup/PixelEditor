@@ -1,8 +1,6 @@
-﻿using PixelEditor.Vector;
-
-namespace PixelEditor
+﻿namespace PixelEditor.Vector
 {
-    public static class StrokeRegionTracer
+    public static class PathRegionTracer
     {
         public static List<ShapePolygon> TraceStrokes(ColorGrid grid,
             float colorTolerance = 0.15f,
@@ -33,13 +31,13 @@ namespace PixelEditor
 
         private static List<PointF> ExtractRegionBoundary(ColorRegion region, ColorGrid grid)
         {
-            bool[,] mask = StrokeUtility.CreateRegionMask(region, grid);
-            PointF? startPoint = StrokeUtility.FindBoundaryStart(mask, grid);
+            bool[,] mask = PathManipulator.CreateRegionMask(region, grid);
+            PointF? startPoint = PathManipulator.FindBoundaryStart(mask, grid);
 
             if (!startPoint.HasValue)
                 return [];
 
-            return StrokeUtility.TraceMooreBoundary((int)startPoint.Value.X, (int)startPoint.Value.Y, mask, grid);
+            return PathManipulator.TraceMooreBoundary((int)startPoint.Value.X, (int)startPoint.Value.Y, mask, grid);
         }
 
         private static List<PointF> ExtractBoundaryWithGapFilling(ColorRegion region, ColorGrid grid)
@@ -51,7 +49,7 @@ namespace PixelEditor
             if (baseBoundary.Count == 0)
                 return baseBoundary;
 
-            bool[,] regionMask = StrokeUtility.CreateRegionMask(region, grid);
+            bool[,] regionMask = PathManipulator.CreateRegionMask(region, grid);
 
             var gapPixels = FindBoundaryGapPixels(baseBoundary, regionMask, grid, gapSearchDistance, gapColorTolerance);
 
@@ -68,9 +66,9 @@ namespace PixelEditor
             var gapPixels = new List<PointF>();
             var visitedGaps = new bool[grid.Width, grid.Height];
 
-            Color boundaryColor = StrokeUtility.CalculateBoundaryColor(boundary, grid);
+            Color boundaryColor = PathManipulator.CalculateBoundaryColor(boundary, grid);
 
-            PointF[] searchDirections = StrokeUtility.GetSearchDirections();
+            PointF[] searchDirections = PathManipulator.GetSearchDirections();
 
             foreach (var boundaryPoint in boundary)
             {
@@ -107,7 +105,7 @@ namespace PixelEditor
             Color pixelColor = Color.FromArgb(grid[(int)point.X, (int)point.Y]);
 
             // Check 1: Not too different from boundary color
-            float colorDiff = StrokeUtility.ColorDistance(boundaryColor, pixelColor);
+            float colorDiff = PathManipulator.ColorDistance(boundaryColor, pixelColor);
             if (colorDiff > colorTolerance)
                 return false;
 
@@ -139,7 +137,7 @@ namespace PixelEditor
                     neighbor.Y >= 0 && neighbor.Y < grid.Height)
                 {
                     Color neighborColor = Color.FromArgb(grid[(int)neighbor.X, (int)neighbor.Y]);
-                    if (StrokeUtility.ColorDistance(color, neighborColor) <= tolerance)
+                    if (PathManipulator.ColorDistance(color, neighborColor) <= tolerance)
                     {
                         similarNeighbors++;
                     }
@@ -176,11 +174,11 @@ namespace PixelEditor
 
         private static List<PointF> TraceBoundaryOfExpandedRegion(bool[,] expandedMask, ColorGrid grid)
         {
-            PointF? startPoint = StrokeUtility.FindBoundaryStart(expandedMask, grid);
+            PointF? startPoint = PathManipulator.FindBoundaryStart(expandedMask, grid);
             if (!startPoint.HasValue)
                 return [];
 
-            return StrokeUtility.TraceMooreBoundary((int)startPoint.Value.X, (int)startPoint.Value.Y, expandedMask, grid);
+            return PathManipulator.TraceMooreBoundary((int)startPoint.Value.X, (int)startPoint.Value.Y, expandedMask, grid);
         }
 
         private static List<ColorRegion> FindColorRegions(ColorGrid grid, float colorTolerance, int minRegionSize)
@@ -219,11 +217,11 @@ namespace PixelEditor
 
                             var currentColor = Color.FromArgb(grid[(int)point.X, (int)point.Y]);
 
-                            if (StrokeUtility.ColorDistance(seedColor, currentColor) <= colorTolerance)
+                            if (PathManipulator.ColorDistance(seedColor, currentColor) <= colorTolerance)
                             {
                                 visited[(int)point.X, (int)point.Y] = true;
                                 region.Pixels.Add(point);
-                                region.Bounds = StrokeUtility.UpdateBounds(region.Bounds, point);
+                                region.Bounds = PathManipulator.UpdateBounds(region.Bounds, point);
 
                                 foreach (var (dx, dy) in neighborOffsets)
                                 {
@@ -234,12 +232,12 @@ namespace PixelEditor
 
                         if (region.Pixels.Count >= minRegionSize)
                         {
-                            region.AverageColor = StrokeUtility.CalculateAverageColor(region.Pixels, grid);
+                            region.AverageColor = PathManipulator.CalculateAverageColor(region.Pixels, grid);
                             regions.Add(region);
                         }
                         else
                         {
-                            region.AverageColor = StrokeUtility.CalculateAverageColor(region.Pixels, grid);
+                            region.AverageColor = PathManipulator.CalculateAverageColor(region.Pixels, grid);
                             stray_regions.Add(region);
                         }
                     }
@@ -255,89 +253,17 @@ namespace PixelEditor
 
             var points = region.Boundary;
 
+            points = PathManipulator.SimplifyContour(points, simplificationTolerance);
+
             foreach (var point in points)
             {
                 stroke.Points.Add(point);
             }
 
-            stroke.LineColor = StrokeUtility.CalculateBoundaryColor(region.Boundary, grid);
+            stroke.LineColor = PathManipulator.CalculateBoundaryColor(region.Boundary, grid);
             stroke.FillColor = region.AverageColor;
 
             return stroke;
-        }
-
-        private static List<ColorRegion> MergeStrayRegions(List<ColorRegion> mainRegions, List<ColorRegion> strayRegions, ColorGrid grid, int minRegionSize, int proximityThreshold = 0)
-        {
-            var finalRegions = new List<ColorRegion>(mainRegions);
-            var remainingStrays = new List<ColorRegion>(strayRegions);
-
-            remainingStrays.Sort((a, b) => b.Pixels.Count.CompareTo(a.Pixels.Count));
-
-            foreach (var stray in remainingStrays.ToList())
-            {
-                ColorRegion bestTarget = null;
-                double bestDistance = double.MaxValue;
-
-                foreach (var main in finalRegions)
-                {
-                    double dist = GetMinDistanceBetweenBounds(stray.Bounds, main.Bounds);
-                    if (dist < bestDistance)
-                    {
-                        bestDistance = dist;
-                        bestTarget = main;
-                    }
-                }
-
-                foreach (var other in remainingStrays)
-                {
-                    if (other == stray) continue;
-                    double dist = GetMinDistanceBetweenBounds(stray.Bounds, other.Bounds);
-                    if (dist < bestDistance)
-                    {
-                        bestDistance = dist;
-                        bestTarget = other;
-                    }
-                }
-
-                if (bestDistance <= proximityThreshold && bestTarget != null)
-                {
-                    foreach (var p in stray.Pixels)
-                    {
-                        bestTarget.Pixels.Add(p);
-                        bestTarget.Bounds = StrokeUtility.UpdateBounds(bestTarget.Bounds, p);
-                    }
-
-                    bestTarget.AverageColor = StrokeUtility.CalculateAverageColor(bestTarget.Pixels, grid); // Color.Green; // 
-
-                    remainingStrays.Remove(stray);
-
-                    if (!finalRegions.Contains(bestTarget) && bestTarget.Pixels.Count >= minRegionSize)
-                    {
-                        finalRegions.Add(bestTarget);
-                        remainingStrays.Remove(bestTarget);
-                    }
-                }
-            }
-
-            foreach (var stray in remainingStrays)
-            {
-                if (stray.Pixels.Count >= minRegionSize)
-                {
-                    finalRegions.Add(stray);
-                }
-            }
-
-            return finalRegions;
-        }
-
-        private static double GetMinDistanceBetweenBounds(Rectangle a, Rectangle b)
-        {
-            if (a.IntersectsWith(b)) return 0;
-
-            int dx = Math.Max(Math.Max(a.Left - b.Right, b.Left - a.Right), 0);
-            int dy = Math.Max(Math.Max(a.Top - b.Bottom, b.Top - a.Bottom), 0);
-
-            return Math.Sqrt(dx * dx + dy * dy);
         }
     }
 }

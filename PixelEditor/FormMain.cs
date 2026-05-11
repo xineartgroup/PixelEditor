@@ -3434,7 +3434,7 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                    List<ShapePolygon> polygons = StrokeRegionTracer.TraceStrokes(ManipulatorGeneral.RasterizeImage(selectedLayer.Image));
+                    List<ShapePolygon> polygons = PathRegionTracer.TraceStrokes(ManipulatorGeneral.RasterizeImage(selectedLayer.Image));
                     selectedLayer.Image?.Dispose();
                     selectedLayer.Image = new Bitmap(Document.Width, Document.Height);
 
@@ -4420,89 +4420,108 @@ namespace PixelEditor
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-                    if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                    if (Layer.LayerSelectionType == LayerSelectionType.Point)
                     {
-                        var indicesToProcess = polygon.ActiveHandleIndicies.ToList();
-                        if (polygon.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(polygon.ActiveHandleIndex))
+                        if (selectedLayer.CurrentShape is ShapePolygon polygon)
                         {
-                            indicesToProcess.Add(polygon.ActiveHandleIndex);
-                        }
-
-                        var sortedIndices = indicesToProcess.OrderByDescending(i => i);
-                        foreach (int index in sortedIndices)
-                        {
-                            if (index >= 0 && index < polygon.Points.Count)
+                            var indicesToProcess = polygon.ActiveHandleIndicies.ToList();
+                            if (polygon.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(polygon.ActiveHandleIndex))
                             {
-                                polygon.Points.RemoveAt(index);
+                                indicesToProcess.Add(polygon.ActiveHandleIndex);
+                            }
+
+                            var sortedIndices = indicesToProcess.OrderByDescending(i => i);
+                            foreach (int index in sortedIndices)
+                            {
+                                if (index >= 0 && index < polygon.Points.Count)
+                                {
+                                    polygon.Points.RemoveAt(index);
+                                }
                             }
                         }
-                    }
-                    else if (selectedLayer.CurrentShape is ShapePath path)
-                    {
-                        var indicesToProcess = path.ActiveHandleIndicies.ToList();
-                        if (path.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(path.ActiveHandleIndex))
+                        else if (selectedLayer.CurrentShape is ShapePath path)
                         {
-                            indicesToProcess.Add(path.ActiveHandleIndex);
-                        }
-
-                        var sortedIndices = indicesToProcess.OrderByDescending(i => i).ToList();
-                        HashSet<int> segmentsToRemove = [];
-
-                        foreach (int targetIndex in sortedIndices)
-                        {
-                            int pointIndex = 0;
-                            for (int i = 0; i < path.PathSegments.Count; i++)
+                            var indicesToProcess = path.ActiveHandleIndicies.ToList();
+                            if (path.ActiveHandleIndex >= 0 && !indicesToProcess.Contains(path.ActiveHandleIndex))
                             {
-                                int pointsInSegment = path.PathSegments[i].InputPoints.Count;
-                                if (targetIndex >= pointIndex && targetIndex < pointIndex + pointsInSegment)
+                                indicesToProcess.Add(path.ActiveHandleIndex);
+                            }
+
+                            var sortedIndices = indicesToProcess.OrderByDescending(i => i).ToList();
+                            HashSet<int> segmentsToRemove = [];
+
+                            foreach (int targetIndex in sortedIndices)
+                            {
+                                int pointIndex = 0;
+                                for (int i = 0; i < path.PathSegments.Count; i++)
                                 {
-                                    segmentsToRemove.Add(i);
+                                    int pointsInSegment = path.PathSegments[i].InputPoints.Count;
+                                    if (targetIndex >= pointIndex && targetIndex < pointIndex + pointsInSegment)
+                                    {
+                                        segmentsToRemove.Add(i);
+                                        break;
+                                    }
+                                    pointIndex += pointsInSegment;
+                                }
+                            }
+
+                            var sortedSegmentIndices = segmentsToRemove.OrderByDescending(i => i);
+                            foreach (int segIdx in sortedSegmentIndices)
+                            {
+                                if (path.PathSegments.Count <= 1)
+                                {
+                                    selectedLayer.Shapes.Remove(path);
+                                    selectedLayer.CurrentShape = null;
                                     break;
                                 }
-                                pointIndex += pointsInSegment;
-                            }
-                        }
 
-                        var sortedSegmentIndices = segmentsToRemove.OrderByDescending(i => i);
-                        foreach (int segIdx in sortedSegmentIndices)
-                        {
-                            if (path.PathSegments.Count <= 1)
-                            {
-                                selectedLayer.Shapes.Remove(path);
-                                selectedLayer.CurrentShape = null;
-                                break;
-                            }
+                                path.PathSegments.RemoveAt(segIdx);
 
-                            path.PathSegments.RemoveAt(segIdx);
-
-                            if (segIdx == 0 && path.PathSegments.Count > 0)
-                            {
-                                var newFirst = path.PathSegments[0];
-                                if (newFirst.InputPoints.Count > 0)
+                                if (segIdx == 0 && path.PathSegments.Count > 0)
                                 {
-                                    PointF endPoint = newFirst.InputPoints[^1];
-                                    newFirst.PathType = "M";
-                                    newFirst.InputPoints = [endPoint];
+                                    var newFirst = path.PathSegments[0];
+                                    if (newFirst.InputPoints.Count > 0)
+                                    {
+                                        PointF endPoint = newFirst.InputPoints[^1];
+                                        newFirst.PathType = "M";
+                                        newFirst.InputPoints = [endPoint];
+                                    }
                                 }
-                            }
-                            else if (segIdx < path.PathSegments.Count && segIdx > 0)
-                            {
-                                var nextSeg = path.PathSegments[segIdx];
-                                var prevSeg = path.PathSegments[segIdx - 1];
-                                if (nextSeg.PathType.Equals("C", StringComparison.OrdinalIgnoreCase) && prevSeg.InputPoints.Count > 0)
+                                else if (segIdx < path.PathSegments.Count && segIdx > 0)
                                 {
-                                    nextSeg.InputPoints[0] = prevSeg.InputPoints[^1];
+                                    var nextSeg = path.PathSegments[segIdx];
+                                    var prevSeg = path.PathSegments[segIdx - 1];
+                                    if (nextSeg.PathType.Equals("C", StringComparison.OrdinalIgnoreCase) && prevSeg.InputPoints.Count > 0)
+                                    {
+                                        nextSeg.InputPoints[0] = prevSeg.InputPoints[^1];
+                                    }
                                 }
                             }
                         }
                     }
-                    else if (selectedLayer.CurrentShape != null)
+                    else
                     {
-                        selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
-                        selectedLayer.CurrentShape = null;
+                        if (selectedLayer.CurrentShape != null)
+                        {
+                            selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
+                            selectedLayer.CurrentShape = null;
+                        }
                     }
 
                     isDrawingShape = true;
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                }
+                
+                if (selectedLayer.AddedShapeSelections.Count > 0)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    foreach (var sel in selectedLayer.AddedShapeSelections)
+                    {
+                        selectedLayer.Shapes.Remove(sel);
+                    }
+                    selectedLayer.AddedShapeSelections.Clear();
+                    isDrawingShape = true;
+                    RedrawImage();
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }

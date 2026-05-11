@@ -651,7 +651,7 @@ namespace PixelEditor.Vector
             return contour;
         }
 
-        private static List<PointF> SimplifyContour(List<PointF> points, float epsilon)
+        public static List<PointF> SimplifyContour(List<PointF> points, float epsilon)
         {
             if (points.Count < 3) return points;
 
@@ -826,6 +826,209 @@ namespace PixelEditor.Vector
             segments.Add(new PathSegment { PathType = "Z", InputPoints = [] });
 
             return segments;
+        }
+
+        public static PointF[] GetSearchDirections()
+        {
+            return
+            [
+                new PointF(-1, -1), new PointF(0, -1), new PointF(1, -1),
+                new PointF(-1, 0),                    new PointF(1, 0),
+                new PointF(-1, 1),  new PointF(0, 1),  new PointF(1, 1)
+            ];
+        }
+
+        public static bool[,] CreateRegionMask(ColorRegion region, ColorGrid grid)
+        {
+            bool[,] mask = new bool[grid.Width, grid.Height];
+            foreach (var point in region.Pixels)
+            {
+                mask[(int)point.X, (int)point.Y] = true;
+            }
+            return mask;
+        }
+
+        public static float ColorDistance(Color c1, Color c2)
+        {
+            float dr = (c1.R - c2.R) / 255.0f;
+            float dg = (c1.G - c2.G) / 255.0f;
+            float db = (c1.B - c2.B) / 255.0f;
+            return (float)Math.Sqrt((dr * dr + dg * dg + db * db) / 3);
+        }
+
+        public static Rectangle UpdateBounds(Rectangle currentBounds, PointF point)
+        {
+            if (currentBounds == Rectangle.Empty)
+                return new Rectangle((int)point.X, (int)point.Y, 1, 1);
+
+            int left = (int)Math.Min(currentBounds.Left, point.X);
+            int top = (int)Math.Min(currentBounds.Top, point.Y);
+            int right = (int)Math.Max(currentBounds.Right, point.X + 1);
+            int bottom = (int)Math.Max(currentBounds.Bottom, point.Y + 1);
+
+            return new Rectangle(left, top, right - left, bottom - top);
+        }
+
+        public static List<PointF> TraceMooreBoundary(int startX, int startY, bool[,] mask, ColorGrid grid)
+        {
+            var boundaryPoints = new List<PointF>();
+            int width = grid.Width;
+            int height = grid.Height;
+
+            PointF[] directions =
+            [
+                new(0, -1), new(-1, -1), new(-1, 0),
+                new(-1, 1), new(0, 1), new(1, 1),
+                new(1, 0), new(1, -1)
+            ];
+
+            int currentX = startX;
+            int currentY = startY;
+            int startDir = 0;
+            int maxIterations = width * height * 2;
+
+            do
+            {
+                boundaryPoints.Add(new PointF(currentX, currentY));
+
+                bool foundNext = false;
+                for (int i = 0; i < 8; i++)
+                {
+                    int dir = (startDir + i) % 8;
+                    int nx = (int)(currentX + directions[dir].X);
+                    int ny = (int)(currentY + directions[dir].Y);
+
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && mask[nx, ny])
+                    {
+                        currentX = nx;
+                        currentY = ny;
+                        startDir = (dir + 5) % 8;
+                        foundNext = true;
+                        break;
+                    }
+                }
+
+                if (!foundNext) break;
+
+                if (currentX == startX && currentY == startY && boundaryPoints.Count > 1)
+                    break;
+
+                if (boundaryPoints.Count > maxIterations)
+                    break;
+
+            } while (true);
+
+            return boundaryPoints;
+        }
+
+        public static PointF? FindBoundaryStart(bool[,] mask, ColorGrid grid)
+        {
+            int width = grid.Width;
+            int height = grid.Height;
+
+            // Simple scan for first boundary pixel
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (mask[x, y] && IsBoundaryInMask(x, y, mask, grid))
+                    {
+                        return new PointF(x, y);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public static bool IsBoundaryInMask(int x, int y, bool[,] mask, ColorGrid grid)
+        {
+            if (!mask[x, y]) return false;
+
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if (nx < 0 || nx >= grid.Width || ny < 0 || ny >= grid.Height || !mask[nx, ny])
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public static Color CalculateAverageColor(List<PointF> pixels, ColorGrid grid)
+        {
+            if (pixels.Count == 0) return Color.Black;
+
+            long totalA = 0, totalR = 0, totalG = 0, totalB = 0;
+            foreach (var point in pixels)
+            {
+                var color = Color.FromArgb(grid[(int)point.X, (int)point.Y]);
+                totalA += color.A;
+                totalR += color.R;
+                totalG += color.G;
+                totalB += color.B;
+            }
+
+            int count = pixels.Count;
+            return Color.FromArgb(
+                (int)(totalA / count),
+                (int)(totalR / count),
+                (int)(totalG / count),
+                (int)(totalB / count)
+            );
+        }
+
+        public static Color CalculateBoundaryColor(List<PointF> boundary, ColorGrid grid, bool isBoundry = false)
+        {
+            if (boundary.Count == 0) return Color.Black;
+
+            int r = 0, g = 0, b = 0;
+            int samples = Math.Min(boundary.Count, 100);
+
+            Color darkest = Color.White;
+            Color ligthest = Color.Black;
+
+            for (int i = 0; i < samples; i++)
+            {
+                var point = boundary[i * boundary.Count / samples];
+                var color = Color.FromArgb(grid[(int)point.X, (int)point.Y]);
+                r += color.R;
+                g += color.G;
+                b += color.B;
+
+                if (color.GetBrightness() < darkest.GetBrightness())
+                {
+                    darkest = color;
+                }
+
+                if (color.GetBrightness() > ligthest.GetBrightness())
+                {
+                    ligthest = color;
+                }
+            }
+
+            Color result = Color.FromArgb(
+                r / samples,
+                g / samples,
+                b / samples
+            );
+
+            if (isBoundry)
+            {
+                result = Color.FromArgb(
+                    (int)(darkest.R * 0.5f + ligthest.R * 0.5f),
+                    (int)(darkest.G * 0.5f + ligthest.G * 0.5f),
+                    (int)(darkest.B * 0.5f + ligthest.B * 0.5f)
+                );
+            }
+
+            return result;
         }
     }
 }
