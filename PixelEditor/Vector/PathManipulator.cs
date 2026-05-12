@@ -183,7 +183,7 @@ namespace PixelEditor.Vector
             {
                 if (contour.Count < 2) continue;
 
-                List<PointF> simplifiedContour = SimplifyContour(contour, epsilon: 0.5f);
+                List<PointF> simplifiedContour = SimplifyPath(contour, epsilon: 0.5f);
                 if (simplifiedContour.Count < 2) continue;
 
                 List<PointF> worldPoints = [];
@@ -262,7 +262,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.0f);
+                var simplified = SimplifyPath(outline, epsilon: 0.75f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -308,7 +308,7 @@ namespace PixelEditor.Vector
             
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.0f);
+                var simplified = SimplifyPath(outline, epsilon: 0.75f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -354,7 +354,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.0f);
+                var simplified = SimplifyPath(outline, epsilon: 0.75f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -400,7 +400,7 @@ namespace PixelEditor.Vector
 
             foreach (var outline in outlines)
             {
-                var simplified = SimplifyContour(outline, epsilon: 1.0f);
+                var simplified = SimplifyPath(outline, epsilon: 0.75f);
                 for (int i = 0; i < simplified.Count; i++)
                 {
                     PointF worldPoint = new(simplified[i].X + minX, simplified[i].Y + minY);
@@ -412,6 +412,44 @@ namespace PixelEditor.Vector
             shape1.PathSegments = resultSegments;
 
             return shape1;
+        }
+
+        public static List<PointF> SimplifyPath(List<PointF> points, float epsilon)
+        {
+            if (points.Count < 3) return points;
+
+            List<PointF> simplified = [];
+
+            // Find point with maximum distance from segment connecting first and last points
+            int index = -1;
+            float maxDist = 0;
+
+            for (int i = 1; i < points.Count - 1; i++)
+            {
+                float dist = PerpendicularDistance(points[i], points[0], points[^1]);
+                if (dist > maxDist)
+                {
+                    index = i;
+                    maxDist = dist;
+                }
+            }
+
+            // If max distance is greater than epsilon, split recursively
+            if (maxDist > epsilon)
+            {
+                var left = SimplifyPath(points.GetRange(0, index + 1), epsilon);
+                var right = SimplifyPath(points.GetRange(index, points.Count - index), epsilon);
+
+                simplified.AddRange(left.GetRange(0, left.Count - 1));
+                simplified.AddRange(right);
+            }
+            else
+            {
+                simplified.Add(points[0]);
+                simplified.Add(points[^1]);
+            }
+
+            return simplified;
         }
 
         private static bool[,] CreatePathMask(ShapePath shape, float offsetX, float offsetY, int width, int height)
@@ -649,44 +687,6 @@ namespace PixelEditor.Vector
             }
 
             return contour;
-        }
-
-        public static List<PointF> SimplifyContour(List<PointF> points, float epsilon)
-        {
-            if (points.Count < 3) return points;
-
-            List<PointF> simplified = [];
-
-            // Find point with maximum distance from segment connecting first and last points
-            int index = -1;
-            float maxDist = 0;
-
-            for (int i = 1; i < points.Count - 1; i++)
-            {
-                float dist = PerpendicularDistance(points[i], points[0], points[^1]);
-                if (dist > maxDist)
-                {
-                    index = i;
-                    maxDist = dist;
-                }
-            }
-
-            // If max distance is greater than epsilon, split recursively
-            if (maxDist > epsilon)
-            {
-                var left = SimplifyContour(points.GetRange(0, index + 1), epsilon);
-                var right = SimplifyContour(points.GetRange(index, points.Count - index), epsilon);
-
-                simplified.AddRange(left.GetRange(0, left.Count - 1));
-                simplified.AddRange(right);
-            }
-            else
-            {
-                simplified.Add(points[0]);
-                simplified.Add(points[^1]);
-            }
-
-            return simplified;
         }
 
         private static float PerpendicularDistance(PointF p, PointF lineStart, PointF lineEnd)

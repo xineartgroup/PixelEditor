@@ -4,7 +4,7 @@
     {
         public static List<ShapePolygon> TraceStrokes(ColorGrid grid,
             float colorTolerance = 0.15f,
-            float simplificationTolerance = 1.0f,
+            float simplificationTolerance = 0.75f,
             bool fillBoundaryGaps = true)
         {
             int minRegionSize = colorTolerance >= 0.15f ? 4 : colorTolerance >= 0.075f ? 2 : 0;
@@ -253,7 +253,7 @@
 
             var points = region.Boundary;
 
-            points = PathManipulator.SimplifyContour(points, simplificationTolerance);
+            points = PathManipulator.SimplifyPath(points, simplificationTolerance);
 
             foreach (var point in points)
             {
