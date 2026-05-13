@@ -18,6 +18,8 @@
 
         public List<PointF> Points { get; set; } = [];
 
+        public int CornerHandleIndex { get; set; } = -1;
+
         public int[] ActiveHandleIndicies { get; set; } = [];
 
         public override List<Point> ControlPoints()

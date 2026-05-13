@@ -120,7 +120,8 @@ namespace PixelEditor
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
                 List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
-                List<(RectangleF[] Handles, Matrix Transform)> activeHandlesToDraw = [];
+                List<(RectangleF[] ControlHandles, Matrix Transform)> controlHandlesToDraw = [];
+                List<(RectangleF[] ActiveHandles, Matrix Transform)> activeHandlesToDraw = [];
                 bool foundSelected = false;
                 RectangleF groupBounds = RectangleF.Empty;
 
@@ -129,10 +130,13 @@ namespace PixelEditor
                     bool isCurrent = (shape == currentShape);
                     if (isCurrent) foundSelected = true;
 
-                    var (handles, activeHandles) = DrawShape(shape, g, isCurrent);
+                    var (handles, controlHandles, activeHandles) = DrawShape(shape, g, isCurrent);
 
                     if (isCurrent && handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
+
+                    if (isCurrent && controlHandles.Length > 0)
+                        controlHandlesToDraw.Add((controlHandles, g.Transform.Clone()));
 
                     if (isCurrent && activeHandles.Length > 0)
                         activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
@@ -146,14 +150,17 @@ namespace PixelEditor
 
                 if (currentShape != null && !foundSelected)
                 {
-                    var (handles, activeHandles) = DrawShape(currentShape, g, true);
+                    var (handles, controlHandles, activeHandles) = DrawShape(currentShape, g, true);
                     if (handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
+                    if (controlHandles.Length > 0)
+                        controlHandlesToDraw.Add((controlHandles, g.Transform.Clone()));
                     if (activeHandles.Length > 0)
                         activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
                 }
 
                 using SolidBrush handleBrush = new(Color.LightBlue);
+                using SolidBrush controlHandleBrush = new(Color.White);
                 using SolidBrush activeHandleBrush = new(Color.Red);
                 using Pen handlePen = new(Color.Red, 2);
 
@@ -164,6 +171,19 @@ namespace PixelEditor
                     foreach (var handle in Handles)
                     {
                         g.FillRectangle(handleBrush, handle);
+                        g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
+
+                foreach (var (Handles, Transform) in controlHandlesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+                    foreach (var handle in Handles)
+                    {
+                        g.FillRectangle(controlHandleBrush, handle);
                         g.DrawRectangle(handlePen, handle.X, handle.Y, handle.Width, handle.Height);
                     }
                     g.Transform = original;
@@ -193,10 +213,10 @@ namespace PixelEditor
             return image;
         }
 
-        public static (RectangleF[], RectangleF[]) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024; //
+            float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024;
             using Pen pen = new(shape.LineColor, scaledLineWidth);
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
@@ -204,52 +224,41 @@ namespace PixelEditor
             int size = Math.Max(Document.Width, Document.Height) / 150;
             size = Math.Clamp(size, 2, 20);
             float offset = size / 2f;
+
             List<RectangleF> handles = [];
+            List<RectangleF> controlHandles = [];
             List<RectangleF> activeHandles = [];
+
+            if (isSelected)
+            {
+                RectangleF bounds = GetShapeBounds(shape, new Matrix());
+                handles.AddRange([
+                    new(bounds.X - offset, bounds.Y - offset, size, size),
+                    new(bounds.X + bounds.Width - offset, bounds.Y - offset, size, size),
+                    new(bounds.X - offset, bounds.Y + bounds.Height - offset, size, size),
+                    new(bounds.X + bounds.Width - offset, bounds.Y + bounds.Height - offset, size, size)
+                ]);
+            }
+
+            using SolidBrush controlHandleBrush = new(Color.White);
+            using SolidBrush activeHandleBrush = new(Color.Red);
+            using Pen handlePen = new(Color.Red, 2);
 
             if (shape is ShapeRect rect)
             {
                 Matrix originalTransform = g.Transform;
-
                 ApplyRotation(g, rect.X, rect.Y, rect.Width, rect.Height, rect.Rotation);
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
-
-                if (isSelected)
-                {
-                    handles.AddRange([
-                        new(rect.X - offset, rect.Y - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y - offset, size, size),
-                        new(rect.X - offset, rect.Y + rect.Height - offset, size, size),
-                        new(rect.X + rect.Width - offset, rect.Y + rect.Height - offset, size, size)
-                    ]);
-                }
-
                 g.Transform = originalTransform;
-
-                //Console.WriteLine($"Rect: x={rect.X} y={rect.Y} w={rect.Width} h={rect.Height}");
             }
             else if (shape is ShapeEllipse ellipse)
             {
                 Matrix originalTransform = g.Transform;
-
                 ApplyRotation(g, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height, ellipse.Rotation);
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
-
-                if (isSelected)
-                {
-                    handles.AddRange([
-                        new(ellipse.X - offset, ellipse.Y - offset, size, size),
-                new(ellipse.X + ellipse.Width - offset, ellipse.Y - offset, size, size),
-                new(ellipse.X - offset, ellipse.Y + ellipse.Height - offset, size, size),
-                new(ellipse.X + ellipse.Width - offset, ellipse.Y + ellipse.Height - offset, size, size)
-                    ]);
-                }
-
                 g.Transform = originalTransform;
-
-                //Console.WriteLine($"Ellipse: x={ellipse.X} y={ellipse.Y} w={ellipse.Width} h={ellipse.Height}");
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
@@ -258,7 +267,13 @@ namespace PixelEditor
 
                 if (isSelected && LayerSelectionType == LayerSelectionType.Point)
                 {
-                    handles.AddRange(polygon.Points.Select(p => new RectangleF(p.X - offset, p.Y - offset, size, size)));
+                    foreach (var p in polygon.Points)
+                    {
+                        var hRect = new RectangleF(p.X - offset, p.Y - offset, size, size);
+                        controlHandles.Add(hRect);
+                        g.FillRectangle(controlHandleBrush, hRect);
+                        g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
+                    }
 
                     if (polygon.ActiveHandleIndicies != null)
                     {
@@ -266,7 +281,10 @@ namespace PixelEditor
                         {
                             if (idx >= 0 && idx < polygon.Points.Count)
                             {
-                                activeHandles.Add(new RectangleF(polygon.Points[idx].X - offset, polygon.Points[idx].Y - offset, size, size));
+                                var hRect = new RectangleF(polygon.Points[idx].X - offset, polygon.Points[idx].Y - offset, size, size);
+                                activeHandles.Add(hRect);
+                                g.FillRectangle(activeHandleBrush, hRect);
+                                g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
                             }
                         }
                     }
@@ -275,24 +293,10 @@ namespace PixelEditor
             else if (shape is ShapeText text)
             {
                 Matrix originalTransform = g.Transform;
-
                 using Font font = CreateScaledFont(text);
                 ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
                 g.DrawString(text.Content, font, brush, text.X, text.Y);
-
-                if (isSelected)
-                {
-                    handles.AddRange([
-                        new(text.X - offset, text.Y - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y - offset, size, size),
-                        new(text.X - offset, text.Y + text.Height - offset, size, size),
-                        new(text.X + text.Width - offset, text.Y + text.Height - offset, size, size)
-                    ]);
-                }
-
                 g.Transform = originalTransform;
-
-                //Console.WriteLine($"Text: {font.Size} x={text.X} y={text.Y}");
             }
             else if (shape is ShapePath path)
             {
@@ -307,39 +311,48 @@ namespace PixelEditor
                     {
                         foreach (var p in segment.InputPoints)
                         {
-                            handles.Add(new RectangleF(p.X - offset, p.Y - offset, size, size));
-                            pointIndex++;
-                        }
-                    }
+                            var hRect = new RectangleF(p.X - offset, p.Y - offset, size, size);
+                            controlHandles.Add(hRect);
+                            g.FillRectangle(controlHandleBrush, hRect);
+                            g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
 
-                    if (path.ActiveHandleIndicies != null)
-                    {
-                        pointIndex = 0;
-                        foreach (var segment in path.PathSegments)
-                        {
-                            foreach (var p in segment.InputPoints)
+                            if (path.ActiveHandleIndicies != null && Array.IndexOf(path.ActiveHandleIndicies, pointIndex) >= 0)
                             {
-                                if (Array.IndexOf(path.ActiveHandleIndicies, pointIndex) >= 0)
-                                {
-                                    activeHandles.Add(new RectangleF(p.X - offset, p.Y - offset, size, size));
-                                }
-                                pointIndex++;
+                                activeHandles.Add(hRect);
+                                g.FillRectangle(activeHandleBrush, hRect);
+                                g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
                             }
+                            pointIndex++;
                         }
                     }
                 }
             }
 
-            return ([.. handles], [.. activeHandles]);
+            return ([.. handles], [.. controlHandles], [.. activeHandles]);
         }
 
-        private static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)
+        public static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)
         {
             using GraphicsPath path = new();
-            if (shape is ShapeRect r) path.AddRectangle(new RectangleF(r.X, r.Y, r.Width, r.Height));
-            else if (shape is ShapeEllipse e) path.AddEllipse(new RectangleF(e.X, e.Y, e.Width, e.Height));
-            else if (shape is ShapePolygon p && p.Points.Count > 1) path.AddPolygon(p.Points.ToArray());
-            else if (shape is ShapeText t) path.AddRectangle(new RectangleF(t.X, t.Y, t.Width, t.Height));
+            if (shape is ShapeRect r)
+            {
+                path.AddRectangle(new RectangleF(r.X, r.Y, r.Width, r.Height));
+            }
+            else if (shape is ShapeEllipse e)
+            {
+                path.AddEllipse(new RectangleF(e.X, e.Y, e.Width, e.Height));
+            }
+            else if (shape is ShapePolygon p && p.Points.Count > 1)
+            {
+                if (p.Points.Count > 2)
+                {
+                    path.AddPolygon(p.Points.ToArray());
+                }
+            }
+            else if (shape is ShapeText t)
+            {
+                path.AddRectangle(new RectangleF(t.X, t.Y, t.Width, t.Height));
+            }
             else if (shape is ShapePath sp && sp.PathSegments.Count > 0)
             {
                 using var pth = BuildGraphicsPath(sp);
@@ -790,6 +803,86 @@ namespace PixelEditor
             }
 
             OnLayerChanged?.Invoke(GetBounds());
+        }
+
+        public static RectangleF GetPolygonBounds(ShapePolygon polygon)
+        {
+            if (polygon.Points.Count == 0) return RectangleF.Empty;
+
+            float minX = polygon.Points.Min(p => p.X);
+            float minY = polygon.Points.Min(p => p.Y);
+            float maxX = polygon.Points.Max(p => p.X);
+            float maxY = polygon.Points.Max(p => p.Y);
+
+            return new RectangleF(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        public static RectangleF GetPathBounds(ShapePath path)
+        {
+            if (path.PathSegments.Count == 0) return RectangleF.Empty;
+
+            float minX = float.MaxValue;
+            float minY = float.MaxValue;
+            float maxX = float.MinValue;
+            float maxY = float.MinValue;
+
+            foreach (var segment in path.PathSegments)
+            {
+                foreach (var point in segment.InputPoints)
+                {
+                    minX = Math.Min(minX, point.X);
+                    minY = Math.Min(minY, point.Y);
+                    maxX = Math.Max(maxX, point.X);
+                    maxY = Math.Max(maxY, point.Y);
+                }
+            }
+
+            return new RectangleF(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        public static void ResizePolygon(ShapePolygon polygon, RectangleF newBounds)
+        {
+            if (polygon.Points.Count == 0) return;
+
+            var oldBounds = GetPolygonBounds(polygon);
+            if (oldBounds.Width == 0 || oldBounds.Height == 0) return;
+
+            float scaleX = newBounds.Width / oldBounds.Width;
+            float scaleY = newBounds.Height / oldBounds.Height;
+
+            for (int i = 0; i < polygon.Points.Count; i++)
+            {
+                float relativeX = polygon.Points[i].X - oldBounds.X;
+                float relativeY = polygon.Points[i].Y - oldBounds.Y;
+
+                polygon.Points[i] = new PointF(
+                    newBounds.X + relativeX * scaleX,
+                    newBounds.Y + relativeY * scaleY
+                );
+            }
+        }
+
+        public static void ResizePath(ShapePath path, RectangleF newBounds)
+        {
+            var oldBounds = GetPathBounds(path);
+            if (oldBounds.Width == 0 || oldBounds.Height == 0) return;
+
+            float scaleX = newBounds.Width / oldBounds.Width;
+            float scaleY = newBounds.Height / oldBounds.Height;
+
+            foreach (var segment in path.PathSegments)
+            {
+                for (int i = 0; i < segment.InputPoints.Count; i++)
+                {
+                    float relativeX = segment.InputPoints[i].X - oldBounds.X;
+                    float relativeY = segment.InputPoints[i].Y - oldBounds.Y;
+
+                    segment.InputPoints[i] = new PointF(
+                        newBounds.X + relativeX * scaleX,
+                        newBounds.Y + relativeY * scaleY
+                    );
+                }
+            }
         }
 
         private static PointF RotatePoint(PointF point, PointF center, float cos, float sin)
