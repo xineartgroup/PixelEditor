@@ -8,8 +8,8 @@ namespace PixelEditor
         public Layer Layer = new("Layer 1", true);
         public List<Layer> Layers = [];
 
-        private GroupBox groupVectorProperties = new();
-        private readonly ListBox listBoxVector = new();
+        private readonly GroupBox groupVectorProperties = new();
+        private readonly CheckedListBox listBoxVector = new();
 
         public FormLayer()
         {
@@ -29,6 +29,7 @@ namespace PixelEditor
             listBoxVector.Size = new Size(300, 200);
             listBoxVector.TabIndex = 0;
             listBoxVector.SelectedIndexChanged += ListBoxVector_SelectedIndexChanged_Handler;
+            listBoxVector.ItemCheck += ListBoxVector_ItemCheck_Handler;
 
             groupVectorProperties.Controls.Add(listBoxVector);
 
@@ -66,9 +67,14 @@ namespace PixelEditor
             cboLayers.SelectedIndex = maskIndex;
             pictureMask.Image = Layer.ImageMask;
 
-            foreach (BaseShape shape in Layer.Shapes)
+            for (int i = 0; i < Layer.Shapes.Count; i++)
             {
-                listBoxVector.Items.Add(shape.GetType().Name);
+                BaseShape shape = Layer.Shapes[i];
+                listBoxVector.Items.Add(shape.GetType().Name, shape.Visible);
+                if (shape == Layer.CurrentShape)
+                {
+                    listBoxVector.SelectedIndex = i;
+                }
             }
         }
 
@@ -94,6 +100,14 @@ namespace PixelEditor
             }
         }
 
+        private void ListBoxVector_ItemCheck_Handler(object? sender, ItemCheckEventArgs e)
+        {
+            if (e.Index >= 0 && e.Index < Layer.Shapes.Count)
+            {
+                Layer.Shapes[e.Index].Visible = e.NewValue == CheckState.Checked;
+            }
+        }
+
         private void BtnOK_Click(object sender, EventArgs e)
         {
             Layer.LayerType = cboType.SelectedIndex == 1 ? LayerType.Vector : LayerType.Image;
@@ -104,6 +118,16 @@ namespace PixelEditor
             Layer.FillType = cboFillWith.Text == "Transparency" ? FillType.Transparency : FillType.Color;
             Layer.X = (int)offsetX.Value;
             Layer.Y = (int)offsetY.Value;
+
+            for (int i = 0; i < Layer.Shapes.Count && i < listBoxVector.Items.Count; i++)
+            {
+                Layer.Shapes[i].Visible = listBoxVector.GetItemChecked(i);
+            }
+
+            if (Layer.CurrentShape != null && !Layer.CurrentShape.Visible)
+            {
+                Layer.CurrentShape = null;
+            }
 
             Image image = ManipulatorGeneral.GetImage(Layer.FillColor, (int)width.Value, (int)height.Value) ?? new Bitmap((int)width.Value, (int)height.Value);
             Image? basicImage = Layer.GetBasicImage();

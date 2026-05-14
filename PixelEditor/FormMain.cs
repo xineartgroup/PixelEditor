@@ -1785,19 +1785,15 @@ namespace PixelEditor
                 Console.WriteLine($"Layer {e.Layer.Name}'s type changed to {e.Layer.LayerType}.");
             }
 
-            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-            RedrawImage();
+            isDrawingShape = true;
             UpdateControls();
-            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void LayersControl_LayerVisibilityChanged(object? sender, LayerVisibilityChangedEventArgs e)
         {
             Console.WriteLine($"Layer {e.Layer.Name}'s visibility changed from {e.OldValue} to {e.NewValue}");
 
-            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             RedrawImage();
-            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void LayersControl_LayerOrderChanged(object? sender, SelectedLayerChangedEventArgs e)

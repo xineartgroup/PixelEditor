@@ -127,24 +127,27 @@ namespace PixelEditor
 
                 foreach (BaseShape shape in shapes)
                 {
-                    bool isCurrent = (shape == currentShape);
-                    if (isCurrent) foundSelected = true;
-
-                    var (handles, controlHandles, activeHandles) = DrawShape(shape, g, isCurrent);
-
-                    if (isCurrent && handles.Length > 0)
-                        handlesToDraw.Add((handles, g.Transform.Clone()));
-
-                    if (isCurrent && controlHandles.Length > 0)
-                        controlHandlesToDraw.Add((controlHandles, g.Transform.Clone()));
-
-                    if (isCurrent && activeHandles.Length > 0)
-                        activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
-
-                    if (addedShapeSelections.Contains(shape) || shape == currentShape)
+                    if (shape.Visible)
                     {
-                        RectangleF bounds = GetShapeBounds(shape, g.Transform);
-                        groupBounds = groupBounds.IsEmpty ? bounds : RectangleF.Union(groupBounds, bounds);
+                        bool isCurrent = (shape == currentShape);
+                        if (isCurrent) foundSelected = true;
+
+                        var (handles, controlHandles, activeHandles) = DrawShape(shape, g, isCurrent);
+
+                        if (isCurrent && handles.Length > 0)
+                            handlesToDraw.Add((handles, g.Transform.Clone()));
+
+                        if (isCurrent && controlHandles.Length > 0)
+                            controlHandlesToDraw.Add((controlHandles, g.Transform.Clone()));
+
+                        if (isCurrent && activeHandles.Length > 0)
+                            activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
+
+                        if (addedShapeSelections.Contains(shape) || shape == currentShape)
+                        {
+                            RectangleF bounds = GetShapeBounds(shape, g.Transform);
+                            groupBounds = groupBounds.IsEmpty ? bounds : RectangleF.Union(groupBounds, bounds);
+                        }
                     }
                 }
 

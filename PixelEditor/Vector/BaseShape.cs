@@ -11,6 +11,7 @@ namespace PixelEditor.Vector
         public float Opacity { get; set; } = 1.0f;
         public float StrokeOpacity { get; set; } = 1.0f;
         public float Rotation { get; set; } = 0.0f;
+        public bool Visible { get; set; } = true;
         public bool HasGradientFill { get; set; } = false;
         public bool HasGradientStroke { get; set; } = false;
         public GradientInfo? GradientStroke { get; set; } = null;
