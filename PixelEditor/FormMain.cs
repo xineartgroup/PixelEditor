@@ -4984,9 +4984,6 @@ namespace PixelEditor
         {
             if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
 
-            if (rotationAngle != 0f)
-                BakeTransformIntoSelectedArea(selectedLayer);
-
             Bitmap result = new(selectedLayer.Image);
             using (Graphics g = Graphics.FromImage(result))
             {
@@ -4997,12 +4994,29 @@ namespace PixelEditor
                 float localX = worldBounds.X - selectedLayer.X;
                 float localY = worldBounds.Y - selectedLayer.Y;
 
-                g.DrawImage(selectedAreaBitmap, localX, localY, worldBounds.Width, worldBounds.Height);
+                if (rotationAngle != 0f)
+                {
+                    PointF center = new(
+                        localX + worldBounds.Width / 2f,
+                        localY + worldBounds.Height / 2f);
+
+                    g.TranslateTransform(center.X, center.Y);
+                    g.RotateTransform(rotationAngle);
+                    g.TranslateTransform(-selectedAreaBitmap.Width / 2f, -selectedAreaBitmap.Height / 2f);
+                    g.DrawImage(selectedAreaBitmap, 0, 0, selectedAreaBitmap.Width, selectedAreaBitmap.Height);
+                }
+                else
+                {
+                    g.DrawImage(selectedAreaBitmap, localX, localY, worldBounds.Width, worldBounds.Height);
+                }
             }
 
             selectedAreaBitmap?.Dispose();
             selectedAreaBitmap = null;
             SelectionsManipulator.ClearSelections();
+            rotationAngle = 0f;
+            SelectionsManipulator.ScaleFactorX = 1.0f;
+            SelectionsManipulator.ScaleFactorY = 1.0f;
 
             return result;
         }
@@ -6192,6 +6206,9 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object? sender, MouseEventArgs e)
         {
+            Console.WriteLine($"MouseUp - rotationAngle: {rotationAngle}, scaleX: {SelectionsManipulator.ScaleFactorX}, scaleY: {SelectionsManipulator.ScaleFactorY}");
+            Console.WriteLine($"MouseUp - selectedAreaBitmap size: {selectedAreaBitmap?.Width}x{selectedAreaBitmap?.Height}");
+
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
             if (isLassoSelecting)
@@ -6279,6 +6296,8 @@ namespace PixelEditor
                         PaintingEngine.EndStroke();
                         SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
                         SelectionsManipulator.CalculateSelectionBounds();
+                        var bounds = SelectionsManipulator.GetSelectionBounds();
+                        Console.WriteLine($"MouseUp - selectionBounds: {bounds}");
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
@@ -6419,10 +6438,19 @@ namespace PixelEditor
                 if (selectedAreaBitmap != null)
                 {
                     RectangleF screenBounds = ManipulatorGeneral.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
+
                     if (rotationAngle != 0f)
                     {
-                        g.MultiplyTransform(transformMatrix);
-                        g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
+                        float cntrX = screenBounds.X + screenBounds.Width / 2f;
+                        float cntrY = screenBounds.Y + screenBounds.Height / 2f;
+
+                        float ratio = ManipulatorGeneral.ScreenToWorldRatio(canvas.Width, canvas.Height);
+                        float screenBmpWidth = selectedAreaBitmap.Width * ratio;
+                        float screenBmpHeight = selectedAreaBitmap.Height * ratio;
+
+                        g.TranslateTransform(cntrX, cntrY);
+                        g.RotateTransform(rotationAngle);
+                        g.DrawImage(selectedAreaBitmap, -screenBmpWidth / 2f, -screenBmpHeight / 2f, screenBmpWidth, screenBmpHeight);
                         g.ResetTransform();
                     }
                     else
