@@ -3348,7 +3348,11 @@ namespace PixelEditor
             }
         }
 
-        private void ScaleSelectedLayerImage(float scaleX, float scaleY)
+        private float initialScaleFactorX = 1.0f;
+        private float initialScaleFactorY = 1.0f;
+        private List<List<Point>>? originalSelectionPoints = null;
+
+        private void ScaleSelectedLayerImage(float deltaX, float deltaY)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
@@ -3365,37 +3369,53 @@ namespace PixelEditor
 
                     if (selectedAreaBitmap != null)
                     {
-                        SelectionsManipulator.ScaleSelections(1 / SelectionsManipulator.ScaleFactorX, 1 / SelectionsManipulator.ScaleFactorY, scaleAnchorWorld);
+                        float newScaleX = initialScaleFactorX * deltaX;
+                        float newScaleY = initialScaleFactorY * deltaY;
 
-                        scaleAnchorWorld = SelectionsManipulator.GetSelectionCenter();
-
-                        if (scaleX < 0)
+                        if (deltaX < 0)
                         {
                             selectedAreaBitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                            scaleX = -scaleX;
+                            deltaX = -deltaX;
                         }
-                        if (scaleY < 0)
+                        if (deltaY < 0)
                         {
                             selectedAreaBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                            scaleY = -scaleY;
+                            deltaY = -deltaY;
                         }
 
-                        SelectionsManipulator.ScaleFactorX = scaleX;
-                        SelectionsManipulator.ScaleFactorY = scaleY;
+                        if (originalSelectionPoints != null)
+                        {
+                            var selections = SelectionsManipulator.GetSelections();
+                            for (int i = 0; i < Math.Min(selections.Count, originalSelectionPoints.Count); i++)
+                            {
+                                selections[i].Points = [.. originalSelectionPoints[i]
+                                    .Select(p => new Point(
+                                        (int)Math.Round(scaleAnchorWorld.X + (p.X - scaleAnchorWorld.X) * Math.Abs(newScaleX)),
+                                        (int)Math.Round(scaleAnchorWorld.Y + (p.Y - scaleAnchorWorld.Y) * Math.Abs(newScaleY))
+                                    ))];
+                            }
+                            SelectionsManipulator.CalculateSelectionBounds();
+                        }
+                        
+                        //SelectionsManipulator.ScaleSelections(deltaX, deltaY, scaleAnchorWorld);
+
+                        SelectionsManipulator.ScaleFactorX = newScaleX;
+                        SelectionsManipulator.ScaleFactorY = newScaleY;
 
                         UpdateTransformMatrix();
-
-                        SelectionsManipulator.ScaleSelections(scaleX, scaleY, scaleAnchorWorld);
 
                         RedrawImage();
                     }
                     else
                     {
+                        float newScaleX = initialScaleFactorX * deltaX;
+                        float newScaleY = initialScaleFactorY * deltaY;
+
                         int originalWidth = selectedLayer.Image.Width;
                         int originalHeight = selectedLayer.Image.Height;
 
-                        int newWidth = (int)Math.Max(1, Math.Abs(originalWidth * scaleX));
-                        int newHeight = (int)Math.Max(1, Math.Abs(originalHeight * scaleY));
+                        int newWidth = (int)Math.Max(1, Math.Abs(originalWidth * newScaleX));
+                        int newHeight = (int)Math.Max(1, Math.Abs(originalHeight * newScaleY));
 
                         Bitmap flippedBitmap = new(newWidth, newHeight);
 
@@ -3403,10 +3423,10 @@ namespace PixelEditor
                         {
                             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
-                            if (scaleX < 0) g.TranslateTransform(newWidth, 0);
-                            if (scaleY < 0) g.TranslateTransform(0, newHeight);
+                            if (newScaleX < 0) g.TranslateTransform(newWidth, 0);
+                            if (newScaleY < 0) g.TranslateTransform(0, newHeight);
 
-                            g.ScaleTransform(scaleX, scaleY);
+                            g.ScaleTransform(newScaleX, newScaleY);
 
                             g.DrawImage(selectedLayer.Image, 0, 0, originalWidth, originalHeight);
                         }
@@ -4940,33 +4960,31 @@ namespace PixelEditor
 
             Point anchorScreen = ManipulatorGeneral.WorldToScreen(Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
 
-            float newX = SelectionsManipulator.ScaleFactorX;
-            float newY = SelectionsManipulator.ScaleFactorY;
+            float deltaX = 1f;
+            float deltaY = 1f;
 
             if (affectsX && initialScaleDistanceX > 0)
             {
                 float startDX = Math.Abs(scaleStartMouseScreen.X - anchorScreen.X);
                 float currentDX = Math.Abs(mouseScreenPos.X - anchorScreen.X);
-                float ratio = startDX > 0 ? currentDX / startDX : 1f;
-                newX = Math.Max(0.01f, ratio);
+                deltaX = startDX > 0 ? currentDX / startDX : 1f;
             }
 
             if (affectsY && initialScaleDistanceY > 0)
             {
                 float startDY = Math.Abs(scaleStartMouseScreen.Y - anchorScreen.Y);
                 float currentDY = Math.Abs(mouseScreenPos.Y - anchorScreen.Y);
-                float ratio = startDY > 0 ? currentDY / startDY : 1f;
-                newY = Math.Max(0.01f, ratio);
+                deltaY = startDY > 0 ? currentDY / startDY : 1f;
             }
 
-            return (newX, newY);
+            return (deltaX, deltaY);
         }
 
         private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
         {
             if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
 
-            if (SelectionsManipulator.ScaleFactorX != 1.0f || SelectionsManipulator.ScaleFactorY != 1.0f || rotationAngle != 0f)
+            if (rotationAngle != 0f)
                 BakeTransformIntoSelectedArea(selectedLayer);
 
             Bitmap result = new(selectedLayer.Image);
@@ -4979,7 +4997,7 @@ namespace PixelEditor
                 float localX = worldBounds.X - selectedLayer.X;
                 float localY = worldBounds.Y - selectedLayer.Y;
 
-                g.DrawImage(selectedAreaBitmap, localX, localY);
+                g.DrawImage(selectedAreaBitmap, localX, localY, worldBounds.Width, worldBounds.Height);
             }
 
             selectedAreaBitmap?.Dispose();
@@ -5180,10 +5198,11 @@ namespace PixelEditor
 
                                 isScaling = true;
                                 activeScaleHandle = handle;
-                                SelectionsManipulator.ScaleFactorX = 1.0f;
-                                SelectionsManipulator.ScaleFactorY = 1.0f;
+                                initialScaleFactorX = SelectionsManipulator.ScaleFactorX;
+                                initialScaleFactorY = SelectionsManipulator.ScaleFactorY;
                                 scaleAnchorWorld = ManipulatorGeneral.GetOppositeAnchor(handle);
                                 scaleStartMouseScreen = e.Location;
+                                originalSelectionPoints = [.. SelectionsManipulator.GetSelections().Select(p => p.Points.ToList())];
 
                                 Point anchorScreen = ManipulatorGeneral.WorldToScreen(
                                     Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
@@ -6296,6 +6315,7 @@ namespace PixelEditor
             isDrawing = false;
             isDraggingShape = false;
             isResizingShape = false;
+            originalSelectionPoints = null;
             ColorDialogX.IsEyeDropping = false;
             layersControl.RefreshLayersDisplay();
         }
@@ -6399,9 +6419,16 @@ namespace PixelEditor
                 if (selectedAreaBitmap != null)
                 {
                     RectangleF screenBounds = ManipulatorGeneral.GetSelectionBoundsScreen(canvas.Width, canvas.Height);
-                    g.MultiplyTransform(transformMatrix);
-                    g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
-                    g.ResetTransform();
+                    if (rotationAngle != 0f)
+                    {
+                        g.MultiplyTransform(transformMatrix);
+                        g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
+                        g.ResetTransform();
+                    }
+                    else
+                    {
+                        g.DrawImage(selectedAreaBitmap, screenBounds.X, screenBounds.Y, screenBounds.Width, screenBounds.Height);
+                    }
                 }
             }
 
