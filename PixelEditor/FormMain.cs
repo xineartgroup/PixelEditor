@@ -33,6 +33,9 @@ namespace PixelEditor
         private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
+        private float initialScaleFactorX = 1.0f;
+        private float initialScaleFactorY = 1.0f;
+        private List<List<Point>>? originalSelectionPoints = null;
         private int selectedBrushIndex = 0;
         private int selectedEraserIndex = 0;
         private string currentFilePath = "";
@@ -1793,6 +1796,7 @@ namespace PixelEditor
         {
             Console.WriteLine($"Layer {e.Layer.Name}'s visibility changed from {e.OldValue} to {e.NewValue}");
 
+            UpdateControls();
             RedrawImage();
         }
 
@@ -1804,7 +1808,6 @@ namespace PixelEditor
             btnMoveDown.Enabled = e.NewIndex < layersControl.GetLayers().Count - 1 && e.NewIndex >= 0;
 
             UpdateControls();
-
             RedrawImage();
         }
 
@@ -1814,6 +1817,9 @@ namespace PixelEditor
 
             btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
             btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1 && layersControl.GetSelectedLayerIndex() >= 0;
+            
+            UpdateControls();
+            RedrawImage();
         }
 
         private void ReloadBrushes()
@@ -2658,18 +2664,6 @@ namespace PixelEditor
             }
         }
 
-        private static Cursor GetCursor(string handle)
-        {
-            return handle switch
-            {
-                "topLeft" or "bottomRight" => Cursors.SizeNWSE,
-                "topRight" or "bottomLeft" => Cursors.SizeNESW,
-                "topMid" or "bottomMid" => Cursors.SizeNS,
-                "leftMid" or "rightMid" => Cursors.SizeWE,
-                _ => Cursors.SizeAll,
-            };
-        }
-
         private void Brush_size_Scroll(object? sender, EventArgs e)
         {
             lblBrushSize.Text = $"{brush_size.Value}";
@@ -3347,10 +3341,6 @@ namespace PixelEditor
                 }
             }
         }
-
-        private float initialScaleFactorX = 1.0f;
-        private float initialScaleFactorY = 1.0f;
-        private List<List<Point>>? originalSelectionPoints = null;
 
         private void ScaleSelectedLayerImage(float deltaX, float deltaY)
         {
@@ -4083,6 +4073,7 @@ namespace PixelEditor
                     btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                     btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
+                    btnPointSelect.Visible = true;
                     btnFiller.Visible = false;
                     btnBrusher.Visible = false;
                     btnEraser.Visible = false;
@@ -4099,6 +4090,7 @@ namespace PixelEditor
                     btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                     btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
+                    btnPointSelect.Visible = false;
                     btnFiller.Visible = true;
                     btnBrusher.Visible = true;
                     btnEraser.Visible = true;
@@ -4113,7 +4105,15 @@ namespace PixelEditor
 
                 if (btnPointer.Checked || btnPointSelect.Checked)
                 {
-                    if (selectedLayer.CurrentShape != null)
+                    if (selectedLayer.CurrentShape == null)
+                    {
+                        groupRectShapeDetail.Visible = false;
+                        groupEllipseShapeDetail.Visible = false;
+                        groupPolygonShapeDetail.Visible = false;
+                        groupTextShapeDetail.Visible = false;
+                        groupPathShapeDetail.Visible = false;
+                    }
+                    else
                     {
                         if (selectedLayer.CurrentShape is ShapeRect r)
                         {
@@ -4980,45 +4980,50 @@ namespace PixelEditor
             return (deltaX, deltaY);
         }
 
-        private Bitmap? MergeSelectionToLayer(Layer selectedLayer)
+        private void MergeSelectedAreaBitmap()
         {
-            if (selectedLayer.Image == null || selectedAreaBitmap == null) return null;
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-            Bitmap result = new(selectedLayer.Image);
-            using (Graphics g = Graphics.FromImage(result))
+            if (selectedLayer == null || selectedLayer.Image == null || selectedAreaBitmap == null) return;
+
+            if (selectedAreaBitmap != null)
             {
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-
-                RectangleF worldBounds = SelectionsManipulator.GetSelectionBounds();
-                float localX = worldBounds.X - selectedLayer.X;
-                float localY = worldBounds.Y - selectedLayer.Y;
-
-                if (rotationAngle != 0f)
+                Bitmap result = new(selectedLayer.Image);
+                using (Graphics g = Graphics.FromImage(result))
                 {
-                    PointF center = new(
-                        localX + worldBounds.Width / 2f,
-                        localY + worldBounds.Height / 2f);
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
 
-                    g.TranslateTransform(center.X, center.Y);
-                    g.RotateTransform(rotationAngle);
-                    g.TranslateTransform(-selectedAreaBitmap.Width / 2f, -selectedAreaBitmap.Height / 2f);
-                    g.DrawImage(selectedAreaBitmap, 0, 0, selectedAreaBitmap.Width, selectedAreaBitmap.Height);
+                    RectangleF worldBounds = SelectionsManipulator.GetSelectionBounds();
+                    float localX = worldBounds.X - selectedLayer.X;
+                    float localY = worldBounds.Y - selectedLayer.Y;
+
+                    if (rotationAngle != 0f)
+                    {
+                        PointF center = new(
+                            localX + worldBounds.Width / 2f,
+                            localY + worldBounds.Height / 2f);
+
+                        g.TranslateTransform(center.X, center.Y);
+                        g.RotateTransform(rotationAngle);
+                        g.TranslateTransform(-selectedAreaBitmap.Width / 2f, -selectedAreaBitmap.Height / 2f);
+                        g.DrawImage(selectedAreaBitmap, 0, 0, selectedAreaBitmap.Width, selectedAreaBitmap.Height);
+                    }
+                    else
+                    {
+                        g.DrawImage(selectedAreaBitmap, localX, localY, worldBounds.Width, worldBounds.Height);
+                    }
                 }
-                else
-                {
-                    g.DrawImage(selectedAreaBitmap, localX, localY, worldBounds.Width, worldBounds.Height);
-                }
+
+                selectedAreaBitmap?.Dispose();
+                selectedAreaBitmap = null;
+                SelectionsManipulator.ClearSelections();
+                rotationAngle = 0f;
+                SelectionsManipulator.ScaleFactorX = 1.0f;
+                SelectionsManipulator.ScaleFactorY = 1.0f;
+
+                selectedLayer?.Image = result;
             }
-
-            selectedAreaBitmap?.Dispose();
-            selectedAreaBitmap = null;
-            SelectionsManipulator.ClearSelections();
-            rotationAngle = 0f;
-            SelectionsManipulator.ScaleFactorX = 1.0f;
-            SelectionsManipulator.ScaleFactorY = 1.0f;
-
-            return result;
         }
 
         private void BakeTransformIntoSelectedArea(Layer selectedLayer)
@@ -5236,6 +5241,10 @@ namespace PixelEditor
                                 isDragging = true;
                                 Cursor.Current = Cursors.SizeAll;
                             }
+                            else
+                            {
+                                MergeSelectedAreaBitmap();
+                            }
 
                             if (selectedAreaBitmap == null)
                             {
@@ -5246,8 +5255,36 @@ namespace PixelEditor
                         }
                         else
                         {
+                            MergeSelectedAreaBitmap();
                             Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                             Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
+
+                            if (selectedLayer.CurrentShape != null && !isResizingShape)
+                            {
+                                var shape = selectedLayer.CurrentShape;
+                                RectangleF bounds = Layer.GetShapeBounds(shape, new Matrix());
+
+                                int size = Math.Max(Document.Width, Document.Height) / 150;
+                                size = Math.Clamp(size, 2, 20);
+
+                                PointF center = new(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+                                float rotHandleY = center.Y - SelectionsManipulator.ROTATION_HANDLE_SIZE;
+                                RectangleF rotHandle = new(
+                                    center.X - SelectionsManipulator.ROTATION_HANDLE_SIZE / 2,
+                                    rotHandleY - SelectionsManipulator.ROTATION_HANDLE_SIZE / 2,
+                                    SelectionsManipulator.ROTATION_HANDLE_SIZE,
+                                    SelectionsManipulator.ROTATION_HANDLE_SIZE);
+
+                                if (rotHandle.Contains(localPos.X, localPos.Y))
+                                {
+                                    isRotating = true;
+                                    startMouseAngle = (float)(Math.Atan2(
+                                        localPos.Y - center.Y,
+                                        localPos.X - center.X) * 180.0 / Math.PI);
+                                    startPoint = center;
+                                    return;
+                                }
+                            }
 
                             if (selectedLayer.CurrentShape != null)
                             {
@@ -5380,9 +5417,9 @@ namespace PixelEditor
                                     RectangleF[] handles =
                                     [
                                         new (sx - offset, sy - offset, size, size),
-                                new (sx + sw - offset, sy - offset, size, size),
-                                new (sx - offset, sy + sh - offset, size, size),
-                                new (sx + sw - offset, sy + sh - offset, size, size)
+                                        new (sx + sw - offset, sy - offset, size, size),
+                                        new (sx - offset, sy + sh - offset, size, size),
+                                        new (sx + sw - offset, sy + sh - offset, size, size)
                                     ];
 
                                     for (int hIndex = 0; hIndex < handles.Length; hIndex++)
@@ -5545,6 +5582,7 @@ namespace PixelEditor
                         SelectionsManipulator.ClearSelections();
                         Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         SelectionsManipulator.AddSelectionPoint(worldPos);
+                        MergeSelectedAreaBitmap();
                     }
                     else if (btnFiller.Checked)
                     {
@@ -5629,6 +5667,8 @@ namespace PixelEditor
                         }
 
                         SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
+
+                        MergeSelectedAreaBitmap();
                     }
                     else if (btnRectangleSelect.Checked)
                     {
@@ -5648,6 +5688,8 @@ namespace PixelEditor
                         }
 
                         SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
+
+                        MergeSelectedAreaBitmap();
                     }
                     else if (btnMagicWand.Checked)
                     {
@@ -5690,6 +5732,8 @@ namespace PixelEditor
                                 }
                             }
                         }
+
+                        MergeSelectedAreaBitmap();
                     }
                 }
             }
@@ -5989,7 +6033,22 @@ namespace PixelEditor
             }
             else if (isRotating)
             {
-                if (SelectionsManipulator.ContainsSelection())
+                if (selectedLayer?.CurrentShape != null)
+                {
+                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+                    Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+
+                    float currentAngle = (float)(Math.Atan2(
+                        localPos.Y - startPoint.Y,
+                        localPos.X - startPoint.X) * 180.0 / Math.PI);
+
+                    float deltaAngle = currentAngle - startMouseAngle;
+                    startMouseAngle = currentAngle;
+
+                    selectedLayer.RotateShape(selectedLayer.CurrentShape, deltaAngle);
+                    isDrawingShape = true;
+                }
+                else if (SelectionsManipulator.ContainsSelection())
                 {
                     float angle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - startMouseAngle;
                     RotateSelectedLayerImage(angle);
@@ -6317,6 +6376,10 @@ namespace PixelEditor
                     {
                         isDrawingShape = true;
                     }
+                    else
+                    {
+
+                    }
                 }
             }
 
@@ -6350,10 +6413,7 @@ namespace PixelEditor
 
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-                if (selectedAreaBitmap != null)
-                {
-                    selectedLayer?.Image = MergeSelectionToLayer(selectedLayer);
-                }
+                MergeSelectedAreaBitmap();
 
                 if (selectedLayer != null && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
                 {

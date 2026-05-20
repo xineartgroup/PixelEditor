@@ -122,6 +122,7 @@ namespace PixelEditor
                 List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
                 List<(RectangleF[] ControlHandles, Matrix Transform)> controlHandlesToDraw = [];
                 List<(RectangleF[] ActiveHandles, Matrix Transform)> activeHandlesToDraw = [];
+                List<(RectangleF[] RotationHandles, Matrix Transform, PointF Center)> rotationHandlesToDraw = [];
                 bool foundSelected = false;
                 RectangleF groupBounds = RectangleF.Empty;
 
@@ -132,7 +133,7 @@ namespace PixelEditor
                         bool isCurrent = (shape == currentShape);
                         if (isCurrent) foundSelected = true;
 
-                        var (handles, controlHandles, activeHandles) = DrawShape(shape, g, isCurrent);
+                        var (handles, controlHandles, activeHandles, rotationHandles, center) = DrawShape(shape, g, isCurrent);
 
                         if (isCurrent && handles.Length > 0)
                             handlesToDraw.Add((handles, g.Transform.Clone()));
@@ -142,6 +143,9 @@ namespace PixelEditor
 
                         if (isCurrent && activeHandles.Length > 0)
                             activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
+
+                        if (isCurrent && rotationHandles.Length > 0)
+                            rotationHandlesToDraw.Add((rotationHandles, g.Transform.Clone(), center));
 
                         if (addedShapeSelections.Contains(shape) || shape == currentShape)
                         {
@@ -153,19 +157,23 @@ namespace PixelEditor
 
                 if (currentShape != null && !foundSelected)
                 {
-                    var (handles, controlHandles, activeHandles) = DrawShape(currentShape, g, true);
+                    var (handles, controlHandles, activeHandles, rotationHandles, center) = DrawShape(currentShape, g, true);
                     if (handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
                     if (controlHandles.Length > 0)
                         controlHandlesToDraw.Add((controlHandles, g.Transform.Clone()));
                     if (activeHandles.Length > 0)
                         activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
+                    if (rotationHandles.Length > 0)
+                        rotationHandlesToDraw.Add((rotationHandles, g.Transform.Clone(), center));
                 }
 
                 using SolidBrush handleBrush = new(Color.LightBlue);
                 using SolidBrush controlHandleBrush = new(Color.White);
                 using SolidBrush activeHandleBrush = new(Color.Red);
+                using SolidBrush rotateBrush = new (Color.Gold);
                 using Pen handlePen = new(Color.Red, 2);
+                using Pen rotationPen = new(Color.White, 1.5f);
 
                 foreach (var (Handles, Transform) in handlesToDraw)
                 {
@@ -206,6 +214,23 @@ namespace PixelEditor
                     Transform.Dispose();
                 }
 
+                foreach (var (RotationHandles, Transform, Center) in rotationHandlesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+
+                    float handleCenterY = Center.Y - SelectionsManipulator.ROTATION_HANDLE_SIZE;
+                    g.DrawLine(rotationPen, Center.X, Center.Y, Center.X, handleCenterY);
+
+                    foreach (var handle in RotationHandles)
+                    {
+                        g.FillEllipse(rotateBrush, handle);
+                        g.DrawEllipse(rotationPen, handle);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
+
                 if (!groupBounds.IsEmpty)
                 {
                     g.ResetTransform();
@@ -216,7 +241,7 @@ namespace PixelEditor
             return image;
         }
 
-        public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles, RectangleF[] RotationHandles, PointF Center) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024;
@@ -231,16 +256,29 @@ namespace PixelEditor
             List<RectangleF> handles = [];
             List<RectangleF> controlHandles = [];
             List<RectangleF> activeHandles = [];
+            List<RectangleF> rotationHandles = [];
+            PointF center = PointF.Empty;
 
             if (isSelected)
             {
                 RectangleF bounds = GetShapeBounds(shape, new Matrix());
                 handles.AddRange([
                     new(bounds.X - offset, bounds.Y - offset, size, size),
-                    new(bounds.X + bounds.Width - offset, bounds.Y - offset, size, size),
-                    new(bounds.X - offset, bounds.Y + bounds.Height - offset, size, size),
-                    new(bounds.X + bounds.Width - offset, bounds.Y + bounds.Height - offset, size, size)
+            new(bounds.X + bounds.Width - offset, bounds.Y - offset, size, size),
+            new(bounds.X - offset, bounds.Y + bounds.Height - offset, size, size),
+            new(bounds.X + bounds.Width - offset, bounds.Y + bounds.Height - offset, size, size)
                 ]);
+
+                center = new PointF(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+                float rotationHandleSize = SelectionsManipulator.ROTATION_HANDLE_SIZE;
+                float rotOffset = rotationHandleSize / 2f;
+                rotationHandles.Add(new RectangleF(
+                    center.X - rotOffset,
+                    center.Y - SelectionsManipulator.ROTATION_HANDLE_SIZE - rotOffset,
+                    rotationHandleSize,
+                    rotationHandleSize
+                ));
             }
 
             using SolidBrush controlHandleBrush = new(Color.White);
@@ -331,7 +369,7 @@ namespace PixelEditor
                 }
             }
 
-            return ([.. handles], [.. controlHandles], [.. activeHandles]);
+            return ([.. handles], [.. controlHandles], [.. activeHandles], [.. rotationHandles], center);
         }
 
         public static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)
