@@ -4073,34 +4073,54 @@ namespace PixelEditor
                     btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                     btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
-                    btnPointSelect.Visible = true;
-                    btnFiller.Visible = false;
-                    btnBrusher.Visible = false;
-                    btnEraser.Visible = false;
-                    btnWarp.Visible = false;
-                    btnCrop.Visible = false;
+                    btnFiller.Enabled = false;
+                    btnFiller.BackColor = Color.LightGray;
+                    btnBrusher.Enabled = false;
+                    btnBrusher.BackColor = Color.LightGray;
+                    btnEraser.Enabled = false;
+                    btnEraser.BackColor = Color.LightGray;
+                    btnWarp.Enabled = false;
+                    btnWarp.BackColor = Color.LightGray;
+                    btnCrop.Enabled = false;
+                    btnCrop.BackColor = Color.LightGray;
 
-                    btnShapeRect.Visible = true;
-                    btnShapeEllipse.Visible = true;
-                    btnShapePolygon.Visible = true;
-                    btnShapeText.Visible = true;
+                    btnPointSelect.Enabled = true;
+                    btnPointSelect.BackColor = Color.White;
+                    btnShapeRect.Enabled = true;
+                    btnShapeRect.BackColor = Color.White;
+                    btnShapeEllipse.Enabled = true;
+                    btnShapeEllipse.BackColor = Color.White;
+                    btnShapePolygon.Enabled = true;
+                    btnShapePolygon.BackColor = Color.White;
+                    btnShapeText.Enabled = true;
+                    btnShapeText.BackColor = Color.White;
                 }
                 else
                 {
                     btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
                     btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
 
-                    btnPointSelect.Visible = false;
-                    btnFiller.Visible = true;
-                    btnBrusher.Visible = true;
-                    btnEraser.Visible = true;
-                    btnWarp.Visible = true;
-                    btnCrop.Visible = true;
+                    btnFiller.Enabled = true;
+                    btnFiller.BackColor = Color.White;
+                    btnBrusher.Enabled = true;
+                    btnBrusher.BackColor = Color.White;
+                    btnEraser.Enabled = true;
+                    btnEraser.BackColor = Color.White;
+                    btnWarp.Enabled = true;
+                    btnWarp.BackColor = Color.White;
+                    btnCrop.Enabled = true;
+                    btnCrop.BackColor = Color.White;
 
-                    btnShapeRect.Visible = false;
-                    btnShapeEllipse.Visible = false;
-                    btnShapePolygon.Visible = false;
-                    btnShapeText.Visible = false;
+                    btnPointSelect.Enabled = false;
+                    btnPointSelect.BackColor = Color.LightGray;
+                    btnShapeRect.Enabled = false;
+                    btnShapeRect.BackColor = Color.LightGray;
+                    btnShapeEllipse.Enabled = false;
+                    btnShapeEllipse.BackColor = Color.LightGray;
+                    btnShapePolygon.Enabled = false;
+                    btnShapePolygon.BackColor = Color.LightGray;
+                    btnShapeText.Enabled = false;
+                    btnShapeText.BackColor = Color.LightGray;
                 }
 
                 if (btnPointer.Checked || btnPointSelect.Checked)
@@ -6038,9 +6058,7 @@ namespace PixelEditor
                     Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
-                    float currentAngle = (float)(Math.Atan2(
-                        localPos.Y - startPoint.Y,
-                        localPos.X - startPoint.X) * 180.0 / Math.PI);
+                    float currentAngle = (float)(Math.Atan2(localPos.Y - startPoint.Y, localPos.X - startPoint.X) * 180.0 / Math.PI);
 
                     float deltaAngle = currentAngle - startMouseAngle;
                     startMouseAngle = currentAngle;

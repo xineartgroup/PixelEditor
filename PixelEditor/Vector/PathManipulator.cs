@@ -192,31 +192,6 @@ namespace PixelEditor.Vector
                     worldPoints.Add(new PointF(point.X + text.X, point.Y + text.Y));
                 }
 
-                if (text.Rotation != 0)
-                {
-                    float minX = worldPoints.Min(p => p.X);
-                    float minY = worldPoints.Min(p => p.Y);
-                    float maxX = worldPoints.Max(p => p.X);
-                    float maxY = worldPoints.Max(p => p.Y);
-                    float centerX = (minX + maxX) / 2f;
-                    float centerY = (minY + maxY) / 2f;
-
-                    List<PointF> rotatedPoints = [];
-                    float angleRad = text.Rotation * (float)(Math.PI / 180.0);
-                    float cos = (float)Math.Cos(angleRad);
-                    float sin = (float)Math.Sin(angleRad);
-
-                    foreach (var point in worldPoints)
-                    {
-                        float dx = point.X - centerX;
-                        float dy = point.Y - centerY;
-                        float x = centerX + dx * cos - dy * sin;
-                        float y = centerY + dx * sin + dy * cos;
-                        rotatedPoints.Add(new PointF(x, y));
-                    }
-                    worldPoints = rotatedPoints;
-                }
-
                 path.PathSegments.Add(new PathSegment { PathType = "M", InputPoints = [worldPoints[0]] });
 
                 for (int i = 1; i < worldPoints.Count; i++)
@@ -538,23 +513,19 @@ namespace PixelEditor.Vector
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.Transparent);
-                g.SmoothingMode = SmoothingMode.None;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
                 using SolidBrush brush = new(Color.Black);
 
-                Matrix originalTransform = g.Transform;
+                float centerX = width / 2f;
+                float centerY = height / 2f;
 
-                float centerX = text.X + text.Width / 2;
-                float centerY = text.Y + text.Height / 2;
-
-                //g.TranslateTransform(centerX, centerY);
-                //g.RotateTransform(text.Rotation);
-                //g.TranslateTransform(-centerX, -centerY);
+                g.TranslateTransform(centerX, centerY);
+                g.RotateTransform(text.Rotation);
+                g.TranslateTransform(-centerX, -centerY);
 
                 g.DrawString(text.Content, font, brush, 0, 0);
-
-                g.Transform = originalTransform;
             }
 
             bool[,] mask = new bool[width, height];
