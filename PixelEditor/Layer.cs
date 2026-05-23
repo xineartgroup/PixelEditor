@@ -926,6 +926,47 @@ namespace PixelEditor
             }
         }
 
+        public static void UpdateShapePositionOrSize(BaseShape shape, float? x, float? y, float? width, float? height)
+        {
+            using Matrix identity = new();
+            RectangleF bounds = Layer.GetShapeBounds(shape, identity);
+
+            float targetX = x ?? bounds.X;
+            float targetY = y ?? bounds.Y;
+            float targetWidth = width ?? bounds.Width;
+            float targetHeight = height ?? bounds.Height;
+
+            if (shape is ShapeRect r)
+            {
+                r.X = targetX;
+                r.Y = targetY;
+                r.Width = targetWidth;
+                r.Height = targetHeight;
+            }
+            else if (shape is ShapeEllipse e)
+            {
+                e.X = targetX;
+                e.Y = targetY;
+                e.Width = targetWidth;
+                e.Height = targetHeight;
+            }
+            else if (shape is ShapeText t)
+            {
+                t.X = targetX;
+                t.Y = targetY;
+                t.Width = targetWidth;
+                t.Height = targetHeight;
+            }
+            else if (shape is ShapePolygon p)
+            {
+                Layer.ResizePolygon(p, new RectangleF(targetX, targetY, targetWidth, targetHeight));
+            }
+            else if (shape is ShapePath sp)
+            {
+                Layer.ResizePath(sp, new RectangleF(targetX, targetY, targetWidth, targetHeight));
+            }
+        }
+
         private static PointF RotatePoint(PointF point, PointF center, float cos, float sin)
         {
             float dx = point.X - center.X;

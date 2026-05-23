@@ -30,28 +30,27 @@ namespace PixelEditor
         private bool isResizingShape = false;
         private bool isColorPicked = false;
         private bool isResizingShapeStarted = false;
+        private float brushPixelSize = 0.0f;
+        private float currentOpacity = 1.0f;
         private float dashOffset = 0;
         private float startMouseAngle = 0;
         private float rotationAngle = 0;
         private float initialScaleFactorX = 1.0f;
         private float initialScaleFactorY = 1.0f;
-        private List<List<Point>>? originalSelectionPoints = null;
-        private int selectedBrushIndex = 0;
-        private int selectedEraserIndex = 0;
-        private string currentFilePath = "";
-        private DateTime lastPaintTime = DateTime.MinValue;
-        private readonly List<Image> brushes = [];
-        private List<PointF> strokePoints = [];
-        private Bitmap? selectedAreaBitmap = null;
-        private readonly Matrix transformMatrix = new();
-        private float brushPixelSize = 0.0f;
-        private float currentOpacity = 1.0f;
         private float initialScaleDistanceX = 0f;
         private float initialScaleDistanceY = 0f;
+        private int selectedBrushIndex = 0;
+        private int selectedEraserIndex = 0;
+        private Bitmap? selectedAreaBitmap = null;
+        private DateTime lastPaintTime = DateTime.MinValue;
+        private List<List<Point>>? originalSelectionPoints = null;
+        private readonly Matrix transformMatrix = new();
         private PointF scaleAnchorWorld = PointF.Empty;
         private Point scaleStartMouseScreen = Point.Empty;
         private string activeScaleHandle = "";
-
+        private string currentFilePath = "";
+        private List<PointF> strokePoints = [];
+        private readonly List<Image> brushes = [];
         private readonly ColorDialogX _colorPicker = new();
 
         private readonly GroupBox groupBrushDetail = new();
@@ -1817,7 +1816,7 @@ namespace PixelEditor
 
             btnMoveUp.Enabled = layersControl.GetSelectedLayerIndex() > 0;
             btnMoveDown.Enabled = layersControl.GetSelectedLayerIndex() < layersControl.GetLayers().Count - 1 && layersControl.GetSelectedLayerIndex() >= 0;
-            
+
             UpdateControls();
             RedrawImage();
         }
@@ -2450,7 +2449,7 @@ namespace PixelEditor
                     }
 
                     float sumT2 = 0, sumT3 = 0, sumT4 = 0;
-                    PointF sumXP = new (0, 0), sumYP = new(0, 0);
+                    PointF sumXP = new(0, 0), sumYP = new(0, 0);
 
                     for (int i = 0; i < pointsToFit.Count; i++)
                     {
@@ -2461,7 +2460,7 @@ namespace PixelEditor
                         float b1 = 3 * t * mt2;
                         float b2 = 3 * t2 * mt;
 
-                        PointF target = new (
+                        PointF target = new(
                             pointsToFit[i].X - (mt3 * p0.X) - (t3 * p3.X),
                             pointsToFit[i].Y - (mt3 * p0.Y) - (t3 * p3.Y)
                         );
@@ -3386,7 +3385,7 @@ namespace PixelEditor
                             }
                             SelectionsManipulator.CalculateSelectionBounds();
                         }
-                        
+
                         //SelectionsManipulator.ScaleSelections(deltaX, deltaY, scaleAnchorWorld);
 
                         SelectionsManipulator.ScaleFactorX = newScaleX;
@@ -3732,6 +3731,171 @@ namespace PixelEditor
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
             }
+        }
+
+        private void ExecuteShapeTransformation(Action<Layer, List<BaseShape>> transformAction)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null && selectedLayer.LayerType == LayerType.Vector)
+            {
+                var allSelectedShapes = new List<BaseShape>();
+                if (selectedLayer.CurrentShape != null)
+                {
+                    allSelectedShapes.Add(selectedLayer.CurrentShape);
+                }
+                if (selectedLayer.AddedShapeSelections != null)
+                {
+                    foreach (var shape in selectedLayer.AddedShapeSelections)
+                    {
+                        if (!allSelectedShapes.Contains(shape))
+                        {
+                            allSelectedShapes.Add(shape);
+                        }
+                    }
+                }
+
+                if (allSelectedShapes.Count > 1)
+                {
+                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    transformAction(selectedLayer, allSelectedShapes);
+
+                    isDrawingShape = true;
+
+                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                    selectedLayer.UseImageCache = false;
+                }
+            }
+        }
+
+        private void AllignLeft_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetLeft = shapes.Min(s => Layer.GetShapeBounds(s, identity).Left);
+
+                foreach (var shape in shapes)
+                {
+                    Layer.UpdateShapePositionOrSize(shape, targetLeft, null, null, null);
+                }
+            });
+        }
+
+        private void AllignCenter_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetCenter = shapes.Average(s => {
+                    var b = Layer.GetShapeBounds(s, identity);
+                    return b.Left + b.Width / 2f;
+                });
+
+                foreach (var shape in shapes)
+                {
+                    var b = Layer.GetShapeBounds(shape, identity);
+                    float newX = targetCenter - (b.Width / 2f);
+                    Layer.UpdateShapePositionOrSize(shape, newX, null, null, null);
+                }
+            });
+        }
+
+        private void AllignRight_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetRight = shapes.Max(s => Layer.GetShapeBounds(s, identity).Right);
+
+                foreach (var shape in shapes)
+                {
+                    var b = Layer.GetShapeBounds(shape, identity);
+                    float newX = targetRight - b.Width;
+                    Layer.UpdateShapePositionOrSize(shape, newX, null, null, null);
+                }
+            });
+        }
+
+        private void AllignTop_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetTop = shapes.Min(s => Layer.GetShapeBounds(s, identity).Top);
+
+                foreach (var shape in shapes)
+                {
+                    Layer.UpdateShapePositionOrSize(shape, null, targetTop, null, null);
+                }
+            });
+        }
+
+        private void AllignMiddle_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetMiddle = shapes.Average(s => {
+                    var b = Layer.GetShapeBounds(s, identity);
+                    return b.Top + b.Height / 2f;
+                });
+
+                foreach (var shape in shapes)
+                {
+                    var b = Layer.GetShapeBounds(shape, identity);
+                    float newY = targetMiddle - (b.Height / 2f);
+                    Layer.UpdateShapePositionOrSize(shape, null, newY, null, null);
+                }
+            });
+        }
+
+        private void AllignBottom_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetBottom = shapes.Max(s => Layer.GetShapeBounds(s, identity).Bottom);
+
+                foreach (var shape in shapes)
+                {
+                    var b = Layer.GetShapeBounds(shape, identity);
+                    float newY = targetBottom - b.Height;
+                    Layer.UpdateShapePositionOrSize(shape, null, newY, null, null);
+                }
+            });
+        }
+
+        private void SameWidthToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetWidth = layer.CurrentShape != null ? Layer.GetShapeBounds(layer.CurrentShape, identity).Width
+                                                               : shapes.Max(s => Layer.GetShapeBounds(s, identity).Width);
+
+                foreach (var shape in shapes)
+                {
+                    Layer.UpdateShapePositionOrSize(shape, null, null, targetWidth, null);
+                }
+            });
+        }
+
+        private void SameHeightToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteShapeTransformation((layer, shapes) =>
+            {
+                using Matrix identity = new();
+                float targetHeight = layer.CurrentShape != null ? Layer.GetShapeBounds(layer.CurrentShape, identity).Height
+                                                                : shapes.Max(s => Layer.GetShapeBounds(s, identity).Height);
+
+                foreach (var shape in shapes)
+                {
+                    Layer.UpdateShapePositionOrSize(shape, null, null, null, targetHeight);
+                }
+            });
         }
 
         private void DuplicateToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -4084,6 +4248,13 @@ namespace PixelEditor
                     btnCrop.Enabled = false;
                     btnCrop.BackColor = Color.LightGray;
 
+                    btnMagicWand.Enabled = false;
+                    btnMagicWand.BackColor = Color.LightGray;
+                    btnRectangleSelect.Enabled = false;
+                    btnRectangleSelect.BackColor = Color.LightGray;
+                    btnLassoSelect.Enabled = false;
+                    btnLassoSelect.BackColor = Color.LightGray;
+
                     btnPointSelect.Enabled = true;
                     btnPointSelect.BackColor = Color.White;
                     btnShapeRect.Enabled = true;
@@ -4110,6 +4281,13 @@ namespace PixelEditor
                     btnWarp.BackColor = Color.White;
                     btnCrop.Enabled = true;
                     btnCrop.BackColor = Color.White;
+
+                    btnMagicWand.Enabled = true;
+                    btnMagicWand.BackColor = Color.White;
+                    btnRectangleSelect.Enabled = true;
+                    btnRectangleSelect.BackColor = Color.White;
+                    btnLassoSelect.Enabled = true;
+                    btnLassoSelect.BackColor = Color.White;
 
                     btnPointSelect.Enabled = false;
                     btnPointSelect.BackColor = Color.LightGray;
@@ -4547,7 +4725,7 @@ namespace PixelEditor
                     isDrawingShape = true;
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
-                
+
                 if (selectedLayer.AddedShapeSelections.Count > 0)
                 {
                     HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -5278,6 +5456,12 @@ namespace PixelEditor
                             MergeSelectedAreaBitmap();
                             Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                             Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
+
+                            if (selectedLayer.LayerType == LayerType.Vector)
+                            {
+                                isRectSelecting = true;
+                                SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
+                            }
 
                             if (selectedLayer.CurrentShape != null && !isResizingShape)
                             {
