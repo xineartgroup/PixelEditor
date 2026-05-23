@@ -2414,124 +2414,134 @@ namespace PixelEditor
         private void BtnSimplifyCurve_Click(object? sender, EventArgs e)
         {
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer?.LayerType != LayerType.Vector || selectedLayer.CurrentShape is not ShapePath path)
+                return;
 
-            if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
+            if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
+
+            // Build flat point list AND per-point segment mapping
+            var allPoints = new List<PointF>();
+            var pointToSegment = new List<int>();
+            for (int i = 0; i < path.PathSegments.Count; i++)
             {
-                if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
-
-                HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
-                var indices = path.ActiveHandleIndicies.OrderBy(i => i).ToList();
-                var allPoints = path.ControlPoints();
-
-                List<PointF> pointsToFit = [];
-                foreach (int idx in indices)
+                var pts = path.PathSegments[i].GetPoints();
+                foreach (var p in pts)
                 {
-                    if (idx >= 0 && idx < allPoints.Count)
-                        pointsToFit.Add(allPoints[idx]);
+                    allPoints.Add(p);
+                    pointToSegment.Add(i);
                 }
+            }
 
-                if (pointsToFit.Count < 2) return;
+            var indices = path.ActiveHandleIndicies
+                .Where(i => i >= 0 && i < allPoints.Count)
+                .OrderBy(i => i)
+                .ToList();
 
+            if (indices.Count < 2) return;
+
+            // *** CONTIGUITY CHECK ***
+            // Only fit points that form a contiguous run. If there's a gap,
+            // split into contiguous runs and handle each (or reject non-contiguous).
+            var runs = new List<List<int>>();
+            var currentRun = new List<int> { indices[0] };
+            for (int i = 1; i < indices.Count; i++)
+            {
+                // Check if consecutive indices map to adjacent/same segments
+                // A "gap" means skipped point indices (non-contiguous flat indices)
+                if (indices[i] == indices[i - 1] + 1)
+                    currentRun.Add(indices[i]);
+                else
+                {
+                    runs.Add(currentRun);
+                    currentRun = new List<int> { indices[i] };
+                }
+            }
+            runs.Add(currentRun);
+
+            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+            // Process runs from last to first so indices stay valid
+            for (int r = runs.Count - 1; r >= 0; r--)
+            {
+                var run = runs[r];
+                if (run.Count < 2) continue;
+
+                var pointsToFit = run.Select(i => allPoints[i]).ToList();
+                var (p1, p2) = ManipulatorGeneral.FitCubicControlPoints(pointsToFit);
                 PointF p0 = pointsToFit[0];
                 PointF p3 = pointsToFit[^1];
 
-                PointF p1, p2;
+                int firstPtIdx = run[0];
+                int lastPtIdx = run[^1];
+                int firstSegIdx = pointToSegment[firstPtIdx];
+                int lastSegIdx = pointToSegment[lastPtIdx];
 
-                if (pointsToFit.Count > 2)
-                {
-                    float totalDist = 0;
-                    List<float> d = [0];
-                    for (int i = 1; i < pointsToFit.Count; i++)
-                    {
-                        totalDist += Utility.VectorDistance(pointsToFit[i], pointsToFit[i - 1]);
-                        d.Add(totalDist);
-                    }
-
-                    float sumT2 = 0, sumT3 = 0, sumT4 = 0;
-                    PointF sumXP = new(0, 0), sumYP = new(0, 0);
-
-                    for (int i = 0; i < pointsToFit.Count; i++)
-                    {
-                        float t = d[i] / totalDist;
-                        float t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t, t6 = t5 * t;
-                        float mt = 1 - t, mt2 = mt * mt, mt3 = mt2 * mt;
-
-                        float b1 = 3 * t * mt2;
-                        float b2 = 3 * t2 * mt;
-
-                        PointF target = new(
-                            pointsToFit[i].X - (mt3 * p0.X) - (t3 * p3.X),
-                            pointsToFit[i].Y - (mt3 * p0.Y) - (t3 * p3.Y)
-                        );
-
-                        sumT2 += b1 * b1;
-                        sumT3 += b1 * b2;
-                        sumT4 += b2 * b2;
-
-                        sumXP.X += b1 * target.X;
-                        sumXP.Y += b1 * target.Y;
-                        sumYP.X += b2 * target.X;
-                        sumYP.Y += b2 * target.Y;
-                    }
-
-                    float det = sumT2 * sumT4 - sumT3 * sumT3;
-                    if (Math.Abs(det) > 1e-6)
-                    {
-                        p1 = new PointF((sumXP.X * sumT4 - sumYP.X * sumT3) / det, (sumXP.Y * sumT4 - sumYP.Y * sumT3) / det);
-                        p2 = new PointF((sumYP.X * sumT2 - sumXP.X * sumT3) / det, (sumYP.Y * sumT2 - sumXP.Y * sumT3) / det);
-                    }
-                    else
-                    {
-                        float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
-                        p1 = new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f);
-                        p2 = new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f);
-                    }
-                }
-                else
-                {
-                    float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
-                    p1 = new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f);
-                    p2 = new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f);
-                }
-
-                int firstIdx = indices[0];
-                int lastIdx = indices[^1];
-                int pointCounter = 0;
-                int firstSegIdx = -1, lastSegIdx = -1;
-
+                var newSegments = new List<PathSegment>();
                 for (int i = 0; i < path.PathSegments.Count; i++)
                 {
-                    int segCount = path.PathSegments[i].InputPoints.Count;
-                    if (firstIdx >= pointCounter && firstIdx < pointCounter + segCount) firstSegIdx = i;
-                    if (lastIdx >= pointCounter && lastIdx < pointCounter + segCount) lastSegIdx = i;
-                    pointCounter += segCount;
+                    if (i < firstSegIdx)
+                    {
+                        newSegments.Add(path.PathSegments[i]);
+                    }
+                    else if (i == firstSegIdx)
+                    {
+                        // If this is the M segment, preserve the M and add C after
+                        if (path.PathSegments[i].PathType == "M")
+                        {
+                            newSegments.Add(new PathSegment { PathType = "M", InputPoints = [p0] });
+                            newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
+                        }
+                        else
+                        {
+                            newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
+                        }
+                    }
+                    else if (i > firstSegIdx && i < lastSegIdx)
+                    {
+                        // Drop intermediate segments that are absorbed into the curve
+                        continue;
+                    }
+                    else if (i == lastSegIdx)
+                    {
+                        // If last selected seg is Z, keep it; otherwise it's absorbed
+                        if (path.PathSegments[i].PathType == "Z")
+                            newSegments.Add(path.PathSegments[i]);
+                        // else: absorbed into the C segment
+                    }
+                    else // i > lastSegIdx
+                    {
+                        newSegments.Add(path.PathSegments[i]);
+                    }
                 }
 
-                if (firstSegIdx != -1 && lastSegIdx != -1)
+                path.PathSegments = newSegments;
+
+                // Rebuild allPoints/pointToSegment for next run (if any)
+                if (r > 0)
                 {
-                    int removeCount = lastSegIdx - firstSegIdx;
-                    for (int r = 0; r < removeCount; r++)
-                        path.PathSegments.RemoveAt(firstSegIdx + 1);
-
-                    var targetSegment = path.PathSegments[firstSegIdx];
-                    if (firstSegIdx == 0)
+                    allPoints.Clear();
+                    pointToSegment.Clear();
+                    for (int i = 0; i < path.PathSegments.Count; i++)
                     {
-                        targetSegment.PathType = "M";
-                        targetSegment.InputPoints = [p3];
-                    }
-                    else
-                    {
-                        targetSegment.PathType = "C";
-                        targetSegment.InputPoints = [p0, p1, p2, p3];
+                        var pts = path.PathSegments[i].GetPoints();
+                        foreach (var p in pts)
+                        {
+                            allPoints.Add(p);
+                            pointToSegment.Add(i);
+                        }
                     }
                 }
-
-                UpdateControls();
-                ManipulatorGeneral.InvalidateCompositeBuffers();
-                isDrawingShape = true;
-                HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             }
+
+            path.ActiveHandleIndicies = [];
+            path.CornerHandleIndex = -1;
+            path.ActiveHandleIndex = -1;
+
+            Console.WriteLine($"Simplified: {path}");
+            UpdateControls();
+            ManipulatorGeneral.InvalidateCompositeBuffers();
+            isDrawingShape = true;
+            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
 
         private void BtnSimplifyLine_Click(object? sender, EventArgs e)
@@ -2540,6 +2550,8 @@ namespace PixelEditor
 
             if (selectedLayer?.LayerType == LayerType.Vector && selectedLayer.CurrentShape is ShapePath path)
             {
+                Console.WriteLine($"Original: {path}");
+
                 if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
 
                 HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
@@ -2593,6 +2605,8 @@ namespace PixelEditor
 
                 path.ActiveHandleIndicies = [firstIdx, firstIdx + 1];
                 path.ActiveHandleIndex = firstIdx + 1;
+
+                Console.WriteLine($"Simplified: {path}");
 
                 UpdateControls();
                 ManipulatorGeneral.InvalidateCompositeBuffers();
@@ -5711,8 +5725,11 @@ namespace PixelEditor
 
                                 if (!found)
                                 {
-                                    selectedLayer.CurrentShape = null;
-                                    selectedLayer.AddedShapeSelections.Clear();
+                                    if (Layer.LayerSelectionType == LayerSelectionType.Shape)
+                                    {
+                                        selectedLayer.CurrentShape = null;
+                                        selectedLayer.AddedShapeSelections.Clear();
+                                    }
                                 }
 
                                 isDrawingShape = true;
@@ -6467,9 +6484,6 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object? sender, MouseEventArgs e)
         {
-            Console.WriteLine($"MouseUp - rotationAngle: {rotationAngle}, scaleX: {SelectionsManipulator.ScaleFactorX}, scaleY: {SelectionsManipulator.ScaleFactorY}");
-            Console.WriteLine($"MouseUp - selectedAreaBitmap size: {selectedAreaBitmap?.Width}x{selectedAreaBitmap?.Height}");
-
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
             if (isLassoSelecting)
@@ -6521,11 +6535,27 @@ namespace PixelEditor
 
                             if (selectedLayer.CurrentShape is ShapePath path)
                             {
+                                for (int i = 0; i < path.ActiveHandleIndicies.Length; i++)
+                                {
+                                    if (path.ActiveHandleIndicies[i] >= 0)
+                                    {
+                                        selectedIndices.Add(path.ActiveHandleIndicies[i]);
+                                    }
+                                }
+
                                 path.ActiveHandleIndicies = [.. selectedIndices];
                                 path.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
                             }
                             else if (selectedLayer.CurrentShape is ShapePolygon polygon)
                             {
+                                for (int i = 0; i < polygon.ActiveHandleIndicies.Length; i++)
+                                {
+                                    if (polygon.ActiveHandleIndicies[i] >= 0)
+                                    {
+                                        selectedIndices.Add(polygon.ActiveHandleIndicies[i]);
+                                    }
+                                }
+
                                 polygon.ActiveHandleIndicies = [.. selectedIndices];
                                 polygon.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
                             }
@@ -6558,7 +6588,6 @@ namespace PixelEditor
                         SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
                         SelectionsManipulator.CalculateSelectionBounds();
                         var bounds = SelectionsManipulator.GetSelectionBounds();
-                        Console.WriteLine($"MouseUp - selectionBounds: {bounds}");
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }

@@ -31,5 +31,17 @@
             }
             return result;
         }
+
+        public override string ToString()
+        {
+            var result = "ShapePath: ";
+
+            foreach (var segment in PathSegments)
+            {
+                result += segment.ToString() + " ";
+            }
+
+            return result;
+        }
     }
 }

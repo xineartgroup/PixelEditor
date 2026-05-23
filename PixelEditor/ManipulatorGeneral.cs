@@ -1556,5 +1556,67 @@ namespace PixelEditor
 
             return Color.Transparent;
         }
+
+        public static (PointF p1, PointF p2) FitCubicControlPoints(List<PointF> pts)
+        {
+            PointF p0 = pts[0], p3 = pts[^1];
+
+            if (pts.Count == 2)
+            {
+                float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
+                return (new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f),
+                        new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f));
+            }
+
+            float totalDist = 0;
+            var d = new List<float> { 0 };
+            for (int i = 1; i < pts.Count; i++)
+            {
+                totalDist += (float)Utility.VectorDistance(pts[i], pts[i - 1]);
+                d.Add(totalDist);
+            }
+
+            if (totalDist < 1e-4f)
+            {
+                float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
+                return (new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f),
+                        new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f));
+            }
+
+            float sumT2 = 0, sumT3 = 0, sumT4 = 0;
+            PointF sumXP = new(0, 0), sumYP = new(0, 0);
+
+            for (int i = 0; i < pts.Count; i++)
+            {
+                float t = d[i] / totalDist;
+                float t2 = t * t, t3 = t2 * t;
+                float mt = 1 - t, mt2 = mt * mt, mt3 = mt2 * mt;
+                float b1 = 3 * t * mt2, b2 = 3 * t2 * mt;
+
+                PointF target = new(
+                    pts[i].X - mt3 * p0.X - t3 * p3.X,
+                    pts[i].Y - mt3 * p0.Y - t3 * p3.Y);
+
+                sumT2 += b1 * b1; sumT3 += b1 * b2; sumT4 += b2 * b2;
+                sumXP.X += b1 * target.X; sumXP.Y += b1 * target.Y;
+                sumYP.X += b2 * target.X; sumYP.Y += b2 * target.Y;
+            }
+
+            float det = sumT2 * sumT4 - sumT3 * sumT3;
+            if (Math.Abs(det) > 1e-6f)
+            {
+                return (
+                    new PointF((sumXP.X * sumT4 - sumYP.X * sumT3) / det,
+                               (sumXP.Y * sumT4 - sumYP.Y * sumT3) / det),
+                    new PointF((sumYP.X * sumT2 - sumXP.X * sumT3) / det,
+                               (sumYP.Y * sumT2 - sumXP.Y * sumT3) / det));
+            }
+            else
+            {
+                float dx = p3.X - p0.X, dy = p3.Y - p0.Y;
+                return (new PointF(p0.X + dx * 0.33f, p0.Y + dy * 0.33f),
+                        new PointF(p0.X + dx * 0.66f, p0.Y + dy * 0.66f));
+            }
+        }
     }
 }
