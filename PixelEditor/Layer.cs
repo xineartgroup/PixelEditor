@@ -123,6 +123,8 @@ namespace PixelEditor
                 List<(RectangleF[] ControlHandles, Matrix Transform)> controlHandlesToDraw = [];
                 List<(RectangleF[] ActiveHandles, Matrix Transform)> activeHandlesToDraw = [];
                 List<(RectangleF[] RotationHandles, Matrix Transform, PointF Center)> rotationHandlesToDraw = [];
+                List<(RectangleF[] BezierHandles, Matrix Transform)> bezierHandlesToDraw = [];
+                List<((PointF Start, PointF End)[] Lines, Matrix Transform)> bezierLinesToDraw = [];
                 bool foundSelected = false;
                 RectangleF groupBounds = RectangleF.Empty;
 
@@ -133,7 +135,7 @@ namespace PixelEditor
                         bool isCurrent = (shape == currentShape);
                         if (isCurrent) foundSelected = true;
 
-                        var (handles, controlHandles, activeHandles, rotationHandles, center) = DrawShape(shape, g, isCurrent);
+                        var (handles, controlHandles, activeHandles, rotationHandles, bezierHandles, bezierLines, center) = DrawShape(shape, g, isCurrent);
 
                         if (isCurrent && handles.Length > 0)
                             handlesToDraw.Add((handles, g.Transform.Clone()));
@@ -147,6 +149,12 @@ namespace PixelEditor
                         if (isCurrent && rotationHandles.Length > 0)
                             rotationHandlesToDraw.Add((rotationHandles, g.Transform.Clone(), center));
 
+                        if (isCurrent && bezierHandles.Length > 0)
+                            bezierHandlesToDraw.Add((bezierHandles, g.Transform.Clone()));
+
+                        if (isCurrent && bezierLines.Length > 0)
+                            bezierLinesToDraw.Add((bezierLines, g.Transform.Clone()));
+
                         if (addedShapeSelections.Contains(shape) || shape == currentShape)
                         {
                             RectangleF bounds = GetShapeBounds(shape, g.Transform);
@@ -157,7 +165,7 @@ namespace PixelEditor
 
                 if (currentShape != null && !foundSelected)
                 {
-                    var (handles, controlHandles, activeHandles, rotationHandles, center) = DrawShape(currentShape, g, true);
+                    var (handles, controlHandles, activeHandles, rotationHandles, bezierHandles, bezierLines, center) = DrawShape(currentShape, g, true);
                     if (handles.Length > 0)
                         handlesToDraw.Add((handles, g.Transform.Clone()));
                     if (controlHandles.Length > 0)
@@ -166,14 +174,33 @@ namespace PixelEditor
                         activeHandlesToDraw.Add((activeHandles, g.Transform.Clone()));
                     if (rotationHandles.Length > 0)
                         rotationHandlesToDraw.Add((rotationHandles, g.Transform.Clone(), center));
+                    if (bezierHandles.Length > 0)
+                        bezierHandlesToDraw.Add((bezierHandles, g.Transform.Clone()));
+                    if (bezierLines.Length > 0)
+                        bezierLinesToDraw.Add((bezierLines, g.Transform.Clone()));
                 }
 
                 using SolidBrush handleBrush = new(Color.LightBlue);
                 using SolidBrush controlHandleBrush = new(Color.White);
                 using SolidBrush activeHandleBrush = new(Color.Red);
-                using SolidBrush rotateBrush = new (Color.Gold);
+                using SolidBrush rotateBrush = new(Color.Gold);
+                using SolidBrush bezierHandleBrush = new(Color.LightGreen);
                 using Pen handlePen = new(Color.Red, 2);
+                using Pen bezierPen = new(Color.Green, 2);
                 using Pen rotationPen = new(Color.White, 1.5f);
+                using Pen bezierLinePen = new(Color.Gray, 1f) { DashStyle = DashStyle.Dash };
+
+                foreach (var (Lines, Transform) in bezierLinesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+                    foreach (var line in Lines)
+                    {
+                        g.DrawLine(bezierLinePen, line.Start, line.End);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
 
                 foreach (var (Handles, Transform) in handlesToDraw)
                 {
@@ -214,6 +241,19 @@ namespace PixelEditor
                     Transform.Dispose();
                 }
 
+                foreach (var (BezierHandles, Transform) in bezierHandlesToDraw)
+                {
+                    Matrix original = g.Transform;
+                    g.Transform = Transform;
+                    foreach (var handle in BezierHandles)
+                    {
+                        g.FillEllipse(bezierHandleBrush, handle);
+                        g.DrawEllipse(bezierPen, handle);
+                    }
+                    g.Transform = original;
+                    Transform.Dispose();
+                }
+
                 foreach (var (RotationHandles, Transform, Center) in rotationHandlesToDraw)
                 {
                     Matrix original = g.Transform;
@@ -241,7 +281,7 @@ namespace PixelEditor
             return image;
         }
 
-        public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles, RectangleF[] RotationHandles, PointF Center) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
+        public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles, RectangleF[] RotationHandles, RectangleF[] BezierHandles, (PointF Start, PointF End)[] BezierLines, PointF Center) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024;
@@ -257,6 +297,8 @@ namespace PixelEditor
             List<RectangleF> controlHandles = [];
             List<RectangleF> activeHandles = [];
             List<RectangleF> rotationHandles = [];
+            List<RectangleF> bezierHandles = [];
+            List<(PointF Start, PointF End)> bezierLines = [];
             PointF center = PointF.Empty;
 
             if (isSelected)
@@ -331,14 +373,6 @@ namespace PixelEditor
                     }
                 }
             }
-            else if (shape is ShapeText text)
-            {
-                Matrix originalTransform = g.Transform;
-                using Font font = CreateScaledFont(text);
-                ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
-                g.DrawString(text.Content, font, brush, text.X, text.Y);
-                g.Transform = originalTransform;
-            }
             else if (shape is ShapePath path)
             {
                 using GraphicsPath gPath = BuildGraphicsPath(path);
@@ -350,12 +384,36 @@ namespace PixelEditor
                     int pointIndex = 0;
                     foreach (var segment in path.PathSegments)
                     {
-                        foreach (var p in segment.InputPoints)
+                        string type = segment.PathType.ToUpper();
+                        bool isBezier = (type == "C" || type == "Q");
+
+                        for (int i = 0; i < segment.InputPoints.Count; i++)
                         {
+                            var p = segment.InputPoints[i];
                             var hRect = new RectangleF(p.X - offset, p.Y - offset, size, size);
-                            controlHandles.Add(hRect);
-                            g.FillRectangle(controlHandleBrush, hRect);
-                            g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
+
+                            bool isBezierControlPoint = isBezier && ((type == "C" && (i == 1 || i == 2)) || (type == "Q" && i == 1));
+
+                            if (isBezierControlPoint)
+                            {
+                                bezierHandles.Add(hRect);
+
+                                if (type == "C" && i == 1 && segment.InputPoints.Count >= 4)
+                                    bezierLines.Add((segment.InputPoints[0], p));
+                                else if (type == "C" && i == 2 && segment.InputPoints.Count >= 4)
+                                    bezierLines.Add((segment.InputPoints[3], p));
+                                else if (type == "Q" && i == 1 && segment.InputPoints.Count >= 3)
+                                {
+                                    bezierLines.Add((segment.InputPoints[0], p));
+                                    bezierLines.Add((segment.InputPoints[2], p));
+                                }
+                            }
+                            else
+                            {
+                                controlHandles.Add(hRect);
+                                g.FillRectangle(controlHandleBrush, hRect);
+                                g.DrawRectangle(handlePen, hRect.X, hRect.Y, hRect.Width, hRect.Height);
+                            }
 
                             if (path.ActiveHandleIndicies != null && Array.IndexOf(path.ActiveHandleIndicies, pointIndex) >= 0)
                             {
@@ -368,8 +426,16 @@ namespace PixelEditor
                     }
                 }
             }
+            else if (shape is ShapeText text)
+            {
+                Matrix originalTransform = g.Transform;
+                using Font font = CreateScaledFont(text);
+                ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
+                g.DrawString(text.Content, font, brush, text.X, text.Y);
+                g.Transform = originalTransform;
+            }
 
-            return ([.. handles], [.. controlHandles], [.. activeHandles], [.. rotationHandles], center);
+            return ([.. handles], [.. controlHandles], [.. activeHandles], [.. rotationHandles], [.. bezierHandles], [.. bezierLines], center);
         }
 
         public static RectangleF GetShapeBounds(BaseShape shape, Matrix transform)

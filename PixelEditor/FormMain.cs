@@ -2440,8 +2440,7 @@ namespace PixelEditor
             if (indices.Count < 2) return;
 
             // *** CONTIGUITY CHECK ***
-            // Only fit points that form a contiguous run. If there's a gap,
-            // split into contiguous runs and handle each (or reject non-contiguous).
+            // Only fit points that form a contiguous run. If there's a gap, split into contiguous runs and handle each (or reject non-contiguous).
             var runs = new List<List<int>>();
             var currentRun = new List<int> { indices[0] };
             for (int i = 1; i < indices.Count; i++)
@@ -2453,7 +2452,7 @@ namespace PixelEditor
                 else
                 {
                     runs.Add(currentRun);
-                    currentRun = new List<int> { indices[i] };
+                    currentRun = [indices[i]];
                 }
             }
             runs.Add(currentRun);
@@ -5473,7 +5472,14 @@ namespace PixelEditor
 
                             if (selectedLayer.LayerType == LayerType.Vector)
                             {
-                                isRectSelecting = true;
+                                if (ModifierKeys.HasFlag(Keys.Control))
+                                {
+                                    isLassoSelecting = true;
+                                }
+                                else
+                                {
+                                    isRectSelecting = true;
+                                }
                                 SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
                             }
 
@@ -6587,7 +6593,7 @@ namespace PixelEditor
                         PaintingEngine.EndStroke();
                         SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
                         SelectionsManipulator.CalculateSelectionBounds();
-                        var bounds = SelectionsManipulator.GetSelectionBounds();
+                        //var bounds = SelectionsManipulator.GetSelectionBounds();
                         RedrawImage();
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
