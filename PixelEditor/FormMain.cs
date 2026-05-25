@@ -5594,23 +5594,34 @@ namespace PixelEditor
                                                     isResizingShapeStarted = false;
                                                     path.CornerHandleIndex = -1;
 
-                                                    if (shiftPressed)
+                                                    var clickedPoint = segment.InputPoints[i];
+                                                    var newList = shiftPressed ? [.. path.ActiveHandleIndicies] : new List<int>();
+
+                                                    int checkIndex = 0;
+                                                    foreach (var seg in path.PathSegments)
                                                     {
-                                                        if (path.ActiveHandleIndicies.Contains(pointIndex))
+                                                        for (int j = 0; j < seg.InputPoints.Count; j++)
                                                         {
-                                                            path.ActiveHandleIndicies = [.. path.ActiveHandleIndicies.Where(idx => idx != pointIndex)];
+                                                            if (checkIndex != pointIndex)
+                                                            {
+                                                                float dist = (float)Utility.VectorDistance(seg.InputPoints[j], clickedPoint);
+                                                                if (dist < 0.5f)
+                                                                    newList.Add(checkIndex);
+                                                            }
+                                                            checkIndex++;
                                                         }
-                                                        else
-                                                        {
-                                                            var newList = path.ActiveHandleIndicies.ToList();
-                                                            newList.Add(pointIndex);
-                                                            path.ActiveHandleIndicies = [.. newList];
-                                                        }
+                                                    }
+
+                                                    newList.Add(pointIndex);
+
+                                                    if (shiftPressed && path.ActiveHandleIndicies.Contains(pointIndex))
+                                                    {
+                                                        path.ActiveHandleIndicies = [.. path.ActiveHandleIndicies.Except(newList)];
                                                         path.ActiveHandleIndex = path.ActiveHandleIndicies.Length > 0 ? path.ActiveHandleIndicies[0] : -1;
                                                     }
                                                     else
                                                     {
-                                                        path.ActiveHandleIndicies = [pointIndex];
+                                                        path.ActiveHandleIndicies = [.. newList.Distinct()];
                                                         path.ActiveHandleIndex = pointIndex;
                                                     }
                                                     break;

@@ -115,9 +115,9 @@ namespace PixelEditor
             Image? image = new Bitmap(temp);
             using (Graphics g = Graphics.FromImage(image))
             {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.SmoothingMode = SmoothingMode.None;
+                g.InterpolationMode = InterpolationMode.Low;
+                g.PixelOffsetMode = PixelOffsetMode.None;
 
                 List<(RectangleF[] Handles, Matrix Transform)> handlesToDraw = [];
                 List<(RectangleF[] ControlHandles, Matrix Transform)> controlHandlesToDraw = [];
@@ -180,23 +180,25 @@ namespace PixelEditor
                         bezierLinesToDraw.Add((bezierLines, g.Transform.Clone()));
                 }
 
+                int penSize = Math.Max(Document.Width, Document.Height) < 800 ? 1 : 2;
+
                 using SolidBrush handleBrush = new(Color.LightBlue);
                 using SolidBrush controlHandleBrush = new(Color.White);
                 using SolidBrush activeHandleBrush = new(Color.Red);
                 using SolidBrush rotateBrush = new(Color.Gold);
                 using SolidBrush bezierHandleBrush = new(Color.LightGreen);
-                using Pen handlePen = new(Color.Red, 2);
-                using Pen bezierPen = new(Color.Green, 2);
-                using Pen rotationPen = new(Color.White, 1.5f);
-                using Pen bezierLinePen = new(Color.Gray, 1f) { DashStyle = DashStyle.Dash };
+                using Pen handlePen = new(Color.Red, penSize);
+                using Pen bezierPen = new(Color.Green, penSize);
+                using Pen rotationPen = new(Color.White, penSize);
+                using Pen bezierLinePen = new(Color.Gray, penSize) { DashStyle = DashStyle.Dash };
 
                 foreach (var (Lines, Transform) in bezierLinesToDraw)
                 {
                     Matrix original = g.Transform;
                     g.Transform = Transform;
-                    foreach (var line in Lines)
+                    foreach (var (Start, End) in Lines)
                     {
-                        g.DrawLine(bezierLinePen, line.Start, line.End);
+                        g.DrawLine(bezierLinePen, Start, End);
                     }
                     g.Transform = original;
                     Transform.Dispose();
@@ -284,13 +286,12 @@ namespace PixelEditor
         public static (RectangleF[] Handles, RectangleF[] ControlHandles, RectangleF[] ActiveHandles, RectangleF[] RotationHandles, RectangleF[] BezierHandles, (PointF Start, PointF End)[] BezierLines, PointF Center) DrawShape(BaseShape shape, Graphics g, bool isSelected = false)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            float scaledLineWidth = shape.LineWidth * Document.Zoom * Math.Max(Document.Width, Document.Height) / 1024;
-            using Pen pen = new(shape.LineColor, scaledLineWidth);
+            using Pen pen = new(shape.LineColor, shape.LineWidth);
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
 
-            int size = Math.Max(Document.Width, Document.Height) / 150;
-            size = Math.Clamp(size, 2, 20);
+            int size = Math.Max(Document.Width, Document.Height) < 400 ? 2 : Math.Max(Document.Width, Document.Height) < 800 ? 4 : Math.Max(Document.Width, Document.Height) < 1200 ? 6 : 12; // Math.Max(Document.Width, Document.Height) / 150;
+            //size = Math.Clamp(size, 2, 20);
             float offset = size / 2f;
 
             List<RectangleF> handles = [];
@@ -323,9 +324,11 @@ namespace PixelEditor
                 ));
             }
 
+            int penSize = Math.Max(Document.Width, Document.Height) < 800 ? 1 : 2;
+
             using SolidBrush controlHandleBrush = new(Color.White);
             using SolidBrush activeHandleBrush = new(Color.Red);
-            using Pen handlePen = new(Color.Red, 2);
+            using Pen handlePen = new(Color.Red, penSize);
 
             if (shape is ShapeRect rect)
             {
