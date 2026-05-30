@@ -2116,14 +2116,14 @@ namespace PixelEditor
                 PaintingEngine.SetBrush(paint);
                 canvas.Cursor = Cursors.Default;
                 Layer.LayerSelectionType = LayerSelectionType.Shape;
-                RedrawImage();
+                isDrawingShape = true;
             }
             else if (btnPointSelect.Checked)
             {
                 PaintingEngine.SetBrush(paint);
                 canvas.Cursor = Cursors.SizeAll;
                 Layer.LayerSelectionType = LayerSelectionType.Point;
-                RedrawImage();
+                isDrawingShape = true;
             }
             else if (btnFiller.Checked)
             {
@@ -2861,7 +2861,7 @@ namespace PixelEditor
                     Shapes = shapes,
                 };
                 layersControl.InsertLayer(0, layer);
-                RedrawImage();
+                isDrawingShape = true;
             }
         }
 
@@ -3469,7 +3469,7 @@ namespace PixelEditor
                     selectedLayer.X = 0;
                     selectedLayer.Y = 0;
                     UpdateControls();
-                    RedrawImage();
+                    isDrawingShape = true;
 
                     HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                 }
@@ -4340,7 +4340,7 @@ namespace PixelEditor
                             btnRectFillColorShape.BackColor = Color.FromArgb(255, r.FillColor.R, r.FillColor.G, r.FillColor.B);
                             fillRectOpacityNum.Value = (decimal)((r.FillColor.A / 255.0) * (double)fillRectOpacityNum.Maximum);
 
-                            rectLineSizeTrack.Value = (int)r.LineWidth;
+                            rectLineSizeTrack.Value = (int)Math.Ceiling(r.LineWidth);
                             cboRectLinePattern.SelectedItem = r.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapeEllipse el)
@@ -4357,7 +4357,7 @@ namespace PixelEditor
                             btnEllipseFillColorShape.BackColor = Color.FromArgb(255, el.FillColor.R, el.FillColor.G, el.FillColor.B);
                             fillEllipseOpacityNum.Value = (decimal)((el.FillColor.A / 255.0) * (double)fillEllipseOpacityNum.Maximum);
 
-                            ellipseLineSizeTrack.Value = (int)el.LineWidth;
+                            ellipseLineSizeTrack.Value = (int)Math.Ceiling(el.LineWidth);
                             cboEllipseLinePattern.SelectedItem = el.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapePolygon pg)
@@ -4374,7 +4374,7 @@ namespace PixelEditor
                             btnPolygonFillColorShape.BackColor = Color.FromArgb(255, pg.FillColor.R, pg.FillColor.G, pg.FillColor.B);
                             fillPolygonOpacityNum.Value = (decimal)((pg.FillColor.A / 255.0) * (double)fillPolygonOpacityNum.Maximum);
 
-                            polygonLineSizeTrack.Value = (int)pg.LineWidth;
+                            polygonLineSizeTrack.Value = (int)Math.Ceiling(pg.LineWidth);
                             cboPolygonLinePattern.SelectedItem = pg.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapeText t)
@@ -4407,7 +4407,7 @@ namespace PixelEditor
 
                             btnPathFillColorShape.BackColor = Color.FromArgb(255, path.FillColor.R, path.FillColor.G, path.FillColor.B);
                             fillPathOpacityNum.Value = (decimal)((path.FillColor.A / 255.0) * (double)fillPathOpacityNum.Maximum);
-                            pathLineSizeTrack.Value = (int)path.LineWidth;
+                            pathLineSizeTrack.Value = (int)Math.Ceiling(path.LineWidth);
                             cboPathLinePattern.SelectedItem = path.DashStyle.ToString();
                         }
                     }
@@ -5770,7 +5770,7 @@ namespace PixelEditor
                         else if (aspectRatio < containerAspectRatio)
                             scale = (float)ManipulatorGeneral.Screen.Height / canvas.Height;
 
-                        brushPixelSize = 2 * scale * (float)brush_size.Value / brush_size.Maximum;
+                        brushPixelSize = 2 * scale * brush_size.Value / brush_size.Maximum;
                         currentOpacity = (float)brush_opacity.Value / brush_opacity.Maximum;
 
                         PaintingEngine.BeginStroke();

@@ -11,9 +11,10 @@
             Height = 0.0f;
             FontFamily = "Arial";
             FontSize = 12.0f;
+            MeasurementUnit = "px";
         }
 
-        public ShapeText(string content, float x, float y, float width, float height, string fontFamily, float fontSize)
+        public ShapeText(string content, float x, float y, float width, float height, string fontFamily, float fontSize, string measurementUnit)
         {
             Content = content;
             X = x;
@@ -22,14 +23,17 @@
             Height = height;
             FontFamily = fontFamily;
             FontSize = fontSize;
+            MeasurementUnit = measurementUnit;
         }
 
         public string Content { get; set; } = string.Empty;
+        public string MeasurementUnit { get; set; } = "px";
         public float X { get; set; } = 0.0f;
         public float Y { get; set; } = 0.0f;
         public float Width { get; set; } = 0.0f;
         public float Height { get; set; } = 0.0f;
         public float FontSize { get; set; } = 12.0f;
+        public float TransformScale { get; set; } = 1f;
         public bool IsBold { get; internal set; } = false;
         public bool IsItalic { get; internal set; } = false;
         public string FontFamily { get; set; } = "Arial";

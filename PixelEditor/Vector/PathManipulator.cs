@@ -500,32 +500,56 @@ namespace PixelEditor.Vector
 
         private static bool[,] CreateTextMask(ShapeText text)
         {
-            using Font font = Layer.CreateScaledFont(text);
+            if (text.Width <= 0 || text.Height <= 0 || string.IsNullOrEmpty(text.Content))
+                return new bool[1, 1];
 
-            using Bitmap measureBmp = new(1, 1);
-            using Graphics measureG = Graphics.FromImage(measureBmp);
-            SizeF size = measureG.MeasureString(text.Content, font);
-
-            int width = Math.Max(1, (int)Math.Ceiling(size.Width));
-            int height = Math.Max(1, (int)Math.Ceiling(size.Height));
+            int width = Math.Max(1, (int)Math.Ceiling(text.Width));
+            int height = Math.Max(1, (int)Math.Ceiling(text.Height));
 
             using Bitmap bmp = new(width, height, PixelFormat.Format32bppArgb);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.Transparent);
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                using SolidBrush brush = new(Color.Black);
+                using GraphicsPath textPath = new();
+                FontStyle style = Layer.GetFontStyle(text);
 
-                float centerX = width / 2f;
-                float centerY = height / 2f;
+                textPath.AddString(
+                    text.Content,
+                    new FontFamily(text.FontFamily),
+                    (int)style,
+                    72f,
+                    new PointF(0, 0),
+                    StringFormat.GenericDefault
+                );
 
-                g.TranslateTransform(centerX, centerY);
-                g.RotateTransform(text.Rotation);
-                g.TranslateTransform(-centerX, -centerY);
+                RectangleF textBounds = textPath.GetBounds();
 
-                g.DrawString(text.Content, font, brush, 0, 0);
+                if (textBounds.Width > 0 && textBounds.Height > 0)
+                {
+                    PointF[] destPoints =
+                    [
+                        new PointF(0, 0),
+                        new PointF(width, 0),
+                        new PointF(0, height)
+                    ];
+
+                    using (Matrix stretchMatrix = new(textBounds, destPoints))
+                    {
+                        textPath.Transform(stretchMatrix);
+                    }
+
+                    float centerX = width / 2f;
+                    float centerY = height / 2f;
+
+                    g.TranslateTransform(centerX, centerY);
+                    g.RotateTransform(text.Rotation);
+                    g.TranslateTransform(-centerX, -centerY);
+
+                    using SolidBrush brush = new(Color.Black);
+                    g.FillPath(brush, textPath);
+                }
             }
 
             bool[,] mask = new bool[width, height];

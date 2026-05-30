@@ -18,8 +18,9 @@ namespace PixelEditor
                 new XAttribute("xmlns", SvgNs.NamespaceName)
             );
 
-            foreach (var layer in layers)
+            for (int n = layers.Count - 1; n >= 0; n--)
             {
+                var layer = layers[n];
                 string visibility = layer.IsVisible ? "inline" : "none";
                 XElement group = new(SvgNs + "g",
                     new XAttribute("id", layer.Name),

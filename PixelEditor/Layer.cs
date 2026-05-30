@@ -290,8 +290,7 @@ namespace PixelEditor
             using SolidBrush brush = new(shape.FillColor);
             pen.DashStyle = shape.DashStyle;
 
-            int size = Math.Max(Document.Width, Document.Height) < 400 ? 2 : Math.Max(Document.Width, Document.Height) < 800 ? 4 : Math.Max(Document.Width, Document.Height) < 1200 ? 6 : 12; // Math.Max(Document.Width, Document.Height) / 150;
-            //size = Math.Clamp(size, 2, 20);
+            int size = Math.Max(Document.Width, Document.Height) < 400 ? 2 : Math.Max(Document.Width, Document.Height) < 800 ? 4 : Math.Max(Document.Width, Document.Height) < 1200 ? 6 : 12;
             float offset = size / 2f;
 
             List<RectangleF> handles = [];
@@ -431,11 +430,82 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                Matrix originalTransform = g.Transform;
-                using Font font = CreateScaledFont(text);
-                ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
-                g.DrawString(text.Content, font, brush, text.X, text.Y);
-                g.Transform = originalTransform;
+                if (text.Width > 0 && text.Height > 0 && !string.IsNullOrEmpty(text.Content))
+                {
+                    Console.WriteLine($"=== DrawShape Text Debug ===");
+                    Console.WriteLine($"Content: '{text.Content}'");
+                    Console.WriteLine($"Position: ({text.X}, {text.Y})");
+                    Console.WriteLine($"Size: {text.Width} x {text.Height}");
+                    Console.WriteLine($"FontSize: {text.FontSize}");
+                    Console.WriteLine($"TransformScale: {text.TransformScale}");
+                    Console.WriteLine($"Rotation: {text.Rotation}");
+                    Console.WriteLine($"Measurement Unit: {text.MeasurementUnit}");
+                    Console.WriteLine($"============================");
+
+                    Matrix originalTransform = g.Transform;
+                    ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
+
+                    RectangleF layoutRect = new(text.X, text.Y, text.Width, text.Height);
+
+                    using (GraphicsPath textPath = new())
+                    {
+                        FontStyle style = GetFontStyle(text);
+
+                        float renderFontSize = text.FontSize;
+
+                        using (Font font = new (text.FontFamily, renderFontSize, style))
+                        {
+                            using (GraphicsPath measurePath = new())
+                            {
+                                measurePath.AddString(text.Content, font.FontFamily, (int)font.Style,
+                                                      font.SizeInPoints, new PointF(0, 0),
+                                                      StringFormat.GenericDefault);
+                                RectangleF measureBounds = measurePath.GetBounds();
+                                Console.WriteLine($"MeasureBounds at {renderFontSize}pt: X={measureBounds.X}, Y={measureBounds.Y}, W={measureBounds.Width}, H={measureBounds.Height}");
+                            }
+
+                            textPath.AddString(
+                                text.Content,
+                                font.FontFamily,
+                                (int)font.Style,
+                                font.SizeInPoints,
+                                new PointF(0, 0),
+                                StringFormat.GenericDefault
+                            );
+                        }
+
+                        RectangleF textBounds = textPath.GetBounds();
+
+                        Console.WriteLine($"=== TextBounds Debug ===");
+                        Console.WriteLine($"Content: '{text.Content}'");
+                        Console.WriteLine($"Font size: {renderFontSize}pt");
+                        Console.WriteLine($"Font family: {text.FontFamily}");
+                        Console.WriteLine($"TextBounds: X={textBounds.X}, Y={textBounds.Y}, W={textBounds.Width}, H={textBounds.Height}");
+                        Console.WriteLine($"Target rect: X={text.X}, Y={text.Y}, W={text.Width}, H={text.Height}");
+                        Console.WriteLine($"ScaleX needed: {text.Width / textBounds.Width}");
+                        Console.WriteLine($"ScaleY needed: {text.Height / textBounds.Height}");
+                        Console.WriteLine($"Graphics DPI: {g.DpiX}, {g.DpiY}");
+                        Console.WriteLine($"=========================");
+
+                        if (textBounds.Width > 0 && textBounds.Height > 0)
+                        {
+                            PointF[] destPoints =
+                            [
+                                new PointF(layoutRect.Left, layoutRect.Top),
+                                new PointF(layoutRect.Right, layoutRect.Top),
+                                new PointF(layoutRect.Left, layoutRect.Bottom)
+                            ];
+
+                            using Matrix stretchMatrix = new(textBounds, destPoints);
+                            textPath.Transform(stretchMatrix);
+                        }
+
+                        g.FillPath(brush, textPath);
+                        g.DrawPath(pen, textPath);
+                    }
+
+                    g.Transform = originalTransform;
+                }
             }
 
             return ([.. handles], [.. controlHandles], [.. activeHandles], [.. rotationHandles], [.. bezierHandles], [.. bezierLines], center);
@@ -564,32 +634,7 @@ namespace PixelEditor
             return gPath;
         }
 
-        public static Font CreateScaledFont(ShapeText text)
-        {
-            using Font tempFont = new(text.FontFamily, text.FontSize, GetFontStyle(text));
-
-            using StringFormat stringFormat = new()
-            {
-                Alignment = StringAlignment.Near,
-                LineAlignment = StringAlignment.Near,
-                Trimming = StringTrimming.None
-            };
-
-            using Graphics g = Graphics.FromImage(new Bitmap(1, 1));
-
-            SizeF textSize = g.MeasureString(text.Content, tempFont, new SizeF(text.Width, text.Height), stringFormat);
-
-            float widthScale = text.Width > 0 ? text.Width / textSize.Width : 1f;
-            float heightScale = text.Height > 0 ? text.Height / textSize.Height : 1f;
-
-            float scale = Math.Min(widthScale, heightScale);
-
-            float scaledFontSize = Math.Max(4, Math.Min(text.FontSize * scale, 4000));
-
-            return new Font(text.FontFamily, scaledFontSize, GetFontStyle(text));
-        }
-
-        private static FontStyle GetFontStyle(ShapeText text)
+        public static FontStyle GetFontStyle(ShapeText text)
         {
             FontStyle style = FontStyle.Regular;
             if (text.IsBold) style |= FontStyle.Bold;
@@ -699,14 +744,17 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize)
+                duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize, text.MeasurementUnit)
                 {
                     IsBold = text.IsBold,
                     IsItalic = text.IsItalic,
                     LineColor = text.LineColor,
                     LineWidth = text.LineWidth,
                     FillColor = text.FillColor,
-                    DashStyle = text.DashStyle
+                    DashStyle = text.DashStyle,
+                    FontSize = text.FontSize,
+                    FontFamily = text.FontFamily,
+                    MeasurementUnit = text.MeasurementUnit
                 };
             }
             else if (shape is ShapePath path)

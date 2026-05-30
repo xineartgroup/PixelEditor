@@ -1,4 +1,5 @@
 ﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.Xml.Linq;
 
@@ -693,51 +694,227 @@ namespace PixelEditor
 
             if (string.IsNullOrEmpty(content)) return null;
 
-            float rawX;
-            float rawY;
+            float x = 0f, y = 0f, width = 0f, height = 0f;
+            bool hasDefinedBounds = false;
+            float fontSize = 12f;
+            string fontFamily = "Calibri";
+            bool isBold = false;
+            bool isItalic = false;
 
-            if (tspan != null)
+            string style = el.Attribute("style")?.Value ?? "";
+
+            int fontSizeIndex = style.IndexOf("font-size:");
+            if (fontSizeIndex != -1)
             {
-                rawX = GetD(tspan, "x");
-                rawY = GetD(tspan, "y");
+                int start = fontSizeIndex + 10;
+                int end = style.IndexOf(';', start);
+                if (end == -1) end = style.Length;
+                string fontSizeStr = style[start..end].Trim();
+                fontSize = ParseDimension(fontSizeStr);
             }
-            else
+
+            int fontFamilyIdx = style.IndexOf("font-family:");
+            if (fontFamilyIdx != -1)
             {
-                rawX = GetD(el, "x");
-                rawY = GetD(el, "y");
+                int start = fontFamilyIdx + 12;
+                int end = style.IndexOf(';', start);
+                if (end == -1) end = style.Length;
+                fontFamily = style[start..end].Trim().Replace("'", "").Replace("\"", "");
+            }
+
+            if (style.Contains("font-weight: bold") || style.Contains("font-weight:700") ||
+                style.Contains("font-weight:800") || style.Contains("font-weight:900"))
+            {
+                isBold = true;
+            }
+
+            if (style.Contains("font-style: italic"))
+            {
+                isItalic = true;
+            }
+
+            // Also check direct attributes (they override style)
+            var fontSizeAttr = el.Attribute("font-size");
+            if (fontSizeAttr != null)
+            {
+                fontSize = ParseDimension(fontSizeAttr.Value);
+            }
+
+            var fontFamilyAttr = el.Attribute("font-family");
+            if (fontFamilyAttr != null)
+            {
+                fontFamily = fontFamilyAttr.Value;
+            }
+
+            var fontWeightAttr = el.Attribute("font-weight");
+            if (fontWeightAttr != null)
+            {
+                string fw = fontWeightAttr.Value;
+                isBold = fw == "bold" || fw == "700" || fw == "800" || fw == "900";
+            }
+
+            var fontStyleAttr = el.Attribute("font-style");
+            if (fontStyleAttr != null)
+            {
+                isItalic = fontStyleAttr.Value == "italic";
+            }
+
+            int shapeInsideIdx = style.IndexOf("shape-inside");
+            if (shapeInsideIdx != -1)
+            {
+                int urlStart = style.IndexOf("url(", shapeInsideIdx);
+                if (urlStart != -1)
+                {
+                    int hashStart = style.IndexOf('#', urlStart);
+                    int parenEnd = style.IndexOf(')', urlStart);
+
+                    if (hashStart != -1 && parenEnd != -1 && hashStart < parenEnd)
+                    {
+                        string rectId = style.Substring(hashStart + 1, parenEnd - hashStart - 1).Trim();
+                        XElement? defsRect = el.Document?.Descendants(el.Name.Namespace + "rect")
+                            .FirstOrDefault(r => r.Attribute("id")?.Value == rectId);
+
+                        if (defsRect != null)
+                        {
+                            x = GetD(defsRect, "x");
+                            y = GetD(defsRect, "y");
+                            width = GetD(defsRect, "width");
+                            height = GetD(defsRect, "height");
+                            hasDefinedBounds = true;
+                        }
+                    }
+                }
+            }
+
+            // Get position from parent rect or element itself
+            if (!hasDefinedBounds)
+            {
+                var parentRect = el.Parent?.Element(el.Name.Namespace + "rect");
+                if (parentRect != null)
+                {
+                    x = GetD(parentRect, "x");
+                    y = GetD(parentRect, "y");
+                    width = GetD(parentRect, "width");
+                    height = GetD(parentRect, "height");
+                    hasDefinedBounds = true;
+                }
+                else
+                {
+                    XElement sourceEl = tspan ?? el;
+                    x = GetD(sourceEl, "x");
+                    y = GetD(sourceEl, "y");
+                }
+            }
+
+            string dominantBaseline = el.Attribute("dominant-baseline")?.Value ?? "";
+            if (string.IsNullOrEmpty(dominantBaseline) && style.Contains("dominant-baseline:"))
+            {
+                int dbStart = style.IndexOf("dominant-baseline:");
+                if (dbStart != -1)
+                {
+                    int dbValStart = dbStart + 18;
+                    int dbEnd = style.IndexOf(';', dbValStart);
+                    if (dbEnd == -1) dbEnd = style.Length;
+                    dominantBaseline = style.Substring(dbValStart, dbEnd - dbValStart).Trim();
+                }
             }
 
             ApplyFullMatrixTransform(el.Attribute("transform")?.Value ?? "",
                 out float matrixScaleX, out float matrixScaleY, out float matrixOffsetX, out float matrixOffsetY);
 
-            float matrixX = (rawX * matrixScaleX) + matrixOffsetX;
-            float matrixY = (rawY * matrixScaleY) + matrixOffsetY;
+            float geoX = (x * matrixScaleX) + matrixOffsetX;
+            float geoY = (y * matrixScaleY) + matrixOffsetY;
+            float geoWidth = width * matrixScaleX;
+            float geoHeight = height * matrixScaleY;
+
+            float innerX, innerY, innerWidth, innerHeight;
+
+            using (GraphicsPath path = new())
+            {
+                FontStyle fontStyle = FontStyle.Regular;
+                if (isBold) fontStyle |= FontStyle.Bold;
+                if (isItalic) fontStyle |= FontStyle.Italic;
+
+                FontFamily family;
+                try
+                {
+                    family = new FontFamily(fontFamily);
+                }
+                catch
+                {
+                    family = FontFamily.GenericSansSerif;
+                }
+
+                path.AddString(content, family, (int)fontStyle, fontSize, new PointF(0, 0), StringFormat.GenericDefault);
+                RectangleF rawGlyphBounds = path.GetBounds();
+
+                float scaledGlyphWidth = rawGlyphBounds.Width * matrixScaleX;
+                float scaledGlyphHeight = rawGlyphBounds.Height * matrixScaleY;
+
+                if (hasDefinedBounds && geoWidth > 0 && geoHeight > 0)
+                {
+                    float marginY = (geoHeight - scaledGlyphHeight) / 2f;
+                    float marginX = fontSize / 6f;
+
+                    innerX = geoX + marginX;
+                    innerY = geoY + marginY;
+                }
+                else
+                {
+                    innerX = geoX + (rawGlyphBounds.X * matrixScaleX);
+                    innerY = geoY + (rawGlyphBounds.Y * matrixScaleY);
+                }
+
+                innerWidth = scaledGlyphWidth;
+                innerHeight = scaledGlyphHeight;
+            }
+
+            // Adjust Y position based on dominant-baseline
+            if (!string.IsNullOrEmpty(dominantBaseline))
+            {
+                switch (dominantBaseline.ToLower())
+                {
+                    case "hanging":
+                        innerY -= fontSize * 0.3f * matrixScaleY; // Hanging baseline: Y coordinate is at the top of the text
+                        break;
+                    case "middle":
+                        innerY += fontSize * 0.15f * matrixScaleY;
+                        break;
+                    case "central":
+                        innerY += fontSize * 0.1f * matrixScaleY;
+                        break;
+                }
+            }
+
+            string unit = "px";
+            XElement? svgEl = el.Document?.Root;
+            if (svgEl != null)
+            {
+                string svgWidthAttr = svgEl.Attribute("width")?.Value ?? "";
+                if (svgWidthAttr.EndsWith("mm")) unit = "mm";
+                else if (svgWidthAttr.EndsWith("cm")) unit = "cm";
+                else if (svgWidthAttr.EndsWith("in")) unit = "in";
+                else if (svgWidthAttr.EndsWith("pt")) unit = "pt";
+                else if (svgWidthAttr.EndsWith("pc")) unit = "pc";
+            }
 
             var text = new ShapeText
             {
                 Content = content,
-                X = matrixX,
-                Y = matrixY,
-                FontSize = 12
+                MeasurementUnit = unit,
+                X = innerX,
+                Y = innerY,
+                Width = innerWidth,
+                Height = innerHeight,
+                FontSize = fontSize,
+                TransformScale = Math.Min(matrixScaleX, matrixScaleY),
+                FontFamily = fontFamily,
+                IsBold = isBold,
+                IsItalic = isItalic
             };
 
             ApplyStyles(el, text, gradients);
-
-            if (tspan != null)
-            {
-                ApplyStyles(tspan, text, gradients);
-
-                var nestedTspan = tspan.Element(tspan.Name.Namespace + "tspan");
-                if (nestedTspan != null)
-                {
-                    ApplyStyles(nestedTspan, text, gradients);
-                }
-            }
-
-            if (matrixScaleY > 0)
-            {
-                text.FontSize *= (float)matrixScaleY;
-            }
+            text.FontSize *= Math.Min(matrixScaleX, matrixScaleY);
 
             return text;
         }
@@ -748,67 +925,57 @@ namespace PixelEditor
             scaleY = 1.0f;
             offsetX = 0;
             offsetY = 0;
+
             if (string.IsNullOrWhiteSpace(transform)) return;
 
-            if (transform.Contains("matrix"))
+            // Handle multiple transform functions (e.g., "translate(10,20) scale(2)")
+            var transformParts = transform.Split([')'], StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var part in transformParts)
             {
-                try
+                if (!part.Contains('(')) continue;
+
+                string function = part[..part.IndexOf('(')].Trim();
+                string content = part[(part.IndexOf('(') + 1)..];
+                string[] values = content.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+
+                switch (function.ToLower())
                 {
-                    int start = transform.IndexOf('(') + 1;
-                    int end = transform.IndexOf(')');
-                    string content = transform[start..end];
-                    string[] parts = content.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 6)
-                    {
-                        float.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out scaleX);
-                        float.TryParse(parts[3], NumberStyles.Any, CultureInfo.InvariantCulture, out scaleY);
-                        float.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out offsetX);
-                        float.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out offsetY);
-                    }
+                    case "matrix":
+                        if (values.Length >= 6)
+                        {
+                            float a = float.Parse(values[0], CultureInfo.InvariantCulture);
+                            float b = float.Parse(values[1], CultureInfo.InvariantCulture);
+                            float c = float.Parse(values[2], CultureInfo.InvariantCulture);
+                            float d = float.Parse(values[3], CultureInfo.InvariantCulture);
+                            float e = float.Parse(values[4], CultureInfo.InvariantCulture);
+                            float f = float.Parse(values[5], CultureInfo.InvariantCulture);
+
+                            // For simple scale+translate matrices
+                            scaleX *= a;
+                            scaleY *= d;
+                            offsetX += e;
+                            offsetY += f;
+                        }
+                        break;
+
+                    case "translate":
+                        float tx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 0;
+                        float ty = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : 0;
+                        offsetX += tx;
+                        offsetY += ty;
+                        break;
+
+                    case "scale":
+                        float sx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 1;
+                        float sy = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : sx;
+                        scaleX *= sx;
+                        scaleY *= sy;
+                        // Scale existing offsets too
+                        offsetX *= sx;
+                        offsetY *= sy;
+                        break;
                 }
-                catch { }
-            }
-            else if (transform.Contains("scale"))
-            {
-                try
-                {
-                    int start = transform.IndexOf('(') + 1;
-                    int end = transform.IndexOf(')');
-                    string content = transform[start..end];
-                    string[] parts = content.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 2)
-                    {
-                        float.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out scaleX);
-                        float.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out scaleY);
-                    }
-                    else if (parts.Length == 1)
-                    {
-                        float.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out scaleX);
-                        scaleY = scaleX; // If only one value, use it for both X and Y
-                    }
-                }
-                catch { }
-            }
-            else if (transform.Contains("translate"))
-            {
-                try
-                {
-                    int start = transform.IndexOf('(') + 1;
-                    int end = transform.IndexOf(')');
-                    string content = transform[start..end];
-                    string[] parts = content.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 2)
-                    {
-                        float.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out offsetX);
-                        float.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out offsetY);
-                    }
-                    else if (parts.Length == 1)
-                    {
-                        float.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out offsetX);
-                        offsetY = 0; // For translate, if only one value, Y is 0
-                    }
-                }
-                catch { }
             }
         }
 
