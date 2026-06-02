@@ -152,7 +152,7 @@ namespace PixelEditor
                 if (shape != null)
                 {
                     ApplyStyles(el, shape, gradients);
-                    ApplyGroupTransforms(el, shape);
+                    ApplyAllTransforms(el, shape);
                     shapes.Add(shape);
                 }
             }
@@ -171,14 +171,14 @@ namespace PixelEditor
             return false;
         }
 
-        private static void ApplyGroupTransforms(XElement element, BaseShape shape)
+        private static void ApplyAllTransforms(XElement element, BaseShape shape)
         {
             var transforms = new List<(float scaleX, float scaleY, float offsetX, float offsetY)>();
 
-            var current = element.Parent;
+            var current = element;
             while (current != null)
             {
-                if (current.Name.LocalName == "g")
+                if (shape is not ShapeText)
                 {
                     var transformAttr = current.Attribute("transform")?.Value;
                     if (!string.IsNullOrEmpty(transformAttr))
@@ -271,7 +271,7 @@ namespace PixelEditor
                 char cmdType = char.ToUpper(currentCmd);
                 bool isRel = char.IsLower(currentCmd);
                 var p = new PathSegment { PathType = cmdType.ToString() };
-                p.InputPoints.Add(new PointF((float)cx, (float)cy));
+                //p.InputPoints.Add(new PointF((float)cx, (float)cy));
 
                 switch (cmdType)
                 {
@@ -287,6 +287,7 @@ namespace PixelEditor
                         cx = isRel ? cx + ParseD(tokens[i++]) : ParseD(tokens[i++]);
                         cy = isRel ? cy + ParseD(tokens[i++]) : ParseD(tokens[i++]);
                         p.InputPoints.Add(new PointF((float)cx, (float)cy));
+                        currentCmd = isRel ? 'l' : 'L';
                         break;
 
                     case 'H':
@@ -362,6 +363,7 @@ namespace PixelEditor
                         cx = startX; cy = startY;
                         p.InputPoints.Add(new PointF((float)cx, (float)cy));
                         currentCmd = ' ';
+
                         break;
 
                     default:
@@ -371,11 +373,15 @@ namespace PixelEditor
 
                 shape.PathSegments.Add(p);
 
-                if (i < tokens.Count && !char.IsLetter(tokens[i][0]))
-                {
-                    if (cmdType == 'Z') i++;
-                }
+                //if (i < tokens.Count && !char.IsLetter(tokens[i][0]))
+                //{
+                //    if (cmdType == 'Z') i++;
+                //}
             }
+            //foreach (var seg in shape.PathSegments)
+            //{
+            //    Console.WriteLine($"Segment {seg}.");
+            //}
             return shape;
         }
 

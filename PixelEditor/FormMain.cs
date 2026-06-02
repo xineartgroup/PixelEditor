@@ -2859,13 +2859,13 @@ namespace PixelEditor
                 {
                     LayerType = LayerType.Vector,
                     Shapes = shapes,
-                    Image = ManipulatorGeneral.GetImage(Color.Transparent, width, height),
                 };
                 layersControl.InsertLayer(0, layer);
-                if (layersControl.GetLayers().Count == 1)
+                if (layersControl.GetLayers().Count == 1 || Document.Width < width || Document.Height < height)
                 {
                     Document.Width = width;
                     Document.Height = height;
+                    ManipulatorGeneral.UpdateBuffers();
                 }
                 isDrawingShape = true;
             }

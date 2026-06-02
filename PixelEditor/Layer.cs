@@ -306,9 +306,9 @@ namespace PixelEditor
                 RectangleF bounds = GetShapeBounds(shape, new Matrix());
                 handles.AddRange([
                     new(bounds.X - offset, bounds.Y - offset, size, size),
-            new(bounds.X + bounds.Width - offset, bounds.Y - offset, size, size),
-            new(bounds.X - offset, bounds.Y + bounds.Height - offset, size, size),
-            new(bounds.X + bounds.Width - offset, bounds.Y + bounds.Height - offset, size, size)
+                    new(bounds.X + bounds.Width - offset, bounds.Y - offset, size, size),
+                    new(bounds.X - offset, bounds.Y + bounds.Height - offset, size, size),
+                    new(bounds.X + bounds.Width - offset, bounds.Y + bounds.Height - offset, size, size)
                 ]);
 
                 center = new PointF(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
@@ -347,8 +347,15 @@ namespace PixelEditor
             }
             else if (shape is ShapePolygon polygon && polygon.Points.Count > 1)
             {
-                if (polygon.IsClosed) { g.FillPolygon(brush, polygon.Points.ToArray()); g.DrawPolygon(pen, polygon.Points.ToArray()); }
-                else { g.DrawLines(pen, polygon.Points.ToArray()); }
+                if (polygon.IsClosed)
+                {
+                    g.FillPolygon(brush, polygon.Points.ToArray());
+                    g.DrawPolygon(pen, polygon.Points.ToArray());
+                }
+                else
+                {
+                    g.DrawLines(pen, polygon.Points.ToArray());
+                }
 
                 if (isSelected && LayerSelectionType == LayerSelectionType.Point)
                 {
@@ -476,16 +483,16 @@ namespace PixelEditor
 
                         RectangleF textBounds = textPath.GetBounds();
 
-                        Console.WriteLine($"=== TextBounds Debug ===");
-                        Console.WriteLine($"Content: '{text.Content}'");
-                        Console.WriteLine($"Font size: {renderFontSize}pt");
-                        Console.WriteLine($"Font family: {text.FontFamily}");
-                        Console.WriteLine($"TextBounds: X={textBounds.X}, Y={textBounds.Y}, W={textBounds.Width}, H={textBounds.Height}");
-                        Console.WriteLine($"Target rect: X={text.X}, Y={text.Y}, W={text.Width}, H={text.Height}");
-                        Console.WriteLine($"ScaleX needed: {text.Width / textBounds.Width}");
-                        Console.WriteLine($"ScaleY needed: {text.Height / textBounds.Height}");
-                        Console.WriteLine($"Graphics DPI: {g.DpiX}, {g.DpiY}");
-                        Console.WriteLine($"=========================");
+                        //Console.WriteLine($"=== TextBounds Debug ===");
+                        //Console.WriteLine($"Content: '{text.Content}'");
+                        //Console.WriteLine($"Font size: {renderFontSize}pt");
+                        //Console.WriteLine($"Font family: {text.FontFamily}");
+                        //Console.WriteLine($"TextBounds: X={textBounds.X}, Y={textBounds.Y}, W={textBounds.Width}, H={textBounds.Height}");
+                        //Console.WriteLine($"Target rect: X={text.X}, Y={text.Y}, W={text.Width}, H={text.Height}");
+                        //Console.WriteLine($"ScaleX needed: {text.Width / textBounds.Width}");
+                        //Console.WriteLine($"ScaleY needed: {text.Height / textBounds.Height}");
+                        //Console.WriteLine($"Graphics DPI: {g.DpiX}, {g.DpiY}");
+                        //Console.WriteLine($"=========================");
 
                         if (textBounds.Width > 0 && textBounds.Height > 0)
                         {
