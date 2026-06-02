@@ -2854,13 +2854,19 @@ namespace PixelEditor
             };
             if ((openFileDialog1).ShowDialog() == DialogResult.OK)
             {
-                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out _, out _);
+                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out int width, out int height);
                 Layer layer = new($"Layer #{layersControl.GetLayers().Count + 1}", true)
                 {
                     LayerType = LayerType.Vector,
                     Shapes = shapes,
+                    Image = ManipulatorGeneral.GetImage(Color.Transparent, width, height),
                 };
                 layersControl.InsertLayer(0, layer);
+                if (layersControl.GetLayers().Count == 1)
+                {
+                    Document.Width = width;
+                    Document.Height = height;
+                }
                 isDrawingShape = true;
             }
         }
@@ -5979,7 +5985,8 @@ namespace PixelEditor
 
         private void PixelImage_MouseMove(object? sender, MouseEventArgs e)
         {
-            labelMousePosition.Text = $"({e.X}, {e.Y})";
+            Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
+            labelMousePosition.Text = $"({currentWorldPos.X}, {currentWorldPos.Y})";
             labelDocStatus.Text = $"Zoom: {Document.Zoom * 100:F1}% Offset {Document.ImageOffset}";
 
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -5988,7 +5995,6 @@ namespace PixelEditor
             {
                 if (selectedLayer != null)
                 {
-                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     if (selectedLayer.CurrentShape is ShapeRect rect)
@@ -6071,7 +6077,6 @@ namespace PixelEditor
             {
                 if (selectedLayer != null && selectedLayer.CurrentShape != null)
                 {
-                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     if (!isResizingShapeStarted)
@@ -6205,7 +6210,6 @@ namespace PixelEditor
                         shapes.Add(selectedLayer.CurrentShape);
                     }
 
-                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     float deltaX = localPos.X - dragOffset.X;
@@ -6273,7 +6277,6 @@ namespace PixelEditor
             {
                 if (selectedLayer?.CurrentShape != null)
                 {
-                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localPos = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     float currentAngle = (float)(Math.Atan2(localPos.Y - startPoint.Y, localPos.X - startPoint.X) * 180.0 / Math.PI);
@@ -6334,7 +6337,6 @@ namespace PixelEditor
 
                     float lazySmoothing = (float)brush_smoothness.Value / brush_smoothness.Maximum;
 
-                    Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
 
                     if (strokePoints.Count == 0)

@@ -15,8 +15,8 @@ namespace PixelEditor
             var doc = XDocument.Load(filePath);
             var root = doc.Root;
 
-            width = root != null ? (int)Math.Round(ParseDimension(root.Attribute("width")?.Value ?? "")) : 0;
-            height = root != null ? (int)Math.Round(ParseDimension(root.Attribute("height")?.Value ?? "")) : 0;
+            width = root != null ? (int)Math.Round(ParseDimension(root.Attribute("width")?.Value ?? "", true)) : 0;
+            height = root != null ? (int)Math.Round(ParseDimension(root.Attribute("height")?.Value ?? "", true)) : 0;
             var defs = root?.Element(root.Name.Namespace + "defs");
 
             var viewBox = root?.Attribute("viewBox")?.Value;
@@ -143,7 +143,7 @@ namespace PixelEditor
                 }
                 else if (localName == "text")
                 {
-                    shape = ParseTextElement(el, gradients);
+                    shape = ParseTextElement(el);
                 }
                 else if (localName == "g")
                 {
@@ -151,11 +151,7 @@ namespace PixelEditor
 
                 if (shape != null)
                 {
-                    // Text elements handle their own style application (including tspan overrides) in ParseTextElement
-                    if (shape is not ShapeText)
-                    {
-                        ApplyStyles(el, shape, gradients);
-                    }
+                    ApplyStyles(el, shape, gradients);
                     ApplyGroupTransforms(el, shape);
                     shapes.Add(shape);
                 }
@@ -522,26 +518,6 @@ namespace PixelEditor
                             s.Opacity = fo;
                         if (k == "stroke-opacity" && float.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out float so))
                             s.StrokeOpacity = so;
-
-                        if (s is ShapeText t)
-                        {
-                            if (k == "font-size")
-                            {
-                                t.FontSize = ParseDimension(v);
-                            }
-                            if (k == "font-family")
-                            {
-                                t.FontFamily = v.Replace("'", "").Replace("\"", "");
-                            }
-                            if (k == "font-weight" && (v == "bold" || v == "700" || v == "800" || v == "900"))
-                            {
-                                t.IsBold = true;
-                            }
-                            if (k == "font-style" && v == "italic")
-                            {
-                                t.IsItalic = true;
-                            }
-                        }
                     }
                 }
 
@@ -656,7 +632,7 @@ namespace PixelEditor
             return points;
         }
 
-        private static float ParseDimension(string v)
+        private static float ParseDimension(string v, bool ignoreFactor = false)
         {
             if (string.IsNullOrEmpty(v)) return 0;
             float factor = 1.0f;
@@ -679,15 +655,34 @@ namespace PixelEditor
             }
             else if (v.EndsWith("cm")) { factor = 37.795275591f; v = v[..^2]; }
             else if (v.EndsWith("pt")) { factor = 1.3333333333f; v = v[..^2]; }
+
+            if (ignoreFactor)
+            {
+                factor = 1.0f;
+            }
+
             return float.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out float res) ? res * factor : 0;
         }
 
-        private static ShapeText? ParseTextElement(XElement el, Dictionary<string, GradientInfo> gradients)
+        private static ShapeText? ParseTextElement(XElement el)
         {
-            string content = el.Value.Trim();
-            XElement? tspan = el.Element(el.Name.Namespace + "tspan");
+            // Find the deepest tspan that contains text
+            XElement? tspan = null;
+            XElement? current = el;
+            while (true)
+            {
+                var childTspan = current.Elements(current.Name.Namespace + "tspan").FirstOrDefault();
+                if (childTspan == null) break;
+                tspan = childTspan;
+                current = childTspan;
+            }
 
-            if (string.IsNullOrEmpty(content) && tspan != null)
+            string content = el.Value.Trim();
+            if (tspan != null && !string.IsNullOrEmpty(tspan.Value.Trim()))
+            {
+                content = tspan.Value.Trim();
+            }
+            else if (string.IsNullOrEmpty(content) && tspan != null)
             {
                 content = tspan.Value.Trim();
             }
@@ -697,11 +692,52 @@ namespace PixelEditor
             float x = 0f, y = 0f, width = 0f, height = 0f;
             bool hasDefinedBounds = false;
             float fontSize = 12f;
-            string fontFamily = "Calibri";
+            string fontFamily = "Arial";
             bool isBold = false;
             bool isItalic = false;
 
             string style = el.Attribute("style")?.Value ?? "";
+
+            // Check all tspan ancestors for style overrides (innermost takes precedence)
+            var tspanChain = new List<XElement>();
+            current = tspan;
+            while (current != null && current != el)
+            {
+                tspanChain.Insert(0, current);
+                current = current.Parent;
+            }
+
+            foreach (var tspanElement in tspanChain)
+            {
+                string tspanStyle = tspanElement.Attribute("style")?.Value ?? "";
+                if (!string.IsNullOrEmpty(tspanStyle))
+                {
+                    // Merge styles - each tspan overrides previous
+                    var styleParts = style.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    var tspanParts = tspanStyle.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var tspanPart in tspanParts)
+                    {
+                        var kv = tspanPart.Split(':', 2);
+                        if (kv.Length == 2)
+                        {
+                            string key = kv[0].Trim();
+                            // Remove existing style with same key
+                            for (int i = 0; i < styleParts.Count; i++)
+                            {
+                                if (styleParts[i].TrimStart().StartsWith(key + ":"))
+                                {
+                                    styleParts.RemoveAt(i);
+                                    break;
+                                }
+                            }
+                            // Add tspan style
+                            styleParts.Add(tspanPart);
+                        }
+                    }
+                    style = string.Join(";", styleParts);
+                }
+            }
 
             int fontSizeIndex = style.IndexOf("font-size:");
             if (fontSizeIndex != -1)
@@ -733,31 +769,45 @@ namespace PixelEditor
                 isItalic = true;
             }
 
-            // Also check direct attributes (they override style)
+            // Also check direct attributes (they override style) - check innermost tspan first
             var fontSizeAttr = el.Attribute("font-size");
+            var fontFamilyAttr = el.Attribute("font-family");
+            var fontWeightAttr = el.Attribute("font-weight");
+            var fontStyleAttr = el.Attribute("font-style");
+
+            // Walk from innermost tspan outward
+            foreach (var tspanElement in tspanChain.AsEnumerable().Reverse())
+            {
+                fontSizeAttr ??= tspanElement.Attribute("font-size");
+                fontFamilyAttr ??= tspanElement.Attribute("font-family");
+                fontWeightAttr ??= tspanElement.Attribute("font-weight");
+                fontStyleAttr ??= tspanElement.Attribute("font-style");
+            }
+
             if (fontSizeAttr != null)
             {
                 fontSize = ParseDimension(fontSizeAttr.Value);
             }
 
-            var fontFamilyAttr = el.Attribute("font-family");
             if (fontFamilyAttr != null)
             {
                 fontFamily = fontFamilyAttr.Value;
             }
 
-            var fontWeightAttr = el.Attribute("font-weight");
             if (fontWeightAttr != null)
             {
                 string fw = fontWeightAttr.Value;
                 isBold = fw == "bold" || fw == "700" || fw == "800" || fw == "900";
             }
 
-            var fontStyleAttr = el.Attribute("font-style");
             if (fontStyleAttr != null)
             {
                 isItalic = fontStyleAttr.Value == "italic";
             }
+
+            XElement sourceEl = tspan ?? el;
+            float tspanX = GetD(sourceEl, "x");
+            float tspanY = GetD(sourceEl, "y");
 
             int shapeInsideIdx = style.IndexOf("shape-inside");
             if (shapeInsideIdx != -1)
@@ -786,8 +836,22 @@ namespace PixelEditor
                 }
             }
 
-            // Get position from parent rect or element itself
-            if (!hasDefinedBounds)
+            if (hasDefinedBounds)
+            {
+                XElement? coordEl = tspan;
+                while (coordEl != null && coordEl != el.Parent && coordEl.Attribute("x") == null && coordEl.Attribute("y") == null)
+                {
+                    coordEl = coordEl.Parent;
+                }
+
+                if (coordEl != null && (coordEl.Attribute("x") != null || coordEl.Attribute("y") != null))
+                {
+                    x = GetD(coordEl, "x");
+                    y = GetD(coordEl, "y");
+                    hasDefinedBounds = false;
+                }
+            }
+            else
             {
                 var parentRect = el.Parent?.Element(el.Name.Namespace + "rect");
                 if (parentRect != null)
@@ -800,7 +864,6 @@ namespace PixelEditor
                 }
                 else
                 {
-                    XElement sourceEl = tspan ?? el;
                     x = GetD(sourceEl, "x");
                     y = GetD(sourceEl, "y");
                 }
@@ -815,7 +878,7 @@ namespace PixelEditor
                     int dbValStart = dbStart + 18;
                     int dbEnd = style.IndexOf(';', dbValStart);
                     if (dbEnd == -1) dbEnd = style.Length;
-                    dominantBaseline = style.Substring(dbValStart, dbEnd - dbValStart).Trim();
+                    dominantBaseline = style[dbValStart..dbEnd].Trim();
                 }
             }
 
@@ -826,6 +889,8 @@ namespace PixelEditor
             float geoY = (y * matrixScaleY) + matrixOffsetY;
             float geoWidth = width * matrixScaleX;
             float geoHeight = height * matrixScaleY;
+
+            float globalTspanX = (tspanX * matrixScaleX) + matrixOffsetX;
 
             float innerX, innerY, innerWidth, innerHeight;
 
@@ -845,24 +910,36 @@ namespace PixelEditor
                     family = FontFamily.GenericSansSerif;
                 }
 
-                path.AddString(content, family, (int)fontStyle, fontSize, new PointF(0, 0), StringFormat.GenericDefault);
+                int emHeight = family.GetEmHeight(fontStyle);
+                int cellAscent = family.GetCellAscent(fontStyle);
+
+                path.AddString(content, family, (int)fontStyle, fontSize, new PointF(0, 0), StringFormat.GenericTypographic);
                 RectangleF rawGlyphBounds = path.GetBounds();
 
                 float scaledGlyphWidth = rawGlyphBounds.Width * matrixScaleX;
                 float scaledGlyphHeight = rawGlyphBounds.Height * matrixScaleY;
 
+                float marginY = 0f;
+                float marginX = 0f;
+
                 if (hasDefinedBounds && geoWidth > 0 && geoHeight > 0)
                 {
-                    float marginY = (geoHeight - scaledGlyphHeight) / 2f;
-                    float marginX = fontSize / 6f;
+                    marginX = globalTspanX - geoX;
+                    marginY = (geoHeight - scaledGlyphHeight);
 
                     innerX = geoX + marginX;
-                    innerY = geoY + marginY;
+                    innerY = geoY + marginY - scaledGlyphHeight;
                 }
                 else
                 {
-                    innerX = geoX + (rawGlyphBounds.X * matrixScaleX);
-                    innerY = geoY + (rawGlyphBounds.Y * matrixScaleY);
+                    marginX = rawGlyphBounds.X * matrixScaleX;
+                    //marginY = rawGlyphBounds.Y * matrixScaleY;
+
+                    float fontAscent = fontSize * cellAscent / emHeight;
+                    marginY = scaledGlyphHeight - (fontAscent * matrixScaleY) + (rawGlyphBounds.Y * matrixScaleY);
+
+                    innerX = geoX + marginX;
+                    innerY = geoY + marginY - scaledGlyphHeight;
                 }
 
                 innerWidth = scaledGlyphWidth;
@@ -913,7 +990,6 @@ namespace PixelEditor
                 IsItalic = isItalic
             };
 
-            ApplyStyles(el, text, gradients);
             text.FontSize *= Math.Min(matrixScaleX, matrixScaleY);
 
             return text;
