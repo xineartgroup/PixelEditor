@@ -439,15 +439,15 @@ namespace PixelEditor
             {
                 if (text.Width > 0 && text.Height > 0 && !string.IsNullOrEmpty(text.Content))
                 {
-                    Console.WriteLine($"=== DrawShape Text Debug ===");
-                    Console.WriteLine($"Content: '{text.Content}'");
-                    Console.WriteLine($"Position: ({text.X}, {text.Y})");
-                    Console.WriteLine($"Size: {text.Width} x {text.Height}");
-                    Console.WriteLine($"FontSize: {text.FontSize}");
-                    Console.WriteLine($"TransformScale: {text.TransformScale}");
-                    Console.WriteLine($"Rotation: {text.Rotation}");
-                    Console.WriteLine($"Measurement Unit: {text.MeasurementUnit}");
-                    Console.WriteLine($"============================");
+                    //Console.WriteLine($"=== DrawShape Text Debug ===");
+                    //Console.WriteLine($"Content: '{text.Content}'");
+                    //Console.WriteLine($"Position: ({text.X}, {text.Y})");
+                    //Console.WriteLine($"Size: {text.Width} x {text.Height}");
+                    //Console.WriteLine($"FontSize: {text.FontSize}");
+                    //Console.WriteLine($"TransformScale: {text.TransformScale}");
+                    //Console.WriteLine($"Rotation: {text.Rotation}");
+                    //Console.WriteLine($"Measurement Unit: {text.MeasurementUnit}");
+                    //Console.WriteLine($"============================");
 
                     Matrix originalTransform = g.Transform;
                     ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
@@ -468,7 +468,7 @@ namespace PixelEditor
                                                       font.SizeInPoints, new PointF(0, 0),
                                                       StringFormat.GenericDefault);
                                 RectangleF measureBounds = measurePath.GetBounds();
-                                Console.WriteLine($"MeasureBounds at {renderFontSize}pt: X={measureBounds.X}, Y={measureBounds.Y}, W={measureBounds.Width}, H={measureBounds.Height}");
+                                //Console.WriteLine($"MeasureBounds at {renderFontSize}pt: X={measureBounds.X}, Y={measureBounds.Y}, W={measureBounds.Width}, H={measureBounds.Height}");
                             }
 
                             textPath.AddString(
@@ -566,61 +566,129 @@ namespace PixelEditor
         {
             GraphicsPath gPath = new();
             PointF currentPoint = PointF.Empty;
-
             foreach (var segment in path.PathSegments)
             {
                 string type = segment.PathType.ToUpper();
                 var pts = segment.InputPoints;
-
                 switch (type)
                 {
                     case "M":
-                        if (pts.Count > 0)
+                        if (pts.Count >= 2)
                         {
                             gPath.StartFigure();
-                            currentPoint = pts[^1];
+                            currentPoint = pts[1];
+                        }
+                        else if (pts.Count == 1)
+                        {
+                            gPath.StartFigure();
+                            currentPoint = pts[0];
                         }
                         break;
 
                     case "L":
-                        if (pts.Count > 0)
+                        if (pts.Count >= 2)
+                        {
+                            gPath.AddLine(pts[0], pts[1]);
+                            currentPoint = pts[1];
+                        }
+                        else if (pts.Count == 1)
                         {
                             gPath.AddLine(currentPoint, pts[0]);
-                            currentPoint = pts[^1];
+                            currentPoint = pts[0];
                         }
                         break;
 
                     case "H":
-                        if (pts.Count > 0)
+                        if (pts.Count >= 2)
                         {
-                            gPath.AddLine(currentPoint, new PointF(pts[0].X, currentPoint.Y));
-                            currentPoint = new PointF(pts[0].X, currentPoint.Y);
+                            PointF dest = new(pts[1].X, pts[0].Y);
+                            gPath.AddLine(pts[0], dest);
+                            currentPoint = dest;
+                        }
+                        else if (pts.Count == 1)
+                        {
+                            PointF dest = new(pts[0].X, currentPoint.Y);
+                            gPath.AddLine(currentPoint, dest);
+                            currentPoint = dest;
                         }
                         break;
 
                     case "V":
-                        if (pts.Count > 0)
+                        if (pts.Count >= 2)
                         {
-                            gPath.AddLine(currentPoint, new PointF(currentPoint.X, pts[0].Y));
-                            currentPoint = new PointF(currentPoint.X, pts[0].Y);
+                            PointF dest = new(pts[0].X, pts[1].Y);
+                            gPath.AddLine(pts[0], dest);
+                            currentPoint = dest;
+                        }
+                        else if (pts.Count == 1)
+                        {
+                            PointF dest = new(currentPoint.X, pts[0].Y);
+                            gPath.AddLine(currentPoint, dest);
+                            currentPoint = dest;
                         }
                         break;
 
                     case "C":
                         if (pts.Count >= 4)
                         {
+                            // Carried point stored: pts[0]=start, pts[1]=cp1, pts[2]=cp2, pts[3]=end
                             gPath.AddBezier(pts[0], pts[1], pts[2], pts[3]);
                             currentPoint = pts[3];
+                        }
+                        else if (pts.Count == 3)
+                        {
+                            // No carried point: pts[0]=cp1, pts[1]=cp2, pts[2]=end
+                            gPath.AddBezier(currentPoint, pts[0], pts[1], pts[2]);
+                            currentPoint = pts[2];
+                        }
+                        break;
+
+                    case "S":
+                        if (pts.Count >= 4)
+                        {
+                            gPath.AddBezier(pts[0], pts[1], pts[2], pts[3]);
+                            currentPoint = pts[3];
+                        }
+                        else if (pts.Count == 3)
+                        {
+                            gPath.AddBezier(currentPoint, pts[0], pts[1], pts[2]);
+                            currentPoint = pts[2];
                         }
                         break;
 
                     case "Q":
                         if (pts.Count >= 3)
                         {
-                            PointF cp1 = new((currentPoint.X + 2 * pts[1].X) / 3, (currentPoint.Y + 2 * pts[1].Y) / 3);
+                            // Carried point stored: pts[0]=start, pts[1]=cp1, pts[2]=end
+                            PointF cp1 = new((pts[0].X + 2 * pts[1].X) / 3, (pts[0].Y + 2 * pts[1].Y) / 3);
                             PointF cp2 = new((pts[2].X + 2 * pts[1].X) / 3, (pts[2].Y + 2 * pts[1].Y) / 3);
-                            gPath.AddBezier(currentPoint, cp1, cp2, pts[2]);
+                            gPath.AddBezier(pts[0], cp1, cp2, pts[2]);
                             currentPoint = pts[2];
+                        }
+                        else if (pts.Count == 2)
+                        {
+                            // No carried point: pts[0]=cp1, pts[1]=end
+                            PointF cp1 = new((currentPoint.X + 2 * pts[0].X) / 3, (currentPoint.Y + 2 * pts[0].Y) / 3);
+                            PointF cp2 = new((pts[1].X + 2 * pts[0].X) / 3, (pts[1].Y + 2 * pts[0].Y) / 3);
+                            gPath.AddBezier(currentPoint, cp1, cp2, pts[1]);
+                            currentPoint = pts[1];
+                        }
+                        break;
+
+                    case "T":
+                        if (pts.Count >= 3)
+                        {
+                            PointF cp1 = new((pts[0].X + 2 * pts[1].X) / 3, (pts[0].Y + 2 * pts[1].Y) / 3);
+                            PointF cp2 = new((pts[2].X + 2 * pts[1].X) / 3, (pts[2].Y + 2 * pts[1].Y) / 3);
+                            gPath.AddBezier(pts[0], cp1, cp2, pts[2]);
+                            currentPoint = pts[2];
+                        }
+                        else if (pts.Count == 2)
+                        {
+                            PointF cp1 = new((currentPoint.X + 2 * pts[0].X) / 3, (currentPoint.Y + 2 * pts[0].Y) / 3);
+                            PointF cp2 = new((pts[1].X + 2 * pts[0].X) / 3, (pts[1].Y + 2 * pts[0].Y) / 3);
+                            gPath.AddBezier(currentPoint, cp1, cp2, pts[1]);
+                            currentPoint = pts[1];
                         }
                         break;
 

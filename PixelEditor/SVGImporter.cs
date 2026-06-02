@@ -271,7 +271,8 @@ namespace PixelEditor
                 char cmdType = char.ToUpper(currentCmd);
                 bool isRel = char.IsLower(currentCmd);
                 var p = new PathSegment { PathType = cmdType.ToString() };
-                //p.InputPoints.Add(new PointF((float)cx, (float)cy));
+
+                p.InputPoints.Add(new PointF(cx, cy));
 
                 switch (cmdType)
                 {
@@ -932,21 +933,16 @@ namespace PixelEditor
                 {
                     marginX = globalTspanX - geoX;
                     marginY = (geoHeight - scaledGlyphHeight);
-
-                    innerX = geoX + marginX;
-                    innerY = geoY + marginY - scaledGlyphHeight;
                 }
                 else
                 {
                     marginX = rawGlyphBounds.X * matrixScaleX;
-                    //marginY = rawGlyphBounds.Y * matrixScaleY;
-
                     float fontAscent = fontSize * cellAscent / emHeight;
                     marginY = scaledGlyphHeight - (fontAscent * matrixScaleY) + (rawGlyphBounds.Y * matrixScaleY);
-
-                    innerX = geoX + marginX;
-                    innerY = geoY + marginY - scaledGlyphHeight;
                 }
+
+                innerX = geoX + marginX;
+                innerY = geoY + marginY - scaledGlyphHeight;
 
                 innerWidth = scaledGlyphWidth;
                 innerHeight = scaledGlyphHeight;
