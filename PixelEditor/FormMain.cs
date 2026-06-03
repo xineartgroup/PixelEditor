@@ -178,6 +178,9 @@ namespace PixelEditor
         private readonly Button btnSimplifyLine = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
+        private readonly Label labelTextLineSize = new();
+        private readonly TrackBar textLineSizeTrack = new();
+        private readonly Label lblTextLineSizeValue = new();
         private readonly Label lblTextLineText = new();
         private readonly TextBox txtTextLineText = new();
         private readonly Label lblTextFont = new();
@@ -1178,6 +1181,9 @@ namespace PixelEditor
             groupTextShapeDetail.Controls.Add(lblTextFont);
             groupTextShapeDetail.Controls.Add(lblTextFillOpacity);
             groupTextShapeDetail.Controls.Add(lblTextFillColor);
+            groupTextShapeDetail.Controls.Add(textLineSizeTrack);
+            groupTextShapeDetail.Controls.Add(lblTextLineSizeValue);
+            groupTextShapeDetail.Controls.Add(labelTextLineSize);
 
             groupTextShapeDetail.Location = new Point(12, 74);
             groupTextShapeDetail.Name = "groupTextShapeDetail";
@@ -1227,6 +1233,32 @@ namespace PixelEditor
             btnTextFillColor.Location = new Point(125, 150);
             btnTextFillColor.Size = new Size(20, 20);
             btnTextFillColor.Click += BtnTextFillColor_Click;
+
+            lblRectLineSizeValue.BackColor = Color.White;
+            lblRectLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblRectLineSizeValue.Location = new Point(188, 22);
+            lblRectLineSizeValue.Size = new Size(32, 22);
+            lblRectLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblRectLineSizeValue.Text = "2";
+
+            labelTextLineSize.AutoSize = true;
+            labelTextLineSize.Location = new Point(10, 180);
+            labelTextLineSize.Text = "Line Size:";
+
+            textLineSizeTrack.Location = new Point(75, 180);
+            textLineSizeTrack.Size = new Size(110, 45);
+            textLineSizeTrack.Maximum = 100;
+            textLineSizeTrack.Minimum = 1;
+            textLineSizeTrack.TickStyle = TickStyle.None;
+            textLineSizeTrack.Value = 2;
+            textLineSizeTrack.Scroll += TextLineSize_Scroll;
+
+            lblTextLineSizeValue.BackColor = Color.White;
+            lblTextLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
+            lblTextLineSizeValue.Location = new Point(188, 180);
+            lblTextLineSizeValue.Size = new Size(32, 22);
+            lblTextLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblTextLineSizeValue.Text = "2";
 
             Controls.Add(groupTextShapeDetail);
             groupTextShapeDetail.ResumeLayout(false);
@@ -1740,6 +1772,17 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.LineWidth = pathLineSizeTrack.Value;
+                isDrawingShape = true;
+            }
+        }
+
+        private void TextLineSize_Scroll(object? sender, EventArgs e)
+        {
+            lblTextLineSizeValue.Text = textLineSizeTrack.Value.ToString();
+
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
+            {
+                shape.LineWidth = textLineSizeTrack.Value;
                 isDrawingShape = true;
             }
         }

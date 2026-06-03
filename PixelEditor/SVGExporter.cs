@@ -1,4 +1,5 @@
 ﻿using PixelEditor.Vector;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
@@ -29,6 +30,9 @@ namespace PixelEditor
                 foreach (var stroke in layer.Shapes)
                 {
                     XElement? el = null;
+
+                    float scaleX = 1.0f;
+                    float scaleY = 1.0f;
 
                     if (stroke is ShapeRect r)
                     {
@@ -74,8 +78,8 @@ namespace PixelEditor
 
                             if (i == 0)
                             {
-                                sb.AppendFormat(CultureInfo.InvariantCulture, "M {0:0.###},{1:0.###} ", pts[0].X, pts[0].Y);
-
+                                PointF startPt = pts.Count >= 2 ? pts[1] : pts[0];
+                                sb.AppendFormat(CultureInfo.InvariantCulture, "M {0:0.###},{1:0.###} ", startPt.X, startPt.Y);
                                 if (type == "M") continue;
                             }
 
@@ -83,28 +87,44 @@ namespace PixelEditor
                             {
                                 case "M":
                                 case "L":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} ", type, pts[^1].X, pts[^1].Y);
+                                    PointF dest = pts.Count >= 2 ? pts[1] : pts[0];
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0} {1:0.###},{2:0.###} ", type, dest.X, dest.Y);
                                     break;
 
                                 case "H":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "H {0:0.###} ", pts[^1].X);
+                                    PointF hPt = pts.Count >= 2 ? pts[1] : pts[0];
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "H {0:0.###} ", hPt.X);
                                     break;
 
                                 case "V":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "V {0:0.###} ", pts[^1].Y);
+                                    PointF vPt = pts.Count >= 2 ? pts[1] : pts[0];
+                                    sb.AppendFormat(CultureInfo.InvariantCulture, "V {0:0.###} ", vPt.Y);
                                     break;
 
                                 case "C":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
-                                        pts[1].X, pts[1].Y, pts[2].X, pts[2].Y, pts[3].X, pts[3].Y);
+                                    if (pts.Count >= 4)
+                                        // Carried: pts[0]=start, pts[1]=cp1, pts[2]=cp2, pts[3]=end
+                                        sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
+                                            pts[1].X, pts[1].Y, pts[2].X, pts[2].Y, pts[3].X, pts[3].Y);
+                                    else if (pts.Count == 3)
+                                        // No carried: pts[0]=cp1, pts[1]=cp2, pts[2]=end
+                                        sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
+                                            pts[0].X, pts[0].Y, pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
                                     break;
 
                                 case "Q":
-                                    sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
-                                        pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
+                                    if (pts.Count >= 3)
+                                        // Carried: pts[0]=start, pts[1]=cp1, pts[2]=end
+                                        sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
+                                            pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
+                                    else if (pts.Count == 2)
+                                        // No carried: pts[0]=cp1, pts[1]=end
+                                        sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
+                                            pts[0].X, pts[0].Y, pts[1].X, pts[1].Y);
                                     break;
 
                                 case "A":
+                                    // A is always stored with carried point from parser
                                     sb.AppendFormat(CultureInfo.InvariantCulture, "A {0:0.###},{1:0.###} {2:0.###} {3},{4} {5:0.###},{6:0.###} ",
                                         pts[1].X, pts[1].Y, pts[2].X, (int)pts[3].X, (int)pts[3].Y, pts[4].X, pts[4].Y);
                                     break;
@@ -118,25 +138,62 @@ namespace PixelEditor
                     }
                     else if (stroke is ShapeText t)
                     {
-                        float scaledFontSize = CalculateScaledFontSize(t);
+                        float nativeFontSize = t.FontSize;
+                        float exportX = t.X;
+                        float exportY = t.Y;
 
-                        XElement textElement = new XElement(SvgNs + "text",
-                            new XAttribute("x", t.X.ToString("0.###", CultureInfo.InvariantCulture)),
-                            new XAttribute("y", t.Y.ToString("0.###", CultureInfo.InvariantCulture)),
-                            new XAttribute("font-size", $"{scaledFontSize.ToString("0.###", CultureInfo.InvariantCulture)}px"),
+                        using (GraphicsPath path = new())
+                        {
+                            FontStyle fontStyle = GetFontStyle(t);
+                            FontFamily family;
+                            try { family = new FontFamily(t.FontFamily ?? "Arial"); }
+                            catch { family = FontFamily.GenericSansSerif; }
+
+                            int emHeight = family.GetEmHeight(fontStyle);
+                            int cellAscent = family.GetCellAscent(fontStyle);
+
+                            path.AddString(t.Content, family, (int)fontStyle, nativeFontSize, new PointF(0, 0), StringFormat.GenericTypographic);
+                            RectangleF rawGlyphBounds = path.GetBounds();
+
+                            if (t.Width > 0 && rawGlyphBounds.Width > 0)
+                            {
+                                scaleX = t.Width / rawGlyphBounds.Width;
+                            }
+                            if (t.Height > 0 && rawGlyphBounds.Height > 0)
+                            {
+                                scaleY = t.Height / rawGlyphBounds.Height;
+                            }
+
+                            float fontAscent = nativeFontSize * cellAscent / emHeight;
+
+                            exportX = t.X - (rawGlyphBounds.X * scaleX);
+                            exportY = t.Y + (fontAscent * scaleY) - (rawGlyphBounds.Y * scaleY);
+                        }
+
+                        XElement textElement = new(SvgNs + "text",
+                            new XAttribute("x", "0"),
+                            new XAttribute("y", "0"),
+                            new XAttribute("font-size", $"{nativeFontSize.ToString("0.###", CultureInfo.InvariantCulture)}px"),
                             new XAttribute("font-family", t.FontFamily ?? "Arial"),
                             t.IsBold ? new XAttribute("font-weight", "bold") : null,
                             t.IsItalic ? new XAttribute("font-style", "italic") : null,
-                            new XAttribute("dominant-baseline", "hanging"),
                             new XAttribute("text-rendering", "geometricPrecision"),
                             t.Content);
 
-                        if (t.Rotation != 0)
+                        StringBuilder transformBuilder = new();
+                        transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "translate({0:0.###},{1:0.###}) ", exportX, exportY);
+
+                        if (scaleX != 1.0f || scaleY != 1.0f)
                         {
-                            textElement.Add(new XAttribute("transform",
-                                $"rotate({t.Rotation.ToString("0.###", CultureInfo.InvariantCulture)}, {t.X.ToString("0.###", CultureInfo.InvariantCulture)}, {t.Y.ToString("0.###", CultureInfo.InvariantCulture)})"));
+                            transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "scale({0:0.###},{1:0.###}) ", scaleX, scaleY);
                         }
 
+                        if (t.Rotation != 0)
+                        {
+                            transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "rotate({0:0.###}) ", t.Rotation);
+                        }
+
+                        textElement.Add(new XAttribute("transform", transformBuilder.ToString().Trim()));
                         el = textElement;
                     }
 
@@ -145,7 +202,17 @@ namespace PixelEditor
                         if (el.Attribute("stroke") == null)
                             el.Add(new XAttribute("stroke", ColorToHex(stroke.LineColor)));
                         if (el.Attribute("stroke-width") == null)
-                            el.Add(new XAttribute("stroke-width", stroke.LineWidth));
+                        {
+                            if (stroke is ShapeText && scaleX > 0)
+                            {
+                                float normalizedStrokeWidth = stroke.LineWidth / scaleX;
+                                el.Add(new XAttribute("stroke-width", normalizedStrokeWidth.ToString("0.###", CultureInfo.InvariantCulture)));
+                            }
+                            else
+                            {
+                                el.Add(new XAttribute("stroke-width", stroke.LineWidth));
+                            }
+                        }
                         if (el.Attribute("fill") == null)
                             el.Add(new XAttribute("fill", (stroke.FillColor == Color.Transparent) ? "none" : ColorToHex(stroke.FillColor)));
 
