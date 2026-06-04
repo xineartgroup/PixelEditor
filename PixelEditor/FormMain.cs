@@ -178,12 +178,17 @@ namespace PixelEditor
         private readonly Button btnSimplifyLine = new();
 
         private readonly GroupBox groupTextShapeDetail = new();
+        private readonly NumericUpDown numTextLineOpacity = new();
+        private readonly Button btnTextLineColor = new();
+        private readonly ComboBox cboTextLinePattern = new();
+        private readonly Label lblTextLineOpacity = new();
+        private readonly Label lblTextLineColor = new();
+        private readonly Label lblTextLinePattern = new();
         private readonly Label labelTextLineSize = new();
         private readonly TrackBar textLineSizeTrack = new();
         private readonly Label lblTextLineSizeValue = new();
         private readonly Label lblTextLineText = new();
         private readonly TextBox txtTextLineText = new();
-        private readonly Label lblTextFont = new();
         private readonly Button btnTextFont = new();
         private readonly Label lblTextFillOpacity = new();
         private readonly NumericUpDown numTextFillOpacity = new();
@@ -1170,82 +1175,46 @@ namespace PixelEditor
         private void InitializeComponentGroupTextShape()
         {
             groupTextShapeDetail.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)textLineSizeTrack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numTextLineOpacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).BeginInit();
             SuspendLayout();
 
+            // Add Controls to Group
             groupTextShapeDetail.Controls.Add(txtTextLineText);
             groupTextShapeDetail.Controls.Add(btnTextFont);
             groupTextShapeDetail.Controls.Add(numTextFillOpacity);
             groupTextShapeDetail.Controls.Add(btnTextFillColor);
             groupTextShapeDetail.Controls.Add(lblTextLineText);
-            groupTextShapeDetail.Controls.Add(lblTextFont);
             groupTextShapeDetail.Controls.Add(lblTextFillOpacity);
             groupTextShapeDetail.Controls.Add(lblTextFillColor);
             groupTextShapeDetail.Controls.Add(textLineSizeTrack);
             groupTextShapeDetail.Controls.Add(lblTextLineSizeValue);
             groupTextShapeDetail.Controls.Add(labelTextLineSize);
+            groupTextShapeDetail.Controls.Add(numTextLineOpacity);
+            groupTextShapeDetail.Controls.Add(btnTextLineColor);
+            groupTextShapeDetail.Controls.Add(cboTextLinePattern);
+            groupTextShapeDetail.Controls.Add(lblTextLineOpacity);
+            groupTextShapeDetail.Controls.Add(lblTextLineColor);
+            groupTextShapeDetail.Controls.Add(lblTextLinePattern);
 
+            // GroupBox Settings
             groupTextShapeDetail.Location = new Point(12, 74);
             groupTextShapeDetail.Name = "groupTextShapeDetail";
-            groupTextShapeDetail.Size = new Size(230, 260);
+            groupTextShapeDetail.Size = new Size(230, 300);
             groupTextShapeDetail.TabIndex = 30;
             groupTextShapeDetail.TabStop = false;
             groupTextShapeDetail.Text = "Text Detail";
             groupTextShapeDetail.Visible = false;
 
-            lblTextLineText.AutoSize = true;
-            lblTextLineText.Location = new Point(10, 27);
-            lblTextLineText.Text = "Text";
+            // --- LINE SECTION ---
 
-            txtTextLineText.Location = new Point(125, 24);
-            txtTextLineText.Size = new Size(60, 23);
-            txtTextLineText.Text = "Text";
-            txtTextLineText.TextAlign = HorizontalAlignment.Center;
-            txtTextLineText.TextChanged += TxtTextLineSize_TextChanged;
-
-            lblTextFont.AutoSize = true;
-            lblTextFont.Location = new Point(10, 73);
-            lblTextFont.Text = "Font:";
-
-            btnTextFont.BackColor = Color.LightGray;
-            btnTextFont.FlatStyle = FlatStyle.Popup;
-            btnTextFont.Location = new Point(125, 68);
-            btnTextFont.Size = new Size(60, 23);
-            btnTextFont.Text = "";
-            btnTextFont.UseVisualStyleBackColor = false;
-            btnTextFont.Click += BtnTextFont_Click;
-
-            lblTextFillOpacity.AutoSize = true;
-            lblTextFillOpacity.Location = new Point(10, 123);
-            lblTextFillOpacity.Text = "Fill Opacity:";
-
-            numTextFillOpacity.Location = new Point(125, 121);
-            numTextFillOpacity.Size = new Size(60, 23);
-            numTextFillOpacity.Value = new decimal([100, 0, 0, 0]);
-            numTextFillOpacity.ValueChanged += NumTextFillOpacity_ValueChanged;
-
-            lblTextFillColor.AutoSize = true;
-            lblTextFillColor.Location = new Point(10, 153);
-            lblTextFillColor.Text = "Fill Color:";
-
-            btnTextFillColor.BackColor = Color.Black;
-            btnTextFillColor.FlatStyle = FlatStyle.Popup;
-            btnTextFillColor.Location = new Point(125, 150);
-            btnTextFillColor.Size = new Size(20, 20);
-            btnTextFillColor.Click += BtnTextFillColor_Click;
-
-            lblRectLineSizeValue.BackColor = Color.White;
-            lblRectLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
-            lblRectLineSizeValue.Location = new Point(188, 22);
-            lblRectLineSizeValue.Size = new Size(32, 22);
-            lblRectLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
-            lblRectLineSizeValue.Text = "2";
-
+            // Line Size
             labelTextLineSize.AutoSize = true;
-            labelTextLineSize.Location = new Point(10, 180);
+            labelTextLineSize.Location = new Point(10, 27);
             labelTextLineSize.Text = "Line Size:";
 
-            textLineSizeTrack.Location = new Point(75, 180);
+            textLineSizeTrack.Location = new Point(75, 27);
             textLineSizeTrack.Size = new Size(110, 45);
             textLineSizeTrack.Maximum = 100;
             textLineSizeTrack.Minimum = 1;
@@ -1255,14 +1224,93 @@ namespace PixelEditor
 
             lblTextLineSizeValue.BackColor = Color.White;
             lblTextLineSizeValue.BorderStyle = BorderStyle.Fixed3D;
-            lblTextLineSizeValue.Location = new Point(188, 180);
+            lblTextLineSizeValue.Location = new Point(188, 27);
             lblTextLineSizeValue.Size = new Size(32, 22);
             lblTextLineSizeValue.TextAlign = ContentAlignment.MiddleCenter;
             lblTextLineSizeValue.Text = "2";
 
+            // Line Opacity
+            lblTextLineOpacity.AutoSize = true;
+            lblTextLineOpacity.Location = new Point(10, 73);
+            lblTextLineOpacity.Text = "Line Opacity:";
+
+            numTextLineOpacity.Location = new Point(125, 71);
+            numTextLineOpacity.Size = new Size(60, 23);
+            numTextLineOpacity.Value = new decimal([100, 0, 0, 0]);
+            numTextLineOpacity.ValueChanged += OnTextLineOpacityValueChanged;
+
+            // Line Color
+            lblTextLineColor.AutoSize = true;
+            lblTextLineColor.Location = new Point(10, 103);
+            lblTextLineColor.Text = "Line Color:";
+
+            btnTextLineColor.BackColor = Color.Black;
+            btnTextLineColor.FlatStyle = FlatStyle.Popup;
+            btnTextLineColor.Location = new Point(125, 100);
+            btnTextLineColor.Size = new Size(20, 20);
+            btnTextLineColor.Click += BtnTextLineColor_Click;
+
+            // Line Pattern
+            lblTextLinePattern.AutoSize = true;
+            lblTextLinePattern.Location = new Point(10, 133);
+            lblTextLinePattern.Text = "Pattern:";
+
+            cboTextLinePattern.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboTextLinePattern.Items.AddRange(["Solid", "Dash", "Dot", "DashDot", "DashDotDot", "Custom"]);
+            cboTextLinePattern.Location = new Point(125, 130);
+            cboTextLinePattern.Size = new Size(100, 21);
+            cboTextLinePattern.SelectedIndexChanged += CboTextLinePattern_SelectedIndexChanged;
+
+            // --- FILL SECTION ---
+
+            // Fill Opacity
+            lblTextFillOpacity.AutoSize = true;
+            lblTextFillOpacity.Location = new Point(10, 173);
+            lblTextFillOpacity.Text = "Fill Opacity:";
+
+            numTextFillOpacity.Location = new Point(125, 171);
+            numTextFillOpacity.Size = new Size(60, 23);
+            numTextFillOpacity.Value = new decimal([100, 0, 0, 0]);
+            numTextFillOpacity.ValueChanged += NumTextFillOpacity_ValueChanged;
+
+            // Fill Color
+            lblTextFillColor.AutoSize = true;
+            lblTextFillColor.Location = new Point(10, 203);
+            lblTextFillColor.Text = "Fill Color:";
+
+            btnTextFillColor.BackColor = Color.White;
+            btnTextFillColor.FlatStyle = FlatStyle.Popup;
+            btnTextFillColor.Location = new Point(125, 200);
+            btnTextFillColor.Size = new Size(20, 20);
+            btnTextFillColor.Click += BtnTextFillColor_Click;
+
+            // --- TEXT SECTION ---
+
+            // Text Input
+            lblTextLineText.AutoSize = true;
+            lblTextLineText.Location = new Point(10, 243);
+            lblTextLineText.Text = "Text:";
+
+            txtTextLineText.Location = new Point(125, 240);
+            txtTextLineText.Size = new Size(65, 25);
+            txtTextLineText.Text = "Text";
+            txtTextLineText.TextAlign = HorizontalAlignment.Center;
+            txtTextLineText.TextChanged += TxtTextLineSize_TextChanged;
+
+            btnTextFont.BackColor = Color.LightGray;
+            btnTextFont.FlatStyle = FlatStyle.Popup;
+            btnTextFont.Location = new Point(190, 240);
+            btnTextFont.Size = new Size(25, 23);
+            btnTextFont.Text = "F";
+            btnTextFont.UseVisualStyleBackColor = false;
+            btnTextFont.Click += BtnTextFont_Click;
+
+            // Finalize
             Controls.Add(groupTextShapeDetail);
             groupTextShapeDetail.ResumeLayout(false);
             groupTextShapeDetail.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)textLineSizeTrack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numTextLineOpacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)numTextFillOpacity).EndInit();
             ResumeLayout(false);
         }
@@ -1531,6 +1579,15 @@ namespace PixelEditor
             }
         }
 
+        private void CboTextLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
+            {
+                shape.DashStyle = ManipulatorGeneral.GetDashStyle(cboTextLinePattern.Text);
+                isDrawingShape = true;
+            }
+        }
+
         private void FillRectOpacityNum_ValueChanged(object? sender, EventArgs e)
         {
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeRect shape)
@@ -1608,6 +1665,15 @@ namespace PixelEditor
             if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapePath shape)
             {
                 shape.LineColor = Color.FromArgb((int)(255 * (pathLineOpacityNum.Value / pathLineOpacityNum.Maximum)), btnPathLineColor.BackColor);
+                isDrawingShape = true;
+            }
+        }
+
+        private void OnTextLineOpacityValueChanged(object? sender, EventArgs e)
+        {
+            if (layersControl.GetLayer(layersControl.GetSelectedLayerIndex())?.CurrentShape is ShapeText shape)
+            {
+                shape.LineColor = Color.FromArgb((int)(255 * (numTextLineOpacity.Value / numTextLineOpacity.Maximum)), btnTextLineColor.BackColor);
                 isDrawingShape = true;
             }
         }
@@ -1728,6 +1794,21 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPathLineColor.BackColor;
+            _colorPicker.Show();
+            _colorPicker.BringToFront();
+        }
+
+        private void BtnTextLineColor_Click(object? sender, EventArgs e)
+        {
+            ColorDialogX.Canvas = canvas;
+
+            _colorPicker.OnColorAccepted = (selectedColor) =>
+            {
+                btnTextLineColor.BackColor = selectedColor;
+                OnTextLineOpacityValueChanged(sender, e);
+            };
+
+            _colorPicker.Color = btnTextLineColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -4390,6 +4471,7 @@ namespace PixelEditor
                             fillRectOpacityNum.Value = (decimal)((r.FillColor.A / 255.0) * (double)fillRectOpacityNum.Maximum);
 
                             rectLineSizeTrack.Value = (int)Math.Ceiling(r.LineWidth);
+                            lblRectLineSizeValue.Text = r.LineWidth.ToString("0.##");
                             cboRectLinePattern.SelectedItem = r.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapeEllipse el)
@@ -4407,6 +4489,7 @@ namespace PixelEditor
                             fillEllipseOpacityNum.Value = (decimal)((el.FillColor.A / 255.0) * (double)fillEllipseOpacityNum.Maximum);
 
                             ellipseLineSizeTrack.Value = (int)Math.Ceiling(el.LineWidth);
+                            lblEllipseLineSizeValue.Text = el.LineWidth.ToString("0.##");
                             cboEllipseLinePattern.SelectedItem = el.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapePolygon pg)
@@ -4424,9 +4507,10 @@ namespace PixelEditor
                             fillPolygonOpacityNum.Value = (decimal)((pg.FillColor.A / 255.0) * (double)fillPolygonOpacityNum.Maximum);
 
                             polygonLineSizeTrack.Value = (int)Math.Ceiling(pg.LineWidth);
+                            lblPolygonLineSizeValue.Text = pg.LineWidth.ToString("0.##");
                             cboPolygonLinePattern.SelectedItem = pg.DashStyle.ToString();
                         }
-                        else if (selectedLayer.CurrentShape is ShapeText t)
+                        else if (selectedLayer.CurrentShape is ShapeText txt)
                         {
                             groupRectShapeDetail.Visible = false;
                             groupEllipseShapeDetail.Visible = false;
@@ -4434,14 +4518,22 @@ namespace PixelEditor
                             groupTextShapeDetail.Visible = true;
                             groupPathShapeDetail.Visible = false;
 
-                            txtTextLineText.Text = t.Content;
-                            btnTextFillColor.BackColor = Color.FromArgb(255, t.FillColor.R, t.FillColor.G, t.FillColor.B);
-                            numTextFillOpacity.Value = (decimal)((t.FillColor.A / 255.0) * (double)numTextFillOpacity.Maximum);
+                            txtTextLineText.Text = txt.Content;
+
+                            btnTextLineColor.BackColor = Color.FromArgb(255, txt.LineColor.R, txt.LineColor.G, txt.LineColor.B);
+                            //textLineOpacityNum.Value = (decimal)((txt.LineColor.A / 255.0) * (double)textLineOpacityNum.Maximum);
+
+                            btnTextFillColor.BackColor = Color.FromArgb(255, txt.FillColor.R, txt.FillColor.G, txt.FillColor.B);
+                            numTextFillOpacity.Value = (decimal)((txt.FillColor.A / 255.0) * (double)numTextFillOpacity.Maximum);
 
                             FontStyle style = FontStyle.Regular;
-                            if (t.IsBold) style |= FontStyle.Bold;
-                            if (t.IsItalic) style |= FontStyle.Italic;
-                            btnTextFont.Font = new Font(t.FontFamily, (float)t.FontSize, style);
+                            if (txt.IsBold) style |= FontStyle.Bold;
+                            if (txt.IsItalic) style |= FontStyle.Italic;
+                            btnTextFont.Font = new Font(txt.FontFamily, (float)txt.FontSize, style);
+
+                            textLineSizeTrack.Value = (int)Math.Ceiling(txt.LineWidth);
+                            lblTextLineSizeValue.Text = txt.LineWidth.ToString("0.##");
+                            cboTextLinePattern.SelectedItem = txt.DashStyle.ToString();
                         }
                         else if (selectedLayer.CurrentShape is ShapePath path)
                         {
@@ -4457,6 +4549,7 @@ namespace PixelEditor
                             btnPathFillColorShape.BackColor = Color.FromArgb(255, path.FillColor.R, path.FillColor.G, path.FillColor.B);
                             fillPathOpacityNum.Value = (decimal)((path.FillColor.A / 255.0) * (double)fillPathOpacityNum.Maximum);
                             pathLineSizeTrack.Value = (int)Math.Ceiling(path.LineWidth);
+                            lblPathLineSizeValue.Text = path.LineWidth.ToString("0.##");
                             cboPathLinePattern.SelectedItem = path.DashStyle.ToString();
                         }
                     }
@@ -5452,7 +5545,8 @@ namespace PixelEditor
                             IsItalic = btnTextFont.Font.Italic,
                             FontSize = btnTextFont.Font.Size,
                             FillColor = fillColor,
-                            DashStyle = dashStyle
+                            DashStyle = dashStyle,
+                            LineWidth = textLineSizeTrack.Value
                         };
                         selectedLayer.CurrentShape = shapeText;
                     }
