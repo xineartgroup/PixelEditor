@@ -332,7 +332,7 @@ namespace PixelEditor
             if (shape is ShapeRect rect)
             {
                 Matrix originalTransform = g.Transform;
-                ApplyRotation(g, rect.X, rect.Y, rect.Width, rect.Height, rect.Rotation);
+                ApplyRotation(g, rect.X, rect.Y, rect.Width, rect.Height, rect.Rotation, rect.HasCustomRotationCenter, rect.RotationCenterX, rect.RotationCenterY);
                 g.FillRectangle(brush, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
                 g.Transform = originalTransform;
@@ -340,7 +340,7 @@ namespace PixelEditor
             else if (shape is ShapeEllipse ellipse)
             {
                 Matrix originalTransform = g.Transform;
-                ApplyRotation(g, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height, ellipse.Rotation);
+                ApplyRotation(g, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height, ellipse.Rotation, ellipse.HasCustomRotationCenter, ellipse.RotationCenterX, ellipse.RotationCenterY);
                 g.FillEllipse(brush, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.DrawEllipse(pen, ellipse.X, ellipse.Y, ellipse.Width, ellipse.Height);
                 g.Transform = originalTransform;
@@ -450,7 +450,7 @@ namespace PixelEditor
                     //Console.WriteLine($"============================");
 
                     Matrix originalTransform = g.Transform;
-                    ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation);
+                    ApplyRotation(g, text.X, text.Y, text.Width, text.Height, text.Rotation, text.HasCustomRotationCenter, text.RotationCenterX, text.RotationCenterY);
 
                     RectangleF layoutRect = new(text.X, text.Y, text.Width, text.Height);
 
@@ -553,10 +553,11 @@ namespace PixelEditor
             return path.GetBounds();
         }
 
-        private static void ApplyRotation(Graphics g, float x, float y, float w, float h, float rotation)
+        private static void ApplyRotation(Graphics g, float x, float y, float w, float h, float rotation,
+            bool hasCustomCenter = false, float customCx = 0, float customCy = 0)
         {
-            float centerX = x + w / 2;
-            float centerY = y + h / 2;
+            float centerX = hasCustomCenter ? customCx : x + w / 2;
+            float centerY = hasCustomCenter ? customCy : y + h / 2;
             g.TranslateTransform(centerX, centerY);
             g.RotateTransform(rotation);
             g.TranslateTransform(-centerX, -centerY);
@@ -789,7 +790,10 @@ namespace PixelEditor
                     LineColor = rect.LineColor,
                     LineWidth = rect.LineWidth,
                     FillColor = rect.FillColor,
-                    DashStyle = rect.DashStyle
+                    DashStyle = rect.DashStyle,
+                    RotationCenterX = rect.RotationCenterX,
+                    RotationCenterY = rect.RotationCenterY,
+                    HasCustomRotationCenter = rect.HasCustomRotationCenter,
                 };
             }
             else if (shape is ShapeEllipse ellipse)
@@ -799,7 +803,10 @@ namespace PixelEditor
                     LineColor = ellipse.LineColor,
                     LineWidth = ellipse.LineWidth,
                     FillColor = ellipse.FillColor,
-                    DashStyle = ellipse.DashStyle
+                    DashStyle = ellipse.DashStyle,
+                    RotationCenterX = ellipse.RotationCenterX,
+                    RotationCenterY = ellipse.RotationCenterY,
+                    HasCustomRotationCenter = ellipse.HasCustomRotationCenter,
                 };
             }
             else if (shape is ShapePolygon polygon)
@@ -814,7 +821,10 @@ namespace PixelEditor
                     LineColor = polygon.LineColor,
                     LineWidth = polygon.LineWidth,
                     FillColor = polygon.FillColor,
-                    DashStyle = polygon.DashStyle
+                    DashStyle = polygon.DashStyle,
+                    RotationCenterX = polygon.RotationCenterX,
+                    RotationCenterY = polygon.RotationCenterY,
+                    HasCustomRotationCenter = polygon.HasCustomRotationCenter,
                 };
             }
             else if (shape is ShapeText text)
@@ -829,7 +839,10 @@ namespace PixelEditor
                     DashStyle = text.DashStyle,
                     FontSize = text.FontSize,
                     FontFamily = text.FontFamily,
-                    MeasurementUnit = text.MeasurementUnit
+                    MeasurementUnit = text.MeasurementUnit,
+                    RotationCenterX = text.RotationCenterX,
+                    RotationCenterY = text.RotationCenterY,
+                    HasCustomRotationCenter = text.HasCustomRotationCenter,
                 };
             }
             else if (shape is ShapePath path)
@@ -849,7 +862,10 @@ namespace PixelEditor
                     LineColor = path.LineColor,
                     LineWidth = path.LineWidth,
                     FillColor = path.FillColor,
-                    DashStyle = path.DashStyle
+                    DashStyle = path.DashStyle,
+                    RotationCenterX = path.RotationCenterX,
+                    RotationCenterY = path.RotationCenterY,
+                    HasCustomRotationCenter = path.HasCustomRotationCenter,
                 };
             }
 
@@ -1181,7 +1197,8 @@ namespace PixelEditor
                 _channel = _channel,
                 _blendMode = _blendMode,
                 _fillType = _fillType,
-                _fillColor = _fillColor
+                _fillColor = _fillColor,
+
             };
 
             if (Image != null)

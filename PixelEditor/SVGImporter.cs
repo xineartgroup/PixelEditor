@@ -182,9 +182,10 @@ namespace PixelEditor
 
         private static void ApplyAllTransforms(XElement element, BaseShape shape)
         {
-            var transforms = new List<(float scaleX, float scaleY, float offsetX, float offsetY)>();
-
+            using Matrix finalMatrix = new();
             var current = element;
+            var transformAttributes = new List<string>();
+
             while (current != null)
             {
                 if (shape is not ShapeText)
@@ -192,68 +193,172 @@ namespace PixelEditor
                     var transformAttr = current.Attribute("transform")?.Value;
                     if (!string.IsNullOrEmpty(transformAttr))
                     {
-                        ApplyFullMatrixTransform(transformAttr, out float sx, out float sy, out float ox, out float oy);
-                        transforms.Add((sx, sy, ox, oy));
+                        transformAttributes.Add(transformAttr);
                     }
                 }
                 current = current.Parent;
             }
 
-            transforms.Reverse();
+            transformAttributes.Reverse();
 
-            foreach (var (scaleX, scaleY, offsetX, offsetY) in transforms)
+            foreach (var transformStr in transformAttributes)
             {
-                if (shape is ShapeRect rect)
+                var transformParts = transformStr.Split([')'], StringSplitOptions.RemoveEmptyEntries);
+                for (int i = transformParts.Length - 1; i >= 0; i--)
                 {
-                    rect.X = (rect.X * scaleX) + offsetX;
-                    rect.Y = (rect.Y * scaleY) + offsetY;
-                    rect.Width *= scaleX;
-                    rect.Height *= scaleY;
-                    rect.Rx *= scaleX;
-                    rect.Ry *= scaleY;
-                }
-                else if (shape is ShapeEllipse ellipse)
-                {
-                    ellipse.X = (ellipse.X * scaleX) + offsetX;
-                    ellipse.Y = (ellipse.Y * scaleY) + offsetY;
-                    ellipse.Width *= scaleX;
-                    ellipse.Height *= scaleY;
-                }
-                else if (shape is ShapeLine line)
-                {
-                    line.StartPoint = new PointF(
-                        (float)((line.StartPoint.X * scaleX) + offsetX),
-                        (float)((line.StartPoint.Y * scaleY) + offsetY));
-                    line.EndPoint = new PointF(
-                        (float)((line.EndPoint.X * scaleX) + offsetX),
-                        (float)((line.EndPoint.Y * scaleY) + offsetY));
-                }
-                else if (shape is ShapePolygon polygon)
-                {
-                    for (int i = 0; i < polygon.Points.Count; i++)
+                    var part = transformParts[i];
+                    if (!part.Contains('(')) continue;
+
+                    string function = part[..part.IndexOf('(')].Trim().ToLower();
+                    string contentStr = part[(part.IndexOf('(') + 1)..];
+                    string[] values = contentStr.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+
+                    switch (function)
                     {
-                        polygon.Points[i] = new PointF(
-                            (float)((polygon.Points[i].X * scaleX) + offsetX),
-                            (float)((polygon.Points[i].Y * scaleY) + offsetY));
+                        case "matrix":
+                            if (values.Length >= 6)
+                            {
+                                float ma = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                float mb = float.Parse(values[1], CultureInfo.InvariantCulture);
+                                float mc = float.Parse(values[2], CultureInfo.InvariantCulture);
+                                float md = float.Parse(values[3], CultureInfo.InvariantCulture);
+                                float me = float.Parse(values[4], CultureInfo.InvariantCulture);
+                                float mf = float.Parse(values[5], CultureInfo.InvariantCulture);
+                                using Matrix em = new(ma, mb, mc, md, me, mf);
+                                finalMatrix.Multiply(em, MatrixOrder.Append);
+                            }
+                            break;
+                        case "translate":
+                            if (values.Length > 0)
+                            {
+                                float tx = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                float ty = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : 0;
+                                finalMatrix.Translate(tx, ty, MatrixOrder.Append);
+                            }
+                            break;
+                        case "scale":
+                            if (values.Length > 0)
+                            {
+                                float sx = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                float sy = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : sx;
+                                finalMatrix.Scale(sx, sy, MatrixOrder.Append);
+                            }
+                            break;
+                        case "rotate":
+                            if (values.Length > 0)
+                            {
+                                float angle = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                if (values.Length >= 3)
+                                {
+                                    float cx = float.Parse(values[1], CultureInfo.InvariantCulture);
+                                    float cy = float.Parse(values[2], CultureInfo.InvariantCulture);
+                                    finalMatrix.Translate(cx, cy, MatrixOrder.Append);
+                                    finalMatrix.Rotate(angle, MatrixOrder.Append);
+                                    finalMatrix.Translate(-cx, -cy, MatrixOrder.Append);
+                                }
+                                else
+                                {
+                                    finalMatrix.Rotate(angle, MatrixOrder.Append);
+                                }
+                            }
+                            break;
                     }
                 }
-                else if (shape is ShapePath path)
+            }
+
+            float[] mElements = finalMatrix.Elements;
+            float scaleX = (float)Math.Sqrt(mElements[0] * mElements[0] + mElements[1] * mElements[1]);
+            float scaleY = (float)Math.Sqrt(mElements[2] * mElements[2] + mElements[3] * mElements[3]);
+
+            float angleInRadians = (float)Math.Atan2(mElements[1], mElements[0]);
+            float calculatedRotation = angleInRadians * (180.0f / (float)Math.PI);
+
+            if (shape is not ShapeText)
+            {
+                shape.Rotation = calculatedRotation;
+            }
+
+            if (shape is ShapeRect rect)
+            {
+                float origCenterX = rect.X + rect.Width / 2f;
+                float origCenterY = rect.Y + rect.Height / 2f;
+
+                PointF[] pts = [
+                    new PointF(rect.X, rect.Y),
+        new PointF(origCenterX, origCenterY)
+                ];
+                finalMatrix.TransformPoints(pts);
+
+                rect.X = pts[1].X - rect.Width / 2f;
+                rect.Y = pts[1].Y - rect.Height / 2f;
+                rect.Width *= scaleX;
+                rect.Height *= scaleY;
+
+                rect.RotationCenterX = pts[1].X;
+                rect.RotationCenterY = pts[1].Y;
+                rect.HasCustomRotationCenter = true;
+            }
+            else if (shape is ShapeEllipse ellipse)
+            {
+                float origCenterX = ellipse.X + ellipse.Width / 2f;
+                float origCenterY = ellipse.Y + ellipse.Height / 2f;
+
+                PointF[] pts = [
+                    new PointF(ellipse.X, ellipse.Y),
+        new PointF(origCenterX, origCenterY)
+                ];
+                finalMatrix.TransformPoints(pts);
+
+                ellipse.X = pts[1].X - ellipse.Width / 2f;
+                ellipse.Y = pts[1].Y - ellipse.Height / 2f;
+                ellipse.Width *= scaleX;
+                ellipse.Height *= scaleY;
+
+                ellipse.RotationCenterX = pts[1].X;
+                ellipse.RotationCenterY = pts[1].Y;
+                ellipse.HasCustomRotationCenter = true;
+            }
+            else if (shape is ShapeLine line)
+            {
+                PointF[] pts = [line.StartPoint, line.EndPoint];
+                finalMatrix.TransformPoints(pts);
+                line.StartPoint = pts[0];
+                line.EndPoint = pts[1];
+            }
+            else if (shape is ShapePolygon polygon)
+            {
+                if (polygon.Points.Count > 0)
                 {
-                    for (int i = 0; i < path.PathSegments.Count; i++)
+                    PointF[] pts = [.. polygon.Points];
+                    finalMatrix.TransformPoints(pts);
+                    for (int i = 0; i < pts.Length; i++)
                     {
-                        for (int j = 0; j < path.PathSegments[i].InputPoints.Count; j++)
+                        polygon.Points[i] = pts[i];
+                    }
+                }
+            }
+            else if (shape is ShapePath path)
+            {
+                for (int i = 0; i < path.PathSegments.Count; i++)
+                {
+                    if (path.PathSegments[i].InputPoints.Count > 0)
+                    {
+                        PointF[] pts = [.. path.PathSegments[i].InputPoints];
+                        finalMatrix.TransformPoints(pts);
+                        for (int j = 0; j < pts.Length; j++)
                         {
-                            path.PathSegments[i].InputPoints[j] = new PointF(
-                                (float)((path.PathSegments[i].InputPoints[j].X * scaleX) + offsetX),
-                                (float)((path.PathSegments[i].InputPoints[j].Y * scaleY) + offsetY));
+                            path.PathSegments[i].InputPoints[j] = pts[j];
                         }
                     }
                 }
-                else if (shape is ShapeText text)
-                {
-                    text.X = (text.X * scaleX) + offsetX;
-                    text.Y = (text.Y * scaleY) + offsetY;
-                }
+            }
+            else if (shape is ShapeText text)
+            {
+                ////Already handled translation, rotation and scaling for text
+                //PointF[] pts = [new PointF(text.X, text.Y)];
+                //finalMatrix.TransformPoints(pts);
+                //text.X = pts[0].X;
+                //text.Y = pts[0].Y;
             }
         }
 
@@ -683,7 +788,6 @@ namespace PixelEditor
 
         private static ShapeText? ParseTextElement(XElement el)
         {
-            // Find the deepest tspan that contains text
             XElement? tspan = null;
             XElement? current = el;
             while (true)
@@ -715,7 +819,6 @@ namespace PixelEditor
 
             string style = el.Attribute("style")?.Value ?? "";
 
-            // Check all tspan ancestors for style overrides (innermost takes precedence)
             var tspanChain = new List<XElement>();
             current = tspan;
             while (current != null && current != el)
@@ -783,13 +886,11 @@ namespace PixelEditor
                 isItalic = true;
             }
 
-            // Also check direct attributes (they override style) - check innermost tspan first
             var fontSizeAttr = el.Attribute("font-size");
             var fontFamilyAttr = el.Attribute("font-family");
             var fontWeightAttr = el.Attribute("font-weight");
             var fontStyleAttr = el.Attribute("font-style");
 
-            // Walk from innermost tspan outward
             foreach (var tspanElement in tspanChain.AsEnumerable().Reverse())
             {
                 fontSizeAttr ??= tspanElement.Attribute("font-size");
@@ -798,30 +899,16 @@ namespace PixelEditor
                 fontStyleAttr ??= tspanElement.Attribute("font-style");
             }
 
-            if (fontSizeAttr != null)
-            {
-                fontSize = ParseDimension(fontSizeAttr.Value);
-            }
-
-            if (fontFamilyAttr != null)
-            {
-                fontFamily = fontFamilyAttr.Value;
-            }
-
+            if (fontSizeAttr != null) fontSize = ParseDimension(fontSizeAttr.Value);
+            if (fontFamilyAttr != null) fontFamily = fontFamilyAttr.Value;
             if (fontWeightAttr != null)
             {
                 string fw = fontWeightAttr.Value;
                 isBold = fw == "bold" || fw == "700" || fw == "800" || fw == "900";
             }
-
-            if (fontStyleAttr != null)
-            {
-                isItalic = fontStyleAttr.Value == "italic";
-            }
+            if (fontStyleAttr != null) isItalic = fontStyleAttr.Value == "italic";
 
             XElement sourceEl = tspan ?? el;
-            float tspanX = GetD(sourceEl, "x");
-            float tspanY = GetD(sourceEl, "y");
 
             int shapeInsideIdx = style.IndexOf("shape-inside");
             if (shapeInsideIdx != -1)
@@ -884,15 +971,102 @@ namespace PixelEditor
                 }
             }
 
-            ApplyFullMatrixTransform(el.Attribute("transform")?.Value ?? "",
-                out float matrixScaleX, out float matrixScaleY, out float matrixOffsetX, out float matrixOffsetY);
+            float matrixScaleX = 1.0f;
+            float matrixScaleY = 1.0f;
+            float geoX = x;
+            float geoY = y;
+            float calculatedRotation = 0.0f;
 
-            float geoX = (x * matrixScaleX) + matrixOffsetX;
-            float geoY = (y * matrixScaleY) + matrixOffsetY;
+            string transformStr = el.Attribute("transform")?.Value ?? "";
+            using (Matrix matrix = new ())
+            {
+                if (!string.IsNullOrWhiteSpace(transformStr))
+                {
+                    var transformParts = transformStr.Split([')'], StringSplitOptions.RemoveEmptyEntries);
+                    for (int i = transformParts.Length - 1; i >= 0; i--)
+                    {
+                        var part = transformParts[i];
+                        if (!part.Contains('(')) continue;
+
+                        string function = part[..part.IndexOf('(')].Trim().ToLower();
+                        string contentStr = part[(part.IndexOf('(') + 1)..];
+                        string[] values = contentStr.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+
+                        switch (function)
+                        {
+                            case "matrix":
+                                if (values.Length >= 6)
+                                {
+                                    float ma = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                    float mb = float.Parse(values[1], CultureInfo.InvariantCulture);
+                                    float mc = float.Parse(values[2], CultureInfo.InvariantCulture);
+                                    float md = float.Parse(values[3], CultureInfo.InvariantCulture);
+                                    float me = float.Parse(values[4], CultureInfo.InvariantCulture);
+                                    float mf = float.Parse(values[5], CultureInfo.InvariantCulture);
+                                    using Matrix em = new(ma, mb, mc, md, me, mf);
+                                    matrix.Multiply(em, MatrixOrder.Append);
+                                }
+                                break;
+                            case "translate":
+                                if (values.Length > 0)
+                                {
+                                    float tx = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                    float ty = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : 0;
+                                    matrix.Translate(tx, ty, MatrixOrder.Append);
+                                }
+                                break;
+                            case "scale":
+                                if (values.Length > 0)
+                                {
+                                    float sx = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                    float sy = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : sx;
+                                    matrix.Scale(sx, sy, MatrixOrder.Append);
+                                }
+                                break;
+                            case "rotate":
+                                if (values.Length > 0)
+                                {
+                                    float angle = float.Parse(values[0], CultureInfo.InvariantCulture);
+                                    if (values.Length >= 3)
+                                    {
+                                        float cx = float.Parse(values[1], CultureInfo.InvariantCulture);
+                                        float cy = float.Parse(values[2], CultureInfo.InvariantCulture);
+                                        matrix.Translate(cx, cy, MatrixOrder.Append);
+                                        matrix.Rotate(angle, MatrixOrder.Append);
+                                        matrix.Translate(-cx, -cy, MatrixOrder.Append);
+                                    }
+                                    else
+                                    {
+                                        matrix.Rotate(angle, MatrixOrder.Append);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                }
+
+                float[] mElements = matrix.Elements;
+                matrixScaleX = (float)Math.Sqrt(mElements[0] * mElements[0] + mElements[1] * mElements[1]);
+                matrixScaleY = (float)Math.Sqrt(mElements[2] * mElements[2] + mElements[3] * mElements[3]);
+
+                PointF[] points = [new PointF(x, y)];
+                matrix.TransformPoints(points);
+                geoX = points[0].X;
+                geoY = points[0].Y;
+
+                float angleInRadians = (float)Math.Atan2(mElements[1], mElements[0]);
+                calculatedRotation = angleInRadians * (180.0f / (float)Math.PI);
+
+                Console.WriteLine($"Matrix elements: {string.Join(", ", matrix.Elements.Select(e => e.ToString("F4")))}");
+                Console.WriteLine($"tspan x={GetD(sourceEl, "x")} y={GetD(sourceEl, "y")}");
+                Console.WriteLine($"Raw x={x} y={y} before transform");
+                PointF[] testPt = [new PointF(x, y)];
+                matrix.TransformPoints(testPt);
+                Console.WriteLine($"After transform: {testPt[0].X}, {testPt[0].Y}");
+            }
+
             float geoWidth = width * matrixScaleX;
             float geoHeight = height * matrixScaleY;
-
-            float globalTspanX = (tspanX * matrixScaleX) + matrixOffsetX;
 
             float innerX, innerY, innerWidth, innerHeight;
 
@@ -930,15 +1104,15 @@ namespace PixelEditor
                 {
                     if (dominantBaseline.Equals("hanging", StringComparison.CurrentCultureIgnoreCase))
                     {
-                        innerY = geoY - marginY; // Hanging baseline: Y coordinate is at the top of the text
+                        innerY = geoY - marginY;
                     }
                     else if (dominantBaseline.Equals("middle", StringComparison.CurrentCultureIgnoreCase))
                     {
-                        innerY = geoY - scaledGlyphHeight / 2 - marginY; // Middle baseline: Y coordinate is at the center of the text
+                        innerY = geoY - scaledGlyphHeight / 2 - marginY;
                     }
                     else if (dominantBaseline.Equals("central", StringComparison.CurrentCultureIgnoreCase))
                     {
-                        innerY = geoY - scaledGlyphHeight / 2; // Central baseline: Y coordinate is at the center of the text
+                        innerY = geoY - scaledGlyphHeight / 2;
                     }
                     else
                     {
@@ -951,9 +1125,14 @@ namespace PixelEditor
                 }
 
                 innerX = geoX + marginX;
-                //innerY = geoY + marginY - scaledGlyphHeight;
                 innerWidth = scaledGlyphWidth;
                 innerHeight = scaledGlyphHeight;
+
+                Console.WriteLine($"rawGlyphBounds: X={rawGlyphBounds.X} Y={rawGlyphBounds.Y} W={rawGlyphBounds.Width} H={rawGlyphBounds.Height}");
+                Console.WriteLine($"fontAscent={fontAscent}");
+                Console.WriteLine($"scaledGlyphWidth={scaledGlyphWidth} scaledGlyphHeight={scaledGlyphHeight}");
+                Console.WriteLine($"marginX={marginX} marginY={marginY}");
+                Console.WriteLine($"innerX={innerX} innerY={innerY}");
             }
 
             string unit = "px";
@@ -968,6 +1147,9 @@ namespace PixelEditor
                 else if (svgWidthAttr.EndsWith("pc")) unit = "pc";
             }
 
+            float textCenterX = geoX; // already the transformed position of the text origin
+            float textCenterY = geoY;
+
             var text = new ShapeText
             {
                 Content = content,
@@ -981,79 +1163,22 @@ namespace PixelEditor
                 FontFamily = fontFamily,
                 IsBold = isBold,
                 IsItalic = isItalic,
+                Rotation = calculatedRotation,
+                RotationCenterX = geoX,
+                RotationCenterY = geoY,
+                HasCustomRotationCenter = true
             };
 
             text.FontSize *= Math.Min(matrixScaleX, matrixScaleY);
             text.LineWidth = ((matrixScaleX + matrixScaleY) / 2.0f);
 
+            Console.WriteLine($"geoX={geoX} geoY={geoY}");
+            Console.WriteLine($"innerX={innerX} innerY={innerY}");
+            Console.WriteLine($"innerWidth={innerWidth} innerHeight={innerHeight}");
+            Console.WriteLine($"matrixScaleX={matrixScaleX} matrixScaleY={matrixScaleY}");
+            Console.WriteLine($"calculatedRotation={calculatedRotation}");
+
             return text;
-        }
-
-        private static void ApplyFullMatrixTransform(string transform, out float scaleX, out float scaleY, out float offsetX, out float offsetY)
-        {
-            scaleX = 1.0f;
-            scaleY = 1.0f;
-            offsetX = 0f;
-            offsetY = 0f;
-
-            if (string.IsNullOrWhiteSpace(transform)) return;
-
-            // Handle multiple transform functions (e.g., "translate(10,20) scale(2)")
-            var transformParts = transform.Split([')'], StringSplitOptions.RemoveEmptyEntries);
-
-            // CRITICAL: SVG transforms apply from RIGHT to LEFT.
-            for (int i = transformParts.Length - 1; i >= 0; i--)
-            {
-                var part = transformParts[i];
-                if (!part.Contains('(')) continue;
-
-                string function = part[..part.IndexOf('(')].Trim().ToLower();
-                string content = part[(part.IndexOf('(') + 1)..];
-                string[] values = content.Split(new[] { ',', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-
-                switch (function)
-                {
-                    case "matrix":
-                        if (values.Length >= 6)
-                        {
-                            float a = float.Parse(values[0], CultureInfo.InvariantCulture);
-                            float b = float.Parse(values[1], CultureInfo.InvariantCulture); // Skew Y
-                            float c = float.Parse(values[2], CultureInfo.InvariantCulture); // Skew X
-                            float d = float.Parse(values[3], CultureInfo.InvariantCulture);
-                            float e = float.Parse(values[4], CultureInfo.InvariantCulture);
-                            float f = float.Parse(values[5], CultureInfo.InvariantCulture);
-
-                            offsetX *= a;
-                            offsetY *= d;
-
-                            offsetX += e;
-                            offsetY += f;
-
-                            scaleX *= a;
-                            scaleY *= d;
-                        }
-                        break;
-
-                    case "translate":
-                        float tx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 0;
-                        float ty = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : 0;
-
-                        offsetX += tx;
-                        offsetY += ty;
-                        break;
-
-                    case "scale":
-                        float sx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 1;
-                        float sy = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : sx;
-
-                        scaleX *= sx;
-                        scaleY *= sy;
-
-                        offsetX *= sx;
-                        offsetY *= sy;
-                        break;
-                }
-            }
         }
 
         private static void ParseGradientTransform(string transform, GradientInfo gradient)
