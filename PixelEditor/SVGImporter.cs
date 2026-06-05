@@ -151,8 +151,17 @@ namespace PixelEditor
 
                 if (shape != null)
                 {
+                    float visualStrokeWidth = 1.0f;
+                    if (shape is ShapeText textShape)
+                    {
+                        visualStrokeWidth = textShape.LineWidth;
+                    }
                     ApplyStyles(el, shape, gradients);
                     ApplyAllTransforms(el, shape);
+                    if (shape is ShapeText textShapeD)
+                    {
+                        textShapeD.LineWidth *= visualStrokeWidth;
+                    }
                     shapes.Add(shape);
                 }
             }
@@ -440,6 +449,7 @@ namespace PixelEditor
             try
             {
                 string style = el.Attribute("style")?.Value ?? "";
+                s.LineWidth = 1.0f; // Default line width
                 if (!string.IsNullOrEmpty(style))
                 {
                     var styleParts = style.Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -719,7 +729,6 @@ namespace PixelEditor
                 string tspanStyle = tspanElement.Attribute("style")?.Value ?? "";
                 if (!string.IsNullOrEmpty(tspanStyle))
                 {
-                    // Merge styles - each tspan overrides previous
                     var styleParts = style.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
                     var tspanParts = tspanStyle.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
@@ -729,7 +738,6 @@ namespace PixelEditor
                         if (kv.Length == 2)
                         {
                             string key = kv[0].Trim();
-                            // Remove existing style with same key
                             for (int i = 0; i < styleParts.Count; i++)
                             {
                                 if (styleParts[i].TrimStart().StartsWith(key + ":"))
@@ -738,7 +746,6 @@ namespace PixelEditor
                                     break;
                                 }
                             }
-                            // Add tspan style
                             styleParts.Add(tspanPart);
                         }
                     }
@@ -860,20 +867,8 @@ namespace PixelEditor
             }
             else
             {
-                var parentRect = el.Parent?.Element(el.Name.Namespace + "rect");
-                if (parentRect != null)
-                {
-                    x = GetD(parentRect, "x");
-                    y = GetD(parentRect, "y");
-                    width = GetD(parentRect, "width");
-                    height = GetD(parentRect, "height");
-                    hasDefinedBounds = true;
-                }
-                else
-                {
-                    x = GetD(sourceEl, "x");
-                    y = GetD(sourceEl, "y");
-                }
+                x = GetD(sourceEl, "x");
+                y = GetD(sourceEl, "y");
             }
 
             string dominantBaseline = el.Attribute("dominant-baseline")?.Value ?? "";
@@ -926,43 +921,39 @@ namespace PixelEditor
                 float scaledGlyphWidth = rawGlyphBounds.Width * matrixScaleX;
                 float scaledGlyphHeight = rawGlyphBounds.Height * matrixScaleY;
 
-                float marginY = 0f;
-                float marginX = 0f;
+                float fontAscent = fontSize * cellAscent / emHeight;
 
-                if (hasDefinedBounds && geoWidth > 0 && geoHeight > 0)
+                float marginX = rawGlyphBounds.X * matrixScaleX;
+                float marginY = scaledGlyphHeight - (fontAscent * matrixScaleY) + (rawGlyphBounds.Y * matrixScaleY);
+
+                if (!string.IsNullOrEmpty(dominantBaseline))
                 {
-                    marginX = globalTspanX - geoX;
-                    marginY = (geoHeight - scaledGlyphHeight);
+                    if (dominantBaseline.Equals("hanging", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        innerY = geoY - marginY; // Hanging baseline: Y coordinate is at the top of the text
+                    }
+                    else if (dominantBaseline.Equals("middle", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        innerY = geoY - scaledGlyphHeight / 2 - marginY; // Middle baseline: Y coordinate is at the center of the text
+                    }
+                    else if (dominantBaseline.Equals("central", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        innerY = geoY - scaledGlyphHeight / 2; // Central baseline: Y coordinate is at the center of the text
+                    }
+                    else
+                    {
+                        innerY = geoY + marginY - scaledGlyphHeight;
+                    }
                 }
                 else
                 {
-                    marginX = rawGlyphBounds.X * matrixScaleX;
-                    float fontAscent = fontSize * cellAscent / emHeight;
-                    marginY = scaledGlyphHeight - (fontAscent * matrixScaleY) + (rawGlyphBounds.Y * matrixScaleY);
+                    innerY = geoY + marginY - scaledGlyphHeight;
                 }
 
                 innerX = geoX + marginX;
-                innerY = geoY + marginY - scaledGlyphHeight;
-
+                //innerY = geoY + marginY - scaledGlyphHeight;
                 innerWidth = scaledGlyphWidth;
                 innerHeight = scaledGlyphHeight;
-            }
-
-            // Adjust Y position based on dominant-baseline
-            if (!string.IsNullOrEmpty(dominantBaseline))
-            {
-                switch (dominantBaseline.ToLower())
-                {
-                    case "hanging":
-                        innerY -= fontSize * 0.3f * matrixScaleY; // Hanging baseline: Y coordinate is at the top of the text
-                        break;
-                    case "middle":
-                        innerY += fontSize * 0.15f * matrixScaleY;
-                        break;
-                    case "central":
-                        innerY += fontSize * 0.1f * matrixScaleY;
-                        break;
-                }
             }
 
             string unit = "px";
@@ -989,10 +980,11 @@ namespace PixelEditor
                 TransformScale = Math.Min(matrixScaleX, matrixScaleY),
                 FontFamily = fontFamily,
                 IsBold = isBold,
-                IsItalic = isItalic
+                IsItalic = isItalic,
             };
 
             text.FontSize *= Math.Min(matrixScaleX, matrixScaleY);
+            text.LineWidth = ((matrixScaleX + matrixScaleY) / 2.0f);
 
             return text;
         }
@@ -1001,45 +993,51 @@ namespace PixelEditor
         {
             scaleX = 1.0f;
             scaleY = 1.0f;
-            offsetX = 0;
-            offsetY = 0;
+            offsetX = 0f;
+            offsetY = 0f;
 
             if (string.IsNullOrWhiteSpace(transform)) return;
 
             // Handle multiple transform functions (e.g., "translate(10,20) scale(2)")
             var transformParts = transform.Split([')'], StringSplitOptions.RemoveEmptyEntries);
 
-            foreach (var part in transformParts)
+            // CRITICAL: SVG transforms apply from RIGHT to LEFT.
+            for (int i = transformParts.Length - 1; i >= 0; i--)
             {
+                var part = transformParts[i];
                 if (!part.Contains('(')) continue;
 
-                string function = part[..part.IndexOf('(')].Trim();
+                string function = part[..part.IndexOf('(')].Trim().ToLower();
                 string content = part[(part.IndexOf('(') + 1)..];
-                string[] values = content.Split([',', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+                string[] values = content.Split(new[] { ',', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
-                switch (function.ToLower())
+                switch (function)
                 {
                     case "matrix":
                         if (values.Length >= 6)
                         {
                             float a = float.Parse(values[0], CultureInfo.InvariantCulture);
-                            float b = float.Parse(values[1], CultureInfo.InvariantCulture);
-                            float c = float.Parse(values[2], CultureInfo.InvariantCulture);
+                            float b = float.Parse(values[1], CultureInfo.InvariantCulture); // Skew Y
+                            float c = float.Parse(values[2], CultureInfo.InvariantCulture); // Skew X
                             float d = float.Parse(values[3], CultureInfo.InvariantCulture);
                             float e = float.Parse(values[4], CultureInfo.InvariantCulture);
                             float f = float.Parse(values[5], CultureInfo.InvariantCulture);
 
-                            // For simple scale+translate matrices
-                            scaleX *= a;
-                            scaleY *= d;
+                            offsetX *= a;
+                            offsetY *= d;
+
                             offsetX += e;
                             offsetY += f;
+
+                            scaleX *= a;
+                            scaleY *= d;
                         }
                         break;
 
                     case "translate":
                         float tx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 0;
                         float ty = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : 0;
+
                         offsetX += tx;
                         offsetY += ty;
                         break;
@@ -1047,9 +1045,10 @@ namespace PixelEditor
                     case "scale":
                         float sx = values.Length > 0 ? float.Parse(values[0], CultureInfo.InvariantCulture) : 1;
                         float sy = values.Length > 1 ? float.Parse(values[1], CultureInfo.InvariantCulture) : sx;
+
                         scaleX *= sx;
                         scaleY *= sy;
-                        // Scale existing offsets too
+
                         offsetX *= sx;
                         offsetY *= sy;
                         break;
