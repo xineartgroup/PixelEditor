@@ -25,6 +25,7 @@ namespace PixelEditor
         private bool isCropping = false;
         private bool isDirty = false;
         private bool isDrawingShape = false;
+        private bool isDrawAllShapes = false;
         private bool isDraggingShape = false;
         private bool isUpdatingPolygonShape = false;
         private bool isResizingShape = false;
@@ -237,6 +238,16 @@ namespace PixelEditor
                     RedrawImage(layersControl.GetSelectedLayerIndex());
 
                     isDrawingShape = false;
+                }
+                if (isDrawAllShapes)
+                {
+                    for (int i = 0; i < layersControl.GetLayers().Count; i++)
+                    {
+                        RedrawImage(i);
+                    }
+
+                    layersControl.RefreshLayersDisplay();
+                    isDrawAllShapes = false;
                 }
             };
             animationTimer.Start();
@@ -2978,21 +2989,19 @@ namespace PixelEditor
             };
             if ((openFileDialog1).ShowDialog() == DialogResult.OK)
             {
-                List<BaseShape> shapes = SVGImporter.ImportSVG(openFileDialog1.FileName, out int width, out int height);
-                Layer layer = new($"Layer #{layersControl.GetLayers().Count + 1}", true)
+                List<Layer> layers = SVGImporter.ImportSVG(openFileDialog1.FileName, out int width, out int height);
+                foreach (var layer in layers)
                 {
-                    LayerType = LayerType.Vector,
-                    Shapes = shapes,
-                };
-                layersControl.InsertLayer(0, layer);
-                if (layersControl.GetLayers().Count == 1 || Document.Width < width || Document.Height < height)
-                {
-                    Document.Width = width;
-                    Document.Height = height;
-                    ManipulatorGeneral.UpdateBuffers();
+                    layersControl.InsertLayer(0, layer);
+                    if (layersControl.GetLayers().Count == 1 || Document.Width < width || Document.Height < height)
+                    {
+                        Document.Width = width;
+                        Document.Height = height;
+                        ManipulatorGeneral.UpdateBuffers();
+                    }
                 }
-                isDrawingShape = true;
             }
+            isDrawAllShapes = true;
         }
 
         private void PNGPictureToolStripMenuItem_Click(object? sender, EventArgs e)

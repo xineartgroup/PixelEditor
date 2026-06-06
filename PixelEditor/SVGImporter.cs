@@ -9,15 +9,14 @@ namespace PixelEditor
     {
         private static readonly XNamespace SvgNs = "http://www.w3.org/2000/svg";
 
-        public static List<BaseShape> ImportSVG(string filePath, out int width, out int height)
+        public static List<Layer> ImportSVG(string filePath, out int width, out int height)
         {
-            var shapes = new List<BaseShape>();
+            var layers = new List<Layer>();
             var doc = XDocument.Load(filePath);
             var root = doc.Root;
 
             width = root != null ? (int)Math.Round(ParseDimension(root.Attribute("width")?.Value ?? "", true)) : 0;
             height = root != null ? (int)Math.Round(ParseDimension(root.Attribute("height")?.Value ?? "", true)) : 0;
-            var defs = root?.Element(root.Name.Namespace + "defs");
 
             var viewBox = root?.Attribute("viewBox")?.Value;
             if ((width == 0 || height == 0) && !string.IsNullOrEmpty(viewBox))
@@ -30,24 +29,9 @@ namespace PixelEditor
                 }
             }
 
+            var defs = root?.Element(root.Name.Namespace + "defs");
             Dictionary<string, PointF> definedShapes = [];
             Dictionary<string, GradientInfo> gradients = [];
-
-            if (defs != null)
-            {
-                foreach (var el in defs.Elements())
-                {
-                    string? id = el.Attribute("id")?.Value;
-                    if (string.IsNullOrEmpty(id)) continue;
-
-                    if (el.Name.LocalName == "rect")
-                    {
-                        float x = (float)GetD(el, "x");
-                        float y = (float)GetD(el, "y");
-                        definedShapes[id] = new PointF(x, y);
-                    }
-                }
-            }
 
             if (defs != null)
             {
@@ -66,106 +50,119 @@ namespace PixelEditor
                     {
                         var gradient = ParseGradient(el, gradients);
                         if (gradient != null)
-                        {
                             gradients[id] = gradient;
-                        }
                     }
                 }
             }
 
-            foreach (var el in doc.Descendants())
+            var groups = root?.Elements().Where(e => e.Name.LocalName == "g").ToList() ?? [];
+
+            foreach (var group in groups)
             {
-                if (IsInsideDefs(el))
-                    continue;
+                string layerName = group.Attribute("id")?.Value ?? "Layer";
+                string display = group.Attribute("display")?.Value ?? "inline";
+                bool isVisible = display != "none";
 
-                string localName = el.Name.LocalName.ToLower();
-                BaseShape? shape = null;
+                var layer = new Layer(layerName, isVisible)
+                {
+                    LayerType = LayerType.Vector
+                };
 
-                if (localName == "rect")
-                {
-                    shape = new ShapeRect
-                    {
-                        X = GetD(el, "x"),
-                        Y = GetD(el, "y"),
-                        Width = GetD(el, "width"),
-                        Height = GetD(el, "height"),
-                        Rx = GetD(el, "rx"),
-                        Ry = GetD(el, "ry")
-                    };
-                }
-                else if (localName == "circle")
-                {
-                    shape = new ShapeEllipse
-                    {
-                        X = GetD(el, "cx") - GetD(el, "r"),
-                        Y = GetD(el, "cy") - GetD(el, "r"),
-                        Width = GetD(el, "r") * 2,
-                        Height = GetD(el, "r") * 2
-                    };
-                }
-                else if (localName == "ellipse")
-                {
-                    shape = new ShapeEllipse
-                    {
-                        X = GetD(el, "cx") - GetD(el, "rx"),
-                        Y = GetD(el, "cy") - GetD(el, "ry"),
-                        Width = GetD(el, "rx") * 2,
-                        Height = GetD(el, "ry") * 2
-                    };
-                }
-                else if (localName == "line")
-                {
-                    shape = new ShapeLine
-                    {
-                        StartPoint = new PointF((float)GetD(el, "x1"), (float)GetD(el, "y1")),
-                        EndPoint = new PointF((float)GetD(el, "x2"), (float)GetD(el, "y2"))
-                    };
-                }
-                else if (localName == "polyline")
-                {
-                    shape = new ShapePolygon
-                    {
-                        IsClosed = false,
-                        Points = ParsePts(el.Attribute("points")?.Value ?? "")
-                    };
-                }
-                else if (localName == "polygon")
-                {
-                    shape = new ShapePolygon
-                    {
-                        IsClosed = true,
-                        Points = ParsePts(el.Attribute("points")?.Value ?? "")
-                    };
-                }
-                else if (localName == "path")
-                {
-                    shape = ParsePathElement(el);
-                }
-                else if (localName == "text")
-                {
-                    shape = ParseTextElement(el);
-                }
-                else if (localName == "g")
-                {
-                }
+                var shapes = new List<BaseShape>();
 
-                if (shape != null)
+                foreach (var el in group.Descendants())
                 {
-                    float visualStrokeWidth = 1.0f;
-                    if (shape is ShapeText textShape)
+                    if (IsInsideDefs(el)) continue;
+
+                    string localName = el.Name.LocalName.ToLower();
+                    BaseShape? shape = null;
+
+                    if (localName == "rect")
                     {
-                        visualStrokeWidth = textShape.LineWidth;
+                        shape = new ShapeRect
+                        {
+                            X = GetD(el, "x"),
+                            Y = GetD(el, "y"),
+                            Width = GetD(el, "width"),
+                            Height = GetD(el, "height"),
+                            Rx = GetD(el, "rx"),
+                            Ry = GetD(el, "ry")
+                        };
                     }
-                    ApplyStyles(el, shape, gradients);
-                    ApplyAllTransforms(el, shape);
-                    if (shape is ShapeText textShapeD)
+                    else if (localName == "circle")
                     {
-                        textShapeD.LineWidth *= visualStrokeWidth;
+                        shape = new ShapeEllipse
+                        {
+                            X = GetD(el, "cx") - GetD(el, "r"),
+                            Y = GetD(el, "cy") - GetD(el, "r"),
+                            Width = GetD(el, "r") * 2,
+                            Height = GetD(el, "r") * 2
+                        };
                     }
-                    shapes.Add(shape);
+                    else if (localName == "ellipse")
+                    {
+                        shape = new ShapeEllipse
+                        {
+                            X = GetD(el, "cx") - GetD(el, "rx"),
+                            Y = GetD(el, "cy") - GetD(el, "ry"),
+                            Width = GetD(el, "rx") * 2,
+                            Height = GetD(el, "ry") * 2
+                        };
+                    }
+                    else if (localName == "line")
+                    {
+                        shape = new ShapeLine
+                        {
+                            StartPoint = new PointF((float)GetD(el, "x1"), (float)GetD(el, "y1")),
+                            EndPoint = new PointF((float)GetD(el, "x2"), (float)GetD(el, "y2"))
+                        };
+                    }
+                    else if (localName == "polyline")
+                    {
+                        shape = new ShapePolygon
+                        {
+                            IsClosed = false,
+                            Points = ParsePts(el.Attribute("points")?.Value ?? "")
+                        };
+                    }
+                    else if (localName == "polygon")
+                    {
+                        shape = new ShapePolygon
+                        {
+                            IsClosed = true,
+                            Points = ParsePts(el.Attribute("points")?.Value ?? "")
+                        };
+                    }
+                    else if (localName == "path")
+                    {
+                        shape = ParsePathElement(el);
+                    }
+                    else if (localName == "text")
+                    {
+                        shape = ParseTextElement(el);
+                    }
+
+                    if (shape != null)
+                    {
+                        float visualStrokeWidth = 1.0f;
+                        if (shape is ShapeText textShape)
+                            visualStrokeWidth = textShape.LineWidth;
+
+                        ApplyStyles(el, shape, gradients);
+                        ApplyAllTransforms(el, shape);
+
+                        if (shape is ShapeText textShapeD)
+                            textShapeD.LineWidth *= visualStrokeWidth;
+
+                        shapes.Add(shape);
+                    }
                 }
+
+                layer.Shapes = shapes;
+                layers.Add(layer);
             }
-            return shapes;
+
+            return layers;
         }
 
         private static bool IsInsideDefs(XElement element)

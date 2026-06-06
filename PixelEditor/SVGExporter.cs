@@ -22,6 +22,9 @@ namespace PixelEditor
             for (int n = layers.Count - 1; n >= 0; n--)
             {
                 var layer = layers[n];
+
+                if (layer.LayerType != LayerType.Vector) continue;
+
                 string visibility = layer.IsVisible ? "inline" : "none";
                 XElement group = new(SvgNs + "g",
                     new XAttribute("id", layer.Name),

@@ -787,6 +787,8 @@ namespace PixelEditor
             {
                 duplicate = new ShapeRect(rect.X + 10, rect.Y + 10, rect.Width, rect.Height)
                 {
+                    Rx = rect.Rx,
+                    Ry = rect.Ry,
                     LineColor = rect.LineColor,
                     LineWidth = rect.LineWidth,
                     FillColor = rect.FillColor,
