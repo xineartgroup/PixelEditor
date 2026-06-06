@@ -30,7 +30,6 @@ namespace PixelEditor
                 foreach (var stroke in layer.Shapes)
                 {
                     XElement? el = null;
-
                     float scaleX = 1.0f;
                     float scaleY = 1.0f;
 
@@ -103,28 +102,23 @@ namespace PixelEditor
 
                                 case "C":
                                     if (pts.Count >= 4)
-                                        // Carried: pts[0]=start, pts[1]=cp1, pts[2]=cp2, pts[3]=end
                                         sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
                                             pts[1].X, pts[1].Y, pts[2].X, pts[2].Y, pts[3].X, pts[3].Y);
                                     else if (pts.Count == 3)
-                                        // No carried: pts[0]=cp1, pts[1]=cp2, pts[2]=end
                                         sb.AppendFormat(CultureInfo.InvariantCulture, "C {0:0.###},{1:0.###} {2:0.###},{3:0.###} {4:0.###},{5:0.###} ",
                                             pts[0].X, pts[0].Y, pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
                                     break;
 
                                 case "Q":
                                     if (pts.Count >= 3)
-                                        // Carried: pts[0]=start, pts[1]=cp1, pts[2]=end
                                         sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
                                             pts[1].X, pts[1].Y, pts[2].X, pts[2].Y);
                                     else if (pts.Count == 2)
-                                        // No carried: pts[0]=cp1, pts[1]=end
                                         sb.AppendFormat(CultureInfo.InvariantCulture, "Q {0:0.###},{1:0.###} {2:0.###},{3:0.###} ",
                                             pts[0].X, pts[0].Y, pts[1].X, pts[1].Y);
                                     break;
 
                                 case "A":
-                                    // A is always stored with carried point from parser
                                     sb.AppendFormat(CultureInfo.InvariantCulture, "A {0:0.###},{1:0.###} {2:0.###} {3},{4} {5:0.###},{6:0.###} ",
                                         pts[1].X, pts[1].Y, pts[2].X, (int)pts[3].X, (int)pts[3].Y, pts[4].X, pts[4].Y);
                                     break;
@@ -156,19 +150,27 @@ namespace PixelEditor
                             RectangleF rawGlyphBounds = path.GetBounds();
 
                             if (t.Width > 0 && rawGlyphBounds.Width > 0)
-                            {
                                 scaleX = t.Width / rawGlyphBounds.Width;
-                            }
                             if (t.Height > 0 && rawGlyphBounds.Height > 0)
-                            {
                                 scaleY = t.Height / rawGlyphBounds.Height;
-                            }
 
                             float fontAscent = nativeFontSize * cellAscent / emHeight;
-
                             exportX = t.X - (rawGlyphBounds.X * scaleX);
                             exportY = t.Y + (fontAscent * scaleY) - (rawGlyphBounds.Y * scaleY);
                         }
+
+                        double angleRad = t.Rotation * Math.PI / 180.0;
+                        float cos = (float)Math.Cos(angleRad);
+                        float sin = (float)Math.Sin(angleRad);
+
+                        float ma = cos * scaleX;
+                        float mb = sin * scaleX;
+                        float mc = -sin * scaleY;
+                        float md = cos * scaleY;
+
+                        string transform = string.Format(CultureInfo.InvariantCulture,
+                            "matrix({0:0.######},{1:0.######},{2:0.######},{3:0.######},{4:0.###},{5:0.###})",
+                            ma, mb, mc, md, exportX, exportY);
 
                         XElement textElement = new(SvgNs + "text",
                             new XAttribute("x", "0"),
@@ -178,43 +180,48 @@ namespace PixelEditor
                             t.IsBold ? new XAttribute("font-weight", "bold") : null,
                             t.IsItalic ? new XAttribute("font-style", "italic") : null,
                             new XAttribute("text-rendering", "geometricPrecision"),
+                            new XAttribute("transform", transform),
                             t.Content);
 
-                        StringBuilder transformBuilder = new();
-                        transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "translate({0:0.###},{1:0.###}) ", exportX, exportY);
-
-                        if (scaleX != 1.0f || scaleY != 1.0f)
-                        {
-                            transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "scale({0:0.###},{1:0.###}) ", scaleX, scaleY);
-                        }
-
-                        if (t.Rotation != 0)
-                        {
-                            transformBuilder.AppendFormat(CultureInfo.InvariantCulture, "rotate({0:0.###}) ", t.Rotation);
-                        }
-
-                        textElement.Add(new XAttribute("transform", transformBuilder.ToString().Trim()));
                         el = textElement;
                     }
 
                     if (el != null)
                     {
+                        if (stroke is not ShapeText && stroke.Rotation != 0)
+                        {
+                            float cx = stroke.HasCustomRotationCenter ? stroke.RotationCenterX : 0;
+                            float cy = stroke.HasCustomRotationCenter ? stroke.RotationCenterY : 0;
+
+                            double angleRad = stroke.Rotation * Math.PI / 180.0;
+                            float cos = (float)Math.Cos(angleRad);
+                            float sin = (float)Math.Sin(angleRad);
+
+                            float ma = cos;
+                            float mb = sin;
+                            float mc = -sin;
+                            float md = cos;
+                            float me = cx * (1 - cos) + cy * sin;
+                            float mf = cy * (1 - cos) - cx * sin;
+
+                            string transform = string.Format(CultureInfo.InvariantCulture,
+                                "matrix({0:0.######},{1:0.######},{2:0.######},{3:0.######},{4:0.###},{5:0.###})",
+                                ma, mb, mc, md, me, mf);
+
+                            el.Add(new XAttribute("transform", transform));
+                        }
+
                         if (el.Attribute("stroke") == null)
                             el.Add(new XAttribute("stroke", ColorToHex(stroke.LineColor)));
                         if (el.Attribute("stroke-width") == null)
                         {
                             if (stroke is ShapeText && scaleX > 0)
-                            {
-                                float normalizedStrokeWidth = stroke.LineWidth / scaleX;
-                                el.Add(new XAttribute("stroke-width", normalizedStrokeWidth.ToString("0.###", CultureInfo.InvariantCulture)));
-                            }
+                                el.Add(new XAttribute("stroke-width", (stroke.LineWidth / scaleX).ToString("0.###", CultureInfo.InvariantCulture)));
                             else
-                            {
                                 el.Add(new XAttribute("stroke-width", stroke.LineWidth));
-                            }
                         }
                         if (el.Attribute("fill") == null)
-                            el.Add(new XAttribute("fill", (stroke.FillColor == Color.Transparent) ? "none" : ColorToHex(stroke.FillColor)));
+                            el.Add(new XAttribute("fill", stroke.FillColor == Color.Transparent ? "none" : ColorToHex(stroke.FillColor)));
 
                         group.Add(el);
                     }
@@ -241,30 +248,6 @@ namespace PixelEditor
                 sb.Append(p.Y.ToString("0.###", CultureInfo.InvariantCulture));
             }
             return sb.ToString();
-        }
-
-        private static float CalculateScaledFontSize(ShapeText text)
-        {
-            using Font tempFont = new(text.FontFamily, text.FontSize, GetFontStyle(text));
-
-            using StringFormat stringFormat = new()
-            {
-                Alignment = StringAlignment.Near,
-                LineAlignment = StringAlignment.Near,
-                Trimming = StringTrimming.None
-            };
-
-            using Graphics g = Graphics.FromImage(new Bitmap(1, 1));
-
-            SizeF textSize = g.MeasureString(text.Content, tempFont, new SizeF(text.Width, text.Height), stringFormat);
-
-            float widthScale = text.Width > 0 ? text.Width / textSize.Width : 1f;
-            float heightScale = text.Height > 0 ? text.Height / textSize.Height : 1f;
-
-            float scale = Math.Min(widthScale, heightScale);
-            float scaledFontSize = Math.Max(4, Math.Min(text.FontSize * scale, 4000));
-
-            return scaledFontSize;
         }
 
         private static FontStyle GetFontStyle(ShapeText text)
