@@ -46,14 +46,31 @@ namespace PixelEditor
 
                     if (type == LayerType.Vector)
                     {
-                        Layer layer = new(name, true) { LayerType = LayerType.Vector };
                         int shapeCount = reader.ReadInt32();
+                        int opacity = reader.ReadInt32();
                         bool isVisible = reader.ReadBoolean();
+                        bool redFilter = reader.ReadBoolean();
+                        bool greenFilter = reader.ReadBoolean();
+                        bool blueFilter = reader.ReadBoolean();
+                        LayerChannel channel = (LayerChannel)reader.ReadInt32();
+                        ImageBlending blendMode = (ImageBlending)reader.ReadInt32();
+
+                        Layer layer = new(name, isVisible)
+                        {
+                            LayerType = LayerType.Vector,
+                            Opacity = opacity,
+                            RedFilter = redFilter,
+                            GreenFilter = greenFilter,
+                            BlueFilter = blueFilter,
+                            Channel = channel,
+                            BlendMode = blendMode
+                        };
+
                         for (int j = 0; j < shapeCount; j++)
                         {
                             layer.Shapes.Add(ReadShape(reader));
                         }
-                        layer.IsVisible = isVisible;
+
                         layers.Add(layer);
                     }
                     else

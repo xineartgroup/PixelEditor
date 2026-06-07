@@ -37,7 +37,13 @@ namespace PixelEditor
                         if (layer.LayerType == LayerType.Vector)
                         {
                             writer.Write(layer.Shapes.Count);
+                            writer.Write(layer.Opacity);
                             writer.Write(layer.IsVisible);
+                            writer.Write(layer.RedFilter);
+                            writer.Write(layer.GreenFilter);
+                            writer.Write(layer.BlueFilter);
+                            writer.Write((int)layer.Channel);
+                            writer.Write((int)layer.BlendMode);
                             foreach (var shape in layer.Shapes)
                             {
                                 WriteShape(writer, shape);

@@ -5603,7 +5603,7 @@ namespace PixelEditor
                     }
                     else if (btnPointer.Checked || btnPointSelect.Checked)
                     {
-                        if (SelectionsManipulator.ContainsSelection())
+                        if (selectedLayer.LayerType == LayerType.Image && SelectionsManipulator.ContainsSelection())
                         {
                             if (selectedLayer.Image == null) return;
 
@@ -5658,24 +5658,21 @@ namespace PixelEditor
                                 selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
                             }
                         }
-                        else
+                        else if (selectedLayer.LayerType == LayerType.Vector)
                         {
                             MergeSelectedAreaBitmap();
                             Point worldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                             Point localPos = new(worldPos.X - selectedLayer.X, worldPos.Y - selectedLayer.Y);
 
-                            if (selectedLayer.LayerType == LayerType.Vector)
+                            if (ModifierKeys.HasFlag(Keys.Control))
                             {
-                                if (ModifierKeys.HasFlag(Keys.Control))
-                                {
-                                    isLassoSelecting = true;
-                                }
-                                else
-                                {
-                                    isRectSelecting = true;
-                                }
-                                SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
+                                isLassoSelecting = true;
                             }
+                            else
+                            {
+                                isRectSelecting = true;
+                            }
+                            SelectionsManipulator.AddSelectionPoint(ManipulatorGeneral.ScreenToWorld(lastMousePosition, canvas.Width, canvas.Height));
 
                             if (selectedLayer.CurrentShape != null && !isResizingShape)
                             {
