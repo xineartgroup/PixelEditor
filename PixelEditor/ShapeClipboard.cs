@@ -5,7 +5,6 @@ namespace PixelEditor
 {
     public static class ShapeClipboard
     {
-        // A mapping of the exact classes to unique clipboard format keys
         private static readonly (Type Type, string Format)[] ShapeFormats =
         [
             (typeof(ShapeLine), "PixelEditor.Vector.ShapeLine"),
@@ -15,6 +14,12 @@ namespace PixelEditor
             (typeof(ShapePath), "PixelEditor.Vector.ShapePath"),
             (typeof(ShapeText), "PixelEditor.Vector.ShapeText")
         ];
+
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            WriteIndented = false,
+            Converters = { new ColorJsonConverter() }
+        };
 
         public static void SetClipboardData(BaseShape? shape)
         {
@@ -36,10 +41,7 @@ namespace PixelEditor
 
                 if (targetFormat == null) return;
 
-                string json = JsonSerializer.Serialize(shape, exactType, new JsonSerializerOptions
-                {
-                    WriteIndented = false
-                });
+                string json = JsonSerializer.Serialize(shape, exactType, SerializerOptions);
 
                 DataObject data = new();
                 data.SetData(targetFormat, false, json);
@@ -60,10 +62,7 @@ namespace PixelEditor
                 {
                     if (Clipboard.TryGetData(mapping.Format, out string? json) && !string.IsNullOrEmpty(json))
                     {
-                        if (JsonSerializer.Deserialize(json, mapping.Type) is BaseShape concreteShape)
-                        {
-                            return concreteShape;
-                        }
+                        return JsonSerializer.Deserialize(json, mapping.Type, SerializerOptions) as BaseShape;
                     }
                 }
             }

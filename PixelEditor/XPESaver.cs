@@ -37,6 +37,7 @@ namespace PixelEditor
                         if (layer.LayerType == LayerType.Vector)
                         {
                             writer.Write(layer.Shapes.Count);
+                            writer.Write(layer.IsVisible);
                             foreach (var shape in layer.Shapes)
                             {
                                 WriteShape(writer, shape);

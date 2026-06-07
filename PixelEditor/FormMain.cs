@@ -4918,30 +4918,40 @@ namespace PixelEditor
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
-                if (SelectionsManipulator.ContainsSelection())
+                if (selectedLayer.LayerType == LayerType.Image)
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    SelectionsManipulator.CalculateSelectionBounds();
-                    Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
-                    selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
-                    if (tempImage != null)
+                    if (SelectionsManipulator.ContainsSelection())
                     {
-                        SetClipboardImage(tempImage);
-                        //ImageSelections.ClearSelections();
-                        RedrawImage();
+                        SelectionsManipulator.CalculateSelectionBounds();
+                        Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
+                        selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
+                        if (tempImage != null)
+                        {
+                            SetClipboardImage(tempImage);
+                            //ImageSelections.ClearSelections();
+                            RedrawImage();
+                        }
                     }
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-                else
-                {
-                    Image? tempImage = selectedLayer.Image;
-                    if (tempImage != null)
+                    else
                     {
-                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        SetClipboardImage(tempImage);
-                        DeleteImageToolStripMenuItem_Click(sender, e);
-                        RedrawImage();
-                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Image? tempImage = selectedLayer.Image;
+                        if (tempImage != null)
+                        {
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                            SetClipboardImage(tempImage);
+                            DeleteImageToolStripMenuItem_Click(sender, e);
+                            RedrawImage();
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        }
+                    }
+                }
+                else if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    if (selectedLayer.CurrentShape != null)
+                    {
+                        ShapeClipboard.SetClipboardData(Layer.GetDuplicate(selectedLayer.CurrentShape));
+                        selectedLayer.Shapes.Remove(selectedLayer.CurrentShape);
+                        isDrawAllShapes = true;
                     }
                 }
             }
@@ -4956,7 +4966,6 @@ namespace PixelEditor
                 {
                     if (SelectionsManipulator.ContainsSelection())
                     {
-                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         SelectionsManipulator.CalculateSelectionBounds();
                         Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
                         if (tempImage != null)
@@ -4965,17 +4974,14 @@ namespace PixelEditor
                             //ImageSelections.ClearSelections();
                             RedrawImage();
                         }
-                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                     else
                     {
                         Image? tempImage = selectedLayer.Image;
                         if (tempImage != null)
                         {
-                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                             SetClipboardImage(tempImage);
                             RedrawImage();
-                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         }
                     }
                 }
@@ -4983,10 +4989,8 @@ namespace PixelEditor
                 {
                     if (selectedLayer.CurrentShape != null)
                     {
-                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        ShapeClipboard.SetClipboardData(selectedLayer.CurrentShape);
-                        isDrawingShape = true;
-                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        ShapeClipboard.SetClipboardData(Layer.GetDuplicate(selectedLayer.CurrentShape));
+                        isDrawAllShapes = true;
                     }
                 }
             }
@@ -5032,9 +5036,11 @@ namespace PixelEditor
                     if (shape != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
                         selectedLayer.Shapes.Add(shape);
                         selectedLayer.CurrentShape = shape;
-                        isDrawingShape = true;
+                        isDrawAllShapes = true;
+
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }

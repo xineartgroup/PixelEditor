@@ -779,13 +779,11 @@ namespace PixelEditor
             }
         }
 
-        public void DuplicateShape(BaseShape shape)
+        public static BaseShape? GetDuplicate(BaseShape shape, int spacing = 0)
         {
-            BaseShape? duplicate = null;
-
             if (shape is ShapeRect rect)
             {
-                duplicate = new ShapeRect(rect.X + 10, rect.Y + 10, rect.Width, rect.Height)
+                return new ShapeRect(rect.X + spacing, rect.Y + spacing, rect.Width, rect.Height)
                 {
                     Rx = rect.Rx,
                     Ry = rect.Ry,
@@ -800,7 +798,7 @@ namespace PixelEditor
             }
             else if (shape is ShapeEllipse ellipse)
             {
-                duplicate = new ShapeEllipse(ellipse.X + 10, ellipse.Y + 10, ellipse.Width, ellipse.Height)
+                return new ShapeEllipse(ellipse.X + spacing, ellipse.Y + spacing, ellipse.Width, ellipse.Height)
                 {
                     LineColor = ellipse.LineColor,
                     LineWidth = ellipse.LineWidth,
@@ -816,9 +814,9 @@ namespace PixelEditor
                 List<PointF> points = [];
                 foreach (var p in polygon.Points)
                 {
-                    points.Add(new PointF(p.X + 10, p.Y + 10));
+                    points.Add(new PointF(p.X + spacing, p.Y + spacing));
                 }
-                duplicate = new ShapePolygon(points, polygon.IsClosed)
+                return new ShapePolygon(points, polygon.IsClosed)
                 {
                     LineColor = polygon.LineColor,
                     LineWidth = polygon.LineWidth,
@@ -831,7 +829,7 @@ namespace PixelEditor
             }
             else if (shape is ShapeText text)
             {
-                duplicate = new ShapeText(text.Content, text.X + 10, text.Y + 10, text.Width, text.Height, text.FontFamily, text.FontSize, text.MeasurementUnit)
+                return new ShapeText(text.Content, text.X + spacing, text.Y + spacing, text.Width, text.Height, text.FontFamily, text.FontSize, text.MeasurementUnit)
                 {
                     IsBold = text.IsBold,
                     IsItalic = text.IsItalic,
@@ -855,11 +853,11 @@ namespace PixelEditor
                     List<PointF> offsetPoints = [];
                     foreach (var p in segment.InputPoints)
                     {
-                        offsetPoints.Add(new PointF(p.X + 10, p.Y + 10));
+                        offsetPoints.Add(new PointF(p.X + spacing, p.Y + spacing));
                     }
                     segments.Add(new PathSegment(segment.PathType, offsetPoints));
                 }
-                duplicate = new ShapePath(segments)
+                return new ShapePath(segments)
                 {
                     LineColor = path.LineColor,
                     LineWidth = path.LineWidth,
@@ -870,6 +868,13 @@ namespace PixelEditor
                     HasCustomRotationCenter = path.HasCustomRotationCenter,
                 };
             }
+
+            return null;
+        }
+
+        public void DuplicateShape(BaseShape shape)
+        {
+            BaseShape? duplicate = GetDuplicate(shape, 10);
 
             if (duplicate != null)
             {
@@ -1201,6 +1206,7 @@ namespace PixelEditor
                 _fillType = _fillType,
                 _fillColor = _fillColor,
                 _layerType = _layerType,
+                shapes = [.. shapes.Select(s => GetDuplicate(s) ?? s)]
 
             };
 

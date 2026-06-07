@@ -48,10 +48,12 @@ namespace PixelEditor
                     {
                         Layer layer = new(name, true) { LayerType = LayerType.Vector };
                         int shapeCount = reader.ReadInt32();
+                        bool isVisible = reader.ReadBoolean();
                         for (int j = 0; j < shapeCount; j++)
                         {
                             layer.Shapes.Add(ReadShape(reader));
                         }
+                        layer.IsVisible = isVisible;
                         layers.Add(layer);
                     }
                     else
