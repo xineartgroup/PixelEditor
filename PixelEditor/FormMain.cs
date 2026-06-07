@@ -6832,6 +6832,7 @@ namespace PixelEditor
             isDrawing = false;
             isDraggingShape = false;
             isResizingShape = false;
+            isColorPicked = false;
             originalSelectionPoints = null;
             ColorDialogX.IsEyeDropping = false;
             layersControl.RefreshLayersDisplay();
