@@ -1200,6 +1200,7 @@ namespace PixelEditor
                 _blendMode = _blendMode,
                 _fillType = _fillType,
                 _fillColor = _fillColor,
+                _layerType = _layerType,
 
             };
 

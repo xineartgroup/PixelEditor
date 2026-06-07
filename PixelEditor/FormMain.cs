@@ -2554,34 +2554,33 @@ namespace PixelEditor
 
             if (path.ActiveHandleIndicies == null || path.ActiveHandleIndicies.Length < 2) return;
 
-            // Build flat point list AND per-point segment mapping
-            var allPoints = new List<PointF>();
-            var pointToSegment = new List<int>();
+            // Build flat list of ANCHOR POINTS only (not interpolated points)
+            var allAnchorPoints = new List<PointF>();
+            var anchorToSegment = new List<int>();
+
             for (int i = 0; i < path.PathSegments.Count; i++)
             {
-                var pts = path.PathSegments[i].GetPoints();
-                foreach (var p in pts)
+                var segment = path.PathSegments[i];
+                // Only add the actual control points, not interpolated points
+                foreach (var p in segment.InputPoints)
                 {
-                    allPoints.Add(p);
-                    pointToSegment.Add(i);
+                    allAnchorPoints.Add(p);
+                    anchorToSegment.Add(i);
                 }
             }
 
             var indices = path.ActiveHandleIndicies
-                .Where(i => i >= 0 && i < allPoints.Count)
+                .Where(i => i >= 0 && i < allAnchorPoints.Count)
                 .OrderBy(i => i)
                 .ToList();
 
             if (indices.Count < 2) return;
 
-            // *** CONTIGUITY CHECK ***
-            // Only fit points that form a contiguous run. If there's a gap, split into contiguous runs and handle each (or reject non-contiguous).
+            // Check for contiguous runs in anchor point space
             var runs = new List<List<int>>();
             var currentRun = new List<int> { indices[0] };
             for (int i = 1; i < indices.Count; i++)
             {
-                // Check if consecutive indices map to adjacent/same segments
-                // A "gap" means skipped point indices (non-contiguous flat indices)
                 if (indices[i] == indices[i - 1] + 1)
                     currentRun.Add(indices[i]);
                 else
@@ -2594,21 +2593,21 @@ namespace PixelEditor
 
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
 
-            // Process runs from last to first so indices stay valid
+            // Process runs from last to first
             for (int r = runs.Count - 1; r >= 0; r--)
             {
                 var run = runs[r];
                 if (run.Count < 2) continue;
 
-                var pointsToFit = run.Select(i => allPoints[i]).ToList();
+                var pointsToFit = run.Select(i => allAnchorPoints[i]).ToList();
                 var (p1, p2) = ManipulatorGeneral.FitCubicControlPoints(pointsToFit);
                 PointF p0 = pointsToFit[0];
                 PointF p3 = pointsToFit[^1];
 
-                int firstPtIdx = run[0];
-                int lastPtIdx = run[^1];
-                int firstSegIdx = pointToSegment[firstPtIdx];
-                int lastSegIdx = pointToSegment[lastPtIdx];
+                int firstAnchorIdx = run[0];
+                int lastAnchorIdx = run[^1];
+                int firstSegIdx = anchorToSegment[firstAnchorIdx];
+                int lastSegIdx = anchorToSegment[lastAnchorIdx];
 
                 var newSegments = new List<PathSegment>();
                 for (int i = 0; i < path.PathSegments.Count; i++)
@@ -2619,30 +2618,40 @@ namespace PixelEditor
                     }
                     else if (i == firstSegIdx)
                     {
-                        // If this is the M segment, preserve the M and add C after
+                        // Handle the starting segment
                         if (path.PathSegments[i].PathType == "M")
                         {
                             newSegments.Add(new PathSegment { PathType = "M", InputPoints = [p0] });
                             newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
                         }
-                        else
+                        else if (path.PathSegments[i].PathType == "C" || path.PathSegments[i].PathType == "L")
                         {
-                            newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
+                            // For curves/lines, we need to check if p0 is the start of this segment
+                            if (path.PathSegments[i].InputPoints[0] == p0)
+                            {
+                                newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
+                            }
+                            else
+                            {
+                                // p0 is somewhere in the middle of this segment - this is complex
+                                // You might need to split the segment
+                                newSegments.Add(new PathSegment { PathType = "C", InputPoints = [p0, p1, p2, p3] });
+                            }
                         }
                     }
                     else if (i > firstSegIdx && i < lastSegIdx)
                     {
-                        // Drop intermediate segments that are absorbed into the curve
+                        // Skip intermediate segments
                         continue;
                     }
                     else if (i == lastSegIdx)
                     {
-                        // If last selected seg is Z, keep it; otherwise it's absorbed
+                        // Handle ending segment
                         if (path.PathSegments[i].PathType == "Z")
                             newSegments.Add(path.PathSegments[i]);
-                        // else: absorbed into the C segment
+                        // else absorbed
                     }
-                    else // i > lastSegIdx
+                    else
                     {
                         newSegments.Add(path.PathSegments[i]);
                     }
@@ -2650,18 +2659,17 @@ namespace PixelEditor
 
                 path.PathSegments = newSegments;
 
-                // Rebuild allPoints/pointToSegment for next run (if any)
+                // Rebuild anchor points for next run
                 if (r > 0)
                 {
-                    allPoints.Clear();
-                    pointToSegment.Clear();
+                    allAnchorPoints.Clear();
+                    anchorToSegment.Clear();
                     for (int i = 0; i < path.PathSegments.Count; i++)
                     {
-                        var pts = path.PathSegments[i].GetPoints();
-                        foreach (var p in pts)
+                        foreach (var p in path.PathSegments[i].InputPoints)
                         {
-                            allPoints.Add(p);
-                            pointToSegment.Add(i);
+                            allAnchorPoints.Add(p);
+                            anchorToSegment.Add(i);
                         }
                     }
                 }
@@ -4944,27 +4952,40 @@ namespace PixelEditor
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
             if (selectedLayer != null)
             {
-                if (SelectionsManipulator.ContainsSelection())
+                if (selectedLayer.LayerType == LayerType.Image)
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    SelectionsManipulator.CalculateSelectionBounds();
-                    Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
-                    if (tempImage != null)
-                    {
-                        SetClipboardImage(tempImage);
-                        //ImageSelections.ClearSelections();
-                        RedrawImage();
-                    }
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-                else
-                {
-                    Image? tempImage = selectedLayer.Image;
-                    if (tempImage != null)
+                    if (SelectionsManipulator.ContainsSelection())
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        SetClipboardImage(tempImage);
-                        RedrawImage();
+                        SelectionsManipulator.CalculateSelectionBounds();
+                        Image? tempImage = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
+                        if (tempImage != null)
+                        {
+                            SetClipboardImage(tempImage);
+                            //ImageSelections.ClearSelections();
+                            RedrawImage();
+                        }
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
+                    else
+                    {
+                        Image? tempImage = selectedLayer.Image;
+                        if (tempImage != null)
+                        {
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                            SetClipboardImage(tempImage);
+                            RedrawImage();
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        }
+                    }
+                }
+                else if (selectedLayer.LayerType == LayerType.Vector)
+                {
+                    if (selectedLayer.CurrentShape != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        ShapeClipboard.SetClipboardData(selectedLayer.CurrentShape);
+                        isDrawingShape = true;
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
@@ -4973,32 +4994,47 @@ namespace PixelEditor
 
         private void PasteImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            IDataObject? data = Clipboard.GetDataObject();
-            Bitmap? clipboardImage = null;
-
-            if (data != null)
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
             {
-                if (data.GetDataPresent("PNG"))
+                if (selectedLayer.LayerType == LayerType.Image)
                 {
-                    using MemoryStream? ms = (MemoryStream?)data.GetData("PNG");
-                    if (ms != null) clipboardImage = new Bitmap(ms);
-                }
+                    IDataObject? data = Clipboard.GetDataObject();
+                    Bitmap? clipboardImage = null;
 
-                if (clipboardImage == null && data.GetDataPresent(DataFormats.Bitmap))
-                {
-                    clipboardImage = (Bitmap?)Clipboard.GetImage();
-                }
+                    if (data != null)
+                    {
+                        if (data.GetDataPresent("PNG"))
+                        {
+                            using MemoryStream? ms = (MemoryStream?)data.GetData("PNG");
+                            if (ms != null) clipboardImage = new Bitmap(ms);
+                        }
 
-                if (clipboardImage != null)
+                        if (clipboardImage == null && data.GetDataPresent(DataFormats.Bitmap))
+                        {
+                            clipboardImage = (Bitmap?)Clipboard.GetImage();
+                        }
+
+                        if (clipboardImage != null)
+                        {
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+
+                            selectedAreaBitmap = new Bitmap(clipboardImage);
+                            RedrawImage();
+
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        }
+                    }
+                }
+                else if (selectedLayer.LayerType == LayerType.Vector)
                 {
-                    var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-                    if (selectedLayer != null)
+                    BaseShape? shape = ShapeClipboard.GetClipboardData();
+                    if (shape != null)
                     {
                         HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-
-                        selectedAreaBitmap = new Bitmap(clipboardImage);
-                        RedrawImage();
-
+                        selectedLayer.Shapes.Add(shape);
+                        selectedLayer.CurrentShape = shape;
+                        isDrawingShape = true;
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
                 }
