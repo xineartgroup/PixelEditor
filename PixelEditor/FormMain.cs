@@ -4425,6 +4425,8 @@ namespace PixelEditor
                     btnShapePolygon.BackColor = Color.White;
                     btnShapeText.Enabled = true;
                     btnShapeText.BackColor = Color.White;
+
+                    canvas.ContextMenuStrip = contextMenuStrip2;
                 }
                 else
                 {
@@ -4459,6 +4461,8 @@ namespace PixelEditor
                     btnShapePolygon.BackColor = Color.LightGray;
                     btnShapeText.Enabled = false;
                     btnShapeText.BackColor = Color.LightGray;
+
+                    canvas.ContextMenuStrip = contextMenuStrip1;
                 }
 
                 if (btnPointer.Checked || btnPointSelect.Checked)
@@ -4538,7 +4542,7 @@ namespace PixelEditor
                             txtTextLineText.Text = txt.Content;
 
                             btnTextLineColor.BackColor = Color.FromArgb(255, txt.LineColor.R, txt.LineColor.G, txt.LineColor.B);
-                            //textLineOpacityNum.Value = (decimal)((txt.LineColor.A / 255.0) * (double)textLineOpacityNum.Maximum);
+                            numTextLineOpacity.Value = (decimal)((txt.LineColor.A / 255.0) * (double)numTextLineOpacity.Maximum);
 
                             btnTextFillColor.BackColor = Color.FromArgb(255, txt.FillColor.R, txt.FillColor.G, txt.FillColor.B);
                             numTextFillOpacity.Value = (decimal)((txt.FillColor.A / 255.0) * (double)numTextFillOpacity.Maximum);
@@ -4928,7 +4932,6 @@ namespace PixelEditor
                         if (tempImage != null)
                         {
                             SetClipboardImage(tempImage);
-                            //ImageSelections.ClearSelections();
                             RedrawImage();
                         }
                     }
@@ -4959,25 +4962,7 @@ namespace PixelEditor
 
         private void CopyImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            //string debugSource = "";
-
-            //if (sender is ToolStripMenuItem menuItem)
-            //{
-            //    debugSource = menuItem.Name ?? "<Unknown>";
-            //}
-
-            //Console.WriteLine();
-            //Console.WriteLine($"Copy called from: {debugSource}");
-            //Console.WriteLine($"layersControl hash: {layersControl.GetHashCode()}");
-            //Console.WriteLine($"Selected index: {layersControl.GetSelectedLayerIndex()}");
-            //Console.WriteLine($"Total layers: {layersControl.GetLayers().Count}");
-
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-
-            //Console.WriteLine($"Selected layer: {(selectedLayer != null ? selectedLayer.Name : "Null")}");
-            //Console.WriteLine($"Selected shape: {(selectedLayer != null ? selectedLayer.CurrentShape?.ToString() : "Null")}");
-            //Console.WriteLine($"Shapes Count: {(selectedLayer != null ? selectedLayer.Shapes.Count : 0)}");
-            //Console.WriteLine();
 
             if (selectedLayer != null)
             {
@@ -4990,7 +4975,6 @@ namespace PixelEditor
                         if (tempImage != null)
                         {
                             SetClipboardImage(tempImage);
-                            //ImageSelections.ClearSelections();
                             RedrawImage();
                         }
                     }
