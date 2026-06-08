@@ -260,7 +260,7 @@
             contextMenuStrip1.Items.AddRange(new ToolStripItem[] { deleteImageToolStripMenuItem1, toolStripMenuItem10, cutImageToolStripMenuItem1, copyImageToolStripMenuItem1, pasteImageToolStripMenuItem1 });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(108, 98);
-            contextMenuStrip1.Click += DeleteImageToolStripMenuItem_Click;
+            //contextMenuStrip1.Click += DeleteImageToolStripMenuItem_Click;
             // 
             // deleteImageToolStripMenuItem1
             // 

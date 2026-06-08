@@ -724,9 +724,13 @@ namespace PixelEditor
 
             if (Equals(field, value)) return;
 
-            OnLayerChanged?.Invoke(GetBounds());
+            T oldValue = field;
             field = value;
-            OnLayerChanged?.Invoke(GetBounds());
+
+            if (!Equals(oldValue, value))
+            {
+                OnLayerChanged?.Invoke(GetBounds());
+            }
         }
 
         public Rectangle GetBounds()

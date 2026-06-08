@@ -4959,7 +4959,26 @@ namespace PixelEditor
 
         private void CopyImageToolStripMenuItem_Click(object? sender, EventArgs e)
         {
+            //string debugSource = "";
+
+            //if (sender is ToolStripMenuItem menuItem)
+            //{
+            //    debugSource = menuItem.Name ?? "<Unknown>";
+            //}
+
+            //Console.WriteLine();
+            //Console.WriteLine($"Copy called from: {debugSource}");
+            //Console.WriteLine($"layersControl hash: {layersControl.GetHashCode()}");
+            //Console.WriteLine($"Selected index: {layersControl.GetSelectedLayerIndex()}");
+            //Console.WriteLine($"Total layers: {layersControl.GetLayers().Count}");
+
             var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            //Console.WriteLine($"Selected layer: {(selectedLayer != null ? selectedLayer.Name : "Null")}");
+            //Console.WriteLine($"Selected shape: {(selectedLayer != null ? selectedLayer.CurrentShape?.ToString() : "Null")}");
+            //Console.WriteLine($"Shapes Count: {(selectedLayer != null ? selectedLayer.Shapes.Count : 0)}");
+            //Console.WriteLine();
+
             if (selectedLayer != null)
             {
                 if (selectedLayer.LayerType == LayerType.Image)
@@ -5508,10 +5527,10 @@ namespace PixelEditor
 
         private void PixelImage_MouseDown(object? sender, MouseEventArgs e)
         {
-            lastMousePosition = e.Location;
-
             if (e.Button == MouseButtons.Left)
             {
+                lastMousePosition = e.Location;
+
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
                 if (selectedLayer != null)
@@ -6688,132 +6707,135 @@ namespace PixelEditor
 
         private void PixelImage_MouseUp(object? sender, MouseEventArgs e)
         {
-            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
-
-            if (isLassoSelecting)
+            if (e.Button == MouseButtons.Left)
             {
-                if (SelectionsManipulator.GetLastSelection().Count > 1)
-                {
-                    SelectionsManipulator.AddSelectionPoint(SelectionsManipulator.GetLastSelection()[0]);
-                }
-            }
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
 
-            if (isRectSelecting || isLassoSelecting)
-            {
-                if (selectedLayer != null && selectedLayer.LayerType == LayerType.Vector && selectedLayer.Shapes.Count > 0)
+                if (isLassoSelecting)
                 {
-                    HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    if (Layer.LayerSelectionType == LayerSelectionType.Shape)
+                    if (SelectionsManipulator.GetLastSelection().Count > 1)
                     {
-                        foreach (var shape in selectedLayer.Shapes)
+                        SelectionsManipulator.AddSelectionPoint(SelectionsManipulator.GetLastSelection()[0]);
+                    }
+                }
+
+                if (isRectSelecting || isLassoSelecting)
+                {
+                    if (selectedLayer != null && selectedLayer.LayerType == LayerType.Vector && selectedLayer.Shapes.Count > 0)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        if (Layer.LayerSelectionType == LayerSelectionType.Shape)
                         {
-                            bool shapeInSelection = true;
-                            foreach (var point in shape.ControlPoints())
+                            foreach (var shape in selectedLayer.Shapes)
                             {
-                                if (SelectionsManipulator.IsPointInSelection(point) < 0)
+                                bool shapeInSelection = true;
+                                foreach (var point in shape.ControlPoints())
                                 {
-                                    shapeInSelection = false;
-                                    break;
+                                    if (SelectionsManipulator.IsPointInSelection(point) < 0)
+                                    {
+                                        shapeInSelection = false;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (shapeInSelection)
-                            {
-                                selectedLayer.AddedShapeSelections.Add(shape);
+                                if (shapeInSelection)
+                                {
+                                    selectedLayer.AddedShapeSelections.Add(shape);
+                                }
                             }
                         }
-                    }
-                    else if (Layer.LayerSelectionType == LayerSelectionType.Point)
-                    {
-                        if (selectedLayer.CurrentShape != null)
+                        else if (Layer.LayerSelectionType == LayerSelectionType.Point)
                         {
-                            var controlPoints = selectedLayer.CurrentShape.ControlPoints();
-                            List<int> selectedIndices = [];
-
-                            for (int i = 0; i < controlPoints.Count; i++)
+                            if (selectedLayer.CurrentShape != null)
                             {
-                                if (SelectionsManipulator.IsPointInSelection(controlPoints[i]) >= 0)
-                                {
-                                    selectedIndices.Add(i);
-                                }
-                            }
+                                var controlPoints = selectedLayer.CurrentShape.ControlPoints();
+                                List<int> selectedIndices = [];
 
-                            if (selectedLayer.CurrentShape is ShapePath path)
-                            {
-                                for (int i = 0; i < path.ActiveHandleIndicies.Length; i++)
+                                for (int i = 0; i < controlPoints.Count; i++)
                                 {
-                                    if (path.ActiveHandleIndicies[i] >= 0)
+                                    if (SelectionsManipulator.IsPointInSelection(controlPoints[i]) >= 0)
                                     {
-                                        selectedIndices.Add(path.ActiveHandleIndicies[i]);
+                                        selectedIndices.Add(i);
                                     }
                                 }
 
-                                path.ActiveHandleIndicies = [.. selectedIndices];
-                                path.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
-                            }
-                            else if (selectedLayer.CurrentShape is ShapePolygon polygon)
-                            {
-                                for (int i = 0; i < polygon.ActiveHandleIndicies.Length; i++)
+                                if (selectedLayer.CurrentShape is ShapePath path)
                                 {
-                                    if (polygon.ActiveHandleIndicies[i] >= 0)
+                                    for (int i = 0; i < path.ActiveHandleIndicies.Length; i++)
                                     {
-                                        selectedIndices.Add(polygon.ActiveHandleIndicies[i]);
+                                        if (path.ActiveHandleIndicies[i] >= 0)
+                                        {
+                                            selectedIndices.Add(path.ActiveHandleIndicies[i]);
+                                        }
                                     }
-                                }
 
-                                polygon.ActiveHandleIndicies = [.. selectedIndices];
-                                polygon.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
+                                    path.ActiveHandleIndicies = [.. selectedIndices];
+                                    path.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
+                                }
+                                else if (selectedLayer.CurrentShape is ShapePolygon polygon)
+                                {
+                                    for (int i = 0; i < polygon.ActiveHandleIndicies.Length; i++)
+                                    {
+                                        if (polygon.ActiveHandleIndicies[i] >= 0)
+                                        {
+                                            selectedIndices.Add(polygon.ActiveHandleIndicies[i]);
+                                        }
+                                    }
+
+                                    polygon.ActiveHandleIndicies = [.. selectedIndices];
+                                    polygon.ActiveHandleIndex = selectedIndices.Count > 0 ? selectedIndices[0] : -1;
+                                }
                             }
                         }
-                    }
-                    SelectionsManipulator.ClearSelections();
-                    isDrawingShape = true;
-                    HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                }
-            }
-
-            if (selectedLayer != null)
-            {
-                if (selectedLayer.CurrentShape is ShapePolygon polygon)
-                {
-                    polygon.CornerHandleIndex = -1;
-                }
-                else if (selectedLayer.CurrentShape is ShapePath path)
-                {
-                    path.CornerHandleIndex = -1;
-                }
-
-                if (!isColorPicked)
-                {
-                    if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
-                    {
-                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        ManipulatorGeneral.UpdateBuffers();
-                        PaintingEngine.EndStroke();
-                        SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
-                        SelectionsManipulator.CalculateSelectionBounds();
-                        //var bounds = SelectionsManipulator.GetSelectionBounds();
-                        RedrawImage();
+                        SelectionsManipulator.ClearSelections();
+                        isDrawingShape = true;
                         HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                     }
-                    else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
+                }
+
+                if (selectedLayer != null)
+                {
+                    if (selectedLayer.CurrentShape is ShapePolygon polygon)
                     {
-                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                        if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                        polygon.CornerHandleIndex = -1;
+                    }
+                    else if (selectedLayer.CurrentShape is ShapePath path)
+                    {
+                        path.CornerHandleIndex = -1;
+                    }
+
+                    if (!isColorPicked)
+                    {
+                        if (selectedLayer.LayerType == LayerType.Image && selectedLayer.Image != null)
                         {
-                            selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                            ManipulatorGeneral.UpdateBuffers();
+                            PaintingEngine.EndStroke();
+                            SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
+                            SelectionsManipulator.CalculateSelectionBounds();
+                            //var bounds = SelectionsManipulator.GetSelectionBounds();
+                            RedrawImage();
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         }
-                        btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
-                        btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
-                        isDrawingShape = true;
-                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-                    }
-                    else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
-                    {
-                        isDrawingShape = true;
-                    }
-                    else
-                    {
+                        else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is not ShapePolygon)
+                        {
+                            HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                            if (selectedLayer.IsNewShape(selectedLayer.CurrentShape))
+                            {
+                                selectedLayer.Shapes.Add(selectedLayer.CurrentShape);
+                            }
+                            btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
+                            btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
+                            isDrawingShape = true;
+                            HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        }
+                        else if (selectedLayer.LayerType == LayerType.Vector && selectedLayer.CurrentShape != null && selectedLayer.CurrentShape is ShapePolygon)
+                        {
+                            isDrawingShape = true;
+                        }
+                        else
+                        {
 
+                        }
                     }
                 }
             }
