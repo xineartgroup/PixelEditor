@@ -25,11 +25,19 @@
             btnEyeDropper = new Button();
             picColorRange = new PictureBox();
             txtColor = new TextBox();
+            tkbSaturation = new TrackBar();
+            picSaturation = new PictureBox();
+            tkbValue = new TrackBar();
+            picValue = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)picColorBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseMovePreview).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picColorRange).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)tkbSaturation).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picSaturation).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)tkbValue).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picValue).BeginInit();
             SuspendLayout();
             // 
             // picColorBox
@@ -47,19 +55,19 @@
             // tkbHue
             // 
             tkbHue.LargeChange = 30;
-            tkbHue.Location = new Point(279, 51);
+            tkbHue.Location = new Point(279, 52);
             tkbHue.Margin = new Padding(4, 3, 4, 3);
             tkbHue.Maximum = 360;
             tkbHue.Name = "tkbHue";
             tkbHue.Orientation = Orientation.Vertical;
-            tkbHue.Size = new Size(45, 258);
+            tkbHue.Size = new Size(45, 255);
             tkbHue.TabIndex = 1;
             tkbHue.TickStyle = TickStyle.None;
             tkbHue.Scroll += TkbHue_Scroll;
             // 
             // btnOK
             // 
-            btnOK.Location = new Point(70, 322);
+            btnOK.Location = new Point(141, 322);
             btnOK.Margin = new Padding(4, 3, 4, 3);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(88, 27);
@@ -70,7 +78,7 @@
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(165, 322);
+            btnCancel.Location = new Point(236, 322);
             btnCancel.Margin = new Padding(4, 3, 4, 3);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(88, 27);
@@ -103,7 +111,7 @@
             // 
             btnEyeDropper.FlatStyle = FlatStyle.Popup;
             btnEyeDropper.Image = (Image)resources.GetObject("btnEyeDropper.Image");
-            btnEyeDropper.Location = new Point(261, 17);
+            btnEyeDropper.Location = new Point(434, 18);
             btnEyeDropper.Name = "btnEyeDropper";
             btnEyeDropper.Size = new Size(28, 28);
             btnEyeDropper.TabIndex = 6;
@@ -131,29 +139,86 @@
             txtColor.KeyDown += TxtColor_KeyDown;
             txtColor.Leave += TxtColor_TextChanged;
             // 
+            // tkbSaturation
+            // 
+            tkbSaturation.LargeChange = 30;
+            tkbSaturation.Location = new Point(349, 52);
+            tkbSaturation.Margin = new Padding(4, 3, 4, 3);
+            tkbSaturation.Maximum = 360;
+            tkbSaturation.Name = "tkbSaturation";
+            tkbSaturation.Orientation = Orientation.Vertical;
+            tkbSaturation.Size = new Size(45, 255);
+            tkbSaturation.TabIndex = 1;
+            tkbSaturation.TickStyle = TickStyle.None;
+            tkbSaturation.Scroll += TkbSaturation_Scroll;
+            // 
+            // picSaturation
+            // 
+            picSaturation.Location = new Point(331, 59);
+            picSaturation.Margin = new Padding(4, 3, 4, 3);
+            picSaturation.Name = "picSaturation";
+            picSaturation.Size = new Size(10, 240);
+            picSaturation.TabIndex = 7;
+            picSaturation.TabStop = false;
+            picSaturation.Paint += PicSaturation_Paint;
+            picSaturation.MouseDown += PicSaturation_MouseDown;
+            // 
+            // tkbValue
+            // 
+            tkbValue.LargeChange = 30;
+            tkbValue.Location = new Point(417, 52);
+            tkbValue.Margin = new Padding(4, 3, 4, 3);
+            tkbValue.Maximum = 360;
+            tkbValue.Name = "tkbValue";
+            tkbValue.Orientation = Orientation.Vertical;
+            tkbValue.Size = new Size(45, 255);
+            tkbValue.TabIndex = 1;
+            tkbValue.TickStyle = TickStyle.None;
+            tkbValue.Scroll += TkbValue_Scroll;
+            // 
+            // picValue
+            // 
+            picValue.Location = new Point(399, 59);
+            picValue.Margin = new Padding(4, 3, 4, 3);
+            picValue.Name = "picValue";
+            picValue.Size = new Size(10, 240);
+            picValue.TabIndex = 7;
+            picValue.TabStop = false;
+            picValue.Paint += PicValue_Paint;
+            picValue.MouseDown += PicValue_MouseDown;
+            // 
             // ColorDialogX
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(334, 361);
+            ClientSize = new Size(484, 361);
             Controls.Add(txtColor);
+            Controls.Add(picValue);
+            Controls.Add(picSaturation);
             Controls.Add(picColorRange);
             Controls.Add(btnEyeDropper);
             Controls.Add(picMouseMovePreview);
             Controls.Add(picMouseDownPreview);
             Controls.Add(btnCancel);
             Controls.Add(btnOK);
+            Controls.Add(tkbValue);
+            Controls.Add(tkbSaturation);
             Controls.Add(tkbHue);
             Controls.Add(picColorBox);
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
             Margin = new Padding(4, 3, 4, 3);
             Name = "ColorDialogX";
             Text = "Color Picker";
+            FormClosing += ColorDialogX_FormClosing;
             ((System.ComponentModel.ISupportInitialize)picColorBox).EndInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).EndInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).EndInit();
             ((System.ComponentModel.ISupportInitialize)picMouseMovePreview).EndInit();
             ((System.ComponentModel.ISupportInitialize)picColorRange).EndInit();
+            ((System.ComponentModel.ISupportInitialize)tkbSaturation).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picSaturation).EndInit();
+            ((System.ComponentModel.ISupportInitialize)tkbValue).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picValue).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -167,5 +232,10 @@
         private Button btnEyeDropper;
         private PictureBox picColorRange;
         private TextBox txtColor;
+        private NumericUpDown numericS;
+        private TrackBar tkbSaturation;
+        private PictureBox picSaturation;
+        private TrackBar tkbValue;
+        private PictureBox picValue;
     }
 }

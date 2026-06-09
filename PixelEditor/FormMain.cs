@@ -1543,15 +1543,6 @@ namespace PixelEditor
             _colorPicker.Color = btnTextFillColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //using ColorDialog cd = new();
-            //cd.FullOpen = true;
-            //cd.Color = btnTextFillColor.BackColor;
-            //if (cd.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnTextFillColor.BackColor = cd.Color;
-            //    FillTextOpacityNum_ValueChanged(sender, e);
-            //}
         }
 
         private void CboRectLinePattern_SelectedIndexChanged(object? sender, EventArgs e)
@@ -2074,24 +2065,6 @@ namespace PixelEditor
             _colorPicker.Color = btnPenColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //ColorDialog c = new()
-            //{
-            //    Color = btnPenColor.BackColor,
-            //    FullOpen = true
-            //};
-            //if (c.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnPenColor.BackColor = c.Color;
-            //    paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
-            //    if (paint.Brush != null)
-            //    {
-            //        PaintingEngine.SetBrush(paint);
-            //        int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
-            //        int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
-            //        UpdateCursor(cursorWidth, cursorHeight);
-            //    }
-            //}
         }
 
         private void BtnEraserColor_Click(object? sender, EventArgs e)
@@ -2109,24 +2082,6 @@ namespace PixelEditor
             _colorPicker.Color = btnEraserColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //ColorDialog c = new()
-            //{
-            //    Color = btnEraserColor.BackColor,
-            //    FullOpen = true
-            //};
-            //if (c.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnEraserColor.BackColor = c.Color;
-            //    paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
-            //    if (paint.Brush != null)
-            //    {
-            //        PaintingEngine.SetBrush(paint);
-            //        int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
-            //        int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
-            //        UpdateCursor(cursorWidth, cursorHeight);
-            //    }
-            //}
         }
 
         private void BtnFillColor_Click(object? sender, EventArgs e)
@@ -2144,19 +2099,6 @@ namespace PixelEditor
             _colorPicker.Color = btnFillColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
-
-            //ColorDialog c = new()
-            //{
-            //    Color = btnFillColor.BackColor,
-            //    FullOpen = true
-            //};
-            //if (c.ShowDialog() == DialogResult.OK)
-            //{
-            //    btnFillColor.BackColor = c.Color;
-            //    paint.SetFillColor(btnFillColor.BackColor);
-            //    PaintingEngine.SetBrush(paint);
-            //    UpdateCursor(btnFiller.Image);
-            //}
         }
 
         private void BtnFillColor1_Click(object? sender, EventArgs e)

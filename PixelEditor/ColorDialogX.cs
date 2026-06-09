@@ -47,18 +47,28 @@ namespace PixelEditor
             _hue = tkbHue.Value;
             UpdateColor();
             picColorBox.Invalidate();
+            picSaturation.Invalidate();
+            picValue.Invalidate();
         }
 
         private void PicColorBox_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
+                _saturation = Math.Clamp((float)e.X / picColorBox.Width, 0f, 1f);
+                _brightness = Math.Clamp(1f - ((float)e.Y / picColorBox.Height), 0f, 1f);
+
+                tkbSaturation.Value = (int)(_saturation * tkbSaturation.Maximum);
+                tkbValue.Value = (int)(_brightness * tkbValue.Maximum);
+
+                UpdateColor();
+
                 Color clickedColor = GetColorFromMouse(e.X, e.Y);
                 picMouseDownPreview.BackColor = clickedColor;
-                _saturation = Math.Clamp((float)e.X / picColorBox.Width, 0, 1);
-                _brightness = Math.Clamp(1 - ((float)e.Y / picColorBox.Height), 0, 1);
-                UpdateColor();
+
                 picColorBox.Invalidate();
+                picSaturation.Invalidate();
+                picValue.Invalidate();
             }
         }
 
@@ -66,8 +76,23 @@ namespace PixelEditor
         {
             Color hoveredColor = GetColorFromMouse(e.X, e.Y);
             picMouseMovePreview.BackColor = hoveredColor;
-            _saturation = Math.Clamp((float)e.X / picColorBox.Width, 0, 1);
-            _brightness = Math.Clamp(1 - ((float)e.Y / picColorBox.Height), 0, 1);
+
+            if (e.Button == MouseButtons.Left)
+            {
+                _saturation = Math.Clamp((float)e.X / picColorBox.Width, 0f, 1f);
+                _brightness = Math.Clamp(1f - ((float)e.Y / picColorBox.Height), 0f, 1f);
+
+                tkbSaturation.Value = (int)(_saturation * tkbSaturation.Maximum);
+                tkbValue.Value = (int)(_brightness * tkbValue.Maximum);
+
+                UpdateColor();
+
+                picMouseDownPreview.BackColor = _color;
+
+                picColorBox.Invalidate();
+                picSaturation.Invalidate();
+                picValue.Invalidate();
+            }
         }
 
         private Color GetColorFromMouse(int x, int y)
@@ -239,6 +264,75 @@ namespace PixelEditor
                     }
                 }
                 Canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
+            }
+        }
+
+        private void TkbSaturation_Scroll(object sender, EventArgs e)
+        {
+            _saturation = Math.Clamp((float)tkbSaturation.Value / tkbSaturation.Maximum, 0f, 1f);
+            UpdateColor();
+            picColorBox.Invalidate();
+            picSaturation.Invalidate();
+            picValue.Invalidate();
+        }
+
+        private void TkbValue_Scroll(object sender, EventArgs e)
+        {
+            _brightness = Math.Clamp((float)tkbValue.Value / tkbValue.Maximum, 0f, 1f);
+            UpdateColor();
+            picColorBox.Invalidate();
+            picSaturation.Invalidate();
+            picValue.Invalidate();
+        }
+
+        private void PicSaturation_MouseDown(object sender, MouseEventArgs e)
+        {
+            tkbSaturation.Value = Math.Clamp((picSaturation.Height - e.Y) * tkbSaturation.Maximum / picSaturation.Height, 0, tkbSaturation.Maximum);
+            TkbSaturation_Scroll(sender, e);
+        }
+
+        private void PicSaturation_Paint(object sender, PaintEventArgs e)
+        {
+            for (int y = 0; y < picSaturation.Height; y++)
+            {
+                float s = Math.Clamp((float)(picSaturation.Height - y) / picSaturation.Height, 0f, 1f);
+                Color color = ColorFromHSB(_hue, s, _brightness);
+
+                using var pen = new Pen(color);
+                e.Graphics.DrawLine(pen, 0, y, picSaturation.Width, y);
+            }
+        }
+
+        private void PicValue_MouseDown(object sender, MouseEventArgs e)
+        {
+            tkbValue.Value = Math.Clamp((picValue.Height - e.Y) * tkbValue.Maximum / picValue.Height, 0, tkbValue.Maximum);
+            TkbValue_Scroll(sender, e);
+        }
+
+        private void PicValue_Paint(object sender, PaintEventArgs e)
+        {
+            for (int y = 0; y < picValue.Height; y++)
+            {
+                float v = Math.Clamp((float)(picValue.Height - y) / picValue.Height, 0f, 1f);
+                Color color = ColorFromHSB(_hue, _saturation, v);
+
+                using var pen = new Pen(color);
+                e.Graphics.DrawLine(pen, 0, y, picValue.Width, y);
+            }
+        }
+
+        private void ColorDialogX_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+
+                if (_cursor != null)
+                    Canvas.Cursor = new Cursor(_cursor.Handle);
+                IsEyeDropping = false;
+                DialogResult = DialogResult.Cancel;
+
+                Hide();
             }
         }
     }
