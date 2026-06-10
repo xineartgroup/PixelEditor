@@ -9,7 +9,9 @@ namespace PixelEditor
         private float _hue = 0;
         private float _saturation = 1;
         private float _brightness = 1;
+        private static int _colorIndex = 0;
         private static Cursor? _cursor = null;
+        private static List<PictureBox> _pictureBoxesInOrder = [];
 
         public Action<Color>? OnColorAccepted = null;
 
@@ -333,6 +335,63 @@ namespace PixelEditor
                 DialogResult = DialogResult.Cancel;
 
                 Hide();
+            }
+        }
+
+        private void BtnAdd_Click(object sender, EventArgs e)
+        {
+            _pictureBoxesInOrder[_colorIndex].BackColor = _color;
+            _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.FixedSingle;
+            if (_colorIndex < _pictureBoxesInOrder.Count - 1)
+            {
+                _colorIndex++;
+            }
+            else
+            {
+                _colorIndex = 0;
+            }
+            _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
+        }
+
+        private void PicSave_Click(object sender, EventArgs e)
+        {
+            if (sender is PictureBox pic)
+            {
+                Color = pic.BackColor;
+
+                for (int i = 0; i < _pictureBoxesInOrder.Count; i++)
+                {
+                    if (_pictureBoxesInOrder[i] == pic)
+                    {
+                        _colorIndex = i;
+                    }
+                    else if (_pictureBoxesInOrder[i].BorderStyle == BorderStyle.Fixed3D)
+                    {
+                        _pictureBoxesInOrder[i].BorderStyle = BorderStyle.FixedSingle;
+                    }
+                }
+
+                pic.BorderStyle = BorderStyle.Fixed3D;
+            }
+        }
+
+        private void ColorDialogX_Load(object sender, EventArgs e)
+        {
+            if (_pictureBoxesInOrder.Count == 0)
+            {
+                _pictureBoxesInOrder = [.. groupBox1.Controls.OfType<PictureBox>()
+                .Where(pic => pic.Name.StartsWith("picSave"))
+                .OrderBy(pic => pic.Name)];
+
+                foreach (var ctrl in groupBox1.Controls)
+                {
+                    if (ctrl is PictureBox pic)
+                    {
+                        pic.BackColor = Color.Transparent;
+                    }
+                }
+
+                _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
             }
         }
     }

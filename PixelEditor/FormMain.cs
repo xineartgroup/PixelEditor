@@ -52,7 +52,7 @@ namespace PixelEditor
         private string currentFilePath = "";
         private List<PointF> strokePoints = [];
         private readonly List<Image> brushes = [];
-        private readonly ColorDialogX _colorPicker = new();
+        private readonly ColorDialogX _colorPicker = new(); // Here because of the custom color picking
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -5449,6 +5449,106 @@ namespace PixelEditor
             scaleAnchorWorld = new PointF(
                 (newLeft + newRight) / 2f,
                 (newTop + newBottom) / 2f);
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys baseKey = keyData & Keys.KeyCode;
+
+            if (baseKey == Keys.Left || baseKey == Keys.Right || baseKey == Keys.Up || baseKey == Keys.Down)
+            {
+                float deltaX = 0;
+                float deltaY = 0;
+                float stepSize = 1;
+
+                if (Control.ModifierKeys == Keys.Shift)
+                {
+                    stepSize = 10;
+                }
+
+                if (baseKey == Keys.Left)
+                {
+                    deltaX = -stepSize;
+                }
+                else if (baseKey == Keys.Right)
+                {
+                    deltaX = stepSize;
+                }
+                else if (baseKey == Keys.Up)
+                {
+                    deltaY = -stepSize;
+                }
+                else if (baseKey == Keys.Down)
+                {
+                    deltaY = stepSize;
+                }
+
+                MoveShape(deltaX, deltaY);
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void MoveShape(float deltaX, float deltaY)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+
+            if (selectedLayer != null && selectedLayer.CurrentShape != null)
+            {
+                List<BaseShape> shapes = [];
+
+                foreach (var shape in selectedLayer.AddedShapeSelections)
+                {
+                    if (shape != selectedLayer.CurrentShape && !shapes.Contains(shape))
+                    {
+                        shapes.Add(shape);
+                    }
+                }
+
+                if (selectedLayer.CurrentShape != null && !shapes.Contains(selectedLayer.CurrentShape))
+                {
+                    shapes.Add(selectedLayer.CurrentShape);
+                }
+
+                foreach (var shape in shapes)
+                {
+                    if (shape is ShapeRect rect)
+                    {
+                        rect.X += deltaX;
+                        rect.Y += deltaY;
+                    }
+                    else if (shape is ShapeEllipse ellipse)
+                    {
+                        ellipse.X += deltaX;
+                        ellipse.Y += deltaY;
+                    }
+                    else if (shape is ShapeText text)
+                    {
+                        text.X += deltaX;
+                        text.Y += deltaY;
+                    }
+                    else if (shape is ShapePolygon polygon)
+                    {
+                        for (int i = 0; i < polygon.Points.Count; i++)
+                        {
+                            polygon.Points[i] = new PointF(polygon.Points[i].X + deltaX, polygon.Points[i].Y + deltaY);
+                        }
+                    }
+                    else if (shape is ShapePath path)
+                    {
+                        foreach (var segment in path.PathSegments)
+                        {
+                            for (int i = 0; i < segment.InputPoints.Count; i++)
+                            {
+                                segment.InputPoints[i] = new PointF(segment.InputPoints[i].X + deltaX, segment.InputPoints[i].Y + deltaY);
+                            }
+                        }
+                    }
+                }
+
+                isDrawingShape = true;
+            }
         }
 
         private void PixelImage_MouseDown(object? sender, MouseEventArgs e)
