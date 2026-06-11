@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
+using System.Windows.Forms.VisualStyles;
 
 namespace PixelEditor
 {
@@ -86,7 +87,7 @@ namespace PixelEditor
                         bool blueFilter = reader.ReadBoolean();
                         LayerChannel channel = (LayerChannel)reader.ReadInt32();
                         ImageBlending blendMode = (ImageBlending)reader.ReadInt32();
-
+                        FillType fillType = (FillType)reader.ReadInt32();
                         Layer layer = new(name, isVisible)
                         {
                             LayerType = LayerType.Image,
@@ -100,6 +101,7 @@ namespace PixelEditor
                             BlueFilter = blueFilter,
                             Channel = channel,
                             BlendMode = blendMode,
+                            FillType = fillType,
                             Image = ReadLayerImageData(reader),
                             ImageMask = ReadLayerImageData(reader)
                         };

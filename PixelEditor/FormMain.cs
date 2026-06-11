@@ -2074,9 +2074,14 @@ namespace PixelEditor
             _colorPicker.OnColorAccepted = (selectedColor) =>
             {
                 btnEraserColor.BackColor = selectedColor;
-                paint.SetFillColor(btnEraserColor.BackColor);
-                PaintingEngine.SetBrush(paint);
-                UpdateCursor(btnEraserColor.Image);
+                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                if (paint.Brush != null)
+                {
+                    PaintingEngine.SetBrush(paint);
+                    int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
+                    int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
+                    UpdateCursor(cursorWidth, cursorHeight);
+                }
             };
 
             _colorPicker.Color = btnEraserColor.BackColor;
@@ -6609,7 +6614,7 @@ namespace PixelEditor
                             Point start = Point.Round(strokePoints[0]);
                             Point end = Point.Round(strokePoints[1]);
 
-                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, isErasing, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, isErasing && selectedLayer.FillType == FillType.Transparency, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                         }
                         else
                         {
@@ -6633,7 +6638,7 @@ namespace PixelEditor
 
                                 if (prevRounded != currRounded)
                                 {
-                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, isErasing, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, isErasing && selectedLayer.FillType == FillType.Transparency, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                                 }
 
                                 previousPos = pos;

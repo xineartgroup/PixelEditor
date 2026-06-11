@@ -62,7 +62,7 @@ namespace PixelEditor
                             writer.Write(layer.BlueFilter);
                             writer.Write((int)layer.Channel);
                             writer.Write((int)layer.BlendMode);
-
+                            writer.Write((int)layer.FillType);
                             WriteImageData(writer, layer.GetBasicImage());
                             WriteImageData(writer, layer.ImageMask);
                         }
