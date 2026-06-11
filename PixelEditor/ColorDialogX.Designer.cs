@@ -51,6 +51,8 @@
             picSave02 = new PictureBox();
             picSave03 = new PictureBox();
             picSave01 = new PictureBox();
+            picSave21 = new PictureBox();
+            this.picSave22 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)picColorBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).BeginInit();
@@ -81,6 +83,8 @@
             ((System.ComponentModel.ISupportInitialize)picSave02).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave03).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave01).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picSave21).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)this.picSave22).BeginInit();
             SuspendLayout();
             // 
             // picColorBox
@@ -233,6 +237,8 @@
             // groupBox1
             // 
             groupBox1.Controls.Add(btnAdd);
+            groupBox1.Controls.Add(this.picSave22);
+            groupBox1.Controls.Add(picSave21);
             groupBox1.Controls.Add(picSave20);
             groupBox1.Controls.Add(picSave18);
             groupBox1.Controls.Add(picSave16);
@@ -274,7 +280,7 @@
             // picSave20
             // 
             picSave20.BorderStyle = BorderStyle.FixedSingle;
-            picSave20.Location = new Point(331, 56);
+            picSave20.Location = new Point(332, 56);
             picSave20.Margin = new Padding(4, 3, 4, 3);
             picSave20.Name = "picSave20";
             picSave20.Size = new Size(28, 28);
@@ -285,7 +291,7 @@
             // picSave18
             // 
             picSave18.BorderStyle = BorderStyle.FixedSingle;
-            picSave18.Location = new Point(295, 56);
+            picSave18.Location = new Point(259, 56);
             picSave18.Margin = new Padding(4, 3, 4, 3);
             picSave18.Name = "picSave18";
             picSave18.Size = new Size(28, 28);
@@ -296,7 +302,7 @@
             // picSave16
             // 
             picSave16.BorderStyle = BorderStyle.FixedSingle;
-            picSave16.Location = new Point(259, 56);
+            picSave16.Location = new Point(187, 56);
             picSave16.Margin = new Padding(4, 3, 4, 3);
             picSave16.Name = "picSave16";
             picSave16.Size = new Size(28, 28);
@@ -307,7 +313,7 @@
             // picSave14
             // 
             picSave14.BorderStyle = BorderStyle.FixedSingle;
-            picSave14.Location = new Point(223, 56);
+            picSave14.Location = new Point(115, 56);
             picSave14.Margin = new Padding(4, 3, 4, 3);
             picSave14.Name = "picSave14";
             picSave14.Size = new Size(28, 28);
@@ -318,7 +324,7 @@
             // picSave12
             // 
             picSave12.BorderStyle = BorderStyle.FixedSingle;
-            picSave12.Location = new Point(187, 56);
+            picSave12.Location = new Point(43, 56);
             picSave12.Margin = new Padding(4, 3, 4, 3);
             picSave12.Name = "picSave12";
             picSave12.Size = new Size(28, 28);
@@ -329,7 +335,7 @@
             // picSave10
             // 
             picSave10.BorderStyle = BorderStyle.FixedSingle;
-            picSave10.Location = new Point(151, 56);
+            picSave10.Location = new Point(332, 22);
             picSave10.Margin = new Padding(4, 3, 4, 3);
             picSave10.Name = "picSave10";
             picSave10.Size = new Size(28, 28);
@@ -340,7 +346,7 @@
             // picSave19
             // 
             picSave19.BorderStyle = BorderStyle.FixedSingle;
-            picSave19.Location = new Point(331, 22);
+            picSave19.Location = new Point(295, 56);
             picSave19.Margin = new Padding(4, 3, 4, 3);
             picSave19.Name = "picSave19";
             picSave19.Size = new Size(28, 28);
@@ -351,7 +357,7 @@
             // picSave17
             // 
             picSave17.BorderStyle = BorderStyle.FixedSingle;
-            picSave17.Location = new Point(295, 22);
+            picSave17.Location = new Point(223, 56);
             picSave17.Margin = new Padding(4, 3, 4, 3);
             picSave17.Name = "picSave17";
             picSave17.Size = new Size(28, 28);
@@ -362,7 +368,7 @@
             // picSave15
             // 
             picSave15.BorderStyle = BorderStyle.FixedSingle;
-            picSave15.Location = new Point(259, 22);
+            picSave15.Location = new Point(151, 56);
             picSave15.Margin = new Padding(4, 3, 4, 3);
             picSave15.Name = "picSave15";
             picSave15.Size = new Size(28, 28);
@@ -373,7 +379,7 @@
             // picSave13
             // 
             picSave13.BorderStyle = BorderStyle.FixedSingle;
-            picSave13.Location = new Point(223, 22);
+            picSave13.Location = new Point(79, 56);
             picSave13.Margin = new Padding(4, 3, 4, 3);
             picSave13.Name = "picSave13";
             picSave13.Size = new Size(28, 28);
@@ -384,7 +390,7 @@
             // picSave11
             // 
             picSave11.BorderStyle = BorderStyle.FixedSingle;
-            picSave11.Location = new Point(187, 22);
+            picSave11.Location = new Point(7, 56);
             picSave11.Margin = new Padding(4, 3, 4, 3);
             picSave11.Name = "picSave11";
             picSave11.Size = new Size(28, 28);
@@ -395,7 +401,7 @@
             // picSave08
             // 
             picSave08.BorderStyle = BorderStyle.FixedSingle;
-            picSave08.Location = new Point(115, 56);
+            picSave08.Location = new Point(259, 22);
             picSave08.Margin = new Padding(4, 3, 4, 3);
             picSave08.Name = "picSave08";
             picSave08.Size = new Size(28, 28);
@@ -406,7 +412,7 @@
             // picSave09
             // 
             picSave09.BorderStyle = BorderStyle.FixedSingle;
-            picSave09.Location = new Point(151, 22);
+            picSave09.Location = new Point(295, 22);
             picSave09.Margin = new Padding(4, 3, 4, 3);
             picSave09.Name = "picSave09";
             picSave09.Size = new Size(28, 28);
@@ -417,7 +423,7 @@
             // picSave06
             // 
             picSave06.BorderStyle = BorderStyle.FixedSingle;
-            picSave06.Location = new Point(79, 56);
+            picSave06.Location = new Point(187, 22);
             picSave06.Margin = new Padding(4, 3, 4, 3);
             picSave06.Name = "picSave06";
             picSave06.Size = new Size(28, 28);
@@ -428,7 +434,7 @@
             // picSave07
             // 
             picSave07.BorderStyle = BorderStyle.FixedSingle;
-            picSave07.Location = new Point(115, 22);
+            picSave07.Location = new Point(223, 22);
             picSave07.Margin = new Padding(4, 3, 4, 3);
             picSave07.Name = "picSave07";
             picSave07.Size = new Size(28, 28);
@@ -439,7 +445,7 @@
             // picSave04
             // 
             picSave04.BorderStyle = BorderStyle.FixedSingle;
-            picSave04.Location = new Point(43, 56);
+            picSave04.Location = new Point(115, 22);
             picSave04.Margin = new Padding(4, 3, 4, 3);
             picSave04.Name = "picSave04";
             picSave04.Size = new Size(28, 28);
@@ -450,7 +456,7 @@
             // picSave05
             // 
             picSave05.BorderStyle = BorderStyle.FixedSingle;
-            picSave05.Location = new Point(79, 22);
+            picSave05.Location = new Point(151, 22);
             picSave05.Margin = new Padding(4, 3, 4, 3);
             picSave05.Name = "picSave05";
             picSave05.Size = new Size(28, 28);
@@ -461,7 +467,7 @@
             // picSave02
             // 
             picSave02.BorderStyle = BorderStyle.FixedSingle;
-            picSave02.Location = new Point(7, 56);
+            picSave02.Location = new Point(43, 22);
             picSave02.Margin = new Padding(4, 3, 4, 3);
             picSave02.Name = "picSave02";
             picSave02.Size = new Size(28, 28);
@@ -472,7 +478,7 @@
             // picSave03
             // 
             picSave03.BorderStyle = BorderStyle.FixedSingle;
-            picSave03.Location = new Point(43, 22);
+            picSave03.Location = new Point(79, 22);
             picSave03.Margin = new Padding(4, 3, 4, 3);
             picSave03.Name = "picSave03";
             picSave03.Size = new Size(28, 28);
@@ -490,6 +496,28 @@
             picSave01.TabIndex = 5;
             picSave01.TabStop = false;
             picSave01.Click += PicSave_Click;
+            // 
+            // picSave21
+            // 
+            picSave21.BorderStyle = BorderStyle.FixedSingle;
+            picSave21.Location = new Point(368, 22);
+            picSave21.Margin = new Padding(4, 3, 4, 3);
+            picSave21.Name = "picSave21";
+            picSave21.Size = new Size(28, 28);
+            picSave21.TabIndex = 5;
+            picSave21.TabStop = false;
+            picSave21.Click += PicSave_Click;
+            // 
+            // picSave22
+            // 
+            this.picSave22.BorderStyle = BorderStyle.FixedSingle;
+            this.picSave22.Location = new Point(368, 56);
+            this.picSave22.Margin = new Padding(4, 3, 4, 3);
+            this.picSave22.Name = "picSave22";
+            this.picSave22.Size = new Size(28, 28);
+            this.picSave22.TabIndex = 5;
+            this.picSave22.TabStop = false;
+            this.picSave22.Click += this.PicSave_Click;
             // 
             // ColorDialogX
             // 
@@ -546,16 +574,18 @@
             ((System.ComponentModel.ISupportInitialize)picSave02).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave03).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave01).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picSave21).EndInit();
+            ((System.ComponentModel.ISupportInitialize)this.picSave22).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
-        private System.Windows.Forms.PictureBox picColorBox;
-        private System.Windows.Forms.TrackBar tkbHue;
-        private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.PictureBox picMouseDownPreview;
-        private System.Windows.Forms.PictureBox picMouseMovePreview;
+        private PictureBox picColorBox;
+        private TrackBar tkbHue;
+        private Button btnOK;
+        private Button btnCancel;
+        private PictureBox picMouseDownPreview;
+        private PictureBox picMouseMovePreview;
         private Button btnEyeDropper;
         private PictureBox picColorRange;
         private TextBox txtColor;
@@ -566,25 +596,27 @@
         private PictureBox picValue;
         private GroupBox groupBox1;
         private Button btnAdd;
-        private PictureBox picSave20;
-        private PictureBox picSave18;
-        private PictureBox picSave16;
-        private PictureBox picSave14;
-        private PictureBox picSave12;
-        private PictureBox picSave10;
-        private PictureBox picSave19;
-        private PictureBox picSave17;
-        private PictureBox picSave15;
-        private PictureBox picSave13;
-        private PictureBox picSave11;
-        private PictureBox picSave08;
-        private PictureBox picSave09;
-        private PictureBox picSave06;
-        private PictureBox picSave07;
-        private PictureBox picSave04;
-        private PictureBox picSave05;
+        private PictureBox picSave01;
         private PictureBox picSave02;
         private PictureBox picSave03;
-        private PictureBox picSave01;
+        private PictureBox picSave04;
+        private PictureBox picSave05;
+        private PictureBox picSave06;
+        private PictureBox picSave07;
+        private PictureBox picSave08;
+        private PictureBox picSave09;
+        private PictureBox picSave10;
+        private PictureBox picSave11;
+        private PictureBox picSave12;
+        private PictureBox picSave13;
+        private PictureBox picSave14;
+        private PictureBox picSave15;
+        private PictureBox picSave16;
+        private PictureBox picSave17;
+        private PictureBox picSave18;
+        private PictureBox picSave19;
+        private PictureBox picSave20;
+        private PictureBox picSave21;
+        private PictureBox picSave22;
     }
 }

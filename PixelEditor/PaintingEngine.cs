@@ -41,7 +41,7 @@ namespace PixelEditor
             strokeCoverage = null;
         }
 
-        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, bool[,]? mask = null)
+        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, bool isErasing = false, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null)
                 return;
@@ -50,7 +50,7 @@ namespace PixelEditor
 
             if (distance < 1f)
             {
-                PaintAt(end, brushScale, opacity);
+                PaintAt(end, brushScale, opacity, isErasing);
                 return;
             }
 
@@ -62,13 +62,13 @@ namespace PixelEditor
                 float lerp = t / distance;
                 int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
                 int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
-                PaintAt(new Point(x, y), brushScale, opacity, mask);
+                PaintAt(new Point(x, y), brushScale, opacity, isErasing, mask);
             }
 
-            PaintAt(end, brushScale, opacity, mask);
+            PaintAt(end, brushScale, opacity, isErasing, mask);
         }
 
-        private static void PaintAt(Point location, float brushScale, float opacity, bool[,]? mask = null)
+        private static void PaintAt(Point location, float brushScale, float opacity, bool isErasing, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
                 return;
@@ -131,7 +131,7 @@ namespace PixelEditor
 
                         float inv = 1f - desired;
                         float baseAlpha = basePixel[3] / 255f;
-                        float outAlpha = desired + baseAlpha * inv;
+                        float outAlpha = isErasing ? baseAlpha * (1f - desired) : desired + baseAlpha * inv;
 
                         if (outAlpha > 0)
                         {

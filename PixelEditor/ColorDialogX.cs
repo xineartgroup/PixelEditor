@@ -35,14 +35,33 @@ namespace PixelEditor
                 _color = value;
                 UpdateHSBFromColor();
                 tkbHue.Value = (int)_hue;
+                tkbSaturation.Value = (int)(_saturation * tkbSaturation.Maximum);
+                tkbValue.Value = (int)(_brightness * tkbValue.Maximum);
                 picColorBox.Invalidate();
                 if (picMouseDownPreview.BackColor != _color)
                     picMouseDownPreview.BackColor = _color;
             }
         }
 
-        private bool ShouldSerializeColor() => _color != Color.Red;
-        private void ResetColor() => Color = Color.Red;
+        private void ColorDialogX_Load(object sender, EventArgs e)
+        {
+            if (_pictureBoxesInOrder.Count == 0)
+            {
+                _pictureBoxesInOrder = [.. groupBox1.Controls.OfType<PictureBox>()
+                .Where(pic => pic.Name.StartsWith("picSave"))
+                .OrderBy(pic => pic.Name)];
+
+                foreach (var ctrl in groupBox1.Controls)
+                {
+                    if (ctrl is PictureBox pic)
+                    {
+                        pic.BackColor = Color.Transparent;
+                    }
+                }
+
+                _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
+            }
+        }
 
         private void TkbHue_Scroll(object sender, EventArgs e)
         {
@@ -323,21 +342,6 @@ namespace PixelEditor
             }
         }
 
-        private void ColorDialogX_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (e.CloseReason == CloseReason.UserClosing)
-            {
-                e.Cancel = true;
-
-                if (_cursor != null)
-                    Canvas.Cursor = new Cursor(_cursor.Handle);
-                IsEyeDropping = false;
-                DialogResult = DialogResult.Cancel;
-
-                Hide();
-            }
-        }
-
         private void BtnAdd_Click(object sender, EventArgs e)
         {
             _pictureBoxesInOrder[_colorIndex].BackColor = _color;
@@ -357,7 +361,10 @@ namespace PixelEditor
         {
             if (sender is PictureBox pic)
             {
-                Color = pic.BackColor;
+                if (pic.BackColor != Color.Transparent)
+                {
+                    Color = pic.BackColor;
+                }
 
                 for (int i = 0; i < _pictureBoxesInOrder.Count; i++)
                 {
@@ -375,23 +382,18 @@ namespace PixelEditor
             }
         }
 
-        private void ColorDialogX_Load(object sender, EventArgs e)
+        private void ColorDialogX_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (_pictureBoxesInOrder.Count == 0)
+            if (e.CloseReason == CloseReason.UserClosing)
             {
-                _pictureBoxesInOrder = [.. groupBox1.Controls.OfType<PictureBox>()
-                .Where(pic => pic.Name.StartsWith("picSave"))
-                .OrderBy(pic => pic.Name)];
+                e.Cancel = true;
 
-                foreach (var ctrl in groupBox1.Controls)
-                {
-                    if (ctrl is PictureBox pic)
-                    {
-                        pic.BackColor = Color.Transparent;
-                    }
-                }
+                if (_cursor != null)
+                    Canvas.Cursor = new Cursor(_cursor.Handle);
+                IsEyeDropping = false;
+                DialogResult = DialogResult.Cancel;
 
-                _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
+                Hide();
             }
         }
     }

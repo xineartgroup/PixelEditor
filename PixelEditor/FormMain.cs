@@ -6609,7 +6609,7 @@ namespace PixelEditor
                             Point start = Point.Round(strokePoints[0]);
                             Point end = Point.Round(strokePoints[1]);
 
-                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, isErasing, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                         }
                         else
                         {
@@ -6633,7 +6633,7 @@ namespace PixelEditor
 
                                 if (prevRounded != currRounded)
                                 {
-                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, isErasing, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                                 }
 
                                 previousPos = pos;
