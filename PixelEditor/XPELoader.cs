@@ -110,6 +110,7 @@ namespace PixelEditor
                     }
                 }
 
+                ColorDialogX.ColorPallettes.Clear();
                 int count = reader.ReadInt32();
                 for (int i = 0; i < count; i++)
                 {

@@ -31,6 +31,8 @@
             picValue = new PictureBox();
             groupBox1 = new GroupBox();
             btnAdd = new Button();
+            picSave22 = new PictureBox();
+            picSave21 = new PictureBox();
             picSave20 = new PictureBox();
             picSave18 = new PictureBox();
             picSave16 = new PictureBox();
@@ -51,8 +53,6 @@
             picSave02 = new PictureBox();
             picSave03 = new PictureBox();
             picSave01 = new PictureBox();
-            picSave21 = new PictureBox();
-            this.picSave22 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)picColorBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).BeginInit();
@@ -63,6 +63,8 @@
             ((System.ComponentModel.ISupportInitialize)tkbValue).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picValue).BeginInit();
             groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picSave22).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picSave21).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave20).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave18).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave16).BeginInit();
@@ -83,8 +85,6 @@
             ((System.ComponentModel.ISupportInitialize)picSave02).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave03).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picSave01).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)picSave21).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)this.picSave22).BeginInit();
             SuspendLayout();
             // 
             // picColorBox
@@ -237,7 +237,7 @@
             // groupBox1
             // 
             groupBox1.Controls.Add(btnAdd);
-            groupBox1.Controls.Add(this.picSave22);
+            groupBox1.Controls.Add(picSave22);
             groupBox1.Controls.Add(picSave21);
             groupBox1.Controls.Add(picSave20);
             groupBox1.Controls.Add(picSave18);
@@ -276,6 +276,28 @@
             btnAdd.Text = "+";
             btnAdd.UseVisualStyleBackColor = true;
             btnAdd.Click += BtnAdd_Click;
+            // 
+            // picSave22
+            // 
+            picSave22.BorderStyle = BorderStyle.FixedSingle;
+            picSave22.Location = new Point(368, 56);
+            picSave22.Margin = new Padding(4, 3, 4, 3);
+            picSave22.Name = "picSave22";
+            picSave22.Size = new Size(28, 28);
+            picSave22.TabIndex = 5;
+            picSave22.TabStop = false;
+            picSave22.Click += PicSave_Click;
+            // 
+            // picSave21
+            // 
+            picSave21.BorderStyle = BorderStyle.FixedSingle;
+            picSave21.Location = new Point(368, 22);
+            picSave21.Margin = new Padding(4, 3, 4, 3);
+            picSave21.Name = "picSave21";
+            picSave21.Size = new Size(28, 28);
+            picSave21.TabIndex = 5;
+            picSave21.TabStop = false;
+            picSave21.Click += PicSave_Click;
             // 
             // picSave20
             // 
@@ -497,28 +519,6 @@
             picSave01.TabStop = false;
             picSave01.Click += PicSave_Click;
             // 
-            // picSave21
-            // 
-            picSave21.BorderStyle = BorderStyle.FixedSingle;
-            picSave21.Location = new Point(368, 22);
-            picSave21.Margin = new Padding(4, 3, 4, 3);
-            picSave21.Name = "picSave21";
-            picSave21.Size = new Size(28, 28);
-            picSave21.TabIndex = 5;
-            picSave21.TabStop = false;
-            picSave21.Click += PicSave_Click;
-            // 
-            // picSave22
-            // 
-            this.picSave22.BorderStyle = BorderStyle.FixedSingle;
-            this.picSave22.Location = new Point(368, 56);
-            this.picSave22.Margin = new Padding(4, 3, 4, 3);
-            this.picSave22.Name = "picSave22";
-            this.picSave22.Size = new Size(28, 28);
-            this.picSave22.TabIndex = 5;
-            this.picSave22.TabStop = false;
-            this.picSave22.Click += this.PicSave_Click;
-            // 
             // ColorDialogX
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -544,6 +544,7 @@
             Text = "Color Picker";
             FormClosing += ColorDialogX_FormClosing;
             Load += ColorDialogX_Load;
+            VisibleChanged += ColorDialogX_VisibleChanged;
             ((System.ComponentModel.ISupportInitialize)picColorBox).EndInit();
             ((System.ComponentModel.ISupportInitialize)tkbHue).EndInit();
             ((System.ComponentModel.ISupportInitialize)picMouseDownPreview).EndInit();
@@ -554,6 +555,8 @@
             ((System.ComponentModel.ISupportInitialize)tkbValue).EndInit();
             ((System.ComponentModel.ISupportInitialize)picValue).EndInit();
             groupBox1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)picSave22).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picSave21).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave20).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave18).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave16).EndInit();
@@ -574,8 +577,6 @@
             ((System.ComponentModel.ISupportInitialize)picSave02).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave03).EndInit();
             ((System.ComponentModel.ISupportInitialize)picSave01).EndInit();
-            ((System.ComponentModel.ISupportInitialize)picSave21).EndInit();
-            ((System.ComponentModel.ISupportInitialize)this.picSave22).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }

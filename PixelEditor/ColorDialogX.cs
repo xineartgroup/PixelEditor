@@ -53,6 +53,22 @@ namespace PixelEditor
                 .Where(pic => pic.Name.StartsWith("picSave"))
                 .OrderBy(pic => pic.Name)];
 
+                foreach (var ctrl in groupBox1.Controls)
+                {
+                    if (ctrl is PictureBox pic)
+                    {
+                        pic.BackColor = Color.Transparent;
+                    }
+                }
+
+                _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
+            }
+        }
+
+        private void ColorDialogX_VisibleChanged(object sender, EventArgs e)
+        {
+            if (Visible)
+            {
                 if (ColorPallettes.Count > 0)
                 {
                     for (int i = 0; i < _pictureBoxesInOrder.Count; i++)
@@ -67,18 +83,6 @@ namespace PixelEditor
                         }
                     }
                 }
-                else
-                {
-                    foreach (var ctrl in groupBox1.Controls)
-                    {
-                        if (ctrl is PictureBox pic)
-                        {
-                            pic.BackColor = Color.Transparent;
-                        }
-                    }
-                }
-
-                _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
             }
         }
 
