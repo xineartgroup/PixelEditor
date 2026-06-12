@@ -13,7 +13,8 @@ namespace PixelEditor
         private PointF strokeLastInterpolated;
         private PointF startPoint;
         private PointF dragOffset = PointF.Empty;
-        private bool isDragging = false;
+        private bool isDraggingSelection = false;
+        private bool isDraggingScreen = false;
         private bool isPainting = false;
         private bool isErasing = false;
         private bool isWarping = false;
@@ -3163,6 +3164,8 @@ namespace PixelEditor
                     layersControl.AddRange(layers);
                     layersControl.SetSelectedLayerIndex(selectedLayerIndex);
 
+                    SelectionsManipulator.ClearSelections();
+
                     currentFilePath = ofd.FileName;
                     isDirty = false;
                     UpdateTitleBar();
@@ -5492,6 +5495,17 @@ namespace PixelEditor
                 return true;
             }
 
+            if ((keyData & Keys.Modifiers) == Keys.Control && baseKey == Keys.Oemplus)
+            {
+                ZoomInToolStripMenuItem_Click(this, new EventArgs());
+                return true;
+            }
+            if ((keyData & Keys.Modifiers) == Keys.Control && baseKey == Keys.OemMinus)
+            {
+                ZoomOutToolStripMenuItem_Click(this, new EventArgs());
+                return true;
+            }
+
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -5653,59 +5667,68 @@ namespace PixelEditor
                     }
                     else if (btnPointer.Checked || btnPointSelect.Checked)
                     {
-                        if (selectedLayer.LayerType == LayerType.Image && SelectionsManipulator.ContainsSelection())
+                        if (selectedLayer.LayerType == LayerType.Image)
                         {
+                            if (ModifierKeys.HasFlag(Keys.Control))
+                            {
+                                isDraggingScreen = true;
+                            }
+
                             if (selectedLayer.Image == null) return;
 
-                            if (ManipulatorGeneral.IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
+                            if (SelectionsManipulator.ContainsSelection())
                             {
-                                if (selectedAreaBitmap != null)
-                                    BakeTransformIntoSelectedArea(selectedLayer);
+                                if (ModifierKeys.HasFlag(Keys.Control))
+                                    if (ManipulatorGeneral.IsOverRotationHandle(e.Location, Document.Width, Document.Height, canvas.Width, canvas.Height, Document.Zoom))
+                                    {
+                                        if (selectedAreaBitmap != null)
+                                            BakeTransformIntoSelectedArea(selectedLayer);
 
-                                isRotating = true;
-                                startMouseAngle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
-                            }
-                            else if (ManipulatorGeneral.IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
-                            {
-                                if (selectedAreaBitmap != null)
-                                    BakeTransformIntoSelectedArea(selectedLayer);
+                                        isRotating = true;
+                                        startMouseAngle = ManipulatorGeneral.CalculateRotationAngle(e.Location, canvas.Width, canvas.Height) - rotationAngle;
+                                    }
+                                    else if (ManipulatorGeneral.IsOverScaleHandle(e.Location, canvas.Width, canvas.Height, out string handle))
+                                    {
+                                        if (selectedAreaBitmap != null)
+                                            BakeTransformIntoSelectedArea(selectedLayer);
 
-                                isScaling = true;
-                                activeScaleHandle = handle;
-                                initialScaleFactorX = SelectionsManipulator.ScaleFactorX;
-                                initialScaleFactorY = SelectionsManipulator.ScaleFactorY;
-                                scaleAnchorWorld = ManipulatorGeneral.GetOppositeAnchor(handle);
-                                scaleStartMouseScreen = e.Location;
-                                originalSelectionPoints = [.. SelectionsManipulator.GetSelections().Select(p => p.Points.ToList())];
+                                        isScaling = true;
+                                        activeScaleHandle = handle;
+                                        initialScaleFactorX = SelectionsManipulator.ScaleFactorX;
+                                        initialScaleFactorY = SelectionsManipulator.ScaleFactorY;
+                                        scaleAnchorWorld = ManipulatorGeneral.GetOppositeAnchor(handle);
+                                        scaleStartMouseScreen = e.Location;
+                                        originalSelectionPoints = [.. SelectionsManipulator.GetSelections().Select(p => p.Points.ToList())];
 
-                                Point anchorScreen = ManipulatorGeneral.WorldToScreen(
-                                    Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
+                                        Point anchorScreen = ManipulatorGeneral.WorldToScreen(
+                                            Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
 
-                                (bool affectsX, bool affectsY) = ManipulatorGeneral.GetHandleAxes(handle);
+                                        (bool affectsX, bool affectsY) = ManipulatorGeneral.GetHandleAxes(handle);
 
-                                initialScaleDistanceX = affectsX
-                                    ? Math.Max(1f, Math.Abs(e.Location.X - anchorScreen.X))
-                                    : 1f;
+                                        initialScaleDistanceX = affectsX
+                                            ? Math.Max(1f, Math.Abs(e.Location.X - anchorScreen.X))
+                                            : 1f;
 
-                                initialScaleDistanceY = affectsY
-                                    ? Math.Max(1f, Math.Abs(e.Location.Y - anchorScreen.Y))
-                                    : 1f;
-                            }
-                            else if (SelectionsManipulator.IsPointInSelection(ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height)) >= 0)
-                            {
-                                isDragging = true;
-                                Cursor.Current = Cursors.SizeAll;
-                            }
-                            else
-                            {
-                                MergeSelectedAreaBitmap();
-                            }
+                                        initialScaleDistanceY = affectsY
+                                            ? Math.Max(1f, Math.Abs(e.Location.Y - anchorScreen.Y))
+                                            : 1f;
+                                    }
+                                    else if (SelectionsManipulator.IsPointInSelection(ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height)) >= 0)
+                                    {
+                                        isDraggingSelection = true;
+                                        Cursor.Current = Cursors.SizeAll;
+                                    }
+                                    else
+                                    {
+                                        MergeSelectedAreaBitmap();
+                                    }
 
-                            if (selectedAreaBitmap == null)
-                            {
-                                SelectionsManipulator.CalculateSelectionBounds();
-                                selectedAreaBitmap = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
-                                selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
+                                if (selectedAreaBitmap == null)
+                                {
+                                    SelectionsManipulator.CalculateSelectionBounds();
+                                    selectedAreaBitmap = ManipulatorGeneral.ExtractSelectedArea(selectedLayer);
+                                    selectedLayer.Image = ManipulatorGeneral.CutSelectionFromLayer(selectedLayer);
+                                }
                             }
                         }
                         else if (selectedLayer.LayerType == LayerType.Vector)
@@ -6257,7 +6280,7 @@ namespace PixelEditor
                     isDrawingShape = true;
                 }
             }
-            else if (isDragging)
+            else if (isDraggingSelection)
             {
                 int dx = e.X - lastMousePosition.X;
                 int dy = e.Y - lastMousePosition.Y;
@@ -6307,6 +6330,13 @@ namespace PixelEditor
                         }
                     }
                 }
+            }
+            else if (isDraggingScreen)
+            {
+                int dx = e.X - lastMousePosition.X;
+                int dy = e.Y - lastMousePosition.Y;
+                Document.ImageOffset = new PointF(Document.ImageOffset.X + dx, Document.ImageOffset.Y + dy);
+                RedrawImage();
             }
             else if (isResizingShape)
             {
@@ -6874,7 +6904,8 @@ namespace PixelEditor
             WarpEngine.WarpSnapshot?.Dispose();
             WarpEngine.WarpSnapshot = null;
             isWarping = false;
-            isDragging = false;
+            isDraggingSelection = false;
+            isDraggingScreen = false;
             isPainting = false;
             isErasing = false;
             isLassoSelecting = false;

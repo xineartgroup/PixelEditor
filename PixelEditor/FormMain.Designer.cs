@@ -32,6 +32,21 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             canvas = new PictureBox();
             contextMenuStrip1 = new ContextMenuStrip(components);
+            deleteImageToolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem10 = new ToolStripSeparator();
+            cutImageToolStripMenuItem1 = new ToolStripMenuItem();
+            copyImageToolStripMenuItem1 = new ToolStripMenuItem();
+            pasteImageToolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem46 = new ToolStripSeparator();
+            darkToolStripMenuItem1 = new ToolStripMenuItem();
+            invertToolStripMenuItem2 = new ToolStripMenuItem();
+            selectToolStripMenuItem1 = new ToolStripMenuItem();
+            allToolStripMenuItem2 = new ToolStripMenuItem();
+            noneToolStripMenuItem1 = new ToolStripMenuItem();
+            invertToolStripMenuItem3 = new ToolStripMenuItem();
+            toolStripMenuItem47 = new ToolStripSeparator();
+            growToolStripMenuItem1 = new ToolStripMenuItem();
+            shrinkToolStripMenuItem1 = new ToolStripMenuItem();
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             newToolStripMenuItem = new ToolStripMenuItem();
@@ -227,7 +242,12 @@
             btnShapeText = new RadioButton();
             btnPointSelect = new RadioButton();
             contextMenuStrip2 = new ContextMenuStrip(components);
+            toolStripMenuItem41 = new ToolStripMenuItem();
             toolStripMenuItem45 = new ToolStripSeparator();
+            toolStripMenuItem42 = new ToolStripMenuItem();
+            toolStripMenuItem43 = new ToolStripMenuItem();
+            toolStripMenuItem44 = new ToolStripMenuItem();
+            toolStripMenuItem40 = new ToolStripSeparator();
             convertToRasterToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripMenuItem34 = new ToolStripSeparator();
             toPathToolStripMenuItem = new ToolStripMenuItem();
@@ -263,26 +283,6 @@
             rotate90DegreesCounterclockwiseToolStripMenuItem = new ToolStripMenuItem();
             rotate180DegreesToolStripMenuItem2 = new ToolStripMenuItem();
             rotateToolStripMenuItem2 = new ToolStripMenuItem();
-            toolStripMenuItem41 = new ToolStripMenuItem();
-            toolStripMenuItem42 = new ToolStripMenuItem();
-            toolStripMenuItem43 = new ToolStripMenuItem();
-            toolStripMenuItem44 = new ToolStripMenuItem();
-            toolStripMenuItem40 = new ToolStripSeparator();
-            deleteImageToolStripMenuItem1 = new ToolStripMenuItem();
-            cutImageToolStripMenuItem1 = new ToolStripMenuItem();
-            copyImageToolStripMenuItem1 = new ToolStripMenuItem();
-            pasteImageToolStripMenuItem1 = new ToolStripMenuItem();
-            toolStripMenuItem10 = new ToolStripSeparator();
-            toolStripMenuItem46 = new ToolStripSeparator();
-            darkToolStripMenuItem1 = new ToolStripMenuItem();
-            invertToolStripMenuItem2 = new ToolStripMenuItem();
-            selectToolStripMenuItem1 = new ToolStripMenuItem();
-            allToolStripMenuItem2 = new ToolStripMenuItem();
-            noneToolStripMenuItem1 = new ToolStripMenuItem();
-            invertToolStripMenuItem3 = new ToolStripMenuItem();
-            toolStripMenuItem47 = new ToolStripSeparator();
-            growToolStripMenuItem1 = new ToolStripMenuItem();
-            shrinkToolStripMenuItem1 = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -314,7 +314,106 @@
             // 
             contextMenuStrip1.Items.AddRange(new ToolStripItem[] { deleteImageToolStripMenuItem1, toolStripMenuItem10, cutImageToolStripMenuItem1, copyImageToolStripMenuItem1, pasteImageToolStripMenuItem1, toolStripMenuItem46, darkToolStripMenuItem1, invertToolStripMenuItem2, selectToolStripMenuItem1 });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(181, 192);
+            contextMenuStrip1.Size = new Size(108, 170);
+            // 
+            // deleteImageToolStripMenuItem1
+            // 
+            deleteImageToolStripMenuItem1.Name = "deleteImageToolStripMenuItem1";
+            deleteImageToolStripMenuItem1.Size = new Size(107, 22);
+            deleteImageToolStripMenuItem1.Text = "Delete";
+            deleteImageToolStripMenuItem1.Click += DeleteImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem10
+            // 
+            toolStripMenuItem10.Name = "toolStripMenuItem10";
+            toolStripMenuItem10.Size = new Size(104, 6);
+            // 
+            // cutImageToolStripMenuItem1
+            // 
+            cutImageToolStripMenuItem1.Name = "cutImageToolStripMenuItem1";
+            cutImageToolStripMenuItem1.Size = new Size(107, 22);
+            cutImageToolStripMenuItem1.Text = "Cut";
+            cutImageToolStripMenuItem1.Click += CutImageToolStripMenuItem_Click;
+            // 
+            // copyImageToolStripMenuItem1
+            // 
+            copyImageToolStripMenuItem1.Name = "copyImageToolStripMenuItem1";
+            copyImageToolStripMenuItem1.Size = new Size(107, 22);
+            copyImageToolStripMenuItem1.Text = "Copy";
+            copyImageToolStripMenuItem1.Click += CopyImageToolStripMenuItem_Click;
+            // 
+            // pasteImageToolStripMenuItem1
+            // 
+            pasteImageToolStripMenuItem1.Name = "pasteImageToolStripMenuItem1";
+            pasteImageToolStripMenuItem1.Size = new Size(107, 22);
+            pasteImageToolStripMenuItem1.Text = "Paste";
+            pasteImageToolStripMenuItem1.Click += PasteImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem46
+            // 
+            toolStripMenuItem46.Name = "toolStripMenuItem46";
+            toolStripMenuItem46.Size = new Size(104, 6);
+            // 
+            // darkToolStripMenuItem1
+            // 
+            darkToolStripMenuItem1.Name = "darkToolStripMenuItem1";
+            darkToolStripMenuItem1.Size = new Size(107, 22);
+            darkToolStripMenuItem1.Text = "Dark";
+            darkToolStripMenuItem1.Click += DarkToolStripMenuItem_Click;
+            // 
+            // invertToolStripMenuItem2
+            // 
+            invertToolStripMenuItem2.Name = "invertToolStripMenuItem2";
+            invertToolStripMenuItem2.Size = new Size(107, 22);
+            invertToolStripMenuItem2.Text = "Invert";
+            invertToolStripMenuItem2.Click += InvertToolStripMenuItem_Click;
+            // 
+            // selectToolStripMenuItem1
+            // 
+            selectToolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem2, noneToolStripMenuItem1, invertToolStripMenuItem3, toolStripMenuItem47, growToolStripMenuItem1, shrinkToolStripMenuItem1 });
+            selectToolStripMenuItem1.Name = "selectToolStripMenuItem1";
+            selectToolStripMenuItem1.Size = new Size(107, 22);
+            selectToolStripMenuItem1.Text = "Select";
+            // 
+            // allToolStripMenuItem2
+            // 
+            allToolStripMenuItem2.Name = "allToolStripMenuItem2";
+            allToolStripMenuItem2.Size = new Size(107, 22);
+            allToolStripMenuItem2.Text = "All";
+            allToolStripMenuItem2.Click += SelectAllToolStripMenuItem_Click;
+            // 
+            // noneToolStripMenuItem1
+            // 
+            noneToolStripMenuItem1.Name = "noneToolStripMenuItem1";
+            noneToolStripMenuItem1.Size = new Size(107, 22);
+            noneToolStripMenuItem1.Text = "None";
+            noneToolStripMenuItem1.Click += NoneToolStripMenuItem_Click;
+            // 
+            // invertToolStripMenuItem3
+            // 
+            invertToolStripMenuItem3.Name = "invertToolStripMenuItem3";
+            invertToolStripMenuItem3.Size = new Size(107, 22);
+            invertToolStripMenuItem3.Text = "Invert";
+            invertToolStripMenuItem3.Click += InvertToolStripMenuItem1_Click;
+            // 
+            // toolStripMenuItem47
+            // 
+            toolStripMenuItem47.Name = "toolStripMenuItem47";
+            toolStripMenuItem47.Size = new Size(104, 6);
+            // 
+            // growToolStripMenuItem1
+            // 
+            growToolStripMenuItem1.Name = "growToolStripMenuItem1";
+            growToolStripMenuItem1.Size = new Size(107, 22);
+            growToolStripMenuItem1.Text = "Grow";
+            growToolStripMenuItem1.Click += GrowToolStripMenuItem_Click;
+            // 
+            // shrinkToolStripMenuItem1
+            // 
+            shrinkToolStripMenuItem1.Name = "shrinkToolStripMenuItem1";
+            shrinkToolStripMenuItem1.Size = new Size(107, 22);
+            shrinkToolStripMenuItem1.Text = "Shrink";
+            shrinkToolStripMenuItem1.Click += ShrinkToolStripMenuItem_Click;
             // 
             // menuStrip1
             // 
@@ -529,22 +628,22 @@
             // 
             resetZoomToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { zoomInToolStripMenuItem, zoomOutToolStripMenuItem, resetToolStripMenuItem });
             resetZoomToolStripMenuItem.Name = "resetZoomToolStripMenuItem";
-            resetZoomToolStripMenuItem.Size = new Size(106, 22);
+            resetZoomToolStripMenuItem.Size = new Size(180, 22);
             resetZoomToolStripMenuItem.Text = "Zoom";
             // 
             // zoomInToolStripMenuItem
             // 
             zoomInToolStripMenuItem.Name = "zoomInToolStripMenuItem";
-            zoomInToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Up;
-            zoomInToolStripMenuItem.Size = new Size(194, 22);
+            zoomInToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Oemplus;
+            zoomInToolStripMenuItem.Size = new Size(222, 22);
             zoomInToolStripMenuItem.Text = "Zoom In";
             zoomInToolStripMenuItem.Click += ZoomInToolStripMenuItem_Click;
             // 
             // zoomOutToolStripMenuItem
             // 
             zoomOutToolStripMenuItem.Name = "zoomOutToolStripMenuItem";
-            zoomOutToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Down;
-            zoomOutToolStripMenuItem.Size = new Size(194, 22);
+            zoomOutToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.OemMinus;
+            zoomOutToolStripMenuItem.Size = new Size(222, 22);
             zoomOutToolStripMenuItem.Text = "Zoom Out";
             zoomOutToolStripMenuItem.Click += ZoomOutToolStripMenuItem_Click;
             // 
@@ -552,19 +651,19 @@
             // 
             resetToolStripMenuItem.Name = "resetToolStripMenuItem";
             resetToolStripMenuItem.ShortcutKeys = Keys.Alt | Keys.Z;
-            resetToolStripMenuItem.Size = new Size(194, 22);
+            resetToolStripMenuItem.Size = new Size(222, 22);
             resetToolStripMenuItem.Text = "Reset";
             resetToolStripMenuItem.Click += BtnResetZoom_Click;
             // 
             // toolStripMenuItem8
             // 
             toolStripMenuItem8.Name = "toolStripMenuItem8";
-            toolStripMenuItem8.Size = new Size(103, 6);
+            toolStripMenuItem8.Size = new Size(177, 6);
             // 
             // rulersToolStripMenuItem
             // 
             rulersToolStripMenuItem.Name = "rulersToolStripMenuItem";
-            rulersToolStripMenuItem.Size = new Size(106, 22);
+            rulersToolStripMenuItem.Size = new Size(180, 22);
             rulersToolStripMenuItem.Text = "Rulers";
             // 
             // imageToolStripMenuItem
@@ -1874,10 +1973,43 @@
             contextMenuStrip2.Name = "contextMenuStrip2";
             contextMenuStrip2.Size = new Size(166, 282);
             // 
+            // toolStripMenuItem41
+            // 
+            toolStripMenuItem41.Name = "toolStripMenuItem41";
+            toolStripMenuItem41.Size = new Size(165, 22);
+            toolStripMenuItem41.Text = "Delete";
+            toolStripMenuItem41.Click += DeleteImageToolStripMenuItem_Click;
+            // 
             // toolStripMenuItem45
             // 
             toolStripMenuItem45.Name = "toolStripMenuItem45";
             toolStripMenuItem45.Size = new Size(162, 6);
+            // 
+            // toolStripMenuItem42
+            // 
+            toolStripMenuItem42.Name = "toolStripMenuItem42";
+            toolStripMenuItem42.Size = new Size(165, 22);
+            toolStripMenuItem42.Text = "Cut";
+            toolStripMenuItem42.Click += CutImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem43
+            // 
+            toolStripMenuItem43.Name = "toolStripMenuItem43";
+            toolStripMenuItem43.Size = new Size(165, 22);
+            toolStripMenuItem43.Text = "Copy";
+            toolStripMenuItem43.Click += CopyImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem44
+            // 
+            toolStripMenuItem44.Name = "toolStripMenuItem44";
+            toolStripMenuItem44.Size = new Size(165, 22);
+            toolStripMenuItem44.Text = "Paste";
+            toolStripMenuItem44.Click += PasteImageToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem40
+            // 
+            toolStripMenuItem40.Name = "toolStripMenuItem40";
+            toolStripMenuItem40.Size = new Size(162, 6);
             // 
             // convertToRasterToolStripMenuItem1
             // 
@@ -2109,138 +2241,6 @@
             rotateToolStripMenuItem2.Size = new Size(269, 22);
             rotateToolStripMenuItem2.Text = "Rotate...";
             rotateToolStripMenuItem2.Click += RotateToolStripMenuItem1_Click;
-            // 
-            // toolStripMenuItem41
-            // 
-            toolStripMenuItem41.Name = "toolStripMenuItem41";
-            toolStripMenuItem41.Size = new Size(180, 22);
-            toolStripMenuItem41.Text = "Delete";
-            toolStripMenuItem41.Click += DeleteImageToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem42
-            // 
-            toolStripMenuItem42.Name = "toolStripMenuItem42";
-            toolStripMenuItem42.Size = new Size(180, 22);
-            toolStripMenuItem42.Text = "Cut";
-            toolStripMenuItem42.Click += CutImageToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem43
-            // 
-            toolStripMenuItem43.Name = "toolStripMenuItem43";
-            toolStripMenuItem43.Size = new Size(180, 22);
-            toolStripMenuItem43.Text = "Copy";
-            toolStripMenuItem43.Click += CopyImageToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem44
-            // 
-            toolStripMenuItem44.Name = "toolStripMenuItem44";
-            toolStripMenuItem44.Size = new Size(180, 22);
-            toolStripMenuItem44.Text = "Paste";
-            toolStripMenuItem44.Click += PasteImageToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem40
-            // 
-            toolStripMenuItem40.Name = "toolStripMenuItem40";
-            toolStripMenuItem40.Size = new Size(162, 6);
-            // 
-            // deleteImageToolStripMenuItem1
-            // 
-            deleteImageToolStripMenuItem1.Name = "deleteImageToolStripMenuItem1";
-            deleteImageToolStripMenuItem1.Size = new Size(180, 22);
-            deleteImageToolStripMenuItem1.Text = "Delete";
-            deleteImageToolStripMenuItem1.Click += DeleteImageToolStripMenuItem_Click;
-            // 
-            // cutImageToolStripMenuItem1
-            // 
-            cutImageToolStripMenuItem1.Name = "cutImageToolStripMenuItem1";
-            cutImageToolStripMenuItem1.Size = new Size(180, 22);
-            cutImageToolStripMenuItem1.Text = "Cut";
-            cutImageToolStripMenuItem1.Click += CutImageToolStripMenuItem_Click;
-            // 
-            // copyImageToolStripMenuItem1
-            // 
-            copyImageToolStripMenuItem1.Name = "copyImageToolStripMenuItem1";
-            copyImageToolStripMenuItem1.Size = new Size(180, 22);
-            copyImageToolStripMenuItem1.Text = "Copy";
-            copyImageToolStripMenuItem1.Click += CopyImageToolStripMenuItem_Click;
-            // 
-            // pasteImageToolStripMenuItem1
-            // 
-            pasteImageToolStripMenuItem1.Name = "pasteImageToolStripMenuItem1";
-            pasteImageToolStripMenuItem1.Size = new Size(180, 22);
-            pasteImageToolStripMenuItem1.Text = "Paste";
-            pasteImageToolStripMenuItem1.Click += PasteImageToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem10
-            // 
-            toolStripMenuItem10.Name = "toolStripMenuItem10";
-            toolStripMenuItem10.Size = new Size(177, 6);
-            // 
-            // toolStripMenuItem46
-            // 
-            toolStripMenuItem46.Name = "toolStripMenuItem46";
-            toolStripMenuItem46.Size = new Size(177, 6);
-            // 
-            // darkToolStripMenuItem1
-            // 
-            darkToolStripMenuItem1.Name = "darkToolStripMenuItem1";
-            darkToolStripMenuItem1.Size = new Size(180, 22);
-            darkToolStripMenuItem1.Text = "Dark";
-            darkToolStripMenuItem1.Click += DarkToolStripMenuItem_Click;
-            // 
-            // invertToolStripMenuItem2
-            // 
-            invertToolStripMenuItem2.Name = "invertToolStripMenuItem2";
-            invertToolStripMenuItem2.Size = new Size(180, 22);
-            invertToolStripMenuItem2.Text = "Invert";
-            invertToolStripMenuItem2.Click += InvertToolStripMenuItem_Click;
-            // 
-            // selectToolStripMenuItem1
-            // 
-            selectToolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { allToolStripMenuItem2, noneToolStripMenuItem1, invertToolStripMenuItem3, toolStripMenuItem47, growToolStripMenuItem1, shrinkToolStripMenuItem1 });
-            selectToolStripMenuItem1.Name = "selectToolStripMenuItem1";
-            selectToolStripMenuItem1.Size = new Size(180, 22);
-            selectToolStripMenuItem1.Text = "Select";
-            // 
-            // allToolStripMenuItem2
-            // 
-            allToolStripMenuItem2.Name = "allToolStripMenuItem2";
-            allToolStripMenuItem2.Size = new Size(180, 22);
-            allToolStripMenuItem2.Text = "All";
-            allToolStripMenuItem2.Click += SelectAllToolStripMenuItem_Click;
-            // 
-            // noneToolStripMenuItem1
-            // 
-            noneToolStripMenuItem1.Name = "noneToolStripMenuItem1";
-            noneToolStripMenuItem1.Size = new Size(180, 22);
-            noneToolStripMenuItem1.Text = "None";
-            noneToolStripMenuItem1.Click += NoneToolStripMenuItem_Click;
-            // 
-            // invertToolStripMenuItem3
-            // 
-            invertToolStripMenuItem3.Name = "invertToolStripMenuItem3";
-            invertToolStripMenuItem3.Size = new Size(180, 22);
-            invertToolStripMenuItem3.Text = "Invert";
-            invertToolStripMenuItem3.Click += InvertToolStripMenuItem1_Click;
-            // 
-            // toolStripMenuItem47
-            // 
-            toolStripMenuItem47.Name = "toolStripMenuItem47";
-            toolStripMenuItem47.Size = new Size(177, 6);
-            // 
-            // growToolStripMenuItem1
-            // 
-            growToolStripMenuItem1.Name = "growToolStripMenuItem1";
-            growToolStripMenuItem1.Size = new Size(180, 22);
-            growToolStripMenuItem1.Text = "Grow";
-            growToolStripMenuItem1.Click += GrowToolStripMenuItem_Click;
-            // 
-            // shrinkToolStripMenuItem1
-            // 
-            shrinkToolStripMenuItem1.Name = "shrinkToolStripMenuItem1";
-            shrinkToolStripMenuItem1.Size = new Size(180, 22);
-            shrinkToolStripMenuItem1.Text = "Shrink";
-            shrinkToolStripMenuItem1.Click += ShrinkToolStripMenuItem_Click;
             // 
             // FormMain
             // 

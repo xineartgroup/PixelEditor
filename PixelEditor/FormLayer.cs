@@ -41,8 +41,6 @@ namespace PixelEditor
             int maskIndex = 0;
             cboType.SelectedIndex = Layer.LayerType == LayerType.Vector ? 1 : 0;
             textBoxName.Text = Layer.Name;
-            cboBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
-            cboBlendMode.SelectedItem = Layer.BlendMode.ToString();
             opacity.Value = Layer.Opacity;
             btnBackgroundColor.BackColor = Layer.FillColor;
             cboFillWith.Text = Layer.FillType == FillType.Transparency ? "Transparency" : "Color";
@@ -112,7 +110,6 @@ namespace PixelEditor
         {
             Layer.LayerType = cboType.SelectedIndex == 1 ? LayerType.Vector : LayerType.Image;
             Layer.Name = textBoxName.Text;
-            Layer.BlendMode = !string.IsNullOrEmpty(cboBlendMode.Text) ? Enum.Parse<ImageBlending>(cboBlendMode.Text) : ImageBlending.Normal;
             Layer.Opacity = opacity.Value;
             Layer.FillColor = cboFillWith.Text == "Transparency" ? Color.Transparent : btnBackgroundColor.BackColor;
             Layer.FillType = cboFillWith.Text == "Transparency" ? FillType.Transparency : FillType.Color;
@@ -218,6 +215,20 @@ namespace PixelEditor
             else
             {
                 pictureMask.Image = null;
+            }
+        }
+
+        private void CboFillWith_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cboFillWith.Text == "Transparency")
+            {
+                btnBackgroundColor.Enabled = false;
+                btnBackgroundColor.BackColor = Color.Transparent;
+            }
+            else
+            {
+                btnBackgroundColor.Enabled = true;
+                btnBackgroundColor.BackColor = Layer.FillColor;
             }
         }
     }
