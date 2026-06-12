@@ -109,6 +109,12 @@ namespace PixelEditor
                         layers.Add(layer);
                     }
                 }
+
+                int count = reader.ReadInt32();
+                for (int i = 0; i < count; i++)
+                {
+                    ColorDialogX.ColorPallettes.Add(Color.FromArgb(reader.ReadInt32()));
+                }
             }
             catch (Exception ex)
             {

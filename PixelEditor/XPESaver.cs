@@ -67,6 +67,12 @@ namespace PixelEditor
                             WriteImageData(writer, layer.ImageMask);
                         }
                     }
+
+                    writer.Write(ColorDialogX.ColorPallettes.Count);
+                    for (int i = 0; i < ColorDialogX.ColorPallettes.Count; i++)
+                    {
+                        writer.Write(ColorDialogX.ColorPallettes[i].ToArgb());
+                    }
                 }
 
                 byte[] payload = ms.ToArray();

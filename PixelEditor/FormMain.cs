@@ -4380,9 +4380,6 @@ namespace PixelEditor
                 }
                 else
                 {
-                    btnPointer.Checked = Layer.LayerSelectionType == LayerSelectionType.Shape;
-                    btnPointSelect.Checked = Layer.LayerSelectionType == LayerSelectionType.Point;
-
                     btnFiller.Enabled = true;
                     btnFiller.BackColor = Color.White;
                     btnBrusher.Enabled = true;
@@ -5015,7 +5012,6 @@ namespace PixelEditor
                     layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
-                Refresh();
                 RedrawImage();
             }
         }
@@ -5035,7 +5031,6 @@ namespace PixelEditor
                     layersControl.SetSelectedLayerIndex(history.SelectedLayerIndex);
                 }
 
-                Refresh();
                 RedrawImage();
             }
         }
@@ -6967,6 +6962,7 @@ namespace PixelEditor
                 new Rectangle(0, 0, Document.Width, Document.Height) :
                 new Rectangle(0, 0, 0, 0);
 
+            //Refresh();
             RedrawRasterImage(ManipulatorGeneral.GetImage(ManipulatorGeneral.Screen, rect));
             RedrawSelectedLayerRect();
             RedrawHandles();

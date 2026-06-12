@@ -19,6 +19,8 @@ namespace PixelEditor
 
         public static PictureBox Canvas { get; set; } = new();
 
+        public static List<Color> ColorPallettes { get; set; } = [];
+
         public ColorDialogX()
         {
             InitializeComponent();
@@ -51,11 +53,28 @@ namespace PixelEditor
                 .Where(pic => pic.Name.StartsWith("picSave"))
                 .OrderBy(pic => pic.Name)];
 
-                foreach (var ctrl in groupBox1.Controls)
+                if (ColorPallettes.Count > 0)
                 {
-                    if (ctrl is PictureBox pic)
+                    for (int i = 0; i < _pictureBoxesInOrder.Count; i++)
                     {
-                        pic.BackColor = Color.Transparent;
+                        if (i < ColorPallettes.Count)
+                        {
+                            _pictureBoxesInOrder[i].BackColor = ColorPallettes[i];
+                        }
+                        else
+                        {
+                            _pictureBoxesInOrder[i].BackColor = Color.Transparent;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var ctrl in groupBox1.Controls)
+                    {
+                        if (ctrl is PictureBox pic)
+                        {
+                            pic.BackColor = Color.Transparent;
+                        }
                     }
                 }
 
@@ -355,6 +374,29 @@ namespace PixelEditor
                 _colorIndex = 0;
             }
             _pictureBoxesInOrder[_colorIndex].BorderStyle = BorderStyle.Fixed3D;
+
+            if (ColorPallettes.Count > 0)
+            {
+                ColorPallettes[_colorIndex] = _color;
+            }
+            else
+            {
+                ColorPallettes.Add(_color);
+            }
+
+            if (ColorPallettes.Count != _pictureBoxesInOrder.Count)
+            {
+                ColorPallettes.Clear();
+                ColorPallettes.AddRange(new Color[_pictureBoxesInOrder.Count]);
+            }
+
+            for (int i = 0; i < _pictureBoxesInOrder.Count; i++)
+            {
+                if (_pictureBoxesInOrder[i].BackColor != ColorPallettes[i])
+                {
+                    ColorPallettes[i] = _pictureBoxesInOrder[i].BackColor;
+                }
+            }
         }
 
         private void PicSave_Click(object sender, EventArgs e)
