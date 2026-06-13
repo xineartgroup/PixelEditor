@@ -2011,7 +2011,7 @@ namespace PixelEditor
                             paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
                             PaintingEngine.SetBrush(paint);
                         }
-                        UpdateCursor();
+                        canvas.Cursor = Cursors.Default;
                     }
                 }
             }
@@ -2036,7 +2036,7 @@ namespace PixelEditor
                             paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
                             PaintingEngine.SetBrush(paint);
                         }
-                        UpdateCursor();
+                        canvas.Cursor = Cursors.Default;
                     }
                 }
             }
@@ -2705,73 +2705,13 @@ namespace PixelEditor
             }
         }
 
-        private void UpdateCursor(Image? image)
-        {
-            if (image != null)
-            {
-                canvas.Cursor.Dispose();
-                Bitmap bitmap = new(image, 24, 24);
-                bitmap.MakeTransparent(Color.White);
-                for (int i = 128; i < 256; i++)
-                {
-                    bitmap.MakeTransparent(Color.FromArgb(i, i, i));
-                }
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    for (int x = 0; x < bitmap.Width; x++)
-                    {
-                        Color sourcePixel = bitmap.GetPixel(x, y);
-
-                        Color tL = x > 0 && y > 0 ? bitmap.GetPixel(x - 1, y - 1) : Color.Transparent;
-                        Color tM = y > 0 ? bitmap.GetPixel(x, y - 1) : Color.Transparent;
-                        Color tR = x < bitmap.Width - 1 && y > 0 ? bitmap.GetPixel(x + 1, y - 1) : Color.Transparent;
-                        Color cL = x > 0 ? bitmap.GetPixel(x - 1, y) : Color.Transparent;
-                        Color cR = x < bitmap.Width - 1 ? bitmap.GetPixel(x + 1, y) : Color.Transparent;
-                        Color bL = x > 0 && y < bitmap.Height - 1 ? bitmap.GetPixel(x - 1, y + 1) : Color.Transparent;
-                        Color bM = y < bitmap.Height - 1 ? bitmap.GetPixel(x, y + 1) : Color.Transparent;
-                        Color bR = x < bitmap.Width - 1 && y < bitmap.Height - 1 ? bitmap.GetPixel(x + 1, y + 1) : Color.Transparent;
-
-                        if ((tL.A == 0 || tM.A == 0 || tR.A == 0 || cL.A == 0 || cR.A == 0 || bL.A == 0 || bM.A == 0 || bR.A == 0) && sourcePixel.A > 0)
-                        {
-                            bitmap.SetPixel(x, y, Color.Black);
-                        }
-                        else if (sourcePixel.A > 0)
-                        {
-                            bitmap.SetPixel(x, y, paint.GetFillColor());
-                        }
-                    }
-                }
-                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
-            }
-        }
-
-        private void UpdateCursor()
-        {
-            canvas.Cursor = Cursors.Default;
-        }
-
-        private void UpdateCursor(int cursorWidth, int cursorHeight)
-        {
-            if (paint.Brush != null)
-            {
-                canvas.Cursor.Dispose();
-
-                int hotSpotX = cursorWidth / 2;
-                int hotSpotY = cursorHeight / 2;
-
-                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(paint.Brush, cursorWidth, cursorHeight), hotSpotX, hotSpotY);
-            }
-            else
-            {
-                canvas.Cursor = Cursors.Default;
-            }
-        }
-
         private void Brush_size_Scroll(object? sender, EventArgs e)
         {
             lblBrushSize.Text = $"{brush_size.Value}";
             if (paint.Brush != null)
             {
+                paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+                PaintingEngine.SetBrush(paint);
                 int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
@@ -2783,6 +2723,8 @@ namespace PixelEditor
             lblEraserSize.Text = $"{eraser_size.Value}";
             if (paint.Brush != null)
             {
+                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                PaintingEngine.SetBrush(paint);
                 int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
@@ -2934,6 +2876,66 @@ namespace PixelEditor
                     }
                     image.Dispose();
                 }
+            }
+        }
+
+        private void UpdateCursor(Image? image)
+        {
+            if (image != null)
+            {
+                canvas.Cursor.Dispose();
+                Bitmap bitmap = new(image, 24, 24);
+                bitmap.MakeTransparent(Color.White);
+                for (int i = 128; i < 256; i++)
+                {
+                    bitmap.MakeTransparent(Color.FromArgb(i, i, i));
+                }
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        Color sourcePixel = bitmap.GetPixel(x, y);
+
+                        Color tL = x > 0 && y > 0 ? bitmap.GetPixel(x - 1, y - 1) : Color.Transparent;
+                        Color tM = y > 0 ? bitmap.GetPixel(x, y - 1) : Color.Transparent;
+                        Color tR = x < bitmap.Width - 1 && y > 0 ? bitmap.GetPixel(x + 1, y - 1) : Color.Transparent;
+                        Color cL = x > 0 ? bitmap.GetPixel(x - 1, y) : Color.Transparent;
+                        Color cR = x < bitmap.Width - 1 ? bitmap.GetPixel(x + 1, y) : Color.Transparent;
+                        Color bL = x > 0 && y < bitmap.Height - 1 ? bitmap.GetPixel(x - 1, y + 1) : Color.Transparent;
+                        Color bM = y < bitmap.Height - 1 ? bitmap.GetPixel(x, y + 1) : Color.Transparent;
+                        Color bR = x < bitmap.Width - 1 && y < bitmap.Height - 1 ? bitmap.GetPixel(x + 1, y + 1) : Color.Transparent;
+
+                        if ((tL.A == 0 || tM.A == 0 || tR.A == 0 || cL.A == 0 || cR.A == 0 || bL.A == 0 || bM.A == 0 || bR.A == 0) && sourcePixel.A > 0)
+                        {
+                            bitmap.SetPixel(x, y, Color.Black);
+                        }
+                        else if (sourcePixel.A > 0)
+                        {
+                            bitmap.SetPixel(x, y, paint.GetFillColor());
+                        }
+                    }
+                }
+                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
+            }
+        }
+
+        private void UpdateCursor(int cursorWidth, int cursorHeight)
+        {
+            if (paint.Brush != null)
+            {
+                canvas.Cursor.Dispose();
+
+                cursorWidth = (int)(cursorWidth * Document.Zoom);
+                cursorHeight = (int)(cursorHeight * Document.Zoom);
+
+                int hotSpotX = cursorWidth / 2;
+                int hotSpotY = cursorHeight / 2;
+
+                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(paint.Brush, cursorWidth, cursorHeight), hotSpotX, hotSpotY);
+            }
+            else
+            {
+                canvas.Cursor = Cursors.Default;
             }
         }
 
@@ -4528,8 +4530,8 @@ namespace PixelEditor
         private void ZoomInToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-            float zoomDelta = 0.1f;
-            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom + zoomDelta));
+            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom + 0.1f));
+            BtnTools_CheckedChanged(sender, e);
             RedrawImage();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
@@ -4537,8 +4539,8 @@ namespace PixelEditor
         private void ZoomOutToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
-            float zoomDelta = 0.1f;
-            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom - zoomDelta));
+            Document.Zoom = Math.Max(0.1f, Math.Min(10.0f, Document.Zoom - 0.1f));
+            BtnTools_CheckedChanged(sender, e);
             RedrawImage();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
@@ -4548,6 +4550,7 @@ namespace PixelEditor
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Document.Zoom = 0.95f;
             Document.ImageOffset = new(0, 0);
+            BtnTools_CheckedChanged(sender, e);
             RedrawImage();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
         }
