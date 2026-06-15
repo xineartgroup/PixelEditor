@@ -54,6 +54,8 @@ namespace PixelEditor
         private List<PointF> strokePoints = [];
         private readonly List<Image> brushes = [];
         private readonly ColorDialogX _colorPicker = new(); // Here because of the custom color picking
+        private System.Windows.Forms.Timer? lazyCatchUpTimer;
+        private Point lastRawWorldPos; // last localCurrentRaw, updated every move
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -5568,6 +5570,121 @@ namespace PixelEditor
             }
         }
 
+        private void StartLazyCatchUpTimer(Layer selectedLayer, float lazySmoothing)
+        {
+            lazyCatchUpTimer?.Stop();
+            lazyCatchUpTimer?.Dispose();
+
+            lazyCatchUpTimer = new System.Windows.Forms.Timer { Interval = 16 };
+            lazyCatchUpTimer.Tick += (s, args) =>
+            {
+                if (!isPainting && !isErasing)
+                {
+                    lazyCatchUpTimer?.Stop();
+                    return;
+                }
+
+                AdvanceLazyTowards(lastRawWorldPos, selectedLayer, lazySmoothing);
+
+                const int minPaintIntervalMs = 32;
+                if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
+                {
+                    RedrawImage(layersControl.GetSelectedLayerIndex());
+                    ManipulatorGeneral.DirtyRegions.Clear();
+                    lastPaintTime = DateTime.Now;
+                }
+            };
+            lazyCatchUpTimer.Start();
+        }
+
+        private void AdvanceLazyTowards(PointF target, Layer selectedLayer, float lazySmoothing)
+        {
+            PointF delta = new(target.X - lazyLocalPos.X, target.Y - lazyLocalPos.Y);
+            float distRemaining = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+
+            if (distRemaining <= 0.25f)
+            {
+                if (distRemaining > 0.001f)
+                {
+                    PaintSegmentTo(target, selectedLayer);
+                    lazyLocalPos = target;
+                }
+                lazyCatchUpTimer?.Stop();
+                return;
+            }
+
+            lazyLocalPos.X += delta.X * lazySmoothing;
+            lazyLocalPos.Y += delta.Y * lazySmoothing;
+
+            PaintSegmentTo(lazyLocalPos, selectedLayer);
+        }
+
+        private void PaintSegmentTo(PointF newLazyPos, Layer selectedLayer)
+        {
+            strokePoints.Add(newLazyPos);
+
+            var selectionPolygons = SelectionsManipulator.GetSelections();
+            int n = strokePoints.Count;
+
+            if (n == 2)
+            {
+                PaintingEngine.PaintStroke(Point.Round(strokePoints[0]), Point.Round(strokePoints[1]),
+                    brushPixelSize, currentOpacity,
+                    isErasing && selectedLayer.FillType == FillType.Transparency,
+                    selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+
+                ComputeAndAddDirty(strokePoints[^2], strokePoints[^1], selectedLayer);
+            }
+            else if (n > 2)
+            {
+                PointF p0 = strokePoints[n - 3];
+                PointF p1 = strokePoints[n - 2];
+                PointF p2 = strokePoints[n - 1];
+                PointF p3 = p2;
+
+                int segments = Math.Clamp((int)(0.25f * Utility.VectorDistance(p1, p2) / brushPixelSize), 1, 8);
+
+                PointF previousPos = strokeLastInterpolated;
+
+                for (int i = 1; i <= segments; i++)
+                {
+                    float t = i / (float)segments;
+                    PointF pos = PaintingEngine.CatmullRomPoint(p0, p1, p2, p3, t);
+
+                    Point prevRounded = Point.Round(previousPos);
+                    Point currRounded = Point.Round(pos);
+
+                    if (prevRounded != currRounded)
+                    {
+                        PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity,
+                            isErasing && selectedLayer.FillType == FillType.Transparency,
+                            selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                    }
+
+                    previousPos = pos;
+                }
+
+                strokeLastInterpolated = previousPos;
+                ComputeAndAddDirty(p1, p2, selectedLayer);
+            }
+        }
+
+        private void ComputeAndAddDirty(PointF a, PointF b, Layer selectedLayer)
+        {
+            float radius = paint.Brush != null ? (int)(paint.Brush.Width * brushPixelSize / 2) : 0;
+
+            int minX = (int)(Math.Min(a.X, b.X) - radius);
+            int minY = (int)(Math.Min(a.Y, b.Y) - radius);
+            int maxX = (int)(Math.Max(a.X, b.X) + radius);
+            int maxY = (int)(Math.Max(a.Y, b.Y) + radius);
+
+            Rectangle dirty = new(minX + selectedLayer.X, minY + selectedLayer.Y, maxX - minX, maxY - minY);
+            dirty.Intersect(new Rectangle(0, 0, Document.Width, Document.Height));
+
+            if (!dirty.IsEmpty)
+                ManipulatorGeneral.DirtyRegions.Add(dirty);
+        }
+
         private void PixelImage_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -6599,13 +6716,10 @@ namespace PixelEditor
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
                     float lazySmoothing = (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum;
-
-                    if (lazySmoothing == 0)
-                    {
-                        lazySmoothing = 0.01f;
-                    }
+                    if (lazySmoothing == 0) lazySmoothing = 0.01f;
 
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+                    lastRawWorldPos = localCurrentRaw;
 
                     if (strokePoints.Count == 0)
                     {
@@ -6616,73 +6730,12 @@ namespace PixelEditor
 
                         PaintingEngine.SetTarget(selectedLayer.Image);
                         PaintingEngine.BeginStroke();
+
+                        StartLazyCatchUpTimer(selectedLayer, lazySmoothing);
                         return;
                     }
 
-                    PointF delta = new(localCurrentRaw.X - lazyLocalPos.X, localCurrentRaw.Y - lazyLocalPos.Y);
-
-                    lazyLocalPos.X += delta.X * lazySmoothing;
-                    lazyLocalPos.Y += delta.Y * lazySmoothing;
-
-                    strokePoints.Add(lazyLocalPos);
-
-                    float radius = paint.Brush != null ? (int)(paint.Brush.Width * brushPixelSize / 2) : 0;
-                    Rectangle dirty = new(0, 0, 0, 0);
-
-                    if (strokePoints.Count > 1)
-                    {
-                        int minX = (int)(Math.Min(strokePoints[^2].X, strokePoints[^1].X) - radius);
-                        int minY = (int)(Math.Min(strokePoints[^2].Y, strokePoints[^1].Y) - radius);
-                        int maxX = (int)(Math.Max(strokePoints[^2].X, strokePoints[^1].X) + radius);
-                        int maxY = (int)(Math.Max(strokePoints[^2].Y, strokePoints[^1].Y) + radius);
-
-                        dirty = new(minX + selectedLayer.X, minY + selectedLayer.Y, maxX - minX, maxY - minY);
-
-                        dirty.Intersect(new Rectangle(0, 0, Document.Width, Document.Height));
-
-                        var selectionPolygons = SelectionsManipulator.GetSelections();
-
-                        if (strokePoints.Count == 2)
-                        {
-                            Point start = Point.Round(strokePoints[0]);
-                            Point end = Point.Round(strokePoints[1]);
-
-                            PaintingEngine.PaintStroke(start, end, brushPixelSize, currentOpacity, isErasing && selectedLayer.FillType == FillType.Transparency, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
-                        }
-                        else
-                        {
-                            int n = strokePoints.Count;
-                            PointF p0 = (n > 2) ? strokePoints[n - 3] : strokePoints[n - 2];
-                            PointF p1 = strokePoints[n - 2];
-                            PointF p2 = strokePoints[n - 1];
-                            PointF p3 = p2;
-
-                            int segments = Math.Clamp((int)(0.5f * Utility.VectorDistance(p1, p2) / brushPixelSize), 1, 8);
-
-                            PointF previousPos = strokeLastInterpolated;
-
-                            for (int i = 1; i <= segments; i++)
-                            {
-                                float t = i / (float)segments;
-                                PointF pos = PaintingEngine.CatmullRomPoint(p0, p1, p2, p3, t);
-
-                                Point prevRounded = Point.Round(previousPos);
-                                Point currRounded = Point.Round(pos);
-
-                                if (prevRounded != currRounded)
-                                {
-                                    PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity, isErasing && selectedLayer.FillType == FillType.Transparency, selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
-                                }
-
-                                previousPos = pos;
-                            }
-
-                            strokeLastInterpolated = previousPos;
-                        }
-                    }
-
-                    if (!dirty.IsEmpty)
-                        ManipulatorGeneral.DirtyRegions.Add(dirty);
+                    AdvanceLazyTowards(localCurrentRaw, selectedLayer, lazySmoothing);
 
                     lastMousePosition = e.Location;
 
@@ -6694,7 +6747,6 @@ namespace PixelEditor
                     {
                         RedrawImage(layersControl.GetSelectedLayerIndex());
                         ManipulatorGeneral.DirtyRegions.Clear();
-                        ManipulatorGeneral.DirtyRegions.Add(dirty);
                         lastPaintTime = DateTime.Now;
                     }
                 }
@@ -6938,6 +6990,9 @@ namespace PixelEditor
 
             WarpEngine.WarpSnapshot?.Dispose();
             WarpEngine.WarpSnapshot = null;
+            lazyCatchUpTimer?.Stop();
+            lazyCatchUpTimer?.Dispose();
+            lazyCatchUpTimer = null;
             isWarping = false;
             isDraggingSelection = false;
             isDraggingScreen = false;
