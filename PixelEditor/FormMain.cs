@@ -74,7 +74,6 @@ namespace PixelEditor
         private readonly TrackBar brush_smoothness = new();
 
         private readonly GroupBox groupEraserDetail = new();
-        private readonly Button btnEraserColor = new();
         private readonly Panel panelEraser = new();
         private readonly TrackBar eraser_size = new();
         private readonly TrackBar eraser_opacity = new();
@@ -522,7 +521,6 @@ namespace PixelEditor
             groupEraserDetail.Controls.Add(lblEraserSmoothness);
             groupEraserDetail.Controls.Add(lblEraserOpacity);
             groupEraserDetail.Controls.Add(lblEraserSize);
-            groupEraserDetail.Controls.Add(btnEraserColor);
             groupEraserDetail.Controls.Add(panelEraser);
             groupEraserDetail.Controls.Add(eraser_size);
             groupEraserDetail.Controls.Add(eraser_opacity);
@@ -581,16 +579,6 @@ namespace PixelEditor
             lblEraserSize.Size = new Size(32, 24);
             lblEraserSize.TabIndex = 30;
             lblEraserSize.TextAlign = ContentAlignment.MiddleCenter;
-
-            // Eraser Color Button
-            btnEraserColor.BackColor = Color.White;
-            btnEraserColor.FlatStyle = FlatStyle.Popup;
-            btnEraserColor.Location = new Point(73, 22);
-            btnEraserColor.Name = "btnEraserColor";
-            btnEraserColor.Size = new Size(20, 20);
-            btnEraserColor.TabIndex = 24;
-            btnEraserColor.UseVisualStyleBackColor = false;
-            btnEraserColor.Click += BtnEraserColor_Click;
 
             // Preview panel
             panelEraser.BackColor = Color.White;
@@ -2035,7 +2023,11 @@ namespace PixelEditor
                         paint.Brush = new Bitmap(brush.Image);
                         if (paint.Brush != null)
                         {
-                            paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                            if (selectedLayer != null)
+                            {
+                                paint.Reset(selectedLayer.FillColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                            }
                             PaintingEngine.SetBrush(paint);
                         }
                         canvas.Cursor = Cursors.Default;
@@ -2066,28 +2058,6 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPenColor.BackColor;
-            _colorPicker.Show();
-            _colorPicker.BringToFront();
-        }
-
-        private void BtnEraserColor_Click(object? sender, EventArgs e)
-        {
-            ColorDialogX.Canvas = canvas;
-
-            _colorPicker.OnColorAccepted = (selectedColor) =>
-            {
-                btnEraserColor.BackColor = selectedColor;
-                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
-                if (paint.Brush != null)
-                {
-                    PaintingEngine.SetBrush(paint);
-                    int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
-                    int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
-                    UpdateCursor(cursorWidth, cursorHeight);
-                }
-            };
-
-            _colorPicker.Color = btnEraserColor.BackColor;
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -2234,7 +2204,11 @@ namespace PixelEditor
             else if (btnEraser.Checked)
             {
                 paint.Brush = brushes.Count > selectedEraserIndex && selectedEraserIndex >= 0 ? new Bitmap(brushes[selectedEraserIndex]) : null;
-                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    paint.Reset(selectedLayer.FillColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                }
                 PaintingEngine.SetBrush(paint);
                 groupEraserDetail.Visible = true;
                 if (paint.Brush != null)
@@ -2725,7 +2699,11 @@ namespace PixelEditor
             lblEraserSize.Text = $"{eraser_size.Value}";
             if (paint.Brush != null)
             {
-                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    paint.Reset(selectedLayer.FillColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                }
                 PaintingEngine.SetBrush(paint);
                 int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
@@ -2771,7 +2749,11 @@ namespace PixelEditor
             lblEraserHardness.Text = $"{eraser_hardness.Value}";
             if (paint.Brush != null)
             {
-                paint.Reset(btnEraserColor.BackColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+                if (selectedLayer != null)
+                {
+                    paint.Reset(selectedLayer.FillColor, paint.GetRadius() * (eraser_hardness.Maximum - eraser_hardness.Value) / eraser_hardness.Maximum);
+                }
                 PaintingEngine.SetBrush(paint);
                 int cursorWidth = 2 * paint.Brush.Width * eraser_size.Value / eraser_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;

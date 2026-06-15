@@ -15,23 +15,38 @@ namespace PixelEditor
 
         public static void SetBrush(Paint brush) => currentBrush = brush;
 
-        public static void SetTarget(Image? image) => targetBitmap = image as Bitmap;
+        public static void SetTarget(Image? image)
+        {
+            targetBitmap = image as Bitmap;
+            Console.WriteLine($"Target set: {targetBitmap?.Width}x{targetBitmap?.Height}");
+        }
 
         public static void BeginStroke()
         {
             if (targetBitmap == null)
                 return;
 
-            bufferWidth = targetBitmap.Width;
-            bufferHeight = targetBitmap.Height;
+            try
+            {
+                bufferWidth = targetBitmap.Width;
+                bufferHeight = targetBitmap.Height;
 
-            strokeBase?.Dispose();
-            strokeBase = new Bitmap(targetBitmap);
+                strokeBase?.Dispose();
+                strokeBase = new Bitmap(targetBitmap);
 
-            if (strokeCoverage == null || strokeCoverage.GetLength(0) != bufferWidth || strokeCoverage.GetLength(1) != bufferHeight)
-                strokeCoverage = new float[bufferWidth, bufferHeight];
-            else
-                Array.Clear(strokeCoverage, 0, strokeCoverage.Length);
+                if (strokeCoverage == null || strokeCoverage.GetLength(0) != bufferWidth || strokeCoverage.GetLength(1) != bufferHeight)
+                    strokeCoverage = new float[bufferWidth, bufferHeight];
+                else
+                    Array.Clear(strokeCoverage, 0, strokeCoverage.Length);
+            }
+            catch (Exception ex)
+            {
+                targetBitmap = null;
+                strokeBase = null;
+                strokeCoverage = null;
+                Console.WriteLine($"Error initializing stroke: {ex.Message}");
+                return;
+            }
         }
 
         public static void EndStroke()
