@@ -424,7 +424,7 @@ namespace PixelEditor
             lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
             btnPenColor.BackColor = Color.Black;
             btnPenColor.FlatStyle = FlatStyle.Popup;
-            btnPenColor.Location = new Point(73, 22);
+            btnPenColor.Location = new Point(103, 22);
             btnPenColor.Name = "btnPenColor";
             btnPenColor.Size = new Size(20, 20);
             btnPenColor.TabIndex = 24;
@@ -434,7 +434,7 @@ namespace PixelEditor
             panelBrush.BorderStyle = BorderStyle.FixedSingle;
             panelBrush.Location = new Point(12, 51);
             panelBrush.Name = "panel2";
-            panelBrush.Size = new Size(155, 139);
+            panelBrush.Size = new Size(205, 120);
             panelBrush.TabIndex = 22;
             brush_size.Location = new Point(76, 196);
             brush_size.Maximum = 100;
@@ -585,7 +585,7 @@ namespace PixelEditor
             panelEraser.BorderStyle = BorderStyle.FixedSingle;
             panelEraser.Location = new Point(12, 51);
             panelEraser.Name = "panelEraser";
-            panelEraser.Size = new Size(155, 139);
+            panelEraser.Size = new Size(205, 120);
             panelEraser.TabIndex = 22;
 
             // Size control
@@ -1532,6 +1532,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnTextFillColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnTextFillColor.Left, btnTextFillColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1682,6 +1683,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnRectFillColorShape.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnRectFillColorShape.Left, btnRectFillColorShape.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1697,6 +1699,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnEllipseFillColorShape.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnEllipseFillColorShape.Left, btnEllipseFillColorShape.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1712,6 +1715,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPolygonFillColorShape.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnPolygonFillColorShape.Left, btnPolygonFillColorShape.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1727,6 +1731,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPathFillColorShape.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnPathFillColorShape.Left, btnPathFillColorShape.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1742,6 +1747,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnRectLineColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnRectLineColor.Left, btnRectLineColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1757,6 +1763,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnEllipseLineColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnEllipseLineColor.Left, btnEllipseLineColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1772,6 +1779,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPolygonLineColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnPolygonLineColor.Left, btnPolygonLineColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1787,6 +1795,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPathLineColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnPathLineColor.Left, btnPathLineColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1802,6 +1811,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnTextLineColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnTextLineColor.Left, btnTextLineColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -1875,6 +1885,8 @@ namespace PixelEditor
             LoadNewDocument(true);
             HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
             Form1_Resize(sender, e);
+            _colorPicker.Show(); // Just to initialize the color picker, it will be hidden immediately after
+            _colorPicker.Hide();
             UpdateTitleBar();
             cboBlendMode.Items.Clear();
             cboBlendMode.Items.AddRange(Enum.GetNames<ImageBlending>());
@@ -2058,6 +2070,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnPenColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnPenColor.Left, btnPenColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
@@ -2075,6 +2088,7 @@ namespace PixelEditor
             };
 
             _colorPicker.Color = btnFillColor.BackColor;
+            _colorPicker.Location = PointToScreen(new Point(btnFillColor.Left, btnFillColor.Bottom));
             _colorPicker.Show();
             _colorPicker.BringToFront();
         }
