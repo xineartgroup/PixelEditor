@@ -6711,7 +6711,8 @@ namespace PixelEditor
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                    float lazySmoothing = (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum;
+                    float lazySmoothing = isPainting ? (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum : 
+                        (float)(eraser_smoothness.Maximum - eraser_smoothness.Value) / eraser_smoothness.Maximum;
                     if (lazySmoothing == 0) lazySmoothing = 0.01f;
 
                     Point localCurrentRaw = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
@@ -6910,28 +6911,24 @@ namespace PixelEditor
                     {
                         Point currentWorldPos = ManipulatorGeneral.ScreenToWorld(e.Location, canvas.Width, canvas.Height);
                         Point localFinal = new(currentWorldPos.X - selectedLayer.X, currentWorldPos.Y - selectedLayer.Y);
+                        lastRawWorldPos = localFinal;
 
-                        PointF delta = new(localFinal.X - lazyLocalPos.X, localFinal.Y - lazyLocalPos.Y);
-                        float distRemaining = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+                        float lazySmoothing = isPainting ? (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum :
+                            (float)(eraser_smoothness.Maximum - eraser_smoothness.Value) / eraser_smoothness.Maximum;
+                        if (lazySmoothing == 0) lazySmoothing = 0.01f;
 
-                        if (distRemaining > 0.01f)
+                        float fastSmoothing = lazySmoothing < 0.9f ? lazySmoothing : 0.9f;
+                        const int maxIterations = 32;
+
+                        for (int i = 0; i < maxIterations; i++)
                         {
-                            Point prevRounded = Point.Round(lazyLocalPos);
-                            Point currRounded = Point.Round(localFinal);
+                            PointF delta = new(localFinal.X - lazyLocalPos.X, localFinal.Y - lazyLocalPos.Y);
+                            float distRemaining = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
 
-                            if (prevRounded != currRounded)
-                            {
-                                var selectionPolygons = SelectionsManipulator.GetSelections();
-                                PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity,
-                                    isErasing && selectedLayer.FillType == FillType.Transparency,
-                                    selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
+                            if (distRemaining <= 0.25f)
+                                break;
 
-                                ManipulatorGeneral.DirtyRegions.Add(new Rectangle(
-                                    (int)Math.Min(prevRounded.X, currRounded.X) + selectedLayer.X - (int)brushPixelSize,
-                                    (int)Math.Min(prevRounded.Y, currRounded.Y) + selectedLayer.Y - (int)brushPixelSize,
-                                    Math.Abs(currRounded.X - prevRounded.X) + (int)(brushPixelSize * 2),
-                                    Math.Abs(currRounded.Y - prevRounded.Y) + (int)(brushPixelSize * 2)));
-                            }
+                            AdvanceLazyTowards(localFinal, selectedLayer, fastSmoothing);
                         }
                     }
                 }
