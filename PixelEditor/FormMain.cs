@@ -2,6 +2,7 @@
 using PixelEditor.Vector;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace PixelEditor
 {
@@ -49,13 +50,17 @@ namespace PixelEditor
         private readonly Matrix transformMatrix = new();
         private PointF scaleAnchorWorld = PointF.Empty;
         private Point scaleStartMouseScreen = Point.Empty;
+        private Point lastRawWorldPos; // last localCurrentRaw, updated every move
         private string activeScaleHandle = "";
         private string currentFilePath = "";
         private List<PointF> strokePoints = [];
         private readonly List<Image> brushes = [];
         private readonly ColorDialogX _colorPicker = new(); // Here because of the custom color picking
         private System.Windows.Forms.Timer? lazyCatchUpTimer;
-        private Point lastRawWorldPos; // last localCurrentRaw, updated every move
+        private float currentPressure = 1.0f;
+        private bool hasTabletInput = false;
+
+        private readonly ControlMessageHook _pictureBoxHook;
 
         private readonly GroupBox groupBrushDetail = new();
         private readonly Label lblBrushHardness = new();
@@ -72,6 +77,8 @@ namespace PixelEditor
         private readonly Label label8 = new();
         private readonly TrackBar brush_hardness = new();
         private readonly TrackBar brush_smoothness = new();
+        private readonly CheckBox chkPressuredOpacity = new();
+        private readonly CheckBox chkPressuredBrushSize = new();
 
         private readonly GroupBox groupEraserDetail = new();
         private readonly Panel panelEraser = new();
@@ -87,6 +94,8 @@ namespace PixelEditor
         private readonly Label labelEraserOpacity = new();
         private readonly Label labelEraserHardness = new();
         private readonly Label labelEraserSmoothness = new();
+        private readonly CheckBox chkPressuredOpacityEraser = new();
+        private readonly CheckBox chkPressuredBrushSizeEraser = new();
 
         private readonly GroupBox groupFillDetail = new();
         private readonly ComboBox cboFillBlendMode = new();
@@ -198,6 +207,67 @@ namespace PixelEditor
         private readonly Label lblTextFillColor = new();
         private readonly Button btnTextFillColor = new();
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINTER_INFO
+        {
+            public uint pointerType;
+            public uint pointerId;
+            public uint frameId;
+            public uint pointerFlags;
+            public IntPtr sourceDevice;
+            public IntPtr hwndTarget;
+            public POINT ptPixelLocation;
+            public POINT ptHimetricLocation;
+            public POINT ptPixelLocationRaw;
+            public POINT ptHimetricLocationRaw;
+            public uint dwTime;
+            public uint historyCount;
+            public int inputData;
+            public uint dwKeyStates;
+            public ulong PerformanceCount;
+            public uint buttonChangeType;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINTER_PEN_INFO
+        {
+            public POINTER_INFO pointerInfo;
+            public uint penFlags;
+            public uint penMask;
+            public uint pressure;    // 0-1024
+            public uint rotation;    // 0-359
+            public int tiltX;        // -90 to 90
+            public int tiltY;        // -90 to 90
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")]
+
+        private static extern bool GetPointerPenInfo(uint pointerId, out POINTER_PEN_INFO penInfo);
+
+        private class ControlMessageHook : NativeWindow
+        {
+            private readonly Action<Message> _onMessage;
+
+            public ControlMessageHook(Control control, Action<Message> onMessage)
+            {
+                _onMessage = onMessage;
+                this.AssignHandle(control.Handle);
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                _onMessage(m); // Pass the message to our form handler
+                base.WndProc(ref m);
+            }
+        }
+
         public FormMain()
         {
             InitializeComponent();
@@ -217,6 +287,8 @@ namespace PixelEditor
             layersControl.LayerVisibilityChanged += LayersControl_LayerVisibilityChanged;
             layersControl.SelectedLayerChanged += LayersControl_LayerOrderChanged;
             layersControl.LayerCountChanged += LayersControl_LayerCountChanged;
+
+            _pictureBoxHook = new ControlMessageHook(canvas, HandlePictureBoxMessage);
         }
 
         private void InitializeTimer()
@@ -365,6 +437,7 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)brush_hardness).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_smoothness).BeginInit();
             SuspendLayout();
+
             groupBrushDetail.Controls.Add(lblBrushHardness);
             groupBrushDetail.Controls.Add(lblBrushSmoothness);
             groupBrushDetail.Controls.Add(lblBrushOpacity);
@@ -379,13 +452,41 @@ namespace PixelEditor
             groupBrushDetail.Controls.Add(label8);
             groupBrushDetail.Controls.Add(brush_hardness);
             groupBrushDetail.Controls.Add(brush_smoothness);
+            groupBrushDetail.Controls.Add(chkPressuredOpacity);
+            groupBrushDetail.Controls.Add(chkPressuredBrushSize);
+
             groupBrushDetail.Location = new Point(12, 74);
             groupBrushDetail.Name = "groupBrushDetail";
-            groupBrushDetail.Size = new Size(230, 430);
+            groupBrushDetail.Size = new Size(230, 460);  // Increased height to accommodate checkboxes
             groupBrushDetail.TabIndex = 28;
             groupBrushDetail.TabStop = false;
             groupBrushDetail.Text = "Brush Detail";
             groupBrushDetail.Visible = false;
+
+            // Configure Pressured Opacity Checkbox
+            chkPressuredOpacity.AutoSize = true;
+            chkPressuredOpacity.Font = new Font("Segoe UI", 8.25F);
+            chkPressuredOpacity.Location = new Point(7, 410);  // Moved down from 380
+            chkPressuredOpacity.Name = "chkPressuredOpacity";
+            chkPressuredOpacity.Size = new Size(124, 17);
+            chkPressuredOpacity.TabIndex = 31;
+            chkPressuredOpacity.Text = "Pressured Opacity";
+            chkPressuredOpacity.UseVisualStyleBackColor = true;
+            chkPressuredOpacity.Checked = false;
+            //chkPressuredOpacity.CheckedChanged += ChkPressuredOpacity_CheckedChanged;
+
+            // Configure Pressured Brush Size Checkbox
+            chkPressuredBrushSize.AutoSize = true;
+            chkPressuredBrushSize.Font = new Font("Segoe UI", 8.25F);
+            chkPressuredBrushSize.Location = new Point(7, 433);  // Moved down from 403
+            chkPressuredBrushSize.Name = "chkPressuredBrushSize";
+            chkPressuredBrushSize.Size = new Size(124, 17);
+            chkPressuredBrushSize.TabIndex = 32;
+            chkPressuredBrushSize.Text = "Pressured Brush Size";
+            chkPressuredBrushSize.UseVisualStyleBackColor = true;
+            chkPressuredBrushSize.Checked = true;
+            //chkPressuredBrushSize.CheckedChanged += ChkPressuredBrushSize_CheckedChanged;
+
             lblBrushHardness.BackColor = Color.White;
             lblBrushHardness.BorderStyle = BorderStyle.Fixed3D;
             lblBrushHardness.FlatStyle = FlatStyle.Flat;
@@ -395,6 +496,7 @@ namespace PixelEditor
             lblBrushHardness.Size = new Size(32, 24);
             lblBrushHardness.TabIndex = 30;
             lblBrushHardness.TextAlign = ContentAlignment.MiddleCenter;
+
             lblBrushSmoothness.BackColor = Color.White;
             lblBrushSmoothness.BorderStyle = BorderStyle.Fixed3D;
             lblBrushSmoothness.FlatStyle = FlatStyle.Flat;
@@ -404,6 +506,7 @@ namespace PixelEditor
             lblBrushSmoothness.Size = new Size(32, 24);
             lblBrushSmoothness.TabIndex = 30;
             lblBrushSmoothness.TextAlign = ContentAlignment.MiddleCenter;
+
             lblBrushOpacity.BackColor = Color.White;
             lblBrushOpacity.BorderStyle = BorderStyle.Fixed3D;
             lblBrushOpacity.FlatStyle = FlatStyle.Flat;
@@ -413,6 +516,7 @@ namespace PixelEditor
             lblBrushOpacity.Size = new Size(32, 24);
             lblBrushOpacity.TabIndex = 30;
             lblBrushOpacity.TextAlign = ContentAlignment.MiddleCenter;
+
             lblBrushSize.BackColor = Color.White;
             lblBrushSize.BorderStyle = BorderStyle.Fixed3D;
             lblBrushSize.FlatStyle = FlatStyle.Flat;
@@ -422,6 +526,7 @@ namespace PixelEditor
             lblBrushSize.Size = new Size(32, 24);
             lblBrushSize.TabIndex = 30;
             lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
+
             btnPenColor.BackColor = Color.Black;
             btnPenColor.FlatStyle = FlatStyle.Popup;
             btnPenColor.Location = new Point(103, 22);
@@ -430,12 +535,14 @@ namespace PixelEditor
             btnPenColor.TabIndex = 24;
             btnPenColor.UseVisualStyleBackColor = false;
             btnPenColor.Click += BtnPenColor_Click;
+
             panelBrush.BackColor = Color.White;
             panelBrush.BorderStyle = BorderStyle.FixedSingle;
             panelBrush.Location = new Point(12, 51);
             panelBrush.Name = "panel2";
             panelBrush.Size = new Size(205, 120);
             panelBrush.TabIndex = 22;
+
             brush_size.Location = new Point(76, 196);
             brush_size.Maximum = 100;
             brush_size.Minimum = 1;
@@ -445,6 +552,7 @@ namespace PixelEditor
             brush_size.TickStyle = TickStyle.None;
             brush_size.Value = 6;
             brush_size.Scroll += Brush_size_Scroll;
+
             brush_opacity.Location = new Point(76, 247);
             brush_opacity.Maximum = 100;
             brush_opacity.Name = "brush_opacity";
@@ -453,6 +561,7 @@ namespace PixelEditor
             brush_opacity.TickStyle = TickStyle.None;
             brush_opacity.Value = 100;
             brush_opacity.Scroll += Brush_opacity_Scroll;
+
             label10.AutoSize = true;
             label10.Font = new Font("Segoe UI", 8.25F);
             label10.Location = new Point(7, 349);
@@ -460,6 +569,7 @@ namespace PixelEditor
             label10.Size = new Size(58, 13);
             label10.TabIndex = 29;
             label10.Text = "Hardness:";
+
             label9.AutoSize = true;
             label9.Font = new Font("Segoe UI", 8.25F);
             label9.Location = new Point(6, 298);
@@ -467,6 +577,7 @@ namespace PixelEditor
             label9.Size = new Size(73, 13);
             label9.TabIndex = 29;
             label9.Text = "Smoothness:";
+
             label11.AutoSize = true;
             label11.Font = new Font("Segoe UI", 8.25F);
             label11.Location = new Point(7, 196);
@@ -474,6 +585,7 @@ namespace PixelEditor
             label11.Size = new Size(30, 13);
             label11.TabIndex = 29;
             label11.Text = "Size:";
+
             label8.AutoSize = true;
             label8.Font = new Font("Segoe UI", 8.25F);
             label8.Location = new Point(7, 247);
@@ -481,6 +593,7 @@ namespace PixelEditor
             label8.Size = new Size(49, 13);
             label8.TabIndex = 29;
             label8.Text = "Opacity:";
+
             brush_hardness.Location = new Point(76, 349);
             brush_hardness.Maximum = 100;
             brush_hardness.Minimum = 1;
@@ -490,6 +603,7 @@ namespace PixelEditor
             brush_hardness.TickStyle = TickStyle.None;
             brush_hardness.Value = 80;
             brush_hardness.Scroll += Brush_hardness_Scroll;
+
             brush_smoothness.Location = new Point(76, 298);
             brush_smoothness.Maximum = 100;
             brush_smoothness.Name = "brush_smoothness";
@@ -498,6 +612,7 @@ namespace PixelEditor
             brush_smoothness.TickStyle = TickStyle.None;
             brush_smoothness.Value = 78;
             brush_smoothness.Scroll += Brush_smoothness_Scroll;
+
             Controls.Add(groupBrushDetail);
             groupBrushDetail.ResumeLayout(false);
             groupBrushDetail.PerformLayout();
@@ -530,14 +645,40 @@ namespace PixelEditor
             groupEraserDetail.Controls.Add(labelEraserOpacity);
             groupEraserDetail.Controls.Add(eraser_hardness);
             groupEraserDetail.Controls.Add(eraser_smoothness);
+            groupEraserDetail.Controls.Add(chkPressuredOpacityEraser);
+            groupEraserDetail.Controls.Add(chkPressuredBrushSizeEraser);
 
             groupEraserDetail.Location = new Point(12, 74);
             groupEraserDetail.Name = "groupEraserDetail";
-            groupEraserDetail.Size = new Size(230, 430);
+            groupEraserDetail.Size = new Size(230, 460);  // Increased height to accommodate checkboxes
             groupEraserDetail.TabIndex = 29;
             groupEraserDetail.TabStop = false;
             groupEraserDetail.Text = "Eraser Detail";
             groupEraserDetail.Visible = false;
+
+            // Configure Pressured Opacity Checkbox for Eraser
+            chkPressuredOpacityEraser.AutoSize = true;
+            chkPressuredOpacityEraser.Font = new Font("Segoe UI", 8.25F);
+            chkPressuredOpacityEraser.Location = new Point(7, 410);  // Moved down from 380
+            chkPressuredOpacityEraser.Name = "chkPressuredOpacityEraser";
+            chkPressuredOpacityEraser.Size = new Size(124, 17);
+            chkPressuredOpacityEraser.TabIndex = 31;
+            chkPressuredOpacityEraser.Text = "Pressured Opacity";
+            chkPressuredOpacityEraser.UseVisualStyleBackColor = true;
+            chkPressuredOpacityEraser.Checked = false;
+            //chkPressuredOpacityEraser.CheckedChanged += ChkPressuredOpacityEraser_CheckedChanged;
+
+            // Configure Pressured Brush Size Checkbox for Eraser
+            chkPressuredBrushSizeEraser.AutoSize = true;
+            chkPressuredBrushSizeEraser.Font = new Font("Segoe UI", 8.25F);
+            chkPressuredBrushSizeEraser.Location = new Point(7, 433);  // Moved down from 403
+            chkPressuredBrushSizeEraser.Name = "chkPressuredBrushSizeEraser";
+            chkPressuredBrushSizeEraser.Size = new Size(124, 17);
+            chkPressuredBrushSizeEraser.TabIndex = 32;
+            chkPressuredBrushSizeEraser.Text = "Pressured Brush Size";
+            chkPressuredBrushSizeEraser.UseVisualStyleBackColor = true;
+            chkPressuredBrushSizeEraser.Checked = false;
+            //chkPressuredBrushSizeEraser.CheckedChanged += ChkPressuredBrushSizeEraser_CheckedChanged;
 
             // Labels for displaying values
             lblEraserHardness.BackColor = Color.White;
@@ -5455,6 +5596,44 @@ namespace PixelEditor
                 (newTop + newBottom) / 2f);
         }
 
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_POINTERDOWN = 0x0246;
+            const int WM_POINTERUPDATE = 0x0245;
+            const int WM_POINTERUP = 0x0247;
+
+            switch (m.Msg)
+            {
+                case WM_POINTERDOWN:
+                case WM_POINTERUPDATE:
+                case WM_POINTERUP:
+                    break;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        private void HandlePictureBoxMessage(Message m)
+        {
+            const int WM_POINTERDOWN = 0x0246;
+            const int WM_POINTERUPDATE = 0x0245;
+            const int WM_POINTERUP = 0x0247;
+
+            if (m.Msg == WM_POINTERDOWN || m.Msg == WM_POINTERUPDATE || m.Msg == WM_POINTERUP)
+            {
+                uint pointerId = (uint)((long)m.WParam & 0xFFFF);
+                if (GetPointerPenInfo(pointerId, out POINTER_PEN_INFO penInfo))
+                {
+                    hasTabletInput = true;
+                    currentPressure = Math.Clamp(penInfo.pressure / 1024f, 0.0f, 1.0f);
+                    if (currentPressure > 0.0f)
+                    {
+                        Console.WriteLine($"PictureBox Input: Pressure={currentPressure}");
+                    }
+                }
+            }
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             Keys baseKey = keyData & Keys.KeyCode;
@@ -5622,10 +5801,17 @@ namespace PixelEditor
             var selectionPolygons = SelectionsManipulator.GetSelections();
             int n = strokePoints.Count;
 
+            float pressuredOpacity = hasTabletInput && chkPressuredOpacity.Checked ? currentOpacity * currentPressure : currentOpacity;
+
+            float pressuredBrushSize = hasTabletInput && chkPressuredBrushSize.Checked ? brushPixelSize * currentPressure : brushPixelSize;
+
+            pressuredOpacity = Math.Max(pressuredOpacity, 0.01f);
+            pressuredBrushSize = Math.Max(pressuredBrushSize, 0.01f);
+
             if (n == 2)
             {
                 PaintingEngine.PaintStroke(Point.Round(strokePoints[0]), Point.Round(strokePoints[1]),
-                    brushPixelSize, currentOpacity,
+                    pressuredBrushSize, pressuredOpacity,
                     isErasing && selectedLayer.FillType == FillType.Transparency,
                     selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
 
@@ -5652,7 +5838,7 @@ namespace PixelEditor
 
                     if (prevRounded != currRounded)
                     {
-                        PaintingEngine.PaintStroke(prevRounded, currRounded, brushPixelSize, currentOpacity,
+                        PaintingEngine.PaintStroke(prevRounded, currRounded, pressuredBrushSize, pressuredOpacity,
                             isErasing && selectedLayer.FillType == FillType.Transparency,
                             selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
                     }
@@ -6737,7 +6923,7 @@ namespace PixelEditor
                     lastMousePosition = e.Location;
 
                     sw.Stop();
-                    Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
+                    //Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
 
                     const int minPaintIntervalMs = 32;
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
@@ -7000,6 +7186,8 @@ namespace PixelEditor
             isDraggingShape = false;
             isResizingShape = false;
             isColorPicked = false;
+            currentPressure = 1.0f;
+            hasTabletInput = false;
             originalSelectionPoints = null;
             ColorDialogX.IsEyeDropping = false;
             layersControl.RefreshLayersDisplay();
