@@ -41,7 +41,6 @@ namespace PixelEditor
             int maskIndex = 0;
             cboType.SelectedIndex = Layer.LayerType == LayerType.Vector ? 1 : 0;
             textBoxName.Text = Layer.Name;
-            opacity.Value = Layer.Opacity;
             btnBackgroundColor.BackColor = Layer.FillColor;
             cboFillWith.Text = Layer.FillType == FillType.Transparency ? "Transparency" : "Color";
             width.Value = Layer.Image?.Width ?? Document.Width;
@@ -110,7 +109,6 @@ namespace PixelEditor
         {
             Layer.LayerType = cboType.SelectedIndex == 1 ? LayerType.Vector : LayerType.Image;
             Layer.Name = textBoxName.Text;
-            Layer.Opacity = opacity.Value;
             Layer.FillColor = cboFillWith.Text == "Transparency" ? Color.Transparent : btnBackgroundColor.BackColor;
             Layer.FillType = cboFillWith.Text == "Transparency" ? FillType.Transparency : FillType.Color;
             Layer.X = (int)offsetX.Value;

@@ -29,8 +29,8 @@ namespace PixelEditor
             Panel panelLayer = new()
             {
                 Name = layer.Name,
-                Size = new Size(160, 50),
-                Margin = new Padding(5, 2, 2, 2),
+                Size = new Size(170, 35),
+                Margin = new Padding(2, 2, 2, 2),
                 Tag = layer,
                 BorderStyle = BorderStyle.None
             };
@@ -55,7 +55,7 @@ namespace PixelEditor
             CheckBox chkVisible = new()
             {
                 Checked = layer.IsVisible,
-                Location = new Point(5, 15),
+                Location = new Point(5, 10),
                 Size = new Size(15, 15),
                 Tag = "visibility"
             };
@@ -64,7 +64,7 @@ namespace PixelEditor
             {
                 Image = layer.Image,
                 Size = picSize,
-                Location = Point.Add(new Point(30, 10), new Size(0, 0)),
+                Location = Point.Add(new Point(30, 5), new Size(0, 0)),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -76,7 +76,7 @@ namespace PixelEditor
             {
                 Image = layer.ImageMask,
                 Size = picSize,
-                Location = new Point(pictureBox.Right + 5, 10),
+                Location = new Point(pictureBox.Right + 5, 5),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.Black,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -89,7 +89,8 @@ namespace PixelEditor
             {
                 Text = layer.Name,
                 AutoSize = true,
-                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 15),
+                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 10),
+                Font = new Font("Microsoft Sans Serif", 8, FontStyle.Regular),
                 Tag = "name",
                 ContextMenuStrip = contextMenu
             };
@@ -583,7 +584,7 @@ namespace PixelEditor
                         maskPic.Image = layer.ImageMask;
                         maskPic.Size = picSize;
                         maskPic.Visible = layer.ImageMask != null;
-                        maskPic.Location = new Point(mainPic!.Right + 5, 10);
+                        maskPic.Location = new Point(mainPic!.Right + 5, 5);
                         break;
                     case "name":
                         lblName = (Label)child;
@@ -595,7 +596,7 @@ namespace PixelEditor
             if (lblName != null && mainPic != null && maskPic != null)
             {
                 int labelX = (maskPic.Visible ? maskPic.Right : mainPic.Right) + 5;
-                lblName.Location = new Point(labelX, 15);
+                lblName.Location = new Point(labelX, 10);
             }
         }
     }

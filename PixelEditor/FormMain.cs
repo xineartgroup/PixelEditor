@@ -527,7 +527,7 @@ namespace PixelEditor
             lblBrushSize.TabIndex = 30;
             lblBrushSize.TextAlign = ContentAlignment.MiddleCenter;
 
-            btnPenColor.BackColor = Color.Black;
+            btnPenColor.BackColor = Color.FromArgb(255, 64, 64, 64);
             btnPenColor.FlatStyle = FlatStyle.Popup;
             btnPenColor.Location = new Point(103, 22);
             btnPenColor.Name = "btnPenColor";
@@ -2127,7 +2127,7 @@ namespace PixelEditor
 
                     brushes.Add(new Bitmap(picBrush.Image));
                     x += 24;
-                    if (x > 128)
+                    if (x > panelBrush.Width - 24)
                     {
                         x = 0; y += 24;
                     }

@@ -283,6 +283,7 @@
             rotate90DegreesCounterclockwiseToolStripMenuItem = new ToolStripMenuItem();
             rotate180DegreesToolStripMenuItem2 = new ToolStripMenuItem();
             rotateToolStripMenuItem2 = new ToolStripMenuItem();
+            button1 = new Button();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -628,7 +629,7 @@
             // 
             resetZoomToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { zoomInToolStripMenuItem, zoomOutToolStripMenuItem, resetToolStripMenuItem });
             resetZoomToolStripMenuItem.Name = "resetZoomToolStripMenuItem";
-            resetZoomToolStripMenuItem.Size = new Size(180, 22);
+            resetZoomToolStripMenuItem.Size = new Size(106, 22);
             resetZoomToolStripMenuItem.Text = "Zoom";
             // 
             // zoomInToolStripMenuItem
@@ -658,12 +659,12 @@
             // toolStripMenuItem8
             // 
             toolStripMenuItem8.Name = "toolStripMenuItem8";
-            toolStripMenuItem8.Size = new Size(177, 6);
+            toolStripMenuItem8.Size = new Size(103, 6);
             // 
             // rulersToolStripMenuItem
             // 
             rulersToolStripMenuItem.Name = "rulersToolStripMenuItem";
-            rulersToolStripMenuItem.Size = new Size(180, 22);
+            rulersToolStripMenuItem.Size = new Size(106, 22);
             rulersToolStripMenuItem.Text = "Rulers";
             // 
             // imageToolStripMenuItem
@@ -1580,6 +1581,7 @@
             tabPage1.Controls.Add(btnMoveUp);
             tabPage1.Controls.Add(btnToBottom);
             tabPage1.Controls.Add(label2);
+            tabPage1.Controls.Add(button1);
             tabPage1.Controls.Add(btnMoveDown);
             tabPage1.Controls.Add(label1);
             tabPage1.Controls.Add(btnDuplicate);
@@ -1598,7 +1600,7 @@
             layersControl.Location = new Point(5, 105);
             layersControl.MinimumSize = new Size(185, 200);
             layersControl.Name = "layersControl";
-            layersControl.Size = new Size(193, 200);
+            layersControl.Size = new Size(193, 255);
             layersControl.TabIndex = 40;
             // 
             // cboBlendMode
@@ -2242,6 +2244,19 @@
             rotateToolStripMenuItem2.Text = "Rotate...";
             rotateToolStripMenuItem2.Click += RotateToolStripMenuItem1_Click;
             // 
+            // button1
+            // 
+            button1.FlatStyle = FlatStyle.Popup;
+            button1.Font = new Font("Microsoft Sans Serif", 9.75F);
+            button1.Location = new Point(6, 363);
+            button1.Margin = new Padding(0);
+            button1.Name = "button1";
+            button1.Size = new Size(24, 24);
+            button1.TabIndex = 34;
+            button1.Text = "🔒";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += BtnMoveDown_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2550,5 +2565,6 @@
         private ToolStripSeparator toolStripMenuItem47;
         private ToolStripMenuItem growToolStripMenuItem1;
         private ToolStripMenuItem shrinkToolStripMenuItem1;
+        private Button button1;
     }
 }

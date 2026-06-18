@@ -33,14 +33,23 @@
             // 
             // flowLayers
             // 
+            flowLayers.AutoSize = false;
             flowLayers.AutoScroll = true;
             flowLayers.BackColor = Color.White;
             flowLayers.BorderStyle = BorderStyle.FixedSingle;
-            flowLayers.Dock = DockStyle.Top;
+            flowLayers.Dock = DockStyle.Fill;
             flowLayers.Location = new Point(0, 0);
             flowLayers.Name = "flowLayers";
-            flowLayers.Size = new Size(185, 194);
+            flowLayers.Size = new Size(185, 254);
             flowLayers.TabIndex = 0;
+            flowLayers.HorizontalScroll.Enabled = false;
+            flowLayers.HorizontalScroll.Visible = false;
+            flowLayers.HorizontalScroll.Maximum = 0;
+            flowLayers.VerticalScroll.Enabled = true;
+            flowLayers.VerticalScroll.Visible = true;
+            flowLayers.AutoScrollMinSize = new Size(0, 0);
+            flowLayers.WrapContents = false;
+            flowLayers.FlowDirection = FlowDirection.TopDown;
             // 
             // LayersControl
             // 
