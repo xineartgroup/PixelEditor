@@ -1,5 +1,6 @@
 ﻿using PixelEditor.Properties;
 using PixelEditor.Vector;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -61,6 +62,8 @@ namespace PixelEditor
         private float currentPressure = 1.0f;
         private uint penAngleRotation = 0;
         private bool hasTabletInput = false;
+        private bool splitterIsResizing = false;
+        private int rightPanelWidth = 0;
 
         private readonly ControlMessageHook _pictureBoxHook;
 
@@ -2141,6 +2144,80 @@ namespace PixelEditor
             }
         }
 
+        private void SplitContainer1_SplitterMoving(object sender, SplitterCancelEventArgs e)
+        {
+            splitterIsResizing = true;
+            int newLeftWidth = e.SplitX;
+            int newRightWidth = splitContainer1.Width - e.SplitX;
+
+            if (newLeftWidth < 600)
+            {
+                splitterIsResizing = false;
+                rightPanelWidth = splitContainer1.Width - 600;
+                e.Cancel = true;
+                BeginInvoke(new Action(() =>
+                {
+                    splitContainer1.SplitterDistance = 600;
+                }));
+            }
+            else if (newRightWidth < 235)
+            {
+                splitterIsResizing = false;
+                rightPanelWidth = 235;
+                e.Cancel = true;
+                BeginInvoke(new Action(() =>
+                {
+                    splitContainer1.SplitterDistance = splitContainer1.Width - 235;
+                }));
+            }
+            else
+            {
+                rightPanelWidth = newRightWidth;
+            }
+        }
+
+        private void SplitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            if (splitterIsResizing)
+            {
+                splitterIsResizing = false;
+
+                int newLeftWidth = e.SplitX;
+                int newRightWidth = splitContainer1.Width - e.SplitX;
+
+                if (newLeftWidth < 600)
+                {
+                    rightPanelWidth = splitContainer1.Width - 600;
+                    BeginInvoke(new Action(() =>
+                    {
+                        splitContainer1.SplitterDistance = 600;
+                    }));
+                }
+                else if (newRightWidth < 235)
+                {
+                    rightPanelWidth = 235;
+                    BeginInvoke(new Action(() =>
+                    {
+                        splitContainer1.SplitterDistance = splitContainer1.Width - 235;
+                    }));
+                }
+
+                BeginInvoke(new Action(() =>
+                {
+                    splitContainer1.SplitterDistance = splitContainer1.Width - rightPanelWidth;
+                }));
+            }
+            else
+            {
+                if (splitContainer1.Width - rightPanelWidth > 600 && rightPanelWidth > 235)
+                {
+                    splitContainer1.SplitterDistance = splitContainer1.Width - rightPanelWidth;
+                }
+            }
+
+            RedrawImage();
+        }
+
         private void FormMain_Load(object? sender, EventArgs e)
         {
             LoadNewDocument(true);
@@ -2166,6 +2243,16 @@ namespace PixelEditor
             Eraser_hardness_Scroll(sender, e);
             ReloadBrushes();
             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+        }
+
+        private void Form1_Resize(object? sender, EventArgs e)
+        {
+            if (WindowState != FormWindowState.Minimized)
+            {
+                rightPanelWidth = splitContainer1.Panel2.Width;
+                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 240, ClientSize.Height - canvas.Location.Y - 40);
+                RedrawImage();
+            }
         }
 
         private void LayersControl_LayerChanged(object? sender, LayerChangedEventArgs e)
@@ -3103,15 +3190,6 @@ namespace PixelEditor
             RedrawImage();
 
             labelStatus.Text = "Image Cropped.";
-        }
-
-        private void Form1_Resize(object? sender, EventArgs e)
-        {
-            if (WindowState != FormWindowState.Minimized)
-            {
-                canvas.Size = new Size(ClientSize.Width - canvas.Location.X - 240, ClientSize.Height - canvas.Location.Y - 40);
-                RedrawImage();
-            }
         }
 
         private void BtnBrowseImage_Click(object? sender, EventArgs e)
@@ -4170,7 +4248,8 @@ namespace PixelEditor
             ExecuteShapeTransformation((layer, shapes) =>
             {
                 using Matrix identity = new();
-                float targetCenter = shapes.Average(s => {
+                float targetCenter = shapes.Average(s =>
+                {
                     var b = Layer.GetShapeBounds(s, identity);
                     return b.Left + b.Width / 2f;
                 });
@@ -4219,7 +4298,8 @@ namespace PixelEditor
             ExecuteShapeTransformation((layer, shapes) =>
             {
                 using Matrix identity = new();
-                float targetMiddle = shapes.Average(s => {
+                float targetMiddle = shapes.Average(s =>
+                {
                     var b = Layer.GetShapeBounds(s, identity);
                     return b.Top + b.Height / 2f;
                 });
@@ -7068,7 +7148,7 @@ namespace PixelEditor
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                    float lazySmoothing = isPainting ? (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum : 
+                    float lazySmoothing = isPainting ? (float)(brush_smoothness.Maximum - brush_smoothness.Value) / brush_smoothness.Maximum :
                         (float)(eraser_smoothness.Maximum - eraser_smoothness.Value) / eraser_smoothness.Maximum;
                     if (lazySmoothing == 0) lazySmoothing = 0.01f;
 

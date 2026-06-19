@@ -218,6 +218,7 @@
             btnMoveUp = new Button();
             btnToBottom = new Button();
             label2 = new Label();
+            button1 = new Button();
             btnMoveDown = new Button();
             label1 = new Label();
             btnDuplicate = new Button();
@@ -283,7 +284,7 @@
             rotate90DegreesCounterclockwiseToolStripMenuItem = new ToolStripMenuItem();
             rotate180DegreesToolStripMenuItem2 = new ToolStripMenuItem();
             rotateToolStripMenuItem2 = new ToolStripMenuItem();
-            button1 = new Button();
+            splitContainer1 = new SplitContainer();
             ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
             contextMenuStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -295,15 +296,20 @@
             panelFilters.SuspendLayout();
             panelChannels.SuspendLayout();
             contextMenuStrip2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // canvas
             // 
             canvas.BackColor = Color.White;
             canvas.ContextMenuStrip = contextMenuStrip1;
-            canvas.Location = new Point(248, 74);
+            canvas.Dock = DockStyle.Fill;
+            canvas.Location = new Point(0, 0);
             canvas.Name = "canvas";
-            canvas.Size = new Size(706, 430);
+            canvas.Size = new Size(679, 452);
             canvas.TabIndex = 0;
             canvas.TabStop = false;
             canvas.MouseDoubleClick += Canvas_MouseDoubleClick;
@@ -1347,9 +1353,9 @@
             // 
             labelStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             labelStatus.BorderStyle = BorderStyle.Fixed3D;
-            labelStatus.Location = new Point(125, 529);
+            labelStatus.Location = new Point(133, 529);
             labelStatus.Name = "labelStatus";
-            labelStatus.Size = new Size(366, 23);
+            labelStatus.Size = new Size(360, 23);
             labelStatus.TabIndex = 8;
             // 
             // contextMenuStrip3
@@ -1451,7 +1457,7 @@
             // 
             labelMousePosition.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             labelMousePosition.BorderStyle = BorderStyle.Fixed3D;
-            labelMousePosition.Location = new Point(8, 529);
+            labelMousePosition.Location = new Point(16, 529);
             labelMousePosition.Name = "labelMousePosition";
             labelMousePosition.Size = new Size(111, 23);
             labelMousePosition.TabIndex = 18;
@@ -1460,18 +1466,18 @@
             // 
             labelDocStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             labelDocStatus.BorderStyle = BorderStyle.Fixed3D;
-            labelDocStatus.Location = new Point(497, 529);
+            labelDocStatus.Location = new Point(499, 529);
             labelDocStatus.Name = "labelDocStatus";
-            labelDocStatus.Size = new Size(267, 23);
+            labelDocStatus.Size = new Size(261, 23);
             labelDocStatus.TabIndex = 8;
             // 
             // label6
             // 
             label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label6.BorderStyle = BorderStyle.Fixed3D;
-            label6.Location = new Point(770, 529);
+            label6.Location = new Point(766, 529);
             label6.Name = "label6";
-            label6.Size = new Size(402, 23);
+            label6.Size = new Size(406, 23);
             label6.TabIndex = 8;
             // 
             // btnPointer
@@ -1562,13 +1568,13 @@
             // 
             // tabLayers
             // 
-            tabLayers.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             tabLayers.Controls.Add(tabPage1);
             tabLayers.Controls.Add(tabPage2);
-            tabLayers.Location = new Point(960, 74);
+            tabLayers.Dock = DockStyle.Fill;
+            tabLayers.Location = new Point(0, 0);
             tabLayers.Name = "tabLayers";
             tabLayers.SelectedIndex = 0;
-            tabLayers.Size = new Size(212, 430);
+            tabLayers.Size = new Size(241, 452);
             tabLayers.TabIndex = 31;
             // 
             // tabPage1
@@ -1590,27 +1596,29 @@
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(204, 402);
+            tabPage1.Size = new Size(233, 424);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Layers";
             tabPage1.UseVisualStyleBackColor = true;
             // 
             // layersControl
             // 
+            layersControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             layersControl.Location = new Point(5, 105);
             layersControl.MinimumSize = new Size(185, 200);
             layersControl.Name = "layersControl";
-            layersControl.Size = new Size(193, 255);
+            layersControl.Size = new Size(218, 277);
             layersControl.TabIndex = 40;
             // 
             // cboBlendMode
             // 
+            cboBlendMode.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             cboBlendMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cboBlendMode.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboBlendMode.FormattingEnabled = true;
             cboBlendMode.Location = new Point(70, 11);
             cboBlendMode.Name = "cboBlendMode";
-            cboBlendMode.Size = new Size(128, 21);
+            cboBlendMode.Size = new Size(153, 21);
             cboBlendMode.TabIndex = 36;
             cboBlendMode.SelectedIndexChanged += CboBlendMode_SelectedIndexChanged;
             // 
@@ -1688,6 +1696,19 @@
             label2.TabIndex = 38;
             label2.Text = "Opacity:";
             // 
+            // button1
+            // 
+            button1.FlatStyle = FlatStyle.Popup;
+            button1.Font = new Font("Microsoft Sans Serif", 9.75F);
+            button1.Location = new Point(198, 77);
+            button1.Margin = new Padding(0);
+            button1.Name = "button1";
+            button1.Size = new Size(24, 24);
+            button1.TabIndex = 34;
+            button1.Text = "🔒";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += BtnMoveDown_Click;
+            // 
             // btnMoveDown
             // 
             btnMoveDown.FlatStyle = FlatStyle.Popup;
@@ -1738,7 +1759,8 @@
             // 
             // opacity
             // 
-            opacity.Location = new Point(151, 40);
+            opacity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            opacity.Location = new Point(175, 41);
             opacity.Name = "opacity";
             opacity.Size = new Size(47, 23);
             opacity.TabIndex = 37;
@@ -1752,7 +1774,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(204, 402);
+            tabPage2.Size = new Size(232, 424);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Channels";
             tabPage2.UseVisualStyleBackColor = true;
@@ -2244,25 +2266,32 @@
             rotateToolStripMenuItem2.Text = "Rotate...";
             rotateToolStripMenuItem2.Click += RotateToolStripMenuItem1_Click;
             // 
-            // button1
+            // splitContainer1
             // 
-            button1.FlatStyle = FlatStyle.Popup;
-            button1.Font = new Font("Microsoft Sans Serif", 9.75F);
-            button1.Location = new Point(6, 363);
-            button1.Margin = new Padding(0);
-            button1.Name = "button1";
-            button1.Size = new Size(24, 24);
-            button1.TabIndex = 34;
-            button1.Text = "🔒";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += BtnMoveDown_Click;
+            splitContainer1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            splitContainer1.Location = new Point(248, 74);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(canvas);
+            splitContainer1.Panel1MinSize = 400;
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(tabLayers);
+            splitContainer1.Size = new Size(924, 452);
+            splitContainer1.SplitterDistance = 679;
+            splitContainer1.TabIndex = 32;
+            splitContainer1.SplitterMoving += SplitContainer1_SplitterMoving;
+            splitContainer1.SplitterMoved += SplitContainer1_SplitterMoved;
             // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 561);
-            Controls.Add(tabLayers);
+            Controls.Add(splitContainer1);
             Controls.Add(btnShapeText);
             Controls.Add(btnShapePolygon);
             Controls.Add(btnShapeEllipse);
@@ -2281,7 +2310,6 @@
             Controls.Add(label6);
             Controls.Add(labelDocStatus);
             Controls.Add(labelStatus);
-            Controls.Add(canvas);
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             MinimizeBox = false;
@@ -2306,12 +2334,17 @@
             panelChannels.ResumeLayout(false);
             panelChannels.PerformLayout();
             contextMenuStrip2.ResumeLayout(false);
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
+        private SplitContainer splitContainer1;
         private PictureBox canvas;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem fileToolStripMenuItem;
