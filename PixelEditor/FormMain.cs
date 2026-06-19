@@ -2255,6 +2255,11 @@ namespace PixelEditor
             }
         }
 
+        private void LayersControl_SizeChanged(object sender, EventArgs e)
+        {
+            layersControl.RefreshLayersDisplay();
+        }
+
         private void LayersControl_LayerChanged(object? sender, LayerChangedEventArgs e)
         {
             Console.WriteLine($"Layer {e.Layer.Name}'s properties changed");

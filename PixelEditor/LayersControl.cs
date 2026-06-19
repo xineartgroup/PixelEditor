@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
-
-namespace PixelEditor
+﻿namespace PixelEditor
 {
     public partial class LayersControl : UserControl
     {
@@ -29,7 +23,7 @@ namespace PixelEditor
             Panel panelLayer = new()
             {
                 Name = layer.Name,
-                Size = new Size(170, 35),
+                Size = new Size(Width - 30, 35),
                 Margin = new Padding(2, 2, 2, 2),
                 Tag = layer,
                 BorderStyle = BorderStyle.None
@@ -540,7 +534,7 @@ namespace PixelEditor
                 {
                     if (flowLayers.Controls[i] is Panel existingPanel)
                     {
-                        UpdatePanelContent(existingPanel, layer, newPicSize);
+                        UpdatePanelContent(existingPanel, layer, newPicSize, Width);
                     }
                 }
                 else
@@ -558,10 +552,11 @@ namespace PixelEditor
             flowLayers.ResumeLayout();
         }
 
-        private static void UpdatePanelContent(Panel p, Layer layer, Size picSize)
+        private static void UpdatePanelContent(Panel p, Layer layer, Size picSize, int width)
         {
             p.Tag = layer;
             p.Name = layer.Name;
+            p.Size = new Size(width - 30, p.Height);
 
             PictureBox? mainPic = null;
             PictureBox? maskPic = null;

@@ -1609,6 +1609,7 @@
             layersControl.Name = "layersControl";
             layersControl.Size = new Size(218, 277);
             layersControl.TabIndex = 40;
+            layersControl.SizeChanged += LayersControl_SizeChanged;
             // 
             // cboBlendMode
             // 
@@ -1774,7 +1775,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(232, 424);
+            tabPage2.Size = new Size(233, 424);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Channels";
             tabPage2.UseVisualStyleBackColor = true;
