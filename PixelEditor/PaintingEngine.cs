@@ -13,6 +13,8 @@ namespace PixelEditor
         private static int bufferWidth;
         private static int bufferHeight;
 
+        private static readonly Random strokeRand = new();
+
         public static void SetBrush(Paint brush) => currentBrush = brush;
 
         public static void SetTarget(Image? image)
@@ -56,16 +58,155 @@ namespace PixelEditor
             strokeCoverage = null;
         }
 
-        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, bool isErasing = false, bool[,]? mask = null)
+        //public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, bool isErasing = false, bool[,]? mask = null)
+        //{
+        //    if (currentBrush.Brush == null || targetBitmap == null)
+        //        return;
+
+        //    float distance = Distance(start, end);
+
+        //    if (distance < 1f)
+        //    {
+        //        PaintAt(end, brushScale, opacity, isErasing);
+        //        return;
+        //    }
+
+        //    float brushSize = currentBrush.Brush.Width * brushScale;
+        //    float step = Math.Max(1.0f, brushSize * 0.2f);
+
+        //    for (float t = 0; t <= distance; t += step)
+        //    {
+        //        float lerp = t / distance;
+        //        int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
+        //        int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
+        //        PaintAt(new Point(x, y), brushScale, opacity, isErasing, mask);
+        //    }
+
+        //    PaintAt(end, brushScale, opacity, isErasing, mask);
+        //}
+
+        //private static void PaintAt(Point location, float brushScale, float opacity, bool isErasing, bool[,]? mask = null)
+        //{
+        //    if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
+        //        return;
+
+        //    int brushWidth = (int)(currentBrush.Brush.Width * brushScale);
+        //    int brushHeight = (int)(currentBrush.Brush.Height * brushScale);
+
+        //    using Bitmap brushStamp = GetBrushStamp(brushScale, brushWidth, brushHeight);
+
+        //    int x0 = location.X - brushWidth / 2;
+        //    int y0 = location.Y - brushHeight / 2;
+
+        //    Rectangle targetRect = new(0, 0, targetBitmap.Width, targetBitmap.Height);
+        //    BitmapData targetData = targetBitmap.LockBits(targetRect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+        //    BitmapData baseData = strokeBase.LockBits(targetRect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+        //    Rectangle brushRect = new(0, 0, brushStamp.Width, brushStamp.Height);
+        //    BitmapData brushData = brushStamp.LockBits(brushRect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+        //    unsafe
+        //    {
+        //        byte* targetPtr = (byte*)targetData.Scan0;
+        //        byte* basePtr = (byte*)baseData.Scan0;
+        //        byte* brushPtr = (byte*)brushData.Scan0;
+
+        //        int targetStride = targetData.Stride;
+        //        int brushStride = brushData.Stride;
+
+        //        int startX = Math.Max(0, x0);
+        //        int startY = Math.Max(0, y0);
+        //        int endX = Math.Min(targetBitmap.Width, x0 + brushWidth);
+        //        int endY = Math.Min(targetBitmap.Height, y0 + brushHeight);
+
+        //        for (int y = startY; y < endY; y++)
+        //        {
+        //            for (int x = startX; x < endX; x++)
+        //            {
+        //                if (mask != null && !mask[x, y])
+        //                    continue;
+
+        //                int bx = x - x0;
+        //                int by = y - y0;
+
+        //                byte* brushPixel = brushPtr + by * brushStride + bx * 4;
+
+        //                float brushAlpha = brushPixel[3] / 255f;
+        //                if (brushAlpha <= 0f)
+        //                    continue;
+
+        //                float desired = brushAlpha * opacity;
+        //                float current = strokeCoverage[x, y];
+
+        //                if (current >= desired)
+        //                    continue;
+
+        //                strokeCoverage[x, y] = desired;
+
+        //                byte* basePixel = basePtr + y * targetStride + x * 4;
+        //                byte* targetPixel = targetPtr + y * targetStride + x * 4;
+
+        //                float inv = 1f - desired;
+        //                float baseAlpha = basePixel[3] / 255f;
+        //                float outAlpha = isErasing ? baseAlpha * (1f - desired) : desired + baseAlpha * inv;
+
+        //                if (outAlpha > 0)
+        //                {
+        //                    float baseWeight = baseAlpha * inv;
+        //                    float totalWeight = desired + baseWeight;
+
+        //                    targetPixel[0] = (byte)((brushPixel[0] * desired + basePixel[0] * baseWeight) / totalWeight);
+        //                    targetPixel[1] = (byte)((brushPixel[1] * desired + basePixel[1] * baseWeight) / totalWeight);
+        //                    targetPixel[2] = (byte)((brushPixel[2] * desired + basePixel[2] * baseWeight) / totalWeight);
+        //                }
+        //                targetPixel[3] = (byte)(outAlpha * 255);
+        //            }
+        //        }
+        //    }
+
+        //    targetBitmap.UnlockBits(targetData);
+        //    strokeBase.UnlockBits(baseData);
+        //    brushStamp.UnlockBits(brushData);
+        //}
+
+        //private static Bitmap GetBrushStamp(float scale, int width, int height)
+        //{
+        //    if (currentBrush.Brush == null)
+        //        return new Bitmap(1, 1);
+
+        //    if (scale == 1f)
+        //        return new Bitmap(currentBrush.Brush);
+
+        //    Bitmap resized = new(width, height, PixelFormat.Format32bppArgb);
+        //    using (Graphics g = Graphics.FromImage(resized))
+        //    {
+        //        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        //        g.DrawImage(currentBrush.Brush, 0, 0, width, height);
+        //    }
+        //    return resized;
+        //}
+
+        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f,
+            float tiltX = 0f, float tiltY = 0f, float baseRotation = 0f, int randomRotation = 360,
+            bool isErasing = false, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null)
                 return;
 
             float distance = Distance(start, end);
 
+            float GetCurrentRotation()
+            {
+                if (randomRotation > 0)
+                {
+                    return (baseRotation + strokeRand.Next(0, randomRotation)) % 360;
+                }
+                return baseRotation;
+            }
+
             if (distance < 1f)
             {
-                PaintAt(end, brushScale, opacity, isErasing);
+                PaintAt(end, brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
                 return;
             }
 
@@ -77,24 +218,24 @@ namespace PixelEditor
                 float lerp = t / distance;
                 int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
                 int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
-                PaintAt(new Point(x, y), brushScale, opacity, isErasing, mask);
+
+                PaintAt(new Point(x, y), brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
             }
 
-            PaintAt(end, brushScale, opacity, isErasing, mask);
+            PaintAt(end, brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
         }
 
-        private static void PaintAt(Point location, float brushScale, float opacity, bool isErasing, bool[,]? mask = null)
+        private static void PaintAt(Point location, float brushScale, float opacity, float tiltX, float tiltY, float rotation, bool isErasing, bool[,]? mask = null)
         {
             if (currentBrush.Brush == null || targetBitmap == null || strokeBase == null || strokeCoverage == null)
                 return;
 
-            int brushWidth = (int)(currentBrush.Brush.Width * brushScale);
-            int brushHeight = (int)(currentBrush.Brush.Height * brushScale);
+            // Generate the transformed dynamic brush stamp
+            using Bitmap brushStamp = GetBrushStamp(brushScale, tiltX, tiltY, rotation);
 
-            using Bitmap brushStamp = GetBrushStamp(brushScale, brushWidth, brushHeight);
-
-            int x0 = location.X - brushWidth / 2;
-            int y0 = location.Y - brushHeight / 2;
+            // Center the custom-sized stamp on the current coordinate
+            int x0 = location.X - brushStamp.Width / 2;
+            int y0 = location.Y - brushStamp.Height / 2;
 
             Rectangle targetRect = new(0, 0, targetBitmap.Width, targetBitmap.Height);
             BitmapData targetData = targetBitmap.LockBits(targetRect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
@@ -114,8 +255,8 @@ namespace PixelEditor
 
                 int startX = Math.Max(0, x0);
                 int startY = Math.Max(0, y0);
-                int endX = Math.Min(targetBitmap.Width, x0 + brushWidth);
-                int endY = Math.Min(targetBitmap.Height, y0 + brushHeight);
+                int endX = Math.Min(targetBitmap.Width, x0 + brushStamp.Width);
+                int endY = Math.Min(targetBitmap.Height, y0 + brushStamp.Height);
 
                 for (int y = startY; y < endY; y++)
                 {
@@ -167,21 +308,53 @@ namespace PixelEditor
             brushStamp.UnlockBits(brushData);
         }
 
-        private static Bitmap GetBrushStamp(float scale, int width, int height)
+        private static Bitmap GetBrushStamp(float scale, float tiltX, float tiltY, float rotation)
         {
             if (currentBrush.Brush == null)
                 return new Bitmap(1, 1);
 
-            if (scale == 1f)
-                return new Bitmap(currentBrush.Brush);
+            float origW = currentBrush.Brush.Width * scale;
+            float origH = currentBrush.Brush.Height * scale;
 
-            Bitmap resized = new(width, height, PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(resized))
+            using Matrix matrix = new();
+
+            matrix.Scale(scale, scale);
+
+            float shearX = MathF.Tan(tiltX * MathF.PI / 180f) * 0.5f;
+            float shearY = MathF.Tan(tiltY * MathF.PI / 180f) * 0.5f;
+            matrix.Shear(shearX, shearY);
+
+            matrix.Rotate(rotation);
+
+            PointF[] corners = [
+                new PointF(0, 0),
+                new PointF(currentBrush.Brush.Width, 0),
+                new PointF(currentBrush.Brush.Width, currentBrush.Brush.Height),
+                new PointF(0, currentBrush.Brush.Height)
+            ];
+            matrix.TransformPoints(corners);
+
+            float minX = corners.Min(p => p.X);
+            float maxX = corners.Max(p => p.X);
+            float minY = corners.Min(p => p.Y);
+            float maxY = corners.Max(p => p.Y);
+
+            int boundWidth = Math.Max(1, (int)MathF.Ceiling(maxX - minX));
+            int boundHeight = Math.Max(1, (int)MathF.Ceiling(maxY - minY));
+
+            Bitmap transformedStamp = new(boundWidth, boundHeight, PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(transformedStamp))
             {
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.DrawImage(currentBrush.Brush, 0, 0, width, height);
+                g.InterpolationMode = InterpolationMode.Bilinear; // InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.HighQuality;
+
+                g.TranslateTransform(-minX, -minY);
+                g.MultiplyTransform(matrix);
+
+                g.DrawImage(currentBrush.Brush, 0, 0);
             }
-            return resized;
+
+            return transformedStamp;
         }
 
         private static float Distance(Point p1, Point p2)
