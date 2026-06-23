@@ -9,6 +9,9 @@ namespace PixelEditor
 {
     public partial class FormMain : Form
     {
+        private const int MIN_CANVAS_WIDTH = 600;
+        private const int MIN_RIGHT_PANEL_WIDTH = 244;
+
         private Paint paint;
         private Point lastMousePosition;
         private PointF lazyLocalPos;
@@ -34,6 +37,8 @@ namespace PixelEditor
         private bool isResizingShape = false;
         private bool isColorPicked = false;
         private bool isResizingShapeStarted = false;
+        private bool hasTabletInput = false;
+        private bool splitterIsResizing = false;
         private float brushPixelSize = 0.0f;
         private float currentOpacity = 1.0f;
         private float dashOffset = 0;
@@ -43,6 +48,9 @@ namespace PixelEditor
         private float initialScaleFactorY = 1.0f;
         private float initialScaleDistanceX = 0f;
         private float initialScaleDistanceY = 0f;
+        private float currentPressure = 1.0f;
+        private uint penAngleRotation = 0;
+        private int rightPanelWidth = 0;
         private int selectedBrushIndex = 0;
         private int selectedEraserIndex = 0;
         private Bitmap? selectedAreaBitmap = null;
@@ -51,19 +59,14 @@ namespace PixelEditor
         private readonly Matrix transformMatrix = new();
         private PointF scaleAnchorWorld = PointF.Empty;
         private Point scaleStartMouseScreen = Point.Empty;
-        private Point lastRawWorldPos = Point.Empty; // last localCurrentRaw, updated every move
-        private PointF penAngleTilt = PointF.Empty; // pen tilt, updated every move
+        private Point lastRawWorldPos = Point.Empty;
+        private PointF penAngleTilt = PointF.Empty;
         private string activeScaleHandle = "";
         private string currentFilePath = "";
         private List<PointF> strokePoints = [];
         private readonly List<Image> brushes = [];
         private readonly ColorDialogX _colorPicker = new(); // Here because of the custom color picking
         private System.Windows.Forms.Timer? lazyCatchUpTimer;
-        private float currentPressure = 1.0f;
-        private uint penAngleRotation = 0;
-        private bool hasTabletInput = false;
-        private bool splitterIsResizing = false;
-        private int rightPanelWidth = 0;
 
         private readonly ControlMessageHook _pictureBoxHook;
 
@@ -89,6 +92,9 @@ namespace PixelEditor
         private readonly CheckBox chkPressuredBrushSize = new();
         private readonly CheckBox chkTilt = new();
         private readonly CheckBox chkRotation = new();
+        private readonly TrackBar brush_spacing = new();
+        private readonly Label lblBrushSpacing = new();
+        private readonly Label labelBrushSpacing = new();
 
         private readonly GroupBox groupEraserDetail = new();
         private readonly Panel panelEraser = new();
@@ -111,6 +117,9 @@ namespace PixelEditor
         private readonly CheckBox chkTiltEraser = new();
         private readonly CheckBox chkRotationEraser = new();
         private readonly TrackBar trackRandomRotationEraser = new();
+        private readonly TrackBar eraser_spacing = new();
+        private readonly Label lblEraserSpacing = new();
+        private readonly Label labelEraserSpacing = new();
 
         private readonly GroupBox groupFillDetail = new();
         private readonly ComboBox cboFillBlendMode = new();
@@ -451,12 +460,14 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)brush_opacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_hardness).BeginInit();
             ((System.ComponentModel.ISupportInitialize)brush_smoothness).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)brush_spacing).BeginInit();
             SuspendLayout();
 
             groupBrushDetail.Controls.Add(lblBrushHardness);
             groupBrushDetail.Controls.Add(lblBrushSmoothness);
             groupBrushDetail.Controls.Add(lblBrushOpacity);
             groupBrushDetail.Controls.Add(lblBrushSize);
+            groupBrushDetail.Controls.Add(lblBrushSpacing);
             groupBrushDetail.Controls.Add(lblRandomRotation);
             groupBrushDetail.Controls.Add(btnPenColor);
             groupBrushDetail.Controls.Add(panelBrush);
@@ -466,9 +477,11 @@ namespace PixelEditor
             groupBrushDetail.Controls.Add(label9);
             groupBrushDetail.Controls.Add(label11);
             groupBrushDetail.Controls.Add(label8);
+            groupBrushDetail.Controls.Add(labelBrushSpacing);
             groupBrushDetail.Controls.Add(labelRandomRotation);
             groupBrushDetail.Controls.Add(brush_hardness);
             groupBrushDetail.Controls.Add(brush_smoothness);
+            groupBrushDetail.Controls.Add(brush_spacing);
             groupBrushDetail.Controls.Add(chkPressuredOpacity);
             groupBrushDetail.Controls.Add(chkPressuredBrushSize);
             groupBrushDetail.Controls.Add(chkTilt);
@@ -477,7 +490,7 @@ namespace PixelEditor
 
             groupBrushDetail.Location = new Point(12, 74);
             groupBrushDetail.Name = "groupBrushDetail";
-            groupBrushDetail.Size = new Size(230, 580);
+            groupBrushDetail.Size = new Size(230, 620);
             groupBrushDetail.TabIndex = 28;
             groupBrushDetail.TabStop = false;
             groupBrushDetail.Text = "Brush Detail";
@@ -486,7 +499,7 @@ namespace PixelEditor
             // Configure Pressured Opacity Checkbox
             chkPressuredOpacity.AutoSize = true;
             chkPressuredOpacity.Font = new Font("Segoe UI", 8.25F);
-            chkPressuredOpacity.Location = new Point(7, 410);
+            chkPressuredOpacity.Location = new Point(7, 490);
             chkPressuredOpacity.Name = "chkPressuredOpacity";
             chkPressuredOpacity.Size = new Size(124, 17);
             chkPressuredOpacity.TabIndex = 31;
@@ -497,7 +510,7 @@ namespace PixelEditor
             // Configure Pressured Brush Size Checkbox
             chkPressuredBrushSize.AutoSize = true;
             chkPressuredBrushSize.Font = new Font("Segoe UI", 8.25F);
-            chkPressuredBrushSize.Location = new Point(7, 433);
+            chkPressuredBrushSize.Location = new Point(7, 513);
             chkPressuredBrushSize.Name = "chkPressuredBrushSize";
             chkPressuredBrushSize.Size = new Size(124, 17);
             chkPressuredBrushSize.TabIndex = 32;
@@ -508,7 +521,7 @@ namespace PixelEditor
             // Configure Tilt Checkbox
             chkTilt.AutoSize = true;
             chkTilt.Font = new Font("Segoe UI", 8.25F);
-            chkTilt.Location = new Point(7, 456);
+            chkTilt.Location = new Point(7, 536);
             chkTilt.Name = "chkTilt";
             chkTilt.Size = new Size(68, 17);
             chkTilt.TabIndex = 33;
@@ -519,7 +532,7 @@ namespace PixelEditor
             // Configure Rotation Checkbox
             chkRotation.AutoSize = true;
             chkRotation.Font = new Font("Segoe UI", 8.25F);
-            chkRotation.Location = new Point(7, 479);
+            chkRotation.Location = new Point(7, 559);
             chkRotation.Name = "chkRotation";
             chkRotation.Size = new Size(86, 17);
             chkRotation.TabIndex = 34;
@@ -527,16 +540,16 @@ namespace PixelEditor
             chkRotation.UseVisualStyleBackColor = true;
             chkRotation.Checked = false;
 
-            // Configure Random Rotation TrackBar and Label
+            // Configure Random Rotation TrackBar and Label - directly under Spacing
             labelRandomRotation.AutoSize = true;
             labelRandomRotation.Font = new Font("Segoe UI", 8.25F);
-            labelRandomRotation.Location = new Point(7, 502);
+            labelRandomRotation.Location = new Point(7, 445);
             labelRandomRotation.Name = "labelRandomRotation";
             labelRandomRotation.Size = new Size(99, 13);
             labelRandomRotation.TabIndex = 36;
             labelRandomRotation.Text = "Randomness:";
 
-            trackRandomRotation.Location = new Point(76, 502);
+            trackRandomRotation.Location = new Point(76, 445);
             trackRandomRotation.Maximum = 360;
             trackRandomRotation.Minimum = 0;
             trackRandomRotation.Name = "trackRandomRotation";
@@ -550,11 +563,40 @@ namespace PixelEditor
             lblRandomRotation.BorderStyle = BorderStyle.Fixed3D;
             lblRandomRotation.FlatStyle = FlatStyle.Flat;
             lblRandomRotation.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblRandomRotation.Location = new Point(188, 502);
+            lblRandomRotation.Location = new Point(188, 445);
             lblRandomRotation.Name = "lblRandomRotation";
             lblRandomRotation.Size = new Size(32, 24);
             lblRandomRotation.TabIndex = 37;
             lblRandomRotation.TextAlign = ContentAlignment.MiddleCenter;
+
+            // Configure Spacing TrackBar and Label
+            labelBrushSpacing.AutoSize = true;
+            labelBrushSpacing.Font = new Font("Segoe UI", 8.25F);
+            labelBrushSpacing.Location = new Point(7, 400);
+            labelBrushSpacing.Name = "labelBrushSpacing";
+            labelBrushSpacing.Size = new Size(51, 13);
+            labelBrushSpacing.TabIndex = 38;
+            labelBrushSpacing.Text = "Spacing:";
+
+            brush_spacing.Location = new Point(76, 400);
+            brush_spacing.Maximum = 1000;
+            brush_spacing.Minimum = 1;
+            brush_spacing.Name = "brush_spacing";
+            brush_spacing.Size = new Size(106, 45);
+            brush_spacing.TabIndex = 39;
+            brush_spacing.TickStyle = TickStyle.None;
+            brush_spacing.Value = 2;
+            brush_spacing.Scroll += Brush_spacing_Scroll;
+
+            lblBrushSpacing.BackColor = Color.White;
+            lblBrushSpacing.BorderStyle = BorderStyle.Fixed3D;
+            lblBrushSpacing.FlatStyle = FlatStyle.Flat;
+            lblBrushSpacing.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblBrushSpacing.Location = new Point(188, 400);
+            lblBrushSpacing.Name = "lblBrushSpacing";
+            lblBrushSpacing.Size = new Size(32, 24);
+            lblBrushSpacing.TabIndex = 40;
+            lblBrushSpacing.TextAlign = ContentAlignment.MiddleCenter;
 
             lblBrushHardness.BackColor = Color.White;
             lblBrushHardness.BorderStyle = BorderStyle.Fixed3D;
@@ -689,6 +731,7 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)brush_opacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)brush_hardness).EndInit();
             ((System.ComponentModel.ISupportInitialize)brush_smoothness).EndInit();
+            ((System.ComponentModel.ISupportInitialize)brush_spacing).EndInit();
             ResumeLayout(false);
         }
 
@@ -699,12 +742,14 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)eraser_opacity).BeginInit();
             ((System.ComponentModel.ISupportInitialize)eraser_hardness).BeginInit();
             ((System.ComponentModel.ISupportInitialize)eraser_smoothness).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_spacing).BeginInit();
             SuspendLayout();
 
             groupEraserDetail.Controls.Add(lblEraserHardness);
             groupEraserDetail.Controls.Add(lblEraserSmoothness);
             groupEraserDetail.Controls.Add(lblEraserOpacity);
             groupEraserDetail.Controls.Add(lblEraserSize);
+            groupEraserDetail.Controls.Add(lblEraserSpacing);
             groupEraserDetail.Controls.Add(lblRandomRotationEraser);
             groupEraserDetail.Controls.Add(panelEraser);
             groupEraserDetail.Controls.Add(eraser_size);
@@ -713,9 +758,11 @@ namespace PixelEditor
             groupEraserDetail.Controls.Add(labelEraserSmoothness);
             groupEraserDetail.Controls.Add(labelEraserSize);
             groupEraserDetail.Controls.Add(labelEraserOpacity);
+            groupEraserDetail.Controls.Add(labelEraserSpacing);
             groupEraserDetail.Controls.Add(labelRandomRotationEraser);
             groupEraserDetail.Controls.Add(eraser_hardness);
             groupEraserDetail.Controls.Add(eraser_smoothness);
+            groupEraserDetail.Controls.Add(eraser_spacing);
             groupEraserDetail.Controls.Add(chkPressuredOpacityEraser);
             groupEraserDetail.Controls.Add(chkPressuredBrushSizeEraser);
             groupEraserDetail.Controls.Add(chkTiltEraser);
@@ -724,7 +771,7 @@ namespace PixelEditor
 
             groupEraserDetail.Location = new Point(12, 74);
             groupEraserDetail.Name = "groupEraserDetail";
-            groupEraserDetail.Size = new Size(230, 580);
+            groupEraserDetail.Size = new Size(230, 620);
             groupEraserDetail.TabIndex = 29;
             groupEraserDetail.TabStop = false;
             groupEraserDetail.Text = "Eraser Detail";
@@ -733,7 +780,7 @@ namespace PixelEditor
             // Configure Pressured Opacity Checkbox for Eraser
             chkPressuredOpacityEraser.AutoSize = true;
             chkPressuredOpacityEraser.Font = new Font("Segoe UI", 8.25F);
-            chkPressuredOpacityEraser.Location = new Point(7, 410);
+            chkPressuredOpacityEraser.Location = new Point(7, 490);
             chkPressuredOpacityEraser.Name = "chkPressuredOpacityEraser";
             chkPressuredOpacityEraser.Size = new Size(124, 17);
             chkPressuredOpacityEraser.TabIndex = 31;
@@ -744,7 +791,7 @@ namespace PixelEditor
             // Configure Pressured Brush Size Checkbox for Eraser
             chkPressuredBrushSizeEraser.AutoSize = true;
             chkPressuredBrushSizeEraser.Font = new Font("Segoe UI", 8.25F);
-            chkPressuredBrushSizeEraser.Location = new Point(7, 433);
+            chkPressuredBrushSizeEraser.Location = new Point(7, 513);
             chkPressuredBrushSizeEraser.Name = "chkPressuredBrushSizeEraser";
             chkPressuredBrushSizeEraser.Size = new Size(124, 17);
             chkPressuredBrushSizeEraser.TabIndex = 32;
@@ -755,7 +802,7 @@ namespace PixelEditor
             // Configure Tilt Checkbox for Eraser
             chkTiltEraser.AutoSize = true;
             chkTiltEraser.Font = new Font("Segoe UI", 8.25F);
-            chkTiltEraser.Location = new Point(7, 456);
+            chkTiltEraser.Location = new Point(7, 536);
             chkTiltEraser.Name = "chkTiltEraser";
             chkTiltEraser.Size = new Size(68, 17);
             chkTiltEraser.TabIndex = 33;
@@ -766,7 +813,7 @@ namespace PixelEditor
             // Configure Rotation Checkbox for Eraser
             chkRotationEraser.AutoSize = true;
             chkRotationEraser.Font = new Font("Segoe UI", 8.25F);
-            chkRotationEraser.Location = new Point(7, 479);
+            chkRotationEraser.Location = new Point(7, 559);
             chkRotationEraser.Name = "chkRotationEraser";
             chkRotationEraser.Size = new Size(86, 17);
             chkRotationEraser.TabIndex = 34;
@@ -774,16 +821,16 @@ namespace PixelEditor
             chkRotationEraser.UseVisualStyleBackColor = true;
             chkRotationEraser.Checked = false;
 
-            // Configure Random Rotation TrackBar and Label for Eraser
+            // Configure Random Rotation TrackBar and Label for Eraser - directly under Spacing
             labelRandomRotationEraser.AutoSize = true;
             labelRandomRotationEraser.Font = new Font("Segoe UI", 8.25F);
-            labelRandomRotationEraser.Location = new Point(7, 502);
+            labelRandomRotationEraser.Location = new Point(7, 445);
             labelRandomRotationEraser.Name = "labelRandomRotationEraser";
             labelRandomRotationEraser.Size = new Size(99, 13);
             labelRandomRotationEraser.TabIndex = 36;
             labelRandomRotationEraser.Text = "Randomness:";
 
-            trackRandomRotationEraser.Location = new Point(76, 502);
+            trackRandomRotationEraser.Location = new Point(76, 445);
             trackRandomRotationEraser.Maximum = 360;
             trackRandomRotationEraser.Minimum = 0;
             trackRandomRotationEraser.Name = "trackRandomRotationEraser";
@@ -797,11 +844,40 @@ namespace PixelEditor
             lblRandomRotationEraser.BorderStyle = BorderStyle.Fixed3D;
             lblRandomRotationEraser.FlatStyle = FlatStyle.Flat;
             lblRandomRotationEraser.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblRandomRotationEraser.Location = new Point(188, 502);
+            lblRandomRotationEraser.Location = new Point(188, 445);
             lblRandomRotationEraser.Name = "lblRandomRotationEraser";
             lblRandomRotationEraser.Size = new Size(32, 24);
             lblRandomRotationEraser.TabIndex = 37;
             lblRandomRotationEraser.TextAlign = ContentAlignment.MiddleCenter;
+
+            // Configure Spacing TrackBar and Label for Eraser
+            labelEraserSpacing.AutoSize = true;
+            labelEraserSpacing.Font = new Font("Segoe UI", 8.25F);
+            labelEraserSpacing.Location = new Point(7, 400);
+            labelEraserSpacing.Name = "labelEraserSpacing";
+            labelEraserSpacing.Size = new Size(51, 13);
+            labelEraserSpacing.TabIndex = 41;
+            labelEraserSpacing.Text = "Spacing:";
+
+            eraser_spacing.Location = new Point(76, 400);
+            eraser_spacing.Maximum = 1000;
+            eraser_spacing.Minimum = 1;
+            eraser_spacing.Name = "eraser_spacing";
+            eraser_spacing.Size = new Size(106, 45);
+            eraser_spacing.TabIndex = 42;
+            eraser_spacing.TickStyle = TickStyle.None;
+            eraser_spacing.Value = 2;
+            eraser_spacing.Scroll += Eraser_spacing_Scroll;
+
+            lblEraserSpacing.BackColor = Color.White;
+            lblEraserSpacing.BorderStyle = BorderStyle.Fixed3D;
+            lblEraserSpacing.FlatStyle = FlatStyle.Flat;
+            lblEraserSpacing.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblEraserSpacing.Location = new Point(188, 400);
+            lblEraserSpacing.Name = "lblEraserSpacing";
+            lblEraserSpacing.Size = new Size(32, 24);
+            lblEraserSpacing.TabIndex = 43;
+            lblEraserSpacing.TextAlign = ContentAlignment.MiddleCenter;
 
             // Labels for displaying values
             lblEraserHardness.BackColor = Color.White;
@@ -935,6 +1011,7 @@ namespace PixelEditor
             ((System.ComponentModel.ISupportInitialize)eraser_opacity).EndInit();
             ((System.ComponentModel.ISupportInitialize)eraser_hardness).EndInit();
             ((System.ComponentModel.ISupportInitialize)eraser_smoothness).EndInit();
+            ((System.ComponentModel.ISupportInitialize)eraser_spacing).EndInit();
             ResumeLayout(false);
         }
 
@@ -2150,24 +2227,24 @@ namespace PixelEditor
             int newLeftWidth = e.SplitX;
             int newRightWidth = splitContainer1.Width - e.SplitX;
 
-            if (newLeftWidth < 600)
+            if (newLeftWidth < MIN_CANVAS_WIDTH)
             {
                 splitterIsResizing = false;
-                rightPanelWidth = splitContainer1.Width - 600;
+                rightPanelWidth = splitContainer1.Width - MIN_CANVAS_WIDTH;
                 e.Cancel = true;
                 BeginInvoke(new Action(() =>
                 {
-                    splitContainer1.SplitterDistance = 600;
+                    splitContainer1.SplitterDistance = MIN_CANVAS_WIDTH;
                 }));
             }
-            else if (newRightWidth < 235)
+            else if (newRightWidth < MIN_RIGHT_PANEL_WIDTH)
             {
                 splitterIsResizing = false;
-                rightPanelWidth = 235;
+                rightPanelWidth = MIN_RIGHT_PANEL_WIDTH;
                 e.Cancel = true;
                 BeginInvoke(new Action(() =>
                 {
-                    splitContainer1.SplitterDistance = splitContainer1.Width - 235;
+                    splitContainer1.SplitterDistance = splitContainer1.Width - MIN_RIGHT_PANEL_WIDTH;
                 }));
             }
             else
@@ -2185,31 +2262,41 @@ namespace PixelEditor
                 int newLeftWidth = e.SplitX;
                 int newRightWidth = splitContainer1.Width - e.SplitX;
 
-                if (newLeftWidth < 600)
+                if (newLeftWidth < MIN_CANVAS_WIDTH)
                 {
-                    rightPanelWidth = splitContainer1.Width - 600;
+                    rightPanelWidth = splitContainer1.Width - MIN_CANVAS_WIDTH;
                     BeginInvoke(new Action(() =>
                     {
-                        splitContainer1.SplitterDistance = 600;
+                        splitContainer1.SplitterDistance = MIN_CANVAS_WIDTH;
                     }));
                 }
-                else if (newRightWidth < 235)
+                else if (newRightWidth < MIN_RIGHT_PANEL_WIDTH)
                 {
-                    rightPanelWidth = 235;
+                    rightPanelWidth = MIN_RIGHT_PANEL_WIDTH;
                     BeginInvoke(new Action(() =>
                     {
-                        splitContainer1.SplitterDistance = splitContainer1.Width - 235;
+                        splitContainer1.SplitterDistance = splitContainer1.Width - MIN_RIGHT_PANEL_WIDTH;
                     }));
                 }
-
-                BeginInvoke(new Action(() =>
+                else
                 {
-                    splitContainer1.SplitterDistance = splitContainer1.Width - rightPanelWidth;
-                }));
+                    BeginInvoke(new Action(() =>
+                    {
+                        splitContainer1.SplitterDistance = splitContainer1.Width - rightPanelWidth;
+                    }));
+                }
             }
             else
             {
-                if (splitContainer1.Width - rightPanelWidth > 600 && rightPanelWidth > 235)
+                if (splitContainer1.Width - rightPanelWidth < MIN_CANVAS_WIDTH)
+                {
+                    splitContainer1.SplitterDistance = MIN_CANVAS_WIDTH;
+                }
+                else if (rightPanelWidth < MIN_RIGHT_PANEL_WIDTH)
+                {
+                    splitContainer1.SplitterDistance = splitContainer1.Width - MIN_RIGHT_PANEL_WIDTH;
+                }
+                else
                 {
                     splitContainer1.SplitterDistance = splitContainer1.Width - rightPanelWidth;
                 }
@@ -2235,6 +2322,10 @@ namespace PixelEditor
             cboFIllGradient.SelectedIndex = 0;
             Brush_size_Scroll(sender, e);
             Brush_opacity_Scroll(sender, e);
+            Brush_spacing_Scroll(sender, e);
+            Eraser_spacing_Scroll(sender, e);
+            TrackRandomRotation_Scroll(sender, e);
+            TrackRandomRotationEraser_Scroll(sender, e);
             Brush_smoothness_Scroll(sender, e);
             Brush_hardness_Scroll(sender, e);
             Eraser_size_Scroll(sender, e);
@@ -2529,6 +2620,16 @@ namespace PixelEditor
                     groupTextShapeDetail.Visible = false;
                 }
             }
+        }
+
+        private void Brush_spacing_Scroll(object? sender, EventArgs e)
+        {
+            lblBrushSpacing.Text = brush_spacing.Value.ToString();
+        }
+
+        private void Eraser_spacing_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserSpacing.Text = eraser_spacing.Value.ToString();
         }
 
         private void BtnTools_CheckedChanged(object? sender, EventArgs e)
@@ -5858,17 +5959,17 @@ namespace PixelEditor
 
                     if (currentPressure > 0.0f)
                     {
-                        Console.WriteLine($"PictureBox Input: Pressure={currentPressure}");
+                        //Console.WriteLine($"PictureBox Input: Pressure={currentPressure}");
                     }
 
                     if (penAngleTilt.X != 0.0f || penAngleTilt.Y != 0.0f)
                     {
-                        Console.WriteLine($"PictureBox Input: TiltX={penAngleTilt.X}, TiltY={penAngleTilt.Y}");
+                        //Console.WriteLine($"PictureBox Input: TiltX={penAngleTilt.X}, TiltY={penAngleTilt.Y}");
                     }
 
                     if (penAngleRotation != 0)
                     {
-                        Console.WriteLine($"PictureBox Input: Rotation={penAngleRotation}");
+                        //Console.WriteLine($"PictureBox Input: Rotation={penAngleRotation}");
                     }
                 }
             }
@@ -6015,18 +6116,6 @@ namespace PixelEditor
         private void AdvanceLazyTowards(PointF target, Layer selectedLayer, float lazySmoothing)
         {
             PointF delta = new(target.X - lazyLocalPos.X, target.Y - lazyLocalPos.Y);
-            float distRemaining = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
-
-            if (distRemaining <= 0.25f)
-            {
-                if (distRemaining > 0.001f)
-                {
-                    PaintSegmentTo(target, selectedLayer);
-                    lazyLocalPos = target;
-                }
-                lazyCatchUpTimer?.Stop();
-                return;
-            }
 
             lazyLocalPos.X += delta.X * lazySmoothing;
             lazyLocalPos.Y += delta.Y * lazySmoothing;
@@ -6050,6 +6139,8 @@ namespace PixelEditor
 
             int randomRotation = trackRandomRotation.Value;
 
+            int spacing = brush_spacing.Value;
+
             if (isErasing)
             {
                 pressuredOpacity = Math.Max(hasTabletInput && chkPressuredOpacityEraser.Checked ? currentOpacity * currentPressure : currentOpacity, 0.01f);
@@ -6060,12 +6151,14 @@ namespace PixelEditor
                 angleRotation = hasTabletInput && chkRotationEraser.Checked ? penAngleRotation : 0f;
 
                 randomRotation = trackRandomRotationEraser.Value;
+
+                spacing = eraser_spacing.Value;
             }
 
             if (n == 2)
             {
                 PaintingEngine.PaintStroke(Point.Round(strokePoints[0]), Point.Round(strokePoints[1]),
-                    pressuredBrushSize, pressuredOpacity,
+                    pressuredBrushSize, pressuredOpacity, spacing,
                     angleTiltX, angleTiltY, angleRotation, randomRotation,
                     isErasing && selectedLayer.FillType == FillType.Transparency,
                     selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
@@ -6093,7 +6186,8 @@ namespace PixelEditor
 
                     if (prevRounded != currRounded)
                     {
-                        PaintingEngine.PaintStroke(prevRounded, currRounded, pressuredBrushSize, pressuredOpacity,
+                        PaintingEngine.PaintStroke(prevRounded, currRounded, 
+                            pressuredBrushSize, pressuredOpacity, spacing,
                             angleTiltX, angleTiltY, angleRotation, randomRotation,
                             isErasing && selectedLayer.FillType == FillType.Transparency,
                             selectionPolygons.Count > 0 ? selectionPolygons[0].Mask : null);
@@ -7179,7 +7273,7 @@ namespace PixelEditor
                     lastMousePosition = e.Location;
 
                     sw.Stop();
-                    //Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
+                    Console.WriteLine($"painting: {sw.ElapsedMilliseconds}ms");
 
                     const int minPaintIntervalMs = 32;
                     if ((DateTime.Now - lastPaintTime).TotalMilliseconds >= minPaintIntervalMs)
@@ -7367,7 +7461,7 @@ namespace PixelEditor
                             PointF delta = new(localFinal.X - lazyLocalPos.X, localFinal.Y - lazyLocalPos.Y);
                             float distRemaining = (float)Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
 
-                            if (distRemaining <= 0.25f)
+                            if (distRemaining <= 1.0f)
                                 break;
 
                             AdvanceLazyTowards(localFinal, selectedLayer, fastSmoothing);
@@ -7395,7 +7489,7 @@ namespace PixelEditor
                             PaintingEngine.EndStroke();
                             SelectionsManipulator.MaskAndMergeSelections(selectedLayer.X, selectedLayer.Y, selectedLayer.Image.Width, selectedLayer.Image.Height);
                             SelectionsManipulator.CalculateSelectionBounds();
-                            //var bounds = SelectionsManipulator.GetSelectionBounds();
+                            ManipulatorGeneral.DirtyRegions.Add(new(selectedLayer.X, selectedLayer.Y, selectedLayer.Image?.Width ?? 0, selectedLayer.Image?.Height ?? 0));
                             RedrawImage();
                             HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
                         }
