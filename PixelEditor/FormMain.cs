@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PixelEditor.Properties;
 using PixelEditor.Vector;
-using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -10,6 +9,7 @@ namespace PixelEditor
 {
     public partial class FormMain : Form
     {
+        private const int BRUSH_SELECTOR_SIZE = 24;
         private const int MIN_CANVAS_WIDTH = 600;
         private const int MIN_RIGHT_PANEL_WIDTH = 244;
 
@@ -52,8 +52,6 @@ namespace PixelEditor
         private float currentPressure = 1.0f;
         private uint penAngleRotation = 0;
         private int rightPanelWidth = 0;
-        //private int selectedBrushIndex = 0;
-        //private int selectedEraserIndex = 0;
         private Bitmap? selectedAreaBitmap = null;
         private DateTime lastPaintTime = DateTime.MinValue;
         private List<List<Point>>? originalSelectionPoints = null;
@@ -65,9 +63,8 @@ namespace PixelEditor
         private string activeScaleHandle = "";
         private string currentFilePath = "";
         private string selectedBrushName = "brush_01";
-        private string selectedEraserName = "brush_01";
+        private string selectedEraserName = "brush_02";
         private List<PointF> strokePoints = [];
-        //private readonly List<Image> brushes = [];
         private readonly Dictionary<string, PaintBrush> brushPresets = [];
         private readonly ColorDialogX _colorPicker = new(); // Here because of the custom color picking
         private System.Windows.Forms.Timer? lazyCatchUpTimer;
@@ -510,6 +507,7 @@ namespace PixelEditor
             brush_pressure_opacity.Text = "Pressured Opacity";
             brush_pressure_opacity.UseVisualStyleBackColor = true;
             brush_pressure_opacity.Checked = false;
+            brush_pressure_opacity.CheckedChanged += Brush_pressure_opacity_CheckedChanged;
 
             // Configure Pressured Brush Size Checkbox
             brush_pressure_size.AutoSize = true;
@@ -521,6 +519,7 @@ namespace PixelEditor
             brush_pressure_size.Text = "Pressured Brush Size";
             brush_pressure_size.UseVisualStyleBackColor = true;
             brush_pressure_size.Checked = true;
+            brush_pressure_size.CheckedChanged += Brush_pressure_size_CheckedChanged;
 
             // Configure Tilt Checkbox
             brush_tilt.AutoSize = true;
@@ -532,6 +531,7 @@ namespace PixelEditor
             brush_tilt.Text = "Tilt";
             brush_tilt.UseVisualStyleBackColor = true;
             brush_tilt.Checked = false;
+            brush_tilt.CheckedChanged += Brush_tilt_CheckedChanged;
 
             // Configure Rotation Checkbox
             brush_rotation.AutoSize = true;
@@ -543,6 +543,7 @@ namespace PixelEditor
             brush_rotation.Text = "Rotation";
             brush_rotation.UseVisualStyleBackColor = true;
             brush_rotation.Checked = false;
+            brush_rotation.CheckedChanged += Brush_rotation_CheckedChanged;
 
             // Configure Random Rotation TrackBar and Label - directly under Spacing
             labelRandomRotation.AutoSize = true;
@@ -782,15 +783,16 @@ namespace PixelEditor
             groupEraserDetail.Visible = false;
 
             // Configure Pressured Opacity Checkbox for Eraser
-            eraser_rotation.AutoSize = true;
-            eraser_rotation.Font = new Font("Segoe UI", 8.25F);
-            eraser_rotation.Location = new Point(7, 490);
-            eraser_rotation.Name = "chkPressuredOpacityEraser";
-            eraser_rotation.Size = new Size(124, 17);
-            eraser_rotation.TabIndex = 31;
-            eraser_rotation.Text = "Pressured Opacity";
-            eraser_rotation.UseVisualStyleBackColor = true;
-            eraser_rotation.Checked = false;
+            eraser_pressure_size.AutoSize = true;
+            eraser_pressure_size.Font = new Font("Segoe UI", 8.25F);
+            eraser_pressure_size.Location = new Point(7, 490);
+            eraser_pressure_size.Name = "chkPressuredOpacityEraser";
+            eraser_pressure_size.Size = new Size(124, 17);
+            eraser_pressure_size.TabIndex = 31;
+            eraser_pressure_size.Text = "Pressured Opacity";
+            eraser_pressure_size.UseVisualStyleBackColor = true;
+            eraser_pressure_size.Checked = false;
+            eraser_pressure_size.CheckedChanged += Eraser_pressure_size_CheckedChanged;
 
             // Configure Pressured Brush Size Checkbox for Eraser
             eraser_pressure_opacity.AutoSize = true;
@@ -802,6 +804,7 @@ namespace PixelEditor
             eraser_pressure_opacity.Text = "Pressured Brush Size";
             eraser_pressure_opacity.UseVisualStyleBackColor = true;
             eraser_pressure_opacity.Checked = false;
+            eraser_pressure_opacity.CheckedChanged += Eraser_pressure_opacity_CheckedChanged;
 
             // Configure Tilt Checkbox for Eraser
             eraser_tilt.AutoSize = true;
@@ -813,6 +816,7 @@ namespace PixelEditor
             eraser_tilt.Text = "Tilt";
             eraser_tilt.UseVisualStyleBackColor = true;
             eraser_tilt.Checked = false;
+            eraser_tilt.CheckedChanged += Eraser_tilt_CheckedChanged;
 
             // Configure Rotation Checkbox for Eraser
             eraser_rotation.AutoSize = true;
@@ -824,6 +828,7 @@ namespace PixelEditor
             eraser_rotation.Text = "Rotation";
             eraser_rotation.UseVisualStyleBackColor = true;
             eraser_rotation.Checked = false;
+            eraser_rotation.CheckedChanged += Eraser_rotation_CheckedChanged;
 
             // Configure Random Rotation TrackBar and Label for Eraser - directly under Spacing
             labelRandomRotationEraser.AutoSize = true;
@@ -1887,7 +1892,6 @@ namespace PixelEditor
                 string[] files = Directory.GetFiles(Application.StartupPath + @"\Brushes\");
                 int x = 0;
                 int y = 0;
-                int index = 0;
 
                 foreach (string file in files)
                 {
@@ -1902,7 +1906,7 @@ namespace PixelEditor
                         PictureBox picBrush = new()
                         {
                             Image = new Bitmap(file),
-                            Size = new Size(24, 24),
+                            Size = new Size(BRUSH_SELECTOR_SIZE, BRUSH_SELECTOR_SIZE),
                             Location = new Point(x, y),
                             SizeMode = PictureBoxSizeMode.StretchImage,
                             BorderStyle = BorderStyle.None,
@@ -1914,7 +1918,7 @@ namespace PixelEditor
                         PictureBox picEraser = new()
                         {
                             Image = new Bitmap(file),
-                            Size = new Size(24, 24),
+                            Size = new Size(BRUSH_SELECTOR_SIZE, BRUSH_SELECTOR_SIZE),
                             Location = new Point(x, y),
                             SizeMode = PictureBoxSizeMode.StretchImage,
                             BorderStyle = BorderStyle.None,
@@ -1924,15 +1928,14 @@ namespace PixelEditor
                         panelEraser.Controls.Add(picEraser);
 
                         var stamp = new Bitmap(picBrush.Image);
-                        //brushes.Add(stamp);
 
-                        x += 24;
-                        if (x > panelBrush.Width - 24)
+                        x += BRUSH_SELECTOR_SIZE;
+                        if (x > panelBrush.Width - BRUSH_SELECTOR_SIZE)
                         {
-                            x = 0; y += 24;
+                            x = 0; y += BRUSH_SELECTOR_SIZE;
                         }
 
-                        PaintBrush brush = new(brushName, stamp);
+                        PaintBrush brush = brushPresets.TryGetValue(brushName, out PaintBrush? value) ? value : new(brushName, stamp);
 
                         if (!brushPresets.TryAdd(brushName, brush))
                         {
@@ -1948,6 +1951,12 @@ namespace PixelEditor
                             if (brush != null)
                             {
                                 brush.Name = Path.GetFileNameWithoutExtension(file);
+
+                                if (brushPresets.TryGetValue(brush.Name, out PaintBrush? value))
+                                {
+                                    brush.Stamp = value.Stamp;
+                                }
+
                                 if (!brushPresets.TryAdd(brush.Name, brush))
                                 {
                                     brushPresets[brush.Name] = brush;
@@ -1956,7 +1965,7 @@ namespace PixelEditor
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Failed to load brush file {file}: {ex.Message}");
+                            Console.WriteLine($"Failed to load brush file {file}: {ex.Message}");
                         }
                     }
                 }
@@ -2547,7 +2556,7 @@ namespace PixelEditor
                 {
                     if (brush.Image is not null)
                     {
-                        selectedEraserName = brush.Tag != null ? (string)brush.Tag : "brush_01";
+                        selectedEraserName = brush.Tag != null ? (string)brush.Tag : "brush_02";
                         paint.Brush = new Bitmap(brush.Image);
                         if (paint.Brush != null)
                         {
@@ -2723,16 +2732,6 @@ namespace PixelEditor
             }
         }
 
-        private void Brush_spacing_Scroll(object? sender, EventArgs e)
-        {
-            lblBrushSpacing.Text = brush_spacing.Value.ToString();
-        }
-
-        private void Eraser_spacing_Scroll(object? sender, EventArgs e)
-        {
-            lblEraserSpacing.Text = eraser_spacing.Value.ToString();
-        }
-
         private void BtnTools_CheckedChanged(object? sender, EventArgs e)
         {
             if (btnPointer.Checked)
@@ -2759,15 +2758,37 @@ namespace PixelEditor
             }
             else if (btnBrusher.Checked)
             {
-                paint.Brush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value.Stamp : null;
-                paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
-                PaintingEngine.SetBrush(paint);
-                groupBrushDetail.Visible = true;
-                if (paint.Brush != null)
+                PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+                if (paintBrush != null)
                 {
-                    int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
-                    int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
-                    UpdateCursor(cursorWidth, cursorHeight);
+                    brush_size.Value = (int)(paintBrush.Size * brush_size.Maximum);
+                    brush_opacity.Value = (int)(paintBrush.Opacity * brush_opacity.Maximum);
+                    brush_smoothness.Value = (int)(paintBrush.Smoothness * brush_smoothness.Maximum);
+                    brush_hardness.Value = (int)(paintBrush.Hardness * brush_hardness.Maximum);
+                    brush_spacing.Value = (int)(paintBrush.Spacing * brush_spacing.Maximum);
+                    brush_randomness.Value = (int)(paintBrush.Randomness * brush_randomness.Maximum);
+                    brush_pressure_opacity.Checked = paintBrush.PressuredOpacity;
+                    brush_pressure_size.Checked = paintBrush.PressuredSize;
+                    brush_tilt.Checked = paintBrush.Tilt;
+                    brush_rotation.Checked = paintBrush.Rotation;
+
+                    lblBrushSize.Text = $"{brush_size.Value}";
+                    lblBrushOpacity.Text = $"{brush_opacity.Value}%";
+                    lblBrushSmoothness.Text = $"{brush_smoothness.Value}";
+                    lblBrushHardness.Text = $"{brush_hardness.Value}";
+                    lblBrushSpacing.Text = $"{brush_spacing.Value}";
+                    lblRandomRotation.Text = $"{brush_randomness.Value}";
+
+                    paint.Brush = new Bitmap(paintBrush.Stamp);
+                    paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
+                    PaintingEngine.SetBrush(paint);
+                    groupBrushDetail.Visible = true;
+                    if (paint.Brush != null)
+                    {
+                        int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
+                        int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
+                        UpdateCursor(cursorWidth, cursorHeight);
+                    }
                 }
             }
             else if (btnEraser.Checked)
@@ -3253,6 +3274,7 @@ namespace PixelEditor
         private void Brush_size_Scroll(object? sender, EventArgs e)
         {
             lblBrushSize.Text = $"{brush_size.Value}";
+
             if (paint.Brush != null)
             {
                 paint.Reset(btnPenColor.BackColor, paint.GetRadius() * (brush_hardness.Maximum - brush_hardness.Value) / brush_hardness.Maximum);
@@ -3261,11 +3283,19 @@ namespace PixelEditor
                 int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
             }
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Size = (float)brush_size.Value / brush_size.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
         }
 
         private void Eraser_size_Scroll(object? sender, EventArgs e)
         {
             lblEraserSize.Text = $"{eraser_size.Value}";
+
             if (paint.Brush != null)
             {
                 var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
@@ -3278,26 +3308,61 @@ namespace PixelEditor
                 int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
             }
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Size = (float)eraser_size.Value / eraser_size.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
         }
 
         private void Brush_opacity_Scroll(object? sender, EventArgs e)
         {
             lblBrushOpacity.Text = $"{brush_opacity.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Opacity = (float)brush_opacity.Value / brush_opacity.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
         }
 
         private void Eraser_opacity_Scroll(object? sender, EventArgs e)
         {
             lblEraserOpacity.Text = $"{eraser_opacity.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Opacity = (float)eraser_opacity.Value / eraser_opacity.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
         }
 
         private void Brush_smoothness_Scroll(object? sender, EventArgs e)
         {
             lblBrushSmoothness.Text = $"{brush_smoothness.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Smoothness = (float)brush_smoothness.Value / brush_smoothness.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
         }
 
         private void Eraser_smoothness_Scroll(object? sender, EventArgs e)
         {
             lblEraserSmoothness.Text = $"{eraser_smoothness.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Smoothness = (float)eraser_smoothness.Value / eraser_smoothness.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
         }
 
         private void Brush_hardness_Scroll(object? sender, EventArgs e)
@@ -3310,6 +3375,13 @@ namespace PixelEditor
                 int cursorWidth = 2 * paint.Brush.Width * brush_size.Value / brush_size.Maximum;
                 int cursorHeight = 2 * paint.Brush.Height * brush_size.Value / brush_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
+            }
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Hardness = (float)brush_hardness.Value / brush_hardness.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
             }
         }
 
@@ -3328,16 +3400,141 @@ namespace PixelEditor
                 int cursorHeight = 2 * paint.Brush.Height * eraser_size.Value / eraser_size.Maximum;
                 UpdateCursor(cursorWidth, cursorHeight);
             }
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Hardness = (float)eraser_hardness.Value / eraser_hardness.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
+        }
+
+        private void Brush_spacing_Scroll(object? sender, EventArgs e)
+        {
+            lblBrushSpacing.Text = brush_spacing.Value.ToString();
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Spacing = (float)brush_spacing.Value / brush_spacing.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
+        }
+
+        private void Eraser_spacing_Scroll(object? sender, EventArgs e)
+        {
+            lblEraserSpacing.Text = eraser_spacing.Value.ToString();
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Spacing = (float)eraser_spacing.Value / eraser_spacing.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
         }
 
         private void TrackRandomRotation_Scroll(object? sender, EventArgs e)
         {
             lblRandomRotation.Text = $"{brush_randomness.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Randomness = (float)brush_randomness.Value / brush_randomness.Maximum;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
         }
 
         private void TrackRandomRotationEraser_Scroll(object? sender, EventArgs e)
         {
             lblRandomRotationEraser.Text = $"{eraser_randomness.Value}";
+
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Randomness = (float)eraser_randomness.Value / eraser_randomness.Maximum;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
+        }
+
+        private void Brush_rotation_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Rotation = brush_rotation.Checked;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
+        }
+
+        private void Eraser_rotation_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Rotation = eraser_rotation.Checked;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
+        }
+
+        private void Brush_tilt_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Tilt = brush_tilt.Checked;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
+        }
+
+        private void Eraser_tilt_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.Tilt = eraser_tilt.Checked;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
+        }
+
+        private void Brush_pressure_size_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.PressuredSize = brush_pressure_size.Checked;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
+        }
+
+        private void Eraser_pressure_size_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.PressuredSize = eraser_pressure_size.Checked;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
+        }
+
+        private void Brush_pressure_opacity_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedBrushName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.PressuredOpacity = brush_pressure_opacity.Checked;
+                brushPresets[selectedBrushName] = paintBrush;
+            }
+        }
+
+        private void Eraser_pressure_opacity_CheckedChanged(object? sender, EventArgs e)
+        {
+            PaintBrush? paintBrush = brushPresets.TryGetValue(selectedEraserName, out PaintBrush? value) ? value : null;
+            if (paintBrush != null)
+            {
+                paintBrush.PressuredOpacity = eraser_pressure_opacity.Checked;
+                brushPresets[selectedEraserName] = paintBrush;
+            }
         }
 
         private void SelectionThreshold_Scroll(object? sender, EventArgs e)
@@ -3438,7 +3635,7 @@ namespace PixelEditor
             if (image != null)
             {
                 canvas.Cursor.Dispose();
-                Bitmap bitmap = new(image, 24, 24);
+                Bitmap bitmap = new(image, BRUSH_SELECTOR_SIZE, BRUSH_SELECTOR_SIZE);
                 bitmap.MakeTransparent(Color.White);
                 for (int i = 128; i < 256; i++)
                 {
@@ -3469,7 +3666,7 @@ namespace PixelEditor
                         }
                     }
                 }
-                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, 24, 24), 0, 0);
+                canvas.Cursor = GraphicsUtility.GetCursor(new Bitmap(bitmap, BRUSH_SELECTOR_SIZE, BRUSH_SELECTOR_SIZE), 0, 0);
             }
         }
 
