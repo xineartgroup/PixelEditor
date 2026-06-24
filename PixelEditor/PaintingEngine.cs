@@ -58,7 +58,7 @@ namespace PixelEditor
             strokeCoverage = null;
         }
 
-        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f, int spacing = 1,
+        public static void PaintStroke(Point start, Point end, float brushScale = 1.0f, float opacity = 1.0f,
             float tiltX = 0f, float tiltY = 0f, float baseRotation = 0f, int randomRotation = 360,
             bool isErasing = false, bool[,]? mask = null)
         {
