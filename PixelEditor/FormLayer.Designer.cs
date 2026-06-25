@@ -53,11 +53,10 @@
             label9 = new Label();
             label7 = new Label();
             groupRasterProperties = new GroupBox();
+            listBoxAdjustments = new CheckedListBox();
             trackBarAdjustmentValue2 = new TrackBar();
             trackBarAdjustmentValue1 = new TrackBar();
-            listBoxAdjustments = new ListBox();
             pictureBox2 = new PictureBox();
-            btnAdjustmentVisibility = new Button();
             btnMoveAdjustmentDown = new Button();
             lblAdjustmentValue2 = new Label();
             btnMoveAdjustmentUp = new Button();
@@ -314,15 +313,14 @@
             // 
             // groupRasterProperties
             // 
+            groupRasterProperties.Controls.Add(listBoxAdjustments);
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue2);
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue1);
-            groupRasterProperties.Controls.Add(listBoxAdjustments);
             groupRasterProperties.Controls.Add(cboLayers);
             groupRasterProperties.Controls.Add(pictureBox2);
             groupRasterProperties.Controls.Add(pictureMask);
             groupRasterProperties.Controls.Add(btnAutoHeight);
             groupRasterProperties.Controls.Add(label4);
-            groupRasterProperties.Controls.Add(btnAdjustmentVisibility);
             groupRasterProperties.Controls.Add(btnMoveAdjustmentDown);
             groupRasterProperties.Controls.Add(lblAdjustmentValue2);
             groupRasterProperties.Controls.Add(btnMoveAdjustmentUp);
@@ -350,6 +348,17 @@
             groupRasterProperties.TabIndex = 44;
             groupRasterProperties.TabStop = false;
             // 
+            // listBoxAdjustments
+            // 
+            listBoxAdjustments.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            listBoxAdjustments.FormattingEnabled = true;
+            listBoxAdjustments.Location = new Point(27, 158);
+            listBoxAdjustments.Name = "listBoxAdjustments";
+            listBoxAdjustments.Size = new Size(128, 114);
+            listBoxAdjustments.TabIndex = 45;
+            listBoxAdjustments.ItemCheck += ListBoxAdjustments_ItemCheck;
+            listBoxAdjustments.SelectedIndexChanged += ListBoxAdjustments_SelectedIndexChanged;
+            // 
             // trackBarAdjustmentValue2
             // 
             trackBarAdjustmentValue2.Location = new Point(22, 339);
@@ -372,16 +381,6 @@
             trackBarAdjustmentValue1.Value = 100;
             trackBarAdjustmentValue1.Scroll += TrackBarAdjustmentValue_Scroll;
             // 
-            // listBoxAdjustments
-            // 
-            listBoxAdjustments.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            listBoxAdjustments.FormattingEnabled = true;
-            listBoxAdjustments.Location = new Point(27, 158);
-            listBoxAdjustments.Name = "listBoxAdjustments";
-            listBoxAdjustments.Size = new Size(128, 124);
-            listBoxAdjustments.TabIndex = 43;
-            listBoxAdjustments.SelectedIndexChanged += ListBoxAdjustments_SelectedIndexChanged;
-            // 
             // pictureBox2
             // 
             pictureBox2.BackColor = Color.DimGray;
@@ -392,16 +391,6 @@
             pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox2.TabIndex = 42;
             pictureBox2.TabStop = false;
-            // 
-            // btnAdjustmentVisibility
-            // 
-            btnAdjustmentVisibility.Location = new Point(161, 245);
-            btnAdjustmentVisibility.Name = "btnAdjustmentVisibility";
-            btnAdjustmentVisibility.Size = new Size(29, 23);
-            btnAdjustmentVisibility.TabIndex = 12;
-            btnAdjustmentVisibility.Text = "👁";
-            btnAdjustmentVisibility.UseVisualStyleBackColor = true;
-            btnAdjustmentVisibility.Click += BtnAdjustmentVisibility_Click;
             // 
             // btnMoveAdjustmentDown
             // 
@@ -548,16 +537,15 @@
         private GroupBox groupRasterProperties;
         private Label label1;
         private ComboBox cboAdjustments;
-        private ListBox listBoxAdjustments;
         private PictureBox layerImage;
         private Button btnRemoveAdjustment;
         private TrackBar trackBarAdjustmentValue1;
         private Button btnMoveAdjustmentUp;
         private Button btnMoveAdjustmentDown;
-        private Button btnAdjustmentVisibility;
         private Label lblAdjustmentValue1;
         private PictureBox pictureBox2;
         private TrackBar trackBarAdjustmentValue2;
         private Label lblAdjustmentValue2;
+        private CheckedListBox listBoxAdjustments;
     }
 }

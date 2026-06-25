@@ -51,7 +51,7 @@ namespace PixelEditor
 
             foreach (ImageAdjustment adjustment in Layer.Adjustments)
             {
-                listBoxAdjustments.Items.Add(adjustment.Name);
+                listBoxAdjustments.Items.Add(adjustment.Name, adjustment.IsActive);
             }
 
             int index = 0;
@@ -180,7 +180,7 @@ namespace PixelEditor
         {
             if (!string.IsNullOrEmpty(cboAdjustments.Text.Trim()))
             {
-                listBoxAdjustments.Items.Add(cboAdjustments.Text);
+                listBoxAdjustments.Items.Add(cboAdjustments.Text, true);
                 if (cboAdjustments.Text == "Blur")
                 {
                     Layer.Adjustments.Add(new ImageAdjustment(cboAdjustments.Text, [trackBarAdjustmentValue1.Value / 100f, trackBarAdjustmentValue2.Value / 100f]));
@@ -257,6 +257,16 @@ namespace PixelEditor
             }
         }
 
+        private void ListBoxAdjustments_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            if (e.Index >= 0 && e.Index < Layer.Adjustments.Count)
+            {
+                ImageAdjustment selectedAdjustment = Layer.Adjustments[e.Index];
+                selectedAdjustment.IsActive = (e.NewValue == CheckState.Checked);
+                layerImage.Image = Layer.Image;
+            }
+        }
+
         private void BtnRemoveAdjustment_Click(object sender, EventArgs e)
         {
             if (listBoxAdjustments.SelectedIndex >= 0 && listBoxAdjustments.SelectedIndex < listBoxAdjustments.Items.Count)
@@ -293,17 +303,6 @@ namespace PixelEditor
                 listBoxAdjustments.Items.Insert(selectedIndex + 1, selectedItem);
                 listBoxAdjustments.SelectedIndex = selectedIndex + 1;
                 layerImage.Image = Layer.Image;
-            }
-        }
-
-        private void BtnAdjustmentVisibility_Click(object sender, EventArgs e)
-        {
-            if (listBoxAdjustments.SelectedIndex >= 0 && listBoxAdjustments.SelectedIndex < Layer.Adjustments.Count)
-            {
-                ImageAdjustment selectedAdjustment = Layer.Adjustments[listBoxAdjustments.SelectedIndex];
-                selectedAdjustment.IsActive = !selectedAdjustment.IsActive;
-                layerImage.Image = Layer.Image;
-
             }
         }
 
