@@ -106,6 +106,22 @@ namespace PixelEditor
                             ImageMask = ReadLayerImageData(reader)
                         };
 
+                        int adjustmentCount = reader.ReadInt32();
+
+                        for (int j = 0; j < adjustmentCount; j++)
+                        {
+                            bool isActive = reader.ReadBoolean();
+                            string adjName = reader.ReadString();
+                            int valueCount = reader.ReadInt32();
+                            List<float> values = [];
+                            for (int k = 0; k < valueCount; k++)
+                            {
+                                values.Add(reader.ReadSingle());
+                            }
+                            layer.Adjustments.Add(new ImageAdjustment(adjName, values));
+                            layer.Adjustments[^1].IsActive = isActive;
+                        }
+
                         layers.Add(layer);
                     }
                 }

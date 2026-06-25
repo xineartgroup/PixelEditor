@@ -87,9 +87,9 @@
             // btnOK
             // 
             btnOK.DialogResult = DialogResult.OK;
-            btnOK.Location = new Point(160, 626);
+            btnOK.Location = new Point(181, 484);
             btnOK.Name = "btnOK";
-            btnOK.Size = new Size(75, 23);
+            btnOK.Size = new Size(220, 23);
             btnOK.TabIndex = 13;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;
@@ -98,9 +98,9 @@
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(241, 626);
+            btnCancel.Location = new Point(408, 484);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(75, 23);
+            btnCancel.Size = new Size(220, 23);
             btnCancel.TabIndex = 14;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
@@ -342,9 +342,9 @@
             groupRasterProperties.Controls.Add(label10);
             groupRasterProperties.Controls.Add(cboAdjustments);
             groupRasterProperties.Controls.Add(cboFillWith);
-            groupRasterProperties.Location = new Point(12, 218);
+            groupRasterProperties.Location = new Point(12, 70);
             groupRasterProperties.Name = "groupRasterProperties";
-            groupRasterProperties.Size = new Size(471, 393);
+            groupRasterProperties.Size = new Size(471, 390);
             groupRasterProperties.TabIndex = 44;
             groupRasterProperties.TabStop = false;
             // 
@@ -465,9 +465,9 @@
             // 
             layerImage.BackColor = Color.White;
             layerImage.BorderStyle = BorderStyle.Fixed3D;
-            layerImage.Location = new Point(283, 12);
+            layerImage.Location = new Point(489, 70);
             layerImage.Name = "layerImage";
-            layerImage.Size = new Size(200, 200);
+            layerImage.Size = new Size(390, 390);
             layerImage.SizeMode = PictureBoxSizeMode.Zoom;
             layerImage.TabIndex = 42;
             layerImage.TabStop = false;
@@ -478,7 +478,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(504, 661);
+            ClientSize = new Size(889, 519);
             Controls.Add(groupRasterProperties);
             Controls.Add(textBoxName);
             Controls.Add(cboType);

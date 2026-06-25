@@ -65,6 +65,17 @@ namespace PixelEditor
                             writer.Write((int)layer.FillType);
                             WriteImageData(writer, layer.GetBasicImage());
                             WriteImageData(writer, layer.ImageMask);
+                            writer.Write(layer.Adjustments.Count);
+                            foreach (var adjustment in layer.Adjustments)
+                            {
+                                writer.Write(adjustment.IsActive);
+                                writer.Write(adjustment.Name);
+                                writer.Write(adjustment.Values.Count);
+                                foreach (var value in adjustment.Values)
+                                {
+                                    writer.Write(value);
+                                }
+                            }
                         }
                     }
 

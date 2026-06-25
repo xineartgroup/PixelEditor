@@ -79,11 +79,24 @@
                 ContextMenuStrip = contextMenu
             };
 
+            Label lblAdjustments = new()
+            {
+                Text = $"[{layer.Adjustments.Count}]",
+                AutoSize = true,
+                Size = new Size(10, 10),
+                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 30),
+                Font = new Font("Microsoft Sans Serif", 8, FontStyle.Italic | FontStyle.Underline | FontStyle.Bold),
+                ForeColor = Color.Gray,
+                Tag = "adjustments",
+                Visible = layer.Adjustments.Count > 0,
+                ContextMenuStrip = contextMenu
+            };
+
             Label lblName = new()
             {
                 Text = layer.Name,
                 AutoSize = true,
-                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + 5, 10),
+                Location = new Point((maskBox.Visible ? maskBox.Right : pictureBox.Right) + (lblAdjustments.Visible ? lblAdjustments.Right + 5 : 0) + 5, 10),
                 Font = new Font("Microsoft Sans Serif", 8, FontStyle.Regular),
                 Tag = "name",
                 ContextMenuStrip = contextMenu
@@ -94,16 +107,19 @@
             panelLayer.MouseDown += Layer_MouseDown;
             pictureBox.MouseDown += Layer_MouseDown;
             maskBox.MouseDown += Layer_MouseDown;
+            lblAdjustments.MouseDown += Layer_MouseDown;
             lblName.MouseDown += Layer_MouseDown;
 
             panelLayer.DoubleClick += BtnEditCaption_Click;
             pictureBox.DoubleClick += BtnEditCaption_Click;
             maskBox.DoubleClick += BtnEditCaption_Click;
+            lblAdjustments.DoubleClick += BtnEditCaption_Click;
             lblName.DoubleClick += BtnEditCaption_Click;
 
             panelLayer.Controls.Add(chkVisible);
             panelLayer.Controls.Add(pictureBox);
             panelLayer.Controls.Add(maskBox);
+            panelLayer.Controls.Add(lblAdjustments);
             panelLayer.Controls.Add(lblName);
 
             return panelLayer;
@@ -560,6 +576,7 @@
 
             PictureBox? mainPic = null;
             PictureBox? maskPic = null;
+            Label? lblAdjustments = null;
             Label? lblName = null;
 
             foreach (Control child in p.Controls)
@@ -581,6 +598,11 @@
                         maskPic.Visible = layer.ImageMask != null;
                         maskPic.Location = new Point(mainPic!.Right + 5, 5);
                         break;
+                    case "adjustments":
+                        lblAdjustments = (Label)child;
+                        lblAdjustments.Text = $"[{layer.Adjustments.Count}]";
+                        lblAdjustments.Visible = layer.Adjustments.Count > 0;
+                        break;
                     case "name":
                         lblName = (Label)child;
                         lblName.Text = layer.Name;
@@ -588,9 +610,21 @@
                 }
             }
 
-            if (lblName != null && mainPic != null && maskPic != null)
+            if (mainPic != null && maskPic != null && lblAdjustments != null)
             {
                 int labelX = (maskPic.Visible ? maskPic.Right : mainPic.Right) + 5;
+                lblAdjustments.Location = new Point(labelX, 10);
+            }
+
+            if (lblName != null && mainPic != null && maskPic != null && lblAdjustments != null)
+            {
+                int labelX = (maskPic.Visible ? maskPic.Right : mainPic.Right) + 5;
+
+                if (lblAdjustments.Visible)
+                {
+                    labelX = lblAdjustments.Right + 5;
+                }
+
                 lblName.Location = new Point(labelX, 10);
             }
         }

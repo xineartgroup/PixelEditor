@@ -54,6 +54,11 @@ namespace PixelEditor
                 listBoxAdjustments.Items.Add(adjustment.Name, adjustment.IsActive);
             }
 
+            trackBarAdjustmentValue1.Visible = false;
+            lblAdjustmentValue1.Visible = false;
+            trackBarAdjustmentValue2.Visible = false;
+            lblAdjustmentValue2.Visible = false;
+
             int index = 0;
             foreach (Layer layer in Layers)
             {
@@ -102,6 +107,7 @@ namespace PixelEditor
             if (listBoxVector.SelectedIndex >= 0 && listBoxVector.SelectedIndex < Layer.Shapes.Count)
             {
                 Layer.CurrentShape = Layer.Shapes[listBoxVector.SelectedIndex];
+                layerImage.Image = Layer.Image;
             }
         }
 
