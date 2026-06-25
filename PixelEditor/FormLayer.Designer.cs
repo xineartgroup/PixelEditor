@@ -56,7 +56,7 @@
             listBoxAdjustments = new CheckedListBox();
             trackBarAdjustmentValue2 = new TrackBar();
             trackBarAdjustmentValue1 = new TrackBar();
-            pictureBox2 = new PictureBox();
+            pictureCurve = new PictureBox();
             btnMoveAdjustmentDown = new Button();
             lblAdjustmentValue2 = new Label();
             btnMoveAdjustmentUp = new Button();
@@ -73,7 +73,7 @@
             groupRasterProperties.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureCurve).BeginInit();
             ((System.ComponentModel.ISupportInitialize)layerImage).BeginInit();
             SuspendLayout();
             // 
@@ -317,7 +317,7 @@
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue2);
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue1);
             groupRasterProperties.Controls.Add(cboLayers);
-            groupRasterProperties.Controls.Add(pictureBox2);
+            groupRasterProperties.Controls.Add(pictureCurve);
             groupRasterProperties.Controls.Add(pictureMask);
             groupRasterProperties.Controls.Add(btnAutoHeight);
             groupRasterProperties.Controls.Add(label4);
@@ -350,11 +350,11 @@
             // 
             // listBoxAdjustments
             // 
-            listBoxAdjustments.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            listBoxAdjustments.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             listBoxAdjustments.FormattingEnabled = true;
-            listBoxAdjustments.Location = new Point(27, 158);
+            listBoxAdjustments.Location = new Point(86, 140);
             listBoxAdjustments.Name = "listBoxAdjustments";
-            listBoxAdjustments.Size = new Size(128, 114);
+            listBoxAdjustments.Size = new Size(128, 92);
             listBoxAdjustments.TabIndex = 45;
             listBoxAdjustments.ItemCheck += ListBoxAdjustments_ItemCheck;
             listBoxAdjustments.SelectedIndexChanged += ListBoxAdjustments_SelectedIndexChanged;
@@ -381,20 +381,20 @@
             trackBarAdjustmentValue1.Value = 100;
             trackBarAdjustmentValue1.Scroll += TrackBarAdjustmentValue_Scroll;
             // 
-            // pictureBox2
+            // pictureCurve
             // 
-            pictureBox2.BackColor = Color.DimGray;
-            pictureBox2.BorderStyle = BorderStyle.Fixed3D;
-            pictureBox2.Location = new Point(304, 216);
-            pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new Size(150, 150);
-            pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox2.TabIndex = 42;
-            pictureBox2.TabStop = false;
+            pictureCurve.BackColor = Color.DimGray;
+            pictureCurve.BorderStyle = BorderStyle.Fixed3D;
+            pictureCurve.Location = new Point(304, 216);
+            pictureCurve.Name = "pictureCurve";
+            pictureCurve.Size = new Size(150, 150);
+            pictureCurve.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureCurve.TabIndex = 42;
+            pictureCurve.TabStop = false;
             // 
             // btnMoveAdjustmentDown
             // 
-            btnMoveAdjustmentDown.Location = new Point(161, 216);
+            btnMoveAdjustmentDown.Location = new Point(220, 198);
             btnMoveAdjustmentDown.Name = "btnMoveAdjustmentDown";
             btnMoveAdjustmentDown.Size = new Size(29, 23);
             btnMoveAdjustmentDown.TabIndex = 12;
@@ -413,7 +413,7 @@
             // 
             // btnMoveAdjustmentUp
             // 
-            btnMoveAdjustmentUp.Location = new Point(161, 187);
+            btnMoveAdjustmentUp.Location = new Point(220, 169);
             btnMoveAdjustmentUp.Name = "btnMoveAdjustmentUp";
             btnMoveAdjustmentUp.Size = new Size(29, 23);
             btnMoveAdjustmentUp.TabIndex = 12;
@@ -432,7 +432,7 @@
             // 
             // btnRemoveAdjustment
             // 
-            btnRemoveAdjustment.Location = new Point(161, 158);
+            btnRemoveAdjustment.Location = new Point(220, 140);
             btnRemoveAdjustment.Name = "btnRemoveAdjustment";
             btnRemoveAdjustment.Size = new Size(29, 23);
             btnRemoveAdjustment.TabIndex = 12;
@@ -443,7 +443,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(6, 113);
+            label1.Location = new Point(8, 115);
             label1.Name = "label1";
             label1.Size = new Size(72, 15);
             label1.TabIndex = 41;
@@ -455,7 +455,7 @@
             cboAdjustments.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboAdjustments.FormattingEnabled = true;
             cboAdjustments.Items.AddRange(new object[] { "", "Brightness", "Contrast", "Exposure", "Highlights", "Shadows", "Vignette", "Saturation", "Warmth", "Tint", "Sharpness", "Blur" });
-            cboAdjustments.Location = new Point(27, 131);
+            cboAdjustments.Location = new Point(86, 113);
             cboAdjustments.Name = "cboAdjustments";
             cboAdjustments.Size = new Size(128, 21);
             cboAdjustments.TabIndex = 2;
@@ -502,7 +502,7 @@
             groupRasterProperties.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue2).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureCurve).EndInit();
             ((System.ComponentModel.ISupportInitialize)layerImage).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -543,7 +543,7 @@
         private Button btnMoveAdjustmentUp;
         private Button btnMoveAdjustmentDown;
         private Label lblAdjustmentValue1;
-        private PictureBox pictureBox2;
+        private PictureBox pictureCurve;
         private TrackBar trackBarAdjustmentValue2;
         private Label lblAdjustmentValue2;
         private CheckedListBox listBoxAdjustments;

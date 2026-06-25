@@ -82,17 +82,17 @@ namespace PixelEditor
                 return;
             }
 
-            //float brushSize = currentBrush.Brush.Width * brushScale;
-            //float step = Math.Max(1.0f, brushSize * 0.2f);
+            float brushSize = currentBrush.Brush.Width * brushScale;
+            float step = Math.Max(1.0f, brushSize * 0.2f);
 
-            //for (float t = 0; t <= distance; t += step)
-            //{
-            //    float lerp = t / distance;
-            //    int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
-            //    int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
+            for (float t = 0; t <= distance; t += step)
+            {
+                float lerp = t / distance;
+                int x = (int)Math.Round(start.X + (end.X - start.X) * lerp);
+                int y = (int)Math.Round(start.Y + (end.Y - start.Y) * lerp);
 
-            //    PaintAt(new Point(x, y), brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
-            //}
+                PaintAt(new Point(x, y), brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
+            }
 
             PaintAt(end, brushScale, opacity, tiltX, tiltY, GetCurrentRotation(), isErasing, mask);
         }

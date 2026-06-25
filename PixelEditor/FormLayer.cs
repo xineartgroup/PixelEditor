@@ -58,6 +58,7 @@ namespace PixelEditor
             lblAdjustmentValue1.Visible = false;
             trackBarAdjustmentValue2.Visible = false;
             lblAdjustmentValue2.Visible = false;
+            pictureCurve.Visible = false;
 
             int index = 0;
             foreach (Layer layer in Layers)
@@ -189,6 +190,8 @@ namespace PixelEditor
                 listBoxAdjustments.Items.Add(cboAdjustments.Text, true);
                 if (cboAdjustments.Text == "Blur")
                 {
+                    trackBarAdjustmentValue1.Value = 100;
+                    trackBarAdjustmentValue2.Value = 100;
                     Layer.Adjustments.Add(new ImageAdjustment(cboAdjustments.Text, [trackBarAdjustmentValue1.Value / 100f, trackBarAdjustmentValue2.Value / 100f]));
                     lblAdjustmentValue1.Text = $"{trackBarAdjustmentValue1.Value / (float)trackBarAdjustmentValue1.Maximum:F2}";
                     lblAdjustmentValue2.Text = $"{trackBarAdjustmentValue2.Value / (float)trackBarAdjustmentValue2.Maximum:F2}";
@@ -199,10 +202,15 @@ namespace PixelEditor
                 }
                 else
                 {
+                    trackBarAdjustmentValue1.Value = 100;
+                    trackBarAdjustmentValue2.Value = 100;
                     Layer.Adjustments.Add(new ImageAdjustment(cboAdjustments.Text, [trackBarAdjustmentValue1.Value / 100f]));
                     lblAdjustmentValue1.Text = $"{trackBarAdjustmentValue1.Value / (float)trackBarAdjustmentValue1.Maximum:F2}";
+                    lblAdjustmentValue2.Text = $"{trackBarAdjustmentValue2.Value / (float)trackBarAdjustmentValue2.Maximum:F2}";
                     trackBarAdjustmentValue1.Visible = true;
                     lblAdjustmentValue1.Visible = true;
+                    trackBarAdjustmentValue2.Visible = false;
+                    lblAdjustmentValue2.Visible = false;
                 }
                 cboAdjustments.SelectedIndex = 0;
                 listBoxAdjustments.SelectedIndex = listBoxAdjustments.Items.Count - 1;
@@ -248,17 +256,37 @@ namespace PixelEditor
                     lblAdjustmentValue1.Visible = false;
                 }
 
-                if (selectedAdjustment.Values.Count > 1)
+                if (selectedAdjustment.Values.Count == 2)
                 {
+                    trackBarAdjustmentValue1.Visible = true;
+                    lblAdjustmentValue1.Visible = true;
                     trackBarAdjustmentValue2.Visible = true;
                     lblAdjustmentValue2.Visible = true;
+                    pictureCurve.Visible = false;
+
+                    trackBarAdjustmentValue1.Value = (int)(selectedAdjustment.Values[0] * 100);
+                    lblAdjustmentValue1.Text = $"{trackBarAdjustmentValue1.Value / (float)trackBarAdjustmentValue1.Maximum:F2}";
                     trackBarAdjustmentValue2.Value = (int)(selectedAdjustment.Values[1] * 100);
                     lblAdjustmentValue2.Text = $"{trackBarAdjustmentValue2.Value / (float)trackBarAdjustmentValue2.Maximum:F2}";
                 }
-                else
+                else if (selectedAdjustment.Values.Count == 1)
                 {
+                    trackBarAdjustmentValue1.Visible = true;
+                    lblAdjustmentValue1.Visible = true;
                     trackBarAdjustmentValue2.Visible = false;
                     lblAdjustmentValue2.Visible = false;
+                    pictureCurve.Visible = false;
+
+                    trackBarAdjustmentValue1.Value = (int)(selectedAdjustment.Values[0] * 100);
+                    lblAdjustmentValue1.Text = $"{trackBarAdjustmentValue1.Value / (float)trackBarAdjustmentValue1.Maximum:F2}";
+                }
+                else
+                {
+                    trackBarAdjustmentValue1.Visible = false;
+                    lblAdjustmentValue1.Visible = false;
+                    trackBarAdjustmentValue2.Visible = false;
+                    lblAdjustmentValue2.Visible = false;
+                    pictureCurve.Visible = true;
                 }
             }
         }
@@ -282,7 +310,10 @@ namespace PixelEditor
                 listBoxAdjustments.SelectedIndex = -1;
                 layerImage.Image = Layer.Image;
                 trackBarAdjustmentValue1.Visible = false;
+                lblAdjustmentValue1.Visible = false;
                 trackBarAdjustmentValue2.Visible = false;
+                lblAdjustmentValue2.Visible = false;
+                pictureCurve.Visible = false;
             }
         }
 

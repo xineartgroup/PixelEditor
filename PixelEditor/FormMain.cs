@@ -3614,7 +3614,7 @@ namespace PixelEditor
                         greenToolStripMenuItem1.Checked = false;
                         blueToolStripMenuItem1.Checked = false;
 
-                        var layer = new Layer($"layer {layersControl.GetLayers().Count + 1}", true)
+                        var layer = new Layer($"layer {layersControl.GetLayers().Count}", true)
                         {
                             Image = new Bitmap(image, image.Width, image.Height),
                             X = Document.Width / 2 - image.Width / 2,
@@ -3856,12 +3856,19 @@ namespace PixelEditor
                 HistoryManager.Clear();
                 layersControl.ClearLayers();
 
-                Layer selectedLayer = new($"layer {layersControl.GetLayers().Count + 1}", true)
+                Layer selectedLayer = new($"layer {layersControl.GetLayers().Count}", true)
                 {
                     X = frm.LayerX,
                     Y = frm.LayerY,
                     FillType = FillType.Transparency
                 };
+
+                if (appLaunch)
+                {
+                    selectedLayer.Name = "Background";
+                    selectedLayer.FillType = FillType.Color;
+                    selectedLayer.FillColor = Color.White;
+                }
 
                 if (selectedLayer.Image == null)
                 {
@@ -4942,7 +4949,7 @@ namespace PixelEditor
             FormLayer frm = new()
             {
                 StartPosition = FormStartPosition.CenterParent,
-                Layer = new($"layer {layersControl.GetLayers().Count + 1}", true)
+                Layer = new($"layer {layersControl.GetLayers().Count}", true)
                 {
                     FillType = FillType.Transparency
                 }
