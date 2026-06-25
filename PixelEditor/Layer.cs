@@ -26,6 +26,7 @@ namespace PixelEditor
         private List<BaseShape> shapes = [];
         private List<BaseShape> addedShapeSelections = [];
         private BaseShape? currentShape = null;
+        private List<ImageAdjustment> adjustments = [];
 
         public event Action<Rectangle>? OnLayerChanged;
 
@@ -72,6 +73,8 @@ namespace PixelEditor
 
         public Color FillColor { get => _fillColor; set => SetProperty(ref _fillColor, value); }
 
+        public List<ImageAdjustment> Adjustments { get => adjustments; set => SetProperty(ref adjustments, value); }
+
         public List<BaseShape> Shapes { get => shapes; set => SetProperty(ref shapes, value); }
 
         public List<BaseShape> AddedShapeSelections { get => addedShapeSelections; set => SetProperty(ref addedShapeSelections, value); }
@@ -96,17 +99,89 @@ namespace PixelEditor
             }
             else
             {
+                Image? image = null;
+
                 if (_imageMask == null)
                 {
-                    return _image;
+                    image = _image;
                 }
                 else
                 {
                     if (_image != null)
-                        return ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
-                    else
-                        return null;
+                    {
+                        image = ManipulatorLighting.MaskImage((Bitmap)_image, (Bitmap)_imageMask);
+                    }
                 }
+
+                if (image != null)
+                {
+                    foreach (var adjustment in adjustments)
+                    {
+                        if (!adjustment.IsActive)
+                            continue;
+
+                        if (adjustment.Name == "Brightness")
+                        {
+                            float brightness = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, brightness, 1, 1, 1, 1, 0);
+                        }
+                        else if (adjustment.Name == "Contrast")
+                        {
+                            float contrast = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, 1, contrast, 1, 1, 1, 0);
+                        }
+                        else if (adjustment.Name == "Exposure")
+                        {
+                            float exposure = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, 1, 1, exposure, 1, 1, 0);
+                        }
+                        else if (adjustment.Name == "Highlights")
+                        {
+                            float highlights = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, 1, 1, 1, 1, highlights, 0);
+                        }
+                        else if (adjustment.Name == "Shadows")
+                        {
+                            float shadows = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, 1, 1, 1, shadows, 1, 0);
+                        }
+                        else if (adjustment.Name == "Vignette")
+                        {
+                            float vignetteStrength = adjustment.Values[0];
+                            image = ManipulatorLighting.ApplyLighting(image, 1, 1, 1, 1, 1, vignetteStrength);
+                        }
+                        else if (adjustment.Name == "Saturation")
+                        {
+                            float saturation = adjustment.Values[0];
+                            image = ManipulatorLighting.AdjustColorBalance(image, saturation, 0, 0);
+                        }
+                        else if (adjustment.Name == "Warmth")
+                        {
+                            float warmth = adjustment.Values[0];
+                            image = ManipulatorLighting.AdjustColorBalance(image, 0, warmth, 0);
+                        }
+                        else if (adjustment.Name == "Tint")
+                        {
+                            float tint = adjustment.Values[0];
+                            image = ManipulatorLighting.AdjustColorBalance(image, 0, 0, tint);
+                        }
+                        else if (adjustment.Name == "Sharpness")
+                        {
+                            float sharpness = adjustment.Values[0] * 100;
+                            image = ManipulatorLighting.AdjustSharpness(image, sharpness);
+                        }
+                        else if (adjustment.Name == "Blur")
+                        {
+                            float sizeX = adjustment.Values[0] * 100;
+                            float sizeY = adjustment.Values[1] * 100;
+                            if (sizeX == 0) sizeX = 1;
+                            if (sizeY == 0) sizeY = 1;
+                            image = ManipulatorLighting.GaussianBlur(image, (int)sizeX, (int)sizeY);
+                        }
+                    }
+                }
+
+                return image;
             }
         }
 
