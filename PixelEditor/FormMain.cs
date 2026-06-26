@@ -6058,6 +6058,30 @@ namespace PixelEditor
             }
         }
 
+        private void CurvesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedLayer = layersControl.GetLayer(layersControl.GetSelectedLayerIndex());
+            if (selectedLayer != null)
+            {
+                if (selectedLayer.Image != null)
+                {
+                    FormCurves frm = new()
+                    {
+                        Image = selectedLayer.Image
+                    };
+                    if (frm.ShowDialog() == DialogResult.OK && frm.Image != null)
+                    {
+                        HistoryManager.RecordState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                        Bitmap curves = new(frm.Image);
+                        selectedLayer.Image.Dispose();
+                        selectedLayer.Image = curves;
+                        RedrawImage();
+                        HistoryManager.CurrentState(new HistoryItem(layersControl.GetLayers(), layersControl.GetSelectedLayerIndex()));
+                    }
+                }
+            }
+        }
+
         private void UpdateTransformMatrix()
         {
             Point anchorScreen = ManipulatorGeneral.WorldToScreen(Point.Round(scaleAnchorWorld), canvas.Width, canvas.Height);
@@ -6491,7 +6515,7 @@ namespace PixelEditor
 
                     if (prevRounded != currRounded)
                     {
-                        PaintingEngine.PaintStroke(prevRounded, currRounded, 
+                        PaintingEngine.PaintStroke(prevRounded, currRounded,
                             pressuredBrushSize, pressuredOpacity,
                             angleTiltX, angleTiltY, angleRotation, randomRotation,
                             isErasing && selectedLayer.FillType == FillType.Transparency,

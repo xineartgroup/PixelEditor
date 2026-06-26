@@ -322,10 +322,13 @@ namespace PixelEditor
             if (listBoxAdjustments.SelectedIndex > 0)
             {
                 int selectedIndex = listBoxAdjustments.SelectedIndex;
-                object selectedItem = listBoxAdjustments.SelectedItem;
-                listBoxAdjustments.Items.RemoveAt(selectedIndex);
-                listBoxAdjustments.Items.Insert(selectedIndex - 1, selectedItem);
-                listBoxAdjustments.SelectedIndex = selectedIndex - 1;
+                object? selectedItem = listBoxAdjustments.SelectedItem;
+                if (selectedItem != null)
+                {
+                    listBoxAdjustments.Items.RemoveAt(selectedIndex);
+                    listBoxAdjustments.Items.Insert(selectedIndex - 1, selectedItem);
+                    listBoxAdjustments.SelectedIndex = selectedIndex - 1;
+                }
                 layerImage.Image = Layer.Image;
             }
         }
@@ -335,10 +338,13 @@ namespace PixelEditor
             if (listBoxAdjustments.SelectedIndex < listBoxAdjustments.Items.Count - 1)
             {
                 int selectedIndex = listBoxAdjustments.SelectedIndex;
-                object selectedItem = listBoxAdjustments.SelectedItem;
-                listBoxAdjustments.Items.RemoveAt(selectedIndex);
-                listBoxAdjustments.Items.Insert(selectedIndex + 1, selectedItem);
-                listBoxAdjustments.SelectedIndex = selectedIndex + 1;
+                object? selectedItem = listBoxAdjustments.SelectedItem;
+                if (selectedItem != null)
+                {
+                    listBoxAdjustments.Items.RemoveAt(selectedIndex);
+                    listBoxAdjustments.Items.Insert(selectedIndex + 1, selectedItem);
+                    listBoxAdjustments.SelectedIndex = selectedIndex + 1;
+                }
                 layerImage.Image = Layer.Image;
             }
         }

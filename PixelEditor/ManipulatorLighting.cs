@@ -446,6 +446,63 @@ namespace PixelEditor
             return newBitmap;
         }
 
+        public static unsafe Bitmap ApplyCurvesToImage(Bitmap source, Dictionary<string, List<Point>> curves)
+        {
+            Bitmap result = new(source.Width, source.Height);
+
+            byte[] redLUT = CreateLookupTable(curves["R"]);
+            byte[] greenLUT = CreateLookupTable(curves["G"]);
+            byte[] blueLUT = CreateLookupTable(curves["B"]);
+            byte[] rgbLUT = CreateLookupTable(curves["RGB"]);
+
+            BitmapData srcData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            BitmapData dstData = result.LockBits(new Rectangle(0, 0, result.Width, result.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            int bytesPerPixel = 4;
+            int srcStride = srcData.Stride;
+            int dstStride = dstData.Stride;
+            int height = source.Height;
+            int width = source.Width;
+
+            byte* srcPtr = (byte*)srcData.Scan0;
+            byte* dstPtr = (byte*)dstData.Scan0;
+
+            Parallel.For(0, height, y =>
+            {
+                byte* srcRow = srcPtr + y * srcStride;
+                byte* dstRow = dstPtr + y * dstStride;
+
+                for (int x = 0; x < width; x++)
+                {
+                    byte* srcPixel = srcRow + x * bytesPerPixel;
+                    byte* dstPixel = dstRow + x * bytesPerPixel;
+
+                    byte b = srcPixel[0];
+                    byte g = srcPixel[1];
+                    byte r = srcPixel[2];
+                    byte a = srcPixel[3];
+
+                    r = rgbLUT[r];
+                    g = rgbLUT[g];
+                    b = rgbLUT[b];
+
+                    r = redLUT[r];
+                    g = greenLUT[g];
+                    b = blueLUT[b];
+
+                    dstPixel[0] = b;
+                    dstPixel[1] = g;
+                    dstPixel[2] = r;
+                    dstPixel[3] = a;
+                }
+            });
+
+            source.UnlockBits(srcData);
+            result.UnlockBits(dstData);
+
+            return result;
+        }
+
         public static Bitmap ResizeImage(Image image, int width, int height)
         {
             var destRect = new Rectangle(0, 0, width, height);
@@ -718,6 +775,28 @@ namespace PixelEditor
             if (t < 1f / 2f) return q;
             if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6;
             return p;
+        }
+
+        private static byte[] CreateLookupTable(List<Point> curvePoints)
+        {
+            byte[] table = new byte[256];
+            var sortedPoints = curvePoints.OrderBy(p => p.X).ToList();
+
+            for (int i = 0; i < 256; i++)
+            {
+                for (int j = 0; j < sortedPoints.Count - 1; j++)
+                {
+                    if (i >= sortedPoints[j].X && i <= sortedPoints[j + 1].X)
+                    {
+                        double t = (double)(i - sortedPoints[j].X) / (sortedPoints[j + 1].X - sortedPoints[j].X);
+                        int value = (int)(sortedPoints[j].Y + t * (sortedPoints[j + 1].Y - sortedPoints[j].Y));
+                        table[i] = (byte)Math.Clamp(value, 0, 255);
+                        break;
+                    }
+                }
+            }
+
+            return table;
         }
     }
 }
