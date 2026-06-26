@@ -553,7 +553,7 @@ namespace PixelEditor
         {
             if (Image != null)
             {
-                Bitmap newImage = ManipulatorLighting.ApplyCurvesToImage((Bitmap)Image, _curves);
+                Bitmap newImage = ManipulatorLighting.ApplyCurvesToImage((Bitmap)Image, _currentPoints);
 
                 if (pictureSample.Image != null)
                 {
@@ -570,7 +570,7 @@ namespace PixelEditor
         {
             if (Image != null)
             {
-                Bitmap result = ManipulatorLighting.ApplyCurvesToImage((Bitmap)Image, _curves);
+                Bitmap result = ManipulatorLighting.ApplyCurvesToImage((Bitmap)Image, _currentPoints);
                 Image.Dispose();
                 Image = result;
             }

@@ -481,10 +481,10 @@ namespace PixelEditor
                     scaledX = Math.Clamp(scaledX, 0, 255);
                     scaledPoints.Add(new Point(scaledX, p.Y));
                 }
-                Layer.Adjustments[listBoxAdjustments.SelectedIndex].Curves[kvp.Key] = scaledPoints;
+                Layer.Adjustments[listBoxAdjustments.SelectedIndex].Points = scaledPoints;
             }
 
-            _currentPoints = Layer.Adjustments[listBoxAdjustments.SelectedIndex].Curves[_currentChannel];
+            _currentPoints = Layer.Adjustments[listBoxAdjustments.SelectedIndex].Points;
         }
 
         private void UpdatePointInfo()
@@ -692,7 +692,7 @@ namespace PixelEditor
         private void CboRGB_SelectedIndexChanged(object sender, EventArgs e)
         {
             _currentChannel = cboRGB.Text;
-            _currentPoints = Layer.Adjustments[listBoxAdjustments.SelectedIndex].Curves[_currentChannel];
+            _currentPoints = Layer.Adjustments[listBoxAdjustments.SelectedIndex].Points;
             _selectedPointIndex = -1;
             UpdatePointInfo();
             DrawCurve();

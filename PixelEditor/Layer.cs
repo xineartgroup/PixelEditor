@@ -180,7 +180,7 @@ namespace PixelEditor
                         }
                         else if (adjustment.Name == "Curves")
                         {
-                            image = ManipulatorLighting.ApplyCurvesToImage(image, adjustment.Curves);
+                            image = ManipulatorLighting.ApplyCurvesToImage(image, adjustment.Points);
                         }
                     }
                 }

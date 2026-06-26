@@ -446,15 +446,12 @@ namespace PixelEditor
             return newBitmap;
         }
 
-        public static unsafe Bitmap ApplyCurvesToImage(Image image, Dictionary<string, List<Point>> curves)
+        public static unsafe Bitmap ApplyCurvesToImage(Image image, List<Point> points)
         {
             Bitmap source = new(image);
             Bitmap result = new(source.Width, source.Height);
 
-            byte[] redLUT = CreateLookupTable(curves["R"]);
-            byte[] greenLUT = CreateLookupTable(curves["G"]);
-            byte[] blueLUT = CreateLookupTable(curves["B"]);
-            byte[] rgbLUT = CreateLookupTable(curves["RGB"]);
+            byte[] lut = CreateLookupTable(points);
 
             BitmapData srcData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             BitmapData dstData = result.LockBits(new Rectangle(0, 0, result.Width, result.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
@@ -483,13 +480,9 @@ namespace PixelEditor
                     byte r = srcPixel[2];
                     byte a = srcPixel[3];
 
-                    r = rgbLUT[r];
-                    g = rgbLUT[g];
-                    b = rgbLUT[b];
-
-                    r = redLUT[r];
-                    g = greenLUT[g];
-                    b = blueLUT[b];
+                    r = lut[r];
+                    g = lut[g];
+                    b = lut[b];
 
                     dstPixel[0] = b;
                     dstPixel[1] = g;
@@ -785,11 +778,23 @@ namespace PixelEditor
 
             for (int i = 0; i < 256; i++)
             {
+                if (i <= sortedPoints[0].X)
+                {
+                    table[i] = (byte)sortedPoints[0].Y;
+                    continue;
+                }
+                if (i >= sortedPoints[^1].X)
+                {
+                    table[i] = (byte)sortedPoints[^1].Y;
+                    continue;
+                }
+
                 for (int j = 0; j < sortedPoints.Count - 1; j++)
                 {
                     if (i >= sortedPoints[j].X && i <= sortedPoints[j + 1].X)
                     {
-                        double t = (double)(i - sortedPoints[j].X) / (sortedPoints[j + 1].X - sortedPoints[j].X);
+                        int xDiff = sortedPoints[j + 1].X - sortedPoints[j].X;
+                        double t = (double)(i - sortedPoints[j].X) / xDiff;
                         int value = (int)(sortedPoints[j].Y + t * (sortedPoints[j + 1].Y - sortedPoints[j].Y));
                         table[i] = (byte)Math.Clamp(value, 0, 255);
                         break;
