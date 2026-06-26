@@ -446,8 +446,9 @@ namespace PixelEditor
             return newBitmap;
         }
 
-        public static unsafe Bitmap ApplyCurvesToImage(Bitmap source, Dictionary<string, List<Point>> curves)
+        public static unsafe Bitmap ApplyCurvesToImage(Image image, Dictionary<string, List<Point>> curves)
         {
+            Bitmap source = new(image);
             Bitmap result = new(source.Width, source.Height);
 
             byte[] redLUT = CreateLookupTable(curves["R"]);

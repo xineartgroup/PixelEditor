@@ -53,14 +53,21 @@
             label9 = new Label();
             label7 = new Label();
             groupRasterProperties = new GroupBox();
+            trackBarScaleLight = new TrackBar();
+            trackBarScaleDark = new TrackBar();
+            txtOutput = new TextBox();
+            txtInput = new TextBox();
+            cboRGB = new ComboBox();
+            lblAdjustmentValue2 = new Label();
+            lblAdjustmentValue1 = new Label();
             listBoxAdjustments = new CheckedListBox();
             trackBarAdjustmentValue2 = new TrackBar();
             trackBarAdjustmentValue1 = new TrackBar();
-            pictureCurve = new PictureBox();
+            pictureCurves = new PictureBox();
+            btnDelete = new Button();
+            btnReset = new Button();
             btnMoveAdjustmentDown = new Button();
-            lblAdjustmentValue2 = new Label();
             btnMoveAdjustmentUp = new Button();
-            lblAdjustmentValue1 = new Label();
             btnRemoveAdjustment = new Button();
             label1 = new Label();
             cboAdjustments = new ComboBox();
@@ -71,15 +78,17 @@
             ((System.ComponentModel.ISupportInitialize)offsetY).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureMask).BeginInit();
             groupRasterProperties.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)trackBarScaleLight).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)trackBarScaleDark).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureCurve).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureCurves).BeginInit();
             ((System.ComponentModel.ISupportInitialize)layerImage).BeginInit();
             SuspendLayout();
             // 
             // textBoxName
             // 
-            textBoxName.Location = new Point(110, 41);
+            textBoxName.Location = new Point(398, 12);
             textBoxName.Name = "textBoxName";
             textBoxName.Size = new Size(167, 23);
             textBoxName.TabIndex = 0;
@@ -87,7 +96,7 @@
             // btnOK
             // 
             btnOK.DialogResult = DialogResult.OK;
-            btnOK.Location = new Point(181, 484);
+            btnOK.Location = new Point(222, 506);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(220, 23);
             btnOK.TabIndex = 13;
@@ -98,7 +107,7 @@
             // btnCancel
             // 
             btnCancel.DialogResult = DialogResult.Cancel;
-            btnCancel.Location = new Point(408, 484);
+            btnCancel.Location = new Point(449, 506);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(220, 23);
             btnCancel.TabIndex = 14;
@@ -109,7 +118,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(25, 44);
+            label2.Location = new Point(313, 15);
             label2.Name = "label2";
             label2.Size = new Size(42, 15);
             label2.TabIndex = 41;
@@ -246,7 +255,7 @@
             // 
             pictureMask.BackColor = Color.White;
             pictureMask.BorderStyle = BorderStyle.Fixed3D;
-            pictureMask.Location = new Point(304, 47);
+            pictureMask.Location = new Point(315, 47);
             pictureMask.Name = "pictureMask";
             pictureMask.Size = new Size(150, 150);
             pictureMask.SizeMode = PictureBoxSizeMode.Zoom;
@@ -256,7 +265,7 @@
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(304, 21);
+            label10.Location = new Point(315, 21);
             label10.Name = "label10";
             label10.Size = new Size(35, 15);
             label10.TabIndex = 41;
@@ -267,7 +276,7 @@
             cboLayers.DropDownStyle = ComboBoxStyle.DropDownList;
             cboLayers.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboLayers.FormattingEnabled = true;
-            cboLayers.Location = new Point(345, 19);
+            cboLayers.Location = new Point(356, 19);
             cboLayers.Name = "cboLayers";
             cboLayers.Size = new Size(109, 21);
             cboLayers.TabIndex = 2;
@@ -313,18 +322,25 @@
             // 
             // groupRasterProperties
             // 
+            groupRasterProperties.Controls.Add(trackBarScaleLight);
+            groupRasterProperties.Controls.Add(trackBarScaleDark);
+            groupRasterProperties.Controls.Add(txtOutput);
+            groupRasterProperties.Controls.Add(txtInput);
+            groupRasterProperties.Controls.Add(cboRGB);
+            groupRasterProperties.Controls.Add(lblAdjustmentValue2);
+            groupRasterProperties.Controls.Add(lblAdjustmentValue1);
             groupRasterProperties.Controls.Add(listBoxAdjustments);
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue2);
             groupRasterProperties.Controls.Add(trackBarAdjustmentValue1);
             groupRasterProperties.Controls.Add(cboLayers);
-            groupRasterProperties.Controls.Add(pictureCurve);
+            groupRasterProperties.Controls.Add(pictureCurves);
             groupRasterProperties.Controls.Add(pictureMask);
+            groupRasterProperties.Controls.Add(btnDelete);
+            groupRasterProperties.Controls.Add(btnReset);
             groupRasterProperties.Controls.Add(btnAutoHeight);
             groupRasterProperties.Controls.Add(label4);
             groupRasterProperties.Controls.Add(btnMoveAdjustmentDown);
-            groupRasterProperties.Controls.Add(lblAdjustmentValue2);
             groupRasterProperties.Controls.Add(btnMoveAdjustmentUp);
-            groupRasterProperties.Controls.Add(lblAdjustmentValue1);
             groupRasterProperties.Controls.Add(btnRemoveAdjustment);
             groupRasterProperties.Controls.Add(btnCenterY);
             groupRasterProperties.Controls.Add(btnAutoWidth);
@@ -342,26 +358,94 @@
             groupRasterProperties.Controls.Add(label10);
             groupRasterProperties.Controls.Add(cboAdjustments);
             groupRasterProperties.Controls.Add(cboFillWith);
-            groupRasterProperties.Location = new Point(12, 70);
+            groupRasterProperties.Location = new Point(12, 41);
             groupRasterProperties.Name = "groupRasterProperties";
-            groupRasterProperties.Size = new Size(471, 390);
+            groupRasterProperties.Size = new Size(471, 454);
             groupRasterProperties.TabIndex = 44;
             groupRasterProperties.TabStop = false;
+            // 
+            // trackBarScaleLight
+            // 
+            trackBarScaleLight.Location = new Point(110, 403);
+            trackBarScaleLight.Maximum = 255;
+            trackBarScaleLight.Name = "trackBarScaleLight";
+            trackBarScaleLight.Size = new Size(240, 45);
+            trackBarScaleLight.TabIndex = 49;
+            trackBarScaleLight.TickStyle = TickStyle.None;
+            trackBarScaleLight.Value = 255;
+            trackBarScaleLight.Scroll += TrackBarScaleLight_Scroll;
+            // 
+            // trackBarScaleDark
+            // 
+            trackBarScaleDark.Location = new Point(110, 381);
+            trackBarScaleDark.Maximum = 255;
+            trackBarScaleDark.Name = "trackBarScaleDark";
+            trackBarScaleDark.Size = new Size(240, 45);
+            trackBarScaleDark.TabIndex = 50;
+            trackBarScaleDark.TickStyle = TickStyle.None;
+            trackBarScaleDark.Scroll += TrackBarScaleDark_Scroll;
+            // 
+            // txtOutput
+            // 
+            txtOutput.BorderStyle = BorderStyle.FixedSingle;
+            txtOutput.Location = new Point(316, 344);
+            txtOutput.Name = "txtOutput";
+            txtOutput.Size = new Size(54, 23);
+            txtOutput.TabIndex = 47;
+            txtOutput.TextChanged += TxtOutput_TextChanged;
+            // 
+            // txtInput
+            // 
+            txtInput.BorderStyle = BorderStyle.FixedSingle;
+            txtInput.Location = new Point(316, 315);
+            txtInput.Name = "txtInput";
+            txtInput.Size = new Size(54, 23);
+            txtInput.TabIndex = 48;
+            txtInput.TextChanged += TxtInput_TextChanged;
+            // 
+            // cboRGB
+            // 
+            cboRGB.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboRGB.FormattingEnabled = true;
+            cboRGB.Items.AddRange(new object[] { "RGB", "R", "G", "B" });
+            cboRGB.Location = new Point(13, 205);
+            cboRGB.Name = "cboRGB";
+            cboRGB.Size = new Size(121, 23);
+            cboRGB.TabIndex = 46;
+            cboRGB.SelectedIndexChanged += CboRGB_SelectedIndexChanged;
+            // 
+            // lblAdjustmentValue2
+            // 
+            lblAdjustmentValue2.BackColor = Color.White;
+            lblAdjustmentValue2.BorderStyle = BorderStyle.Fixed3D;
+            lblAdjustmentValue2.Location = new Point(225, 293);
+            lblAdjustmentValue2.Name = "lblAdjustmentValue2";
+            lblAdjustmentValue2.Size = new Size(38, 20);
+            lblAdjustmentValue2.TabIndex = 41;
+            // 
+            // lblAdjustmentValue1
+            // 
+            lblAdjustmentValue1.BackColor = Color.White;
+            lblAdjustmentValue1.BorderStyle = BorderStyle.Fixed3D;
+            lblAdjustmentValue1.Location = new Point(225, 242);
+            lblAdjustmentValue1.Name = "lblAdjustmentValue1";
+            lblAdjustmentValue1.Size = new Size(38, 20);
+            lblAdjustmentValue1.TabIndex = 41;
             // 
             // listBoxAdjustments
             // 
             listBoxAdjustments.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             listBoxAdjustments.FormattingEnabled = true;
-            listBoxAdjustments.Location = new Point(86, 140);
+            listBoxAdjustments.Location = new Point(86, 132);
             listBoxAdjustments.Name = "listBoxAdjustments";
-            listBoxAdjustments.Size = new Size(128, 92);
+            listBoxAdjustments.Size = new Size(128, 58);
             listBoxAdjustments.TabIndex = 45;
             listBoxAdjustments.ItemCheck += ListBoxAdjustments_ItemCheck;
             listBoxAdjustments.SelectedIndexChanged += ListBoxAdjustments_SelectedIndexChanged;
             // 
             // trackBarAdjustmentValue2
             // 
-            trackBarAdjustmentValue2.Location = new Point(22, 339);
+            trackBarAdjustmentValue2.Location = new Point(18, 293);
             trackBarAdjustmentValue2.Maximum = 200;
             trackBarAdjustmentValue2.Name = "trackBarAdjustmentValue2";
             trackBarAdjustmentValue2.Size = new Size(201, 45);
@@ -372,7 +456,7 @@
             // 
             // trackBarAdjustmentValue1
             // 
-            trackBarAdjustmentValue1.Location = new Point(22, 288);
+            trackBarAdjustmentValue1.Location = new Point(18, 242);
             trackBarAdjustmentValue1.Maximum = 200;
             trackBarAdjustmentValue1.Name = "trackBarAdjustmentValue1";
             trackBarAdjustmentValue1.Size = new Size(201, 45);
@@ -381,20 +465,43 @@
             trackBarAdjustmentValue1.Value = 100;
             trackBarAdjustmentValue1.Scroll += TrackBarAdjustmentValue_Scroll;
             // 
-            // pictureCurve
+            // pictureCurves
             // 
-            pictureCurve.BackColor = Color.DimGray;
-            pictureCurve.BorderStyle = BorderStyle.Fixed3D;
-            pictureCurve.Location = new Point(304, 216);
-            pictureCurve.Name = "pictureCurve";
-            pictureCurve.Size = new Size(150, 150);
-            pictureCurve.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureCurve.TabIndex = 42;
-            pictureCurve.TabStop = false;
+            pictureCurves.BackColor = Color.DimGray;
+            pictureCurves.BorderStyle = BorderStyle.Fixed3D;
+            pictureCurves.Location = new Point(140, 205);
+            pictureCurves.Name = "pictureCurves";
+            pictureCurves.Size = new Size(170, 170);
+            pictureCurves.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureCurves.TabIndex = 42;
+            pictureCurves.TabStop = false;
+            pictureCurves.MouseDown += PictureCurves_MouseDown;
+            pictureCurves.MouseMove += PictureCurves_MouseMove;
+            pictureCurves.MouseUp += PictureCurves_MouseUp;
+            // 
+            // btnDelete
+            // 
+            btnDelete.Location = new Point(316, 234);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new Size(23, 23);
+            btnDelete.TabIndex = 8;
+            btnDelete.Text = "🗑";
+            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.Click += BtnDelete_Click;
+            // 
+            // btnReset
+            // 
+            btnReset.Location = new Point(316, 205);
+            btnReset.Name = "btnReset";
+            btnReset.Size = new Size(23, 23);
+            btnReset.TabIndex = 8;
+            btnReset.Text = "⟲";
+            btnReset.UseVisualStyleBackColor = true;
+            btnReset.Click += BtnReset_Click;
             // 
             // btnMoveAdjustmentDown
             // 
-            btnMoveAdjustmentDown.Location = new Point(220, 198);
+            btnMoveAdjustmentDown.Location = new Point(220, 167);
             btnMoveAdjustmentDown.Name = "btnMoveAdjustmentDown";
             btnMoveAdjustmentDown.Size = new Size(29, 23);
             btnMoveAdjustmentDown.TabIndex = 12;
@@ -402,18 +509,9 @@
             btnMoveAdjustmentDown.UseVisualStyleBackColor = true;
             btnMoveAdjustmentDown.Click += BtnMoveAdjustmentDown_Click;
             // 
-            // lblAdjustmentValue2
-            // 
-            lblAdjustmentValue2.BackColor = Color.White;
-            lblAdjustmentValue2.BorderStyle = BorderStyle.Fixed3D;
-            lblAdjustmentValue2.Location = new Point(229, 339);
-            lblAdjustmentValue2.Name = "lblAdjustmentValue2";
-            lblAdjustmentValue2.Size = new Size(38, 20);
-            lblAdjustmentValue2.TabIndex = 41;
-            // 
             // btnMoveAdjustmentUp
             // 
-            btnMoveAdjustmentUp.Location = new Point(220, 169);
+            btnMoveAdjustmentUp.Location = new Point(220, 138);
             btnMoveAdjustmentUp.Name = "btnMoveAdjustmentUp";
             btnMoveAdjustmentUp.Size = new Size(29, 23);
             btnMoveAdjustmentUp.TabIndex = 12;
@@ -421,18 +519,9 @@
             btnMoveAdjustmentUp.UseVisualStyleBackColor = true;
             btnMoveAdjustmentUp.Click += BtnMoveAdjustmentUp_Click;
             // 
-            // lblAdjustmentValue1
-            // 
-            lblAdjustmentValue1.BackColor = Color.White;
-            lblAdjustmentValue1.BorderStyle = BorderStyle.Fixed3D;
-            lblAdjustmentValue1.Location = new Point(229, 288);
-            lblAdjustmentValue1.Name = "lblAdjustmentValue1";
-            lblAdjustmentValue1.Size = new Size(38, 20);
-            lblAdjustmentValue1.TabIndex = 41;
-            // 
             // btnRemoveAdjustment
             // 
-            btnRemoveAdjustment.Location = new Point(220, 140);
+            btnRemoveAdjustment.Location = new Point(220, 109);
             btnRemoveAdjustment.Name = "btnRemoveAdjustment";
             btnRemoveAdjustment.Size = new Size(29, 23);
             btnRemoveAdjustment.TabIndex = 12;
@@ -443,7 +532,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(8, 115);
+            label1.Location = new Point(8, 107);
             label1.Name = "label1";
             label1.Size = new Size(72, 15);
             label1.TabIndex = 41;
@@ -454,8 +543,8 @@
             cboAdjustments.DropDownStyle = ComboBoxStyle.DropDownList;
             cboAdjustments.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cboAdjustments.FormattingEnabled = true;
-            cboAdjustments.Items.AddRange(new object[] { "", "Brightness", "Contrast", "Exposure", "Highlights", "Shadows", "Vignette", "Saturation", "Warmth", "Tint", "Sharpness", "Blur" });
-            cboAdjustments.Location = new Point(86, 113);
+            cboAdjustments.Items.AddRange(new object[] { "", "Brightness", "Contrast", "Exposure", "Highlights", "Shadows", "Vignette", "Saturation", "Warmth", "Tint", "Sharpness", "Blur", "Curves" });
+            cboAdjustments.Location = new Point(86, 105);
             cboAdjustments.Name = "cboAdjustments";
             cboAdjustments.Size = new Size(128, 21);
             cboAdjustments.TabIndex = 2;
@@ -465,9 +554,9 @@
             // 
             layerImage.BackColor = Color.White;
             layerImage.BorderStyle = BorderStyle.Fixed3D;
-            layerImage.Location = new Point(489, 70);
+            layerImage.Location = new Point(489, 41);
             layerImage.Name = "layerImage";
-            layerImage.Size = new Size(390, 390);
+            layerImage.Size = new Size(450, 450);
             layerImage.SizeMode = PictureBoxSizeMode.Zoom;
             layerImage.TabIndex = 42;
             layerImage.TabStop = false;
@@ -478,7 +567,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(889, 519);
+            ClientSize = new Size(948, 541);
             Controls.Add(groupRasterProperties);
             Controls.Add(textBoxName);
             Controls.Add(cboType);
@@ -500,9 +589,11 @@
             ((System.ComponentModel.ISupportInitialize)pictureMask).EndInit();
             groupRasterProperties.ResumeLayout(false);
             groupRasterProperties.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)trackBarScaleLight).EndInit();
+            ((System.ComponentModel.ISupportInitialize)trackBarScaleDark).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue2).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackBarAdjustmentValue1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureCurve).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureCurves).EndInit();
             ((System.ComponentModel.ISupportInitialize)layerImage).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -543,9 +634,16 @@
         private Button btnMoveAdjustmentUp;
         private Button btnMoveAdjustmentDown;
         private Label lblAdjustmentValue1;
-        private PictureBox pictureCurve;
+        private PictureBox pictureCurves;
         private TrackBar trackBarAdjustmentValue2;
         private Label lblAdjustmentValue2;
         private CheckedListBox listBoxAdjustments;
+        private ComboBox cboRGB;
+        private Button btnReset;
+        private Button btnDelete;
+        private TextBox txtOutput;
+        private TextBox txtInput;
+        private TrackBar trackBarScaleLight;
+        private TrackBar trackBarScaleDark;
     }
 }

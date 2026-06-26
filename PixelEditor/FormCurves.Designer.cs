@@ -30,17 +30,19 @@
         {
             cboRGB = new ComboBox();
             pictureCurves = new PictureBox();
-            trackBarScaleDark = new TrackBar();
-            trackBarScaleLight = new TrackBar();
             btnOK = new Button();
             btnCancel = new Button();
             btnReset = new Button();
             btnDelete = new Button();
             pictureSample = new PictureBox();
+            trackBarScaleDark = new TrackBar();
+            trackBarScaleLight = new TrackBar();
+            txtInput = new TextBox();
+            txtOutput = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pictureCurves).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureSample).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBarScaleDark).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBarScaleLight).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureSample).BeginInit();
             SuspendLayout();
             // 
             // cboRGB
@@ -57,39 +59,18 @@
             // 
             pictureCurves.BackColor = Color.Gray;
             pictureCurves.BorderStyle = BorderStyle.FixedSingle;
-            pictureCurves.Location = new Point(12, 347);
+            pictureCurves.Location = new Point(72, 347);
             pictureCurves.Name = "pictureCurves";
-            pictureCurves.Size = new Size(300, 300);
+            pictureCurves.Size = new Size(240, 240);
             pictureCurves.TabIndex = 1;
             pictureCurves.TabStop = false;
             pictureCurves.MouseDown += PictureCurves_MouseDown;
             pictureCurves.MouseMove += PictureCurves_MouseMove;
             pictureCurves.MouseUp += PictureCurves_MouseUp;
             // 
-            // trackBarScaleDark
-            // 
-            trackBarScaleDark.Location = new Point(12, 653);
-            trackBarScaleDark.Maximum = 255;
-            trackBarScaleDark.Name = "trackBarScaleDark";
-            trackBarScaleDark.Size = new Size(300, 45);
-            trackBarScaleDark.TabIndex = 2;
-            trackBarScaleDark.TickStyle = TickStyle.None;
-            trackBarScaleDark.Scroll += TrackBarScaleDark_Scroll;
-            // 
-            // trackBarScaleLight
-            // 
-            trackBarScaleLight.Location = new Point(12, 704);
-            trackBarScaleLight.Maximum = 255;
-            trackBarScaleLight.Name = "trackBarScaleLight";
-            trackBarScaleLight.Size = new Size(300, 45);
-            trackBarScaleLight.TabIndex = 2;
-            trackBarScaleLight.TickStyle = TickStyle.None;
-            trackBarScaleLight.Value = 255;
-            trackBarScaleLight.Scroll += TrackBarScaleLight_Scroll;
-            // 
             // btnOK
             // 
-            btnOK.Location = new Point(70, 752);
+            btnOK.Location = new Point(79, 666);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(75, 23);
             btnOK.TabIndex = 3;
@@ -99,7 +80,7 @@
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(151, 752);
+            btnCancel.Location = new Point(160, 666);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 23);
             btnCancel.TabIndex = 3;
@@ -113,6 +94,7 @@
             btnReset.Name = "btnReset";
             btnReset.Size = new Size(23, 23);
             btnReset.TabIndex = 3;
+            btnReset.Text = "⟲";
             btnReset.UseVisualStyleBackColor = true;
             btnReset.Click += BtnReset_Click;
             // 
@@ -122,6 +104,7 @@
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(23, 23);
             btnDelete.TabIndex = 3;
+            btnDelete.Text = "🗑";
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += BtnDelete_Click;
             // 
@@ -139,19 +122,60 @@
             pictureSample.MouseMove += PictureCurves_MouseMove;
             pictureSample.MouseUp += PictureCurves_MouseUp;
             // 
+            // trackBarScaleDark
+            // 
+            trackBarScaleDark.Location = new Point(72, 593);
+            trackBarScaleDark.Maximum = 255;
+            trackBarScaleDark.Name = "trackBarScaleDark";
+            trackBarScaleDark.Size = new Size(240, 45);
+            trackBarScaleDark.TabIndex = 4;
+            trackBarScaleDark.TickStyle = TickStyle.None;
+            trackBarScaleDark.Scroll += TrackBarScaleDark_Scroll;
+            // 
+            // trackBarScaleLight
+            // 
+            trackBarScaleLight.Location = new Point(72, 615);
+            trackBarScaleLight.Maximum = 255;
+            trackBarScaleLight.Name = "trackBarScaleLight";
+            trackBarScaleLight.Size = new Size(240, 45);
+            trackBarScaleLight.TabIndex = 4;
+            trackBarScaleLight.TickStyle = TickStyle.None;
+            trackBarScaleLight.Value = 255;
+            trackBarScaleLight.Scroll += TrackBarScaleLight_Scroll;
+            // 
+            // txtInput
+            // 
+            txtInput.BorderStyle = BorderStyle.FixedSingle;
+            txtInput.Location = new Point(12, 347);
+            txtInput.Name = "txtInput";
+            txtInput.Size = new Size(54, 23);
+            txtInput.TabIndex = 5;
+            txtInput.TextChanged += TxtInput_TextChanged;
+            // 
+            // txtOutput
+            // 
+            txtOutput.BorderStyle = BorderStyle.FixedSingle;
+            txtOutput.Location = new Point(12, 376);
+            txtOutput.Name = "txtOutput";
+            txtOutput.Size = new Size(54, 23);
+            txtOutput.TabIndex = 5;
+            txtOutput.TextChanged += TxtOutput_TextChanged;
+            // 
             // FormCurves
             // 
             AcceptButton = btnOK;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(324, 793);
+            ClientSize = new Size(324, 698);
+            Controls.Add(txtOutput);
+            Controls.Add(txtInput);
+            Controls.Add(trackBarScaleLight);
+            Controls.Add(trackBarScaleDark);
             Controls.Add(btnCancel);
             Controls.Add(btnDelete);
             Controls.Add(btnReset);
             Controls.Add(btnOK);
-            Controls.Add(trackBarScaleLight);
-            Controls.Add(trackBarScaleDark);
             Controls.Add(pictureSample);
             Controls.Add(pictureCurves);
             Controls.Add(cboRGB);
@@ -162,9 +186,9 @@
             Text = "Curves";
             Load += FormCurves_Load;
             ((System.ComponentModel.ISupportInitialize)pictureCurves).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureSample).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackBarScaleDark).EndInit();
             ((System.ComponentModel.ISupportInitialize)trackBarScaleLight).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureSample).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -173,12 +197,14 @@
 
         private ComboBox cboRGB;
         private PictureBox pictureCurves;
-        private TrackBar trackBarScaleDark;
-        private TrackBar trackBarScaleLight;
         private Button btnOK;
         private Button btnCancel;
         private Button btnReset;
         private Button btnDelete;
         private PictureBox pictureSample;
+        private TrackBar trackBarScaleDark;
+        private TrackBar trackBarScaleLight;
+        private TextBox txtInput;
+        private TextBox txtOutput;
     }
 }

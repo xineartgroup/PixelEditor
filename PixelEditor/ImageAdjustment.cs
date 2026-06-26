@@ -1,16 +1,32 @@
-﻿namespace PixelEditor
+﻿public class ImageAdjustment(string name, List<float> values)
 {
-    public class ImageAdjustment(string name, List<float> values)
+    public string Name { get; set; } = name;
+
+    public List<float> Values { get; set; } = values;
+
+    public Dictionary<string, List<Point>> Curves { get; set; } = InitializeCurves();
+
+    public bool IsActive { get; set; } = true;
+
+    private static Dictionary<string, List<Point>> InitializeCurves()
     {
-        public string Name { get; set; } = name;
+        string[] channels = ["RGB", "R", "G", "B"];
+        var curves = new Dictionary<string, List<Point>>();
 
-        public List<float> Values { get; set; } = values;
-
-        public bool IsActive { get; set; } = true;
-
-        public override string ToString()
+        foreach (string channel in channels)
         {
-            return $"{Name}: {string.Join(", ", Values)}";
+            curves[channel] =
+            [
+                new Point(0, 0),
+                new Point(255, 255)
+            ];
         }
+
+        return curves;
+    }
+
+    public override string ToString()
+    {
+        return $"{Name}: {string.Join(", ", Values)}";
     }
 }

@@ -178,6 +178,10 @@ namespace PixelEditor
                             if (sizeY == 0) sizeY = 1;
                             image = ManipulatorLighting.GaussianBlur(image, (int)sizeX, (int)sizeY);
                         }
+                        else if (adjustment.Name == "Curves")
+                        {
+                            image = ManipulatorLighting.ApplyCurvesToImage(image, adjustment.Curves);
+                        }
                     }
                 }
 
